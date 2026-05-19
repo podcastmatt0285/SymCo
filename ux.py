@@ -7909,6 +7909,11 @@ def brokerage_firm_dashboard(session_token: Optional[str] = Cookie(None)):
                 <a href="/brokerage/credit" class="btn-blue" style="display: inline-block; margin-top: 10px;">View Credit</a>
             </div>
             <div class="card">
+                <h3>📋 Annuities</h3>
+                <p style="color: #64748b; font-size: 0.9rem;">Guaranteed income streams — immediate &amp; deferred</p>
+                <a href="/brokerage/annuities" class="btn-blue" style="display: inline-block; margin-top: 10px;">View Annuities</a>
+            </div>
+            <div class="card">
                 <h3>⚙️ Corporate Actions</h3>
                 <p style="color: #64748b; font-size: 0.9rem;">Automate buybacks, splits, offerings</p>
                 <a href="/corporate-actions/dashboard" class="btn-blue" style="display: inline-block; margin-top: 10px;">Manage Actions</a>
@@ -11049,6 +11054,717 @@ def generate_lent_out_html(loans, disp=None) -> str:
     
     html += '</tbody></table>'
     return html
+
+@router.get("/brokerage/annuities", response_class=HTMLResponse)
+def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
+    """Annuity products — immediate (SPIA) and deferred flexible-premium."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
+
+    try:
+        import time as _time
+        from banks.brokerage_firm import (
+            get_player_annuities, ANNUITY_IMMEDIATE_RATES, ANNUITY_CREDITED_RATE,
+            ANNUITY_IMMEDIATE_MIN, ANNUITY_MIN_TO_ANNUITIZE, ANNUITY_PAYMENT_TICKS,
+            ANNUITY_NONQUAL_TAX_RATE, ANNUITY_QUAL_TAX_RATE, ANNUITY_ISSUANCE_FEE,
+            ANNUITY_SURRENDER_SCHEDULE, _calc_pmt,
+        )
+        import math as _math
+
+        # Epoch seconds → approximate game tick (rough estimate for display only)
+        current_tick = int(_time.time())
+
+        data = get_player_annuities(player.id, current_tick)
+        active    = data["active"]
+        completed = data["completed"][-20:]
+        surrendered = data["surrendered"][-20:]
+
+        # ── Product table rows ──────────────────────────────────────────────
+        def _example_pmt(term, freq):
+            rate = ANNUITY_IMMEDIATE_RATES.get(term, 0)
+            ppy  = 52 if freq == "weekly" else 12
+            n    = max(1, round(term / 365.0 * ppy))
+            pmt  = _calc_pmt(100_000.0, rate, ppy, n)
+            total = round(pmt * n, 2)
+            return pmt, n, total
+
+        product_rows = ""
+        for term, rate in sorted(ANNUITY_IMMEDIATE_RATES.items()):
+            for freq in ("weekly", "monthly"):
+                pmt, n, total = _example_pmt(term, freq)
+                product_rows += f"""
+                <tr>
+                  <td>{term} days</td>
+                  <td style="color:#22c55e;font-weight:bold;">{rate*100:.0f}%</td>
+                  <td>{freq.capitalize()}</td>
+                  <td>{n}</td>
+                  <td style="color:#38bdf8;">${pmt:,.2f}</td>
+                  <td style="color:#a5b4fc;">${total:,.2f}</td>
+                </tr>"""
+
+        # ── Active contract cards ───────────────────────────────────────────
+        def _tick_to_approx_date(tick):
+            """Very rough: treat tick as unix timestamp."""
+            try:
+                from datetime import datetime as _dt
+                return _dt.utcfromtimestamp(tick).strftime("%b %d %H:%M UTC")
+            except Exception:
+                return "—"
+
+        contract_cards = ""
+        for c in active:
+            atype = c.get("annuity_type", "")
+            qual  = c.get("is_qualified", False)
+            phase = c.get("phase", "")
+            cid   = c.get("id", 0)
+            pct   = c.get("pct_complete", 0.0)
+            surr  = c.get("surrender_estimate", 0.0)
+            charge = c.get("charge_rate", 0.0)
+
+            type_badge = (
+                '<span style="background:#0891b2;color:#fff;padding:2px 7px;border-radius:4px;font-size:9px;font-weight:bold;">IMMEDIATE</span>'
+                if atype == "immediate" else
+                '<span style="background:#7c3aed;color:#fff;padding:2px 7px;border-radius:4px;font-size:9px;font-weight:bold;">DEFERRED</span>'
+            )
+            qual_badge = (
+                '<span style="background:#15803d;color:#fff;padding:2px 7px;border-radius:4px;font-size:9px;">QUALIFIED</span>'
+                if qual else
+                '<span style="background:#334155;color:#94a3b8;padding:2px 7px;border-radius:4px;font-size:9px;">NON-QUAL</span>'
+            )
+            tax_note = (
+                f"20% tax on full payment" if qual else
+                f"15% tax on interest only"
+            )
+
+            if phase == "accumulation":
+                acc_val = c.get("accumulated_value", 0.0) or 0.0
+                next_credit = _tick_to_approx_date(c.get("next_credit_tick") or 0)
+                cr = (c.get("credited_rate") or ANNUITY_CREDITED_RATE) * 100
+                acc_end = c.get("accumulation_end_tick")
+                term_label = (f"{c.get('accumulation_term_days')} days — ends {_tick_to_approx_date(acc_end)}"
+                              if acc_end else "Open-ended")
+                phase_html = f"""
+                <div style="margin:8px 0;">
+                  <span style="color:#a78bfa;font-weight:bold;">● ACCUMULATING</span>
+                  <span style="color:#64748b;margin-left:8px;font-size:9px;">{term_label}</span>
+                </div>
+                <div style="display:flex;gap:20px;flex-wrap:wrap;margin:6px 0;">
+                  <div><span style="color:#64748b;font-size:9px;">BALANCE</span><br>
+                    <span style="color:#22c55e;font-weight:bold;">${acc_val:,.2f}</span></div>
+                  <div><span style="color:#64748b;font-size:9px;">CREDITED RATE</span><br>
+                    <span style="color:#38bdf8;">{cr:.1f}% annual</span></div>
+                  <div><span style="color:#64748b;font-size:9px;">NEXT INTEREST CREDIT</span><br>
+                    <span style="color:#94a3b8;">{next_credit}</span></div>
+                </div>
+                <div style="margin:8px 0;font-size:9px;color:#64748b;">{tax_note}</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+                  <button onclick="openContribModal({cid})" class="btn-blue" style="font-size:10px;padding:5px 12px;">+ Contribute</button>
+                  {"" if acc_val < ANNUITY_MIN_TO_ANNUITIZE else f'<button onclick="openAnnuitizeModal({cid})" class="btn-blue" style="font-size:10px;padding:5px 12px;background:#7c3aed;">▶ Annuitize</button>'}
+                  <button onclick="confirmSurrender({cid}, {surr:.2f}, {charge*100:.0f})" class="btn-red" style="font-size:10px;padding:5px 12px;">Surrender</button>
+                </div>"""
+
+            else:  # payout
+                pmt   = c.get("payment_amount", 0.0) or 0.0
+                made  = c.get("payments_made", 0) or 0
+                total_n = c.get("total_payments") or 1
+                remaining = c.get("payments_remaining", 0) or 0
+                next_pmt = _tick_to_approx_date(c.get("next_payment_tick") or 0)
+                rate_pct = (c.get("payout_rate") or 0.0) * 100
+                freq_label = (c.get("payment_frequency") or "").capitalize()
+                bar_pct = min(100, int(pct))
+                phase_html = f"""
+                <div style="margin:8px 0;">
+                  <span style="color:#22c55e;font-weight:bold;">▶ PAYING OUT</span>
+                  <span style="color:#64748b;margin-left:8px;font-size:9px;">{c.get('payout_term_days',0)}-day term @ {rate_pct:.0f}%</span>
+                </div>
+                <div style="background:#1e293b;border-radius:4px;height:6px;margin:6px 0;">
+                  <div style="background:#22c55e;width:{bar_pct}%;height:6px;border-radius:4px;"></div>
+                </div>
+                <div style="display:flex;gap:20px;flex-wrap:wrap;margin:6px 0;">
+                  <div><span style="color:#64748b;font-size:9px;">PAYMENT</span><br>
+                    <span style="color:#22c55e;font-weight:bold;">${pmt:,.2f}</span>
+                    <span style="color:#64748b;font-size:9px;"> {freq_label}</span></div>
+                  <div><span style="color:#64748b;font-size:9px;">PROGRESS</span><br>
+                    <span style="color:#e2e8f0;">{made}/{total_n}</span></div>
+                  <div><span style="color:#64748b;font-size:9px;">REMAINING</span><br>
+                    <span style="color:#94a3b8;">{remaining} payments</span></div>
+                  <div><span style="color:#64748b;font-size:9px;">NEXT PAYMENT</span><br>
+                    <span style="color:#94a3b8;">{next_pmt}</span></div>
+                </div>
+                <div style="font-size:9px;color:#64748b;margin:4px 0;">{tax_note}</div>
+                <div style="display:flex;gap:8px;margin-top:8px;">
+                  <button onclick="confirmSurrender({cid}, {surr:.2f}, {charge*100:.0f})" class="btn-red" style="font-size:10px;padding:5px 12px;">Surrender</button>
+                </div>"""
+
+            surr_charge_label = f"{charge*100:.0f}% surrender charge" if charge > 0 else "No surrender charge"
+            contract_cards += f"""
+            <div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:14px;margin-bottom:12px;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                {type_badge} {qual_badge}
+                <span style="color:#64748b;font-size:9px;margin-left:auto;">#{cid} &nbsp;·&nbsp; {surr_charge_label}</span>
+              </div>
+              <div style="color:#64748b;font-size:9px;">
+                Principal: <span style="color:#e2e8f0;">${(c.get('total_contributions') or 0.0):,.2f}</span>
+                &nbsp;·&nbsp; Paid out: <span style="color:#22c55e;">${(c.get('total_paid_out') or 0.0):,.2f}</span>
+                &nbsp;·&nbsp; Surrender est.: <span style="color:#f59e0b;">${surr:,.2f}</span>
+              </div>
+              {phase_html}
+            </div>"""
+
+        if not contract_cards:
+            contract_cards = '<p style="color:#64748b;text-align:center;padding:20px;">No active annuity contracts.</p>'
+
+        # ── History table ──────────────────────────────────────────────────
+        hist_rows = ""
+        for c in (completed + surrendered):
+            status_badge = (
+                '<span style="color:#10b981;">✅ Completed</span>'
+                if c.get("status") == "completed" else
+                '<span style="color:#f59e0b;">🔓 Surrendered</span>'
+            )
+            atype = "SPIA" if c.get("annuity_type") == "immediate" else "Deferred"
+            principal = c.get("total_contributions") or 0.0
+            total_out = c.get("total_paid_out") or c.get("surrender_payout") or 0.0
+            eff_yield = round((total_out / max(0.01, principal) - 1) * 100, 1)
+            opened = (c.get("opened_at") or "")[:10]
+            closed = (c.get("completed_at") or "")[:10]
+            hist_rows += f"""
+            <tr>
+              <td style="color:#94a3b8;font-size:10px;">{opened}</td>
+              <td>{atype}</td>
+              <td>{status_badge}</td>
+              <td style="color:#e2e8f0;">${principal:,.0f}</td>
+              <td style="color:#22c55e;">${total_out:,.2f}</td>
+              <td style="color:{'#22c55e' if eff_yield >= 0 else '#ef4444'};">{eff_yield:+.1f}%</td>
+              <td style="color:#64748b;font-size:10px;">{closed}</td>
+            </tr>"""
+        if not hist_rows:
+            hist_rows = '<tr><td colspan="7" style="color:#64748b;text-align:center;padding:14px;">No history yet.</td></tr>'
+
+        # ── Page body ──────────────────────────────────────────────────────
+        bal = fmt_usd(player.cash_balance, disp)
+        body = f"""
+<h2 style="color:#38bdf8;margin:0 0 4px;">📋 Annuity Contracts</h2>
+<p style="color:#64748b;margin:0 0 18px;font-size:11px;">
+  Guaranteed income streams — pay a premium now, receive fixed payments over your chosen term.
+  Available through the Wadsworth Brokerage Firm.
+</p>
+
+<!-- ── Available Products ─────────────────────────────────────────────── -->
+<div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:16px;margin-bottom:18px;">
+  <h3 style="color:#e2e8f0;margin:0 0 12px;font-size:13px;">Available Products — Rate Schedule</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+
+    <div style="background:#0f172a;border:1px solid #1e3a5f;border-radius:6px;padding:14px;">
+      <div style="color:#38bdf8;font-weight:bold;font-size:12px;margin-bottom:6px;">📋 Immediate Annuity (SPIA)</div>
+      <ul style="color:#94a3b8;font-size:10px;line-height:1.7;margin:0 0 10px;padding-left:16px;">
+        <li>Single lump-sum premium (min ${ANNUITY_IMMEDIATE_MIN:,.0f})</li>
+        <li>Payments start at the next interval</li>
+        <li>Principal + interest returned via fixed payments</li>
+        <li><b>Non-qualified</b>: 0.25% issuance fee, 15% tax on interest only</li>
+        <li><b>Qualified</b>: no fee, 20% tax on full payment</li>
+      </ul>
+      <button onclick="document.getElementById('spia-form').scrollIntoView({{behavior:'smooth'}})"
+        class="btn-blue" style="font-size:10px;padding:5px 14px;">Open SPIA →</button>
+    </div>
+
+    <div style="background:#0f172a;border:1px solid #3b1d8a;border-radius:6px;padding:14px;">
+      <div style="color:#a78bfa;font-weight:bold;font-size:12px;margin-bottom:6px;">💼 Deferred Annuity</div>
+      <ul style="color:#94a3b8;font-size:10px;line-height:1.7;margin:0 0 10px;padding-left:16px;">
+        <li>Open with $0 or make an initial deposit</li>
+        <li>Add contributions any time</li>
+        <li>Earns {ANNUITY_CREDITED_RATE*100:.0f}% annual during accumulation</li>
+        <li>Annuitize when ready (min ${ANNUITY_MIN_TO_ANNUITIZE:,.0f})</li>
+        <li>Same tax treatment as SPIA at annuitization</li>
+      </ul>
+      <button onclick="document.getElementById('deferred-form').scrollIntoView({{behavior:'smooth'}})"
+        class="btn-blue" style="font-size:10px;padding:5px 14px;background:#7c3aed;">Open Deferred →</button>
+    </div>
+  </div>
+
+  <table style="width:100%;border-collapse:collapse;font-size:11px;">
+    <thead>
+      <tr style="color:#64748b;font-size:9px;border-bottom:1px solid #334155;">
+        <th style="text-align:left;padding:6px 8px;">TERM</th>
+        <th style="text-align:left;padding:6px 8px;">ANNUAL RATE</th>
+        <th style="text-align:left;padding:6px 8px;">FREQUENCY</th>
+        <th style="text-align:left;padding:6px 8px;">PAYMENTS</th>
+        <th style="text-align:left;padding:6px 8px;">PMT ON $100K</th>
+        <th style="text-align:left;padding:6px 8px;">TOTAL ON $100K</th>
+      </tr>
+    </thead>
+    <tbody style="color:#e2e8f0;">
+      {product_rows}
+    </tbody>
+  </table>
+</div>
+
+<!-- ── PMT Calculator ─────────────────────────────────────────────────── -->
+<div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:16px;margin-bottom:18px;">
+  <h3 style="color:#e2e8f0;margin:0 0 10px;font-size:13px;">💡 Payment Calculator</h3>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+    <div>
+      <label style="color:#64748b;font-size:9px;display:block;">PRINCIPAL ($)</label>
+      <input id="calc-principal" type="number" value="50000" min="10000" step="1000"
+        oninput="_calcPmt()"
+        style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:4px;width:130px;">
+    </div>
+    <div>
+      <label style="color:#64748b;font-size:9px;display:block;">TERM (days)</label>
+      <select id="calc-term" onchange="_calcPmt()"
+        style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:4px;">
+        <option value="30">30</option>
+        <option value="90">90</option>
+        <option value="180" selected>180</option>
+        <option value="365">365</option>
+      </select>
+    </div>
+    <div>
+      <label style="color:#64748b;font-size:9px;display:block;">FREQUENCY</label>
+      <select id="calc-freq" onchange="_calcPmt()"
+        style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:4px;">
+        <option value="weekly">Weekly</option>
+        <option value="monthly" selected>Monthly</option>
+      </select>
+    </div>
+    <div style="background:#0f172a;border:1px solid #334155;border-radius:4px;padding:8px 14px;min-width:180px;">
+      <div style="color:#64748b;font-size:9px;">PAYMENT AMOUNT</div>
+      <div id="calc-pmt" style="color:#22c55e;font-size:16px;font-weight:bold;">—</div>
+      <div style="color:#64748b;font-size:9px;margin-top:2px;">
+        Total: <span id="calc-total" style="color:#a5b4fc;">—</span>
+        &nbsp;·&nbsp; Effective yield: <span id="calc-yield" style="color:#38bdf8;">—</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Active Contracts ──────────────────────────────────────────────── -->
+<div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:16px;margin-bottom:18px;">
+  <h3 style="color:#e2e8f0;margin:0 0 12px;font-size:13px;">Your Active Contracts</h3>
+  {contract_cards}
+</div>
+
+<!-- ── Open SPIA Form ─────────────────────────────────────────────────── -->
+<div id="spia-form" style="background:#1e293b;border:1px solid #1e3a5f;border-radius:8px;padding:16px;margin-bottom:18px;">
+  <h3 style="color:#38bdf8;margin:0 0 12px;font-size:13px;">📋 Open Immediate Annuity (SPIA)</h3>
+  <p style="color:#64748b;font-size:10px;margin:0 0 12px;">Your balance: <span style="color:#22c55e;">{bal}</span></p>
+  <form id="spia-submit-form" onsubmit="submitSpia(event)">
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+      <div>
+        <label style="color:#64748b;font-size:9px;display:block;">PREMIUM ($)</label>
+        <input name="purchase_price" type="number" min="{ANNUITY_IMMEDIATE_MIN:.0f}" step="100" value="{ANNUITY_IMMEDIATE_MIN:.0f}" required
+          style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:4px;width:130px;">
+      </div>
+      <div>
+        <label style="color:#64748b;font-size:9px;display:block;">TERM (days)</label>
+        <select name="term_days"
+          style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:4px;">
+          <option value="30">30 days — 8%</option>
+          <option value="90">90 days — 10%</option>
+          <option value="180">180 days — 12%</option>
+          <option value="365">365 days — 15%</option>
+        </select>
+      </div>
+      <div>
+        <label style="color:#64748b;font-size:9px;display:block;">PAYMENT FREQUENCY</label>
+        <select name="payment_frequency"
+          style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:4px;">
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:flex-end;">
+        <label style="display:flex;align-items:center;gap:6px;color:#94a3b8;font-size:10px;cursor:pointer;">
+          <input type="checkbox" name="is_qualified" value="1"
+            style="accent-color:#38bdf8;">
+          Qualified annuity
+          <span style="color:#64748b;font-size:9px;">(no fee, 20% tax on full pmt)</span>
+        </label>
+      </div>
+    </div>
+    <div id="spia-msg" style="font-size:10px;margin:6px 0;min-height:14px;"></div>
+    <button type="submit" class="btn-blue" style="padding:7px 20px;">Purchase SPIA</button>
+  </form>
+</div>
+
+<!-- ── Open Deferred Form ─────────────────────────────────────────────── -->
+<div id="deferred-form" style="background:#1e293b;border:1px solid #3b1d8a;border-radius:8px;padding:16px;margin-bottom:18px;">
+  <h3 style="color:#a78bfa;margin:0 0 12px;font-size:13px;">💼 Open Deferred Annuity</h3>
+  <form id="deferred-submit-form" onsubmit="submitDeferred(event)">
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+      <div>
+        <label style="color:#64748b;font-size:9px;display:block;">INITIAL DEPOSIT ($, optional)</label>
+        <input name="initial_premium" type="number" min="0" step="100" value="0"
+          style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:4px;width:130px;">
+      </div>
+      <div>
+        <label style="color:#64748b;font-size:9px;display:block;">ACCUMULATION TERM (days, optional)</label>
+        <select name="accumulation_term_days"
+          style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:4px;">
+          <option value="">Open-ended (manual annuitize)</option>
+          <option value="30">30 days — auto-annuitize</option>
+          <option value="90">90 days — auto-annuitize</option>
+          <option value="180">180 days — auto-annuitize</option>
+          <option value="365">365 days — auto-annuitize</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:flex-end;">
+        <label style="display:flex;align-items:center;gap:6px;color:#94a3b8;font-size:10px;cursor:pointer;">
+          <input type="checkbox" name="is_qualified" value="1"
+            style="accent-color:#38bdf8;">
+          Qualified
+          <span style="color:#64748b;font-size:9px;">(no fee, 20% tax on payouts)</span>
+        </label>
+      </div>
+    </div>
+    <p style="color:#64748b;font-size:9px;margin:0 0 10px;">
+      Earns {ANNUITY_CREDITED_RATE*100:.0f}% annual (credited monthly) during accumulation.
+      Annuitize when balance ≥ ${ANNUITY_MIN_TO_ANNUITIZE:,.0f}. Add contributions any time.
+    </p>
+    <div id="deferred-msg" style="font-size:10px;margin:6px 0;min-height:14px;"></div>
+    <button type="submit" class="btn-blue" style="padding:7px 20px;background:#7c3aed;">Open Deferred Account</button>
+  </form>
+</div>
+
+<!-- ── History ────────────────────────────────────────────────────────── -->
+<div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:16px;margin-bottom:18px;">
+  <h3 style="color:#e2e8f0;margin:0 0 12px;font-size:13px;">Completed &amp; Surrendered History</h3>
+  <div style="overflow-x:auto;">
+  <table style="width:100%;border-collapse:collapse;font-size:11px;">
+    <thead>
+      <tr style="color:#64748b;font-size:9px;border-bottom:1px solid #334155;">
+        <th style="text-align:left;padding:6px 8px;">OPENED</th>
+        <th style="text-align:left;padding:6px 8px;">TYPE</th>
+        <th style="text-align:left;padding:6px 8px;">STATUS</th>
+        <th style="text-align:left;padding:6px 8px;">PRINCIPAL</th>
+        <th style="text-align:left;padding:6px 8px;">TOTAL RECEIVED</th>
+        <th style="text-align:left;padding:6px 8px;">EFF. YIELD</th>
+        <th style="text-align:left;padding:6px 8px;">CLOSED</th>
+      </tr>
+    </thead>
+    <tbody style="color:#e2e8f0;">{hist_rows}</tbody>
+  </table>
+  </div>
+</div>
+
+<!-- ── Contribution Modal ─────────────────────────────────────────────── -->
+<div id="contrib-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#1e293b;border:1px solid #334155;border-radius:10px;padding:22px;width:320px;max-width:95vw;">
+    <h3 style="color:#a78bfa;margin:0 0 12px;">Add Contribution</h3>
+    <input id="contrib-cid" type="hidden">
+    <label style="color:#64748b;font-size:9px;display:block;">AMOUNT ($)</label>
+    <input id="contrib-amount" type="number" min="100" step="100" value="1000"
+      style="width:100%;background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:7px 10px;border-radius:4px;margin-bottom:12px;">
+    <div id="contrib-msg" style="font-size:10px;min-height:14px;margin-bottom:8px;"></div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="submitContrib()" class="btn-blue" style="flex:1;">Contribute</button>
+      <button onclick="document.getElementById('contrib-modal').style.display='none'" class="btn-red" style="flex:1;">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Annuitize Modal ────────────────────────────────────────────────── -->
+<div id="annuitize-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#1e293b;border:1px solid #3b1d8a;border-radius:10px;padding:22px;width:340px;max-width:95vw;">
+    <h3 style="color:#a78bfa;margin:0 0 12px;">▶ Annuitize Contract</h3>
+    <input id="annuitize-cid" type="hidden">
+    <label style="color:#64748b;font-size:9px;display:block;">PAYOUT TERM</label>
+    <select id="annuitize-term"
+      style="width:100%;background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:7px 10px;border-radius:4px;margin-bottom:10px;">
+      <option value="30">30 days — 8%</option>
+      <option value="90">90 days — 10%</option>
+      <option value="180">180 days — 12%</option>
+      <option value="365" selected>365 days — 15%</option>
+    </select>
+    <label style="color:#64748b;font-size:9px;display:block;">PAYMENT FREQUENCY</label>
+    <select id="annuitize-freq"
+      style="width:100%;background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:7px 10px;border-radius:4px;margin-bottom:12px;">
+      <option value="weekly">Weekly</option>
+      <option value="monthly" selected>Monthly</option>
+    </select>
+    <div id="annuitize-msg" style="font-size:10px;min-height:14px;margin-bottom:8px;"></div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="submitAnnuitize()" class="btn-blue" style="flex:1;background:#7c3aed;">Annuitize</button>
+      <button onclick="document.getElementById('annuitize-modal').style.display='none'" class="btn-red" style="flex:1;">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── PMT calculator ────────────────────────────────────────────────────────
+const RATES = {{"30":0.08,"90":0.10,"180":0.12,"365":0.15}};
+function _calcPmt() {{
+  const p = parseFloat(document.getElementById('calc-principal').value) || 0;
+  const term = document.getElementById('calc-term').value;
+  const freq = document.getElementById('calc-freq').value;
+  const rate = RATES[term] || 0;
+  const ppy  = freq === 'weekly' ? 52 : 12;
+  const n    = Math.round((parseInt(term) / 365) * ppy) || 1;
+  const r    = rate / ppy;
+  const pmt  = r > 0 ? p * r / (1 - Math.pow(1 + r, -n)) : p / n;
+  const total = pmt * n;
+  const yld   = p > 0 ? ((total / p - 1) * 100) : 0;
+  const fmt   = v => '$' + v.toLocaleString('en-US', {{minimumFractionDigits:2,maximumFractionDigits:2}});
+  document.getElementById('calc-pmt').textContent   = fmt(pmt);
+  document.getElementById('calc-total').textContent = fmt(total);
+  document.getElementById('calc-yield').textContent = yld.toFixed(2) + '%';
+}}
+_calcPmt();
+
+// ── SPIA form ─────────────────────────────────────────────────────────────
+async function submitSpia(e) {{
+  e.preventDefault();
+  const form = e.target;
+  const fd   = new FormData(form);
+  const msg  = document.getElementById('spia-msg');
+  msg.style.color = '#64748b'; msg.textContent = 'Processing…';
+  try {{
+    const r = await fetch('/api/brokerage/open-immediate-annuity', {{
+      method:'POST', credentials:'same-origin', body: fd
+    }});
+    const d = await r.json();
+    if (d.ok) {{
+      msg.style.color = '#22c55e';
+      msg.textContent = `✅ Annuity opened — ${{d.total_payments}} payments of $${{d.payment_amount.toLocaleString('en-US',{{minimumFractionDigits:2}})}}. Reloading…`;
+      setTimeout(() => location.reload(), 1800);
+    }} else {{
+      msg.style.color = '#ef4444'; msg.textContent = '❌ ' + d.error;
+    }}
+  }} catch(err) {{ msg.style.color='#ef4444'; msg.textContent='Network error'; }}
+}}
+
+// ── Deferred form ─────────────────────────────────────────────────────────
+async function submitDeferred(e) {{
+  e.preventDefault();
+  const form = e.target;
+  const fd   = new FormData(form);
+  const msg  = document.getElementById('deferred-msg');
+  msg.style.color = '#64748b'; msg.textContent = 'Processing…';
+  try {{
+    const r = await fetch('/api/brokerage/open-deferred-annuity', {{
+      method:'POST', credentials:'same-origin', body: fd
+    }});
+    const d = await r.json();
+    if (d.ok) {{
+      msg.style.color = '#22c55e';
+      msg.textContent = '✅ Deferred annuity opened. Reloading…';
+      setTimeout(() => location.reload(), 1500);
+    }} else {{
+      msg.style.color = '#ef4444'; msg.textContent = '❌ ' + d.error;
+    }}
+  }} catch(err) {{ msg.style.color='#ef4444'; msg.textContent='Network error'; }}
+}}
+
+// ── Contribution modal ────────────────────────────────────────────────────
+function openContribModal(cid) {{
+  document.getElementById('contrib-cid').value = cid;
+  document.getElementById('contrib-msg').textContent = '';
+  document.getElementById('contrib-modal').style.display = 'flex';
+}}
+async function submitContrib() {{
+  const cid    = document.getElementById('contrib-cid').value;
+  const amount = document.getElementById('contrib-amount').value;
+  const msg    = document.getElementById('contrib-msg');
+  msg.style.color = '#64748b'; msg.textContent = 'Processing…';
+  const fd = new FormData();
+  fd.append('contract_id', cid); fd.append('amount', amount);
+  try {{
+    const r = await fetch('/api/brokerage/contribute-annuity', {{
+      method:'POST', credentials:'same-origin', body: fd
+    }});
+    const d = await r.json();
+    if (d.ok) {{
+      msg.style.color = '#22c55e';
+      msg.textContent = `✅ Contributed! New balance: $${{d.new_balance.toLocaleString('en-US',{{minimumFractionDigits:2}})}}. Reloading…`;
+      setTimeout(() => location.reload(), 1500);
+    }} else {{
+      msg.style.color = '#ef4444'; msg.textContent = '❌ ' + d.error;
+    }}
+  }} catch(err) {{ msg.style.color='#ef4444'; msg.textContent='Network error'; }}
+}}
+
+// ── Annuitize modal ───────────────────────────────────────────────────────
+function openAnnuitizeModal(cid) {{
+  document.getElementById('annuitize-cid').value = cid;
+  document.getElementById('annuitize-msg').textContent = '';
+  document.getElementById('annuitize-modal').style.display = 'flex';
+}}
+async function submitAnnuitize() {{
+  const cid  = document.getElementById('annuitize-cid').value;
+  const term = document.getElementById('annuitize-term').value;
+  const freq = document.getElementById('annuitize-freq').value;
+  const msg  = document.getElementById('annuitize-msg');
+  msg.style.color = '#64748b'; msg.textContent = 'Processing…';
+  const fd = new FormData();
+  fd.append('contract_id', cid); fd.append('payout_term_days', term); fd.append('payment_frequency', freq);
+  try {{
+    const r = await fetch('/api/brokerage/annuitize', {{
+      method:'POST', credentials:'same-origin', body: fd
+    }});
+    const d = await r.json();
+    if (d.ok) {{
+      msg.style.color = '#22c55e';
+      msg.textContent = `✅ Annuitized! ${{d.total_payments}} payments of $${{d.payment_amount.toLocaleString('en-US',{{minimumFractionDigits:2}})}}. Reloading…`;
+      setTimeout(() => location.reload(), 1800);
+    }} else {{
+      msg.style.color = '#ef4444'; msg.textContent = '❌ ' + d.error;
+    }}
+  }} catch(err) {{ msg.style.color='#ef4444'; msg.textContent='Network error'; }}
+}}
+
+// ── Surrender ─────────────────────────────────────────────────────────────
+function confirmSurrender(cid, est, chargePct) {{
+  const msg = chargePct > 0
+    ? `Surrender this annuity? You will receive approximately $${{est.toLocaleString('en-US',{{minimumFractionDigits:2}})}} (after ${{chargePct}}% surrender charge).`
+    : `Surrender this annuity? You will receive approximately $${{est.toLocaleString('en-US',{{minimumFractionDigits:2}})}} (no surrender charge).`;
+  if (!confirm(msg)) return;
+  const fd = new FormData(); fd.append('contract_id', cid);
+  fetch('/api/brokerage/surrender-annuity', {{method:'POST',credentials:'same-origin',body:fd}})
+    .then(r => r.json())
+    .then(d => {{
+      if (d.ok) {{ alert(`Surrendered. Received: $${{d.surrender_payout.toLocaleString('en-US',{{minimumFractionDigits:2}})}}`); location.reload(); }}
+      else alert('Error: ' + d.error);
+    }}).catch(() => alert('Network error'));
+}}
+</script>"""
+
+        return shell("Annuities", body, player.cash_balance, player.id)
+
+    except Exception as e:
+        import traceback
+        return shell("Annuities", f'<p style="color:#ef4444;">Error loading annuities: {e}</p>', player.cash_balance, player.id)
+
+
+@router.post("/api/brokerage/open-immediate-annuity")
+async def api_open_immediate_annuity(
+    request: Request,
+    purchase_price: float   = Form(...),
+    term_days: int          = Form(...),
+    payment_frequency: str  = Form(...),
+    is_qualified: str       = Form(default=""),
+    session_token: Optional[str] = Cookie(None),
+):
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return JSONResponse({"ok": False, "error": "Unauthorized"}, status_code=401)
+    try:
+        import time as _time
+        from banks.brokerage_firm import open_immediate_annuity
+        result = open_immediate_annuity(
+            player_id=player.id,
+            purchase_price=purchase_price,
+            term_days=term_days,
+            payment_frequency=payment_frequency,
+            is_qualified=bool(is_qualified and is_qualified not in ("0", "false", "")),
+            current_tick=int(_time.time()),
+        )
+        return JSONResponse(result)
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+
+
+@router.post("/api/brokerage/open-deferred-annuity")
+async def api_open_deferred_annuity(
+    request: Request,
+    initial_premium: float       = Form(default=0.0),
+    accumulation_term_days: str  = Form(default=""),
+    is_qualified: str            = Form(default=""),
+    session_token: Optional[str] = Cookie(None),
+):
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return JSONResponse({"ok": False, "error": "Unauthorized"}, status_code=401)
+    try:
+        import time as _time
+        from banks.brokerage_firm import open_deferred_annuity
+        acc_days = int(accumulation_term_days) if accumulation_term_days and accumulation_term_days.isdigit() else None
+        result = open_deferred_annuity(
+            player_id=player.id,
+            initial_premium=initial_premium or 0.0,
+            accumulation_term_days=acc_days,
+            is_qualified=bool(is_qualified and is_qualified not in ("0", "false", "")),
+            current_tick=int(_time.time()),
+        )
+        return JSONResponse(result)
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+
+
+@router.post("/api/brokerage/contribute-annuity")
+async def api_contribute_annuity(
+    request: Request,
+    contract_id: int             = Form(...),
+    amount: float                = Form(...),
+    session_token: Optional[str] = Cookie(None),
+):
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return JSONResponse({"ok": False, "error": "Unauthorized"}, status_code=401)
+    try:
+        import time as _time
+        from banks.brokerage_firm import contribute_to_deferred
+        result = contribute_to_deferred(
+            player_id=player.id,
+            contract_id=contract_id,
+            amount=amount,
+            current_tick=int(_time.time()),
+        )
+        return JSONResponse(result)
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+
+
+@router.post("/api/brokerage/annuitize")
+async def api_annuitize(
+    request: Request,
+    contract_id: int             = Form(...),
+    payout_term_days: int        = Form(...),
+    payment_frequency: str       = Form(...),
+    session_token: Optional[str] = Cookie(None),
+):
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return JSONResponse({"ok": False, "error": "Unauthorized"}, status_code=401)
+    try:
+        import time as _time
+        from banks.brokerage_firm import annuitize_deferred
+        result = annuitize_deferred(
+            player_id=player.id,
+            contract_id=contract_id,
+            payout_term_days=payout_term_days,
+            payment_frequency=payment_frequency,
+            current_tick=int(_time.time()),
+        )
+        return JSONResponse(result)
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+
+
+@router.post("/api/brokerage/surrender-annuity")
+async def api_surrender_annuity(
+    request: Request,
+    contract_id: int             = Form(...),
+    session_token: Optional[str] = Cookie(None),
+):
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return JSONResponse({"ok": False, "error": "Unauthorized"}, status_code=401)
+    try:
+        import time as _time
+        from banks.brokerage_firm import surrender_annuity
+        result = surrender_annuity(
+            player_id=player.id,
+            contract_id=contract_id,
+            current_tick=int(_time.time()),
+        )
+        return JSONResponse(result)
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+
 
 @router.get("/liens", response_class=HTMLResponse)
 def liens_page(session_token: Optional[str] = Cookie(None)):

@@ -1257,6 +1257,13 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         "p2p_contract_payment": "💳", "p2p_breach_penalty": "⚠️", "p2p_breach_damages": "⚖️",
         # Estate / Misc
         "inheritance": "📜", "tax": "📋",
+        # Annuities
+        "annuity_purchase":     "📋",
+        "annuity_contribution": "💼",
+        "annuity_interest":     "📈",
+        "annuity_payout":       "💰",
+        "annuity_surrender":    "🔓",
+        "annuity_maturity":     "✅",
     }
     TYPE_BADGE_COLORS = {
         # Market
@@ -1292,6 +1299,13 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         "p2p_contract_delivery": "#0ea5e9", "p2p_contract_payment": "#3b82f6",
         "p2p_breach_penalty": "#ef4444", "p2p_breach_damages": "#22c55e",
         "inheritance": "#a78bfa", "tax": "#f97316",
+        # Annuities
+        "annuity_purchase":     "#0891b2",
+        "annuity_contribution": "#0284c7",
+        "annuity_interest":     "#22c55e",
+        "annuity_payout":       "#22c55e",
+        "annuity_surrender":    "#f59e0b",
+        "annuity_maturity":     "#10b981",
     }
 
     # Maps filter-chip key → type-prefix tuples matching actual log_transaction() call sites.
@@ -1326,6 +1340,8 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         # Corporate & Legal
         "corporate":       ("corporate", "business_startup"),
         "inheritance":     ("inheritance",),
+        # Annuities
+        "annuities":       ("annuity_",),
     }
     # Build a flat JSON map of type → category list for JS
     type_to_tabs: Dict[str, List[str]] = {}

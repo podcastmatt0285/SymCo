@@ -761,6 +761,73 @@ DutchAuctionBid = None
 
 
 # ==========================
+# ANNUITY CONSTANTS & MODELS
+# ==========================
+
+ANNUITY_IMMEDIATE_RATES   = {30: 0.08, 90: 0.10, 180: 0.12, 365: 0.15}
+ANNUITY_CREDITED_RATE     = 0.05       # deferred accumulation annual growth
+ANNUITY_CREDIT_INTERVAL   = 518_400    # ticks between monthly credited-interest credits (~30d)
+ANNUITY_ISSUANCE_FEE      = 0.0025     # 0.25% non-qualified purchase fee → government
+ANNUITY_NONQUAL_TAX_RATE  = 0.15       # tax on interest portion (non-qualified)
+ANNUITY_QUAL_TAX_RATE     = 0.20       # tax on full payment (qualified)
+ANNUITY_SURRENDER_SCHEDULE = [0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01, 0.0]
+ANNUITY_FREE_WITHDRAWAL_PCT = 0.10     # 10% of value per contract year, no surrender charge
+ANNUITY_IMMEDIATE_MIN     = 10_000.0   # min SPIA purchase
+ANNUITY_DEFERRED_CONTRIB_MIN = 100.0   # min individual contribution
+ANNUITY_MIN_TO_ANNUITIZE  = 5_000.0    # min accumulated value to start payouts
+ANNUITY_PAYMENT_TICKS     = {"weekly": 120_960, "monthly": 518_400}
+ANNUITY_YEAR_TICKS        = 6_307_200  # 365 × 86400 / 5
+
+
+class AnnuityContract(Base):
+    __tablename__ = "annuity_contracts"
+    id                     = Column(Integer, primary_key=True, autoincrement=True)
+    player_id              = Column(Integer, index=True, nullable=False)
+    annuity_type           = Column(String, nullable=False)   # "immediate" | "deferred"
+    is_qualified           = Column(Boolean, default=False)
+    phase                  = Column(String, default="accumulation")  # accumulation|payout|completed|surrendered
+    # Accumulation phase
+    initial_premium        = Column(Float, default=0.0)
+    total_contributions    = Column(Float, default=0.0)   # cost basis
+    accumulated_value      = Column(Float, default=0.0)
+    credited_rate          = Column(Float, default=ANNUITY_CREDITED_RATE)
+    next_credit_tick       = Column(BigInteger, nullable=True)
+    accumulation_term_days = Column(Integer, nullable=True)   # None = open-ended
+    accumulation_end_tick  = Column(BigInteger, nullable=True)
+    # Payout phase
+    payout_rate            = Column(Float, nullable=True)
+    payment_frequency      = Column(String, nullable=True)    # "weekly" | "monthly"
+    payment_amount         = Column(Float, nullable=True)
+    total_payments         = Column(Integer, nullable=True)
+    payments_made          = Column(Integer, default=0)
+    payments_remaining     = Column(Integer, nullable=True)
+    next_payment_tick      = Column(BigInteger, nullable=True)
+    total_paid_out         = Column(Float, default=0.0)
+    total_interest_paid    = Column(Float, default=0.0)
+    annuitized_at          = Column(DateTime, nullable=True)
+    annuitized_value       = Column(Float, nullable=True)
+    payout_term_days       = Column(Integer, nullable=True)
+    # Surrender / free withdrawal
+    free_withdrawal_used   = Column(Float, default=0.0)
+    contract_year_tick     = Column(BigInteger, nullable=True)
+    # Metadata
+    opened_at              = Column(DateTime, default=datetime.utcnow)
+    status                 = Column(String, default="active")   # active|completed|surrendered
+    surrender_payout       = Column(Float, nullable=True)
+    completed_at           = Column(DateTime, nullable=True)
+
+
+class AnnuityContribution(Base):
+    __tablename__ = "annuity_contributions"
+    id             = Column(Integer, primary_key=True, autoincrement=True)
+    contract_id    = Column(Integer, index=True, nullable=False)
+    player_id      = Column(Integer, index=True, nullable=False)
+    amount         = Column(Float, nullable=False)
+    tick           = Column(BigInteger, nullable=True)
+    contributed_at = Column(DateTime, default=datetime.utcnow)
+
+
+# ==========================
 # HELPER FUNCTIONS
 # ==========================
 
@@ -4190,6 +4257,686 @@ def initialize():
 
 
 # ==========================
+# ANNUITY FUNCTIONS
+# ==========================
+
+def _calc_pmt(principal: float, annual_rate: float, periods_per_year: int, n: int) -> float:
+    """Standard annuity PMT with zero-division and overflow guards."""
+    if n <= 0 or principal <= 0 or periods_per_year <= 0:
+        return 0.0
+    r = annual_rate / periods_per_year
+    if r <= 0:
+        return round(principal / n, 2)
+    try:
+        pmt = principal * r / (1.0 - (1.0 + r) ** (-n))
+        return round(pmt, 2)
+    except (OverflowError, ZeroDivisionError, ValueError):
+        return round(principal / n, 2)
+
+
+def _get_surrender_charge(contract: AnnuityContract, current_tick: int) -> float:
+    """Return the applicable surrender charge rate (0.0–0.07) based on term elapsed."""
+    try:
+        if contract.phase == "payout":
+            n = contract.total_payments or 1
+            pct = (contract.payments_made or 0) / max(1, n)
+        elif contract.accumulation_term_days and contract.accumulation_end_tick:
+            total_ticks = contract.accumulation_term_days * 17_280
+            elapsed = current_tick - (contract.accumulation_end_tick - total_ticks)
+            pct = min(1.0, elapsed / max(1, total_ticks))
+        else:
+            # Open-ended deferred: flat 5% until 1 contract year elapsed, then 0%
+            year_ticks = ANNUITY_YEAR_TICKS
+            elapsed = current_tick - (contract.contract_year_tick or current_tick)
+            pct = min(1.0, elapsed / max(1, year_ticks))
+        tier = min(7, int(pct * 8))
+        return ANNUITY_SURRENDER_SCHEDULE[tier]
+    except Exception:
+        return 0.05
+
+
+def _calc_annuity_tax(payment_amount: float, principal_per_pmt: float, is_qualified: bool) -> float:
+    """Tax on each annuity payment: qualified = full pmt × 20%; non-qualified = interest × 15%."""
+    pa  = payment_amount   or 0.0
+    ppp = principal_per_pmt or 0.0
+    if is_qualified:
+        return round(pa * ANNUITY_QUAL_TAX_RATE, 4)
+    interest = max(0.0, pa - ppp)
+    return round(interest * ANNUITY_NONQUAL_TAX_RATE, 4)
+
+
+def open_immediate_annuity(player_id: int, purchase_price: float, term_days: int,
+                           payment_frequency: str, is_qualified: bool, current_tick: int) -> dict:
+    """Purchase a single-premium immediate annuity (SPIA). Payments start at next interval."""
+    rate = ANNUITY_IMMEDIATE_RATES.get(term_days)
+    if not rate:
+        return {"ok": False, "error": f"Invalid term. Choose from: {list(ANNUITY_IMMEDIATE_RATES.keys())} days"}
+    if payment_frequency not in ANNUITY_PAYMENT_TICKS:
+        return {"ok": False, "error": "Payment frequency must be 'weekly' or 'monthly'"}
+    if (purchase_price or 0.0) < ANNUITY_IMMEDIATE_MIN:
+        return {"ok": False, "error": f"Minimum purchase is ${ANNUITY_IMMEDIATE_MIN:,.0f}"}
+
+    from reserve_banks import spend_player_funds, credit_usd
+    ok, msg = spend_player_funds(player_id, purchase_price)
+    if not ok:
+        return {"ok": False, "error": msg}
+
+    # Issuance fee for non-qualified contracts (like bond issuance fee)
+    fee = 0.0
+    if not is_qualified:
+        fee = round(purchase_price * ANNUITY_ISSUANCE_FEE, 2)
+        credit_usd(0, fee)   # government player_id = 0
+
+    firm_add_cash(purchase_price, "annuity_premium", f"SPIA premium from player {player_id}", player_id=player_id)
+
+    periods_per_year = 52 if payment_frequency == "weekly" else 12
+    n = max(1, round(term_days / 365.0 * periods_per_year))
+    pmt = _calc_pmt(purchase_price, rate, periods_per_year, n)
+
+    db = get_db()
+    try:
+        contract = AnnuityContract(
+            player_id=player_id,
+            annuity_type="immediate",
+            is_qualified=is_qualified,
+            phase="payout",
+            initial_premium=purchase_price,
+            total_contributions=purchase_price,
+            accumulated_value=purchase_price,
+            annuitized_value=purchase_price,
+            annuitized_at=datetime.utcnow(),
+            payout_rate=rate,
+            payment_frequency=payment_frequency,
+            payment_amount=pmt,
+            total_payments=n,
+            payments_remaining=n,
+            payments_made=0,
+            next_payment_tick=max(current_tick + 1, current_tick + ANNUITY_PAYMENT_TICKS[payment_frequency]),
+            contract_year_tick=current_tick,
+            payout_term_days=term_days,
+            status="active",
+        )
+        db.add(contract)
+        db.commit()
+        db.refresh(contract)
+        cid = contract.id
+    except Exception as e:
+        db.rollback()
+        return {"ok": False, "error": str(e)}
+    finally:
+        db.close()
+
+    try:
+        from stats_ux import log_transaction as _lt
+        tax_label = "qualified — full pmt taxed 20%" if is_qualified else "non-qualified — interest taxed 15%"
+        _lt(player_id, "annuity_purchase", "money", -(purchase_price + fee),
+            description=f"Opened {term_days}-day SPIA @ {rate*100:.0f}% ({tax_label}) — "
+                        f"{n} {payment_frequency} payments of ${pmt:,.2f}",
+            reference_id=str(cid))
+    except Exception:
+        pass
+
+    try:
+        from push_ux import create_game_notification
+        qual_label = "Qualified" if is_qualified else "Non-qualified"
+        create_game_notification(
+            player_id,
+            "📋 Immediate Annuity Opened",
+            f"{qual_label} ${purchase_price:,.0f} SPIA @ {rate*100:.0f}% — "
+            f"{n} {payment_frequency} payments of ${pmt:,.2f}",
+            url="/brokerage/annuities",
+        )
+    except Exception:
+        pass
+
+    return {"ok": True, "contract_id": cid, "payment_amount": pmt, "total_payments": n,
+            "issuance_fee": fee, "rate": rate}
+
+
+def open_deferred_annuity(player_id: int, initial_premium: float,
+                          accumulation_term_days, is_qualified: bool, current_tick: int) -> dict:
+    """Open a flexible-premium deferred annuity. Contributions grow at 5% annual until annuitized."""
+    initial_premium = initial_premium or 0.0
+    if initial_premium > 0 and initial_premium < 1000.0:
+        return {"ok": False, "error": "Minimum opening deposit is $1,000 (or $0 to open empty)"}
+
+    acc_end_tick = None
+    if accumulation_term_days:
+        try:
+            accumulation_term_days = int(accumulation_term_days)
+            if accumulation_term_days not in ANNUITY_IMMEDIATE_RATES:
+                return {"ok": False, "error": f"Accumulation term must be one of: {list(ANNUITY_IMMEDIATE_RATES.keys())} days"}
+            acc_end_tick = current_tick + accumulation_term_days * 17_280
+        except (ValueError, TypeError):
+            return {"ok": False, "error": "Invalid accumulation term"}
+
+    if initial_premium > 0:
+        from reserve_banks import spend_player_funds, credit_usd
+        ok, msg = spend_player_funds(player_id, initial_premium)
+        if not ok:
+            return {"ok": False, "error": msg}
+        if not is_qualified:
+            fee = round(initial_premium * ANNUITY_ISSUANCE_FEE, 2)
+            credit_usd(0, fee)
+            firm_add_cash(initial_premium, "annuity_premium",
+                          f"Deferred annuity opening from player {player_id}", player_id=player_id)
+        else:
+            firm_add_cash(initial_premium, "annuity_premium",
+                          f"Deferred annuity opening (qualified) from player {player_id}", player_id=player_id)
+
+    db = get_db()
+    try:
+        contract = AnnuityContract(
+            player_id=player_id,
+            annuity_type="deferred",
+            is_qualified=is_qualified,
+            phase="accumulation",
+            initial_premium=initial_premium,
+            total_contributions=initial_premium,
+            accumulated_value=initial_premium,
+            credited_rate=ANNUITY_CREDITED_RATE,
+            next_credit_tick=current_tick + ANNUITY_CREDIT_INTERVAL,
+            accumulation_term_days=accumulation_term_days if accumulation_term_days else None,
+            accumulation_end_tick=acc_end_tick,
+            contract_year_tick=current_tick,
+            status="active",
+        )
+        db.add(contract)
+        db.commit()
+        db.refresh(contract)
+        cid = contract.id
+    except Exception as e:
+        db.rollback()
+        return {"ok": False, "error": str(e)}
+    finally:
+        db.close()
+
+    try:
+        from stats_ux import log_transaction as _lt
+        if initial_premium > 0:
+            _lt(player_id, "annuity_contribution", "money", -initial_premium,
+                description=f"Opened deferred annuity — initial deposit ${initial_premium:,.2f}",
+                reference_id=str(cid))
+    except Exception:
+        pass
+
+    try:
+        from push_ux import create_game_notification
+        qual_label = "Qualified" if is_qualified else "Non-qualified"
+        term_label = f"{accumulation_term_days}-day term" if accumulation_term_days else "open-ended"
+        create_game_notification(
+            player_id,
+            "💼 Deferred Annuity Opened",
+            f"{qual_label} deferred annuity ({term_label}) — "
+            f"earning {ANNUITY_CREDITED_RATE*100:.0f}% annual during accumulation",
+            url="/brokerage/annuities",
+        )
+    except Exception:
+        pass
+
+    return {"ok": True, "contract_id": cid, "initial_premium": initial_premium}
+
+
+def contribute_to_deferred(player_id: int, contract_id: int, amount: float, current_tick: int) -> dict:
+    """Add funds to a deferred annuity's accumulation account."""
+    if (amount or 0.0) < ANNUITY_DEFERRED_CONTRIB_MIN:
+        return {"ok": False, "error": f"Minimum contribution is ${ANNUITY_DEFERRED_CONTRIB_MIN:,.0f}"}
+
+    db = get_db()
+    try:
+        contract = db.query(AnnuityContract).filter(
+            AnnuityContract.id == contract_id,
+            AnnuityContract.player_id == player_id,
+            AnnuityContract.phase == "accumulation",
+            AnnuityContract.status == "active",
+        ).first()
+        if not contract:
+            return {"ok": False, "error": "Contract not found or not in accumulation phase"}
+
+        from reserve_banks import spend_player_funds
+        ok, msg = spend_player_funds(player_id, amount)
+        if not ok:
+            return {"ok": False, "error": msg}
+
+        firm_add_cash(amount, "annuity_premium",
+                      f"Deferred annuity contribution from player {player_id}", player_id=player_id)
+        contract.accumulated_value = (contract.accumulated_value or 0.0) + amount
+        contract.total_contributions = (contract.total_contributions or 0.0) + amount
+
+        contrib = AnnuityContribution(
+            contract_id=contract_id,
+            player_id=player_id,
+            amount=amount,
+            tick=current_tick,
+        )
+        db.add(contrib)
+        db.commit()
+        new_balance = contract.accumulated_value
+    except Exception as e:
+        db.rollback()
+        return {"ok": False, "error": str(e)}
+    finally:
+        db.close()
+
+    try:
+        from stats_ux import log_transaction as _lt
+        _lt(player_id, "annuity_contribution", "money", -amount,
+            description=f"Contributed ${amount:,.2f} to deferred annuity #{contract_id}",
+            reference_id=str(contract_id))
+    except Exception:
+        pass
+
+    return {"ok": True, "new_balance": new_balance}
+
+
+def annuitize_deferred(player_id: int, contract_id: int, payout_term_days: int,
+                       payment_frequency: str, current_tick: int) -> dict:
+    """Convert a deferred annuity's accumulated value into a fixed payout stream."""
+    rate = ANNUITY_IMMEDIATE_RATES.get(payout_term_days)
+    if not rate:
+        return {"ok": False, "error": f"Invalid payout term. Choose from: {list(ANNUITY_IMMEDIATE_RATES.keys())} days"}
+    if payment_frequency not in ANNUITY_PAYMENT_TICKS:
+        return {"ok": False, "error": "Frequency must be 'weekly' or 'monthly'"}
+
+    db = get_db()
+    try:
+        contract = db.query(AnnuityContract).filter(
+            AnnuityContract.id == contract_id,
+            AnnuityContract.player_id == player_id,
+            AnnuityContract.phase == "accumulation",
+            AnnuityContract.status == "active",
+        ).first()
+        if not contract:
+            return {"ok": False, "error": "Contract not found or not in accumulation phase"}
+
+        principal = contract.accumulated_value or 0.0
+        if principal < ANNUITY_MIN_TO_ANNUITIZE:
+            return {"ok": False, "error": f"Minimum ${ANNUITY_MIN_TO_ANNUITIZE:,.0f} required to annuitize"}
+
+        periods_per_year = 52 if payment_frequency == "weekly" else 12
+        n = max(1, round(payout_term_days / 365.0 * periods_per_year))
+        pmt = _calc_pmt(principal, rate, periods_per_year, n)
+
+        contract.phase = "payout"
+        contract.annuitized_at = datetime.utcnow()
+        contract.annuitized_value = principal
+        contract.payout_rate = rate
+        contract.payout_term_days = payout_term_days
+        contract.payment_frequency = payment_frequency
+        contract.payment_amount = pmt
+        contract.total_payments = n
+        contract.payments_remaining = n
+        contract.payments_made = 0
+        contract.next_payment_tick = max(current_tick + 1, current_tick + ANNUITY_PAYMENT_TICKS[payment_frequency])
+        db.commit()
+        cid = contract.id
+    except Exception as e:
+        db.rollback()
+        return {"ok": False, "error": str(e)}
+    finally:
+        db.close()
+
+    try:
+        from stats_ux import log_transaction as _lt
+        _lt(player_id, "annuity_purchase", "money", 0.0,
+            description=f"Annuitized deferred contract #{contract_id} — "
+                        f"${principal:,.2f} @ {rate*100:.0f}% for {payout_term_days}d — "
+                        f"{n} {payment_frequency} payments of ${pmt:,.2f}",
+            reference_id=str(contract_id))
+    except Exception:
+        pass
+
+    try:
+        from push_ux import create_game_notification
+        create_game_notification(
+            player_id,
+            "▶ Deferred Annuity Annuitized",
+            f"${principal:,.0f} locked in — {n} {payment_frequency} payments of ${pmt:,.2f} starting soon",
+            url="/brokerage/annuities",
+        )
+    except Exception:
+        pass
+
+    return {"ok": True, "contract_id": cid, "payment_amount": pmt, "total_payments": n, "rate": rate}
+
+
+def surrender_annuity(player_id: int, contract_id: int, current_tick: int) -> dict:
+    """Surrender an annuity for remaining principal minus surrender charge."""
+    db = get_db()
+    try:
+        contract = db.query(AnnuityContract).filter(
+            AnnuityContract.id == contract_id,
+            AnnuityContract.player_id == player_id,
+            AnnuityContract.status == "active",
+        ).first()
+        if not contract:
+            return {"ok": False, "error": "Contract not found or already closed"}
+
+        if contract.phase == "payout":
+            ann_val = contract.annuitized_value or contract.total_contributions or 0.0
+            n = max(1, contract.total_payments or 1)
+            remaining = (contract.payments_remaining or 0) / n
+            base = ann_val * remaining
+        else:
+            base = contract.accumulated_value or 0.0
+
+        # Free withdrawal: up to 10% of base per contract year with no charge
+        year_elapsed = current_tick - (contract.contract_year_tick or current_tick)
+        if year_elapsed >= ANNUITY_YEAR_TICKS:
+            contract.free_withdrawal_used = 0.0
+            contract.contract_year_tick = current_tick
+
+        free_remaining = max(0.0, base * ANNUITY_FREE_WITHDRAWAL_PCT - (contract.free_withdrawal_used or 0.0))
+        free_portion = min(base, free_remaining)
+        charged_portion = max(0.0, base - free_portion)
+
+        charge_rate = _get_surrender_charge(contract, current_tick)
+        payout = round(free_portion + charged_portion * (1.0 - charge_rate), 2)
+        payout = max(0.0, payout)
+
+        from reserve_banks import credit_usd
+        firm_deduct_cash(payout, "annuity_surrender", f"Surrender payout to player {player_id}")
+        credit_usd(player_id, payout)
+
+        contract.status = "surrendered"
+        contract.phase = "surrendered"
+        contract.surrender_payout = payout
+        contract.completed_at = datetime.utcnow()
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        return {"ok": False, "error": str(e)}
+    finally:
+        db.close()
+
+    try:
+        from stats_ux import log_transaction as _lt
+        _lt(player_id, "annuity_surrender", "money", payout,
+            description=f"Annuity #{contract_id} surrendered — received ${payout:,.2f} "
+                        f"(surrender charge: {charge_rate*100:.0f}%)",
+            reference_id=str(contract_id))
+    except Exception:
+        pass
+
+    try:
+        from push_ux import create_game_notification, send_push_notification
+        create_game_notification(
+            player_id,
+            "🔓 Annuity Surrendered",
+            f"Received ${payout:,.2f} — surrender charge {charge_rate*100:.0f}%",
+            url="/brokerage/annuities",
+        )
+    except Exception:
+        pass
+
+    return {"ok": True, "surrender_payout": payout, "charge_rate": charge_rate}
+
+
+def get_player_annuities(player_id: int, current_tick: int) -> dict:
+    """Return all annuity contracts for a player, grouped by status."""
+    db = get_db()
+    try:
+        contracts = db.query(AnnuityContract).filter(
+            AnnuityContract.player_id == player_id,
+        ).order_by(AnnuityContract.opened_at.desc()).all()
+    finally:
+        db.close()
+
+    active, completed, surrendered = [], [], []
+    for c in contracts:
+        pct = 0.0
+        if c.phase == "payout" and c.total_payments:
+            pct = (c.payments_made or 0) / max(1, c.total_payments)
+        elif c.phase == "accumulation" and c.accumulation_term_days and c.accumulation_end_tick:
+            total_t = c.accumulation_term_days * 17_280
+            elapsed = current_tick - (c.accumulation_end_tick - total_t)
+            pct = min(1.0, max(0.0, elapsed / max(1, total_t)))
+
+        charge_rate = _get_surrender_charge(c, current_tick)
+
+        if c.phase == "payout":
+            ann_val = c.annuitized_value or c.total_contributions or 0.0
+            remaining_frac = (c.payments_remaining or 0) / max(1, c.total_payments or 1)
+            surr_base = ann_val * remaining_frac
+        else:
+            surr_base = c.accumulated_value or 0.0
+        surr_est = round(surr_base * (1.0 - charge_rate), 2)
+
+        row = {
+            "id": c.id,
+            "annuity_type": c.annuity_type,
+            "is_qualified": c.is_qualified,
+            "phase": c.phase,
+            "status": c.status,
+            "initial_premium": c.initial_premium or 0.0,
+            "total_contributions": c.total_contributions or 0.0,
+            "accumulated_value": c.accumulated_value or 0.0,
+            "credited_rate": c.credited_rate or ANNUITY_CREDITED_RATE,
+            "next_credit_tick": c.next_credit_tick,
+            "accumulation_term_days": c.accumulation_term_days,
+            "accumulation_end_tick": c.accumulation_end_tick,
+            "payout_rate": c.payout_rate,
+            "payment_frequency": c.payment_frequency,
+            "payment_amount": c.payment_amount or 0.0,
+            "total_payments": c.total_payments,
+            "payments_made": c.payments_made or 0,
+            "payments_remaining": c.payments_remaining,
+            "next_payment_tick": c.next_payment_tick,
+            "total_paid_out": c.total_paid_out or 0.0,
+            "total_interest_paid": c.total_interest_paid or 0.0,
+            "annuitized_value": c.annuitized_value,
+            "payout_term_days": c.payout_term_days,
+            "pct_complete": round(pct * 100, 1),
+            "surrender_estimate": surr_est,
+            "charge_rate": charge_rate,
+            "opened_at": c.opened_at.isoformat() if c.opened_at else None,
+            "annuitized_at": c.annuitized_at.isoformat() if c.annuitized_at else None,
+            "completed_at": c.completed_at.isoformat() if c.completed_at else None,
+        }
+        if c.status == "surrendered":
+            surrendered.append(row)
+        elif c.status == "completed":
+            completed.append(row)
+        else:
+            active.append(row)
+
+    return {"active": active, "completed": completed, "surrendered": surrendered}
+
+
+# ── Tick sub-handlers ─────────────────────────────────────────────────────────
+
+def _process_annuity_credits(current_tick: int):
+    """Credit monthly interest to deferred annuity accumulation accounts."""
+    db = get_db()
+    try:
+        contracts = db.query(AnnuityContract).filter(
+            AnnuityContract.phase == "accumulation",
+            AnnuityContract.status == "active",
+            AnnuityContract.next_credit_tick <= current_tick,
+        ).all()
+        for c in contracts:
+            acc = c.accumulated_value or 0.0
+            rate = c.credited_rate or ANNUITY_CREDITED_RATE
+            interest = round(acc * rate / 12.0, 4)
+            c.accumulated_value = acc + interest
+            c.next_credit_tick = current_tick + ANNUITY_CREDIT_INTERVAL
+        if contracts:
+            db.commit()
+        # Log and notify outside transaction to avoid session conflicts
+        for c in contracts:
+            try:
+                from stats_ux import log_transaction as _lt
+                rate = c.credited_rate or ANNUITY_CREDITED_RATE
+                acc_before = (c.accumulated_value or 0.0) - round((c.accumulated_value or 0.0) * rate / 12.0, 4)
+                interest_amount = round(acc_before * rate / 12.0, 4)
+                _lt(c.player_id, "annuity_interest", "money", interest_amount,
+                    description=f"Deferred annuity interest @ {rate*100:.1f}% annual (monthly credit)",
+                    reference_id=str(c.id))
+            except Exception:
+                pass
+    except Exception as e:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        print(f"[Brokerage] Annuity credit error: {e}")
+    finally:
+        db.close()
+
+
+def _process_annuity_payments(current_tick: int):
+    """Process due annuity payments to players."""
+    from reserve_banks import credit_usd, spend_player_funds
+    db = get_db()
+    try:
+        contracts = db.query(AnnuityContract).filter(
+            AnnuityContract.phase == "payout",
+            AnnuityContract.status == "active",
+            AnnuityContract.next_payment_tick <= current_tick,
+        ).all()
+
+        for c in contracts:
+            pmt = c.payment_amount or 0.0
+            if pmt <= 0:
+                continue
+
+            ann_val = c.annuitized_value or c.total_contributions or 0.0
+            n = max(1, c.total_payments or 1)
+            principal_per_pmt = ann_val / n
+            tax = _calc_annuity_tax(pmt, principal_per_pmt, c.is_qualified or False)
+
+            # Executive banking bonus on net payout
+            exec_bonus = 0.0
+            try:
+                from executive import get_player_job_bonus, get_db as exec_get_db
+                _edb = exec_get_db()
+                try:
+                    exec_bonus = get_player_job_bonus(_edb, c.player_id, "banking") or 0.0
+                finally:
+                    _edb.close()
+            except Exception:
+                pass
+
+            net_pmt = round(max(0.0, pmt * (1.0 + exec_bonus) - tax), 4)
+
+            firm_deduct_cash(pmt, "annuity_payment", f"Annuity payment to player {c.player_id}")
+            credit_usd(c.player_id, net_pmt)
+            if tax > 0:
+                credit_usd(0, tax)   # government
+
+            c.payments_made = (c.payments_made or 0) + 1
+            c.payments_remaining = max(0, (c.payments_remaining or 1) - 1)
+            c.total_paid_out = (c.total_paid_out or 0.0) + pmt
+            c.total_interest_paid = (c.total_interest_paid or 0.0) + max(0.0, pmt - principal_per_pmt)
+
+            is_mature = c.payments_remaining <= 0
+            if is_mature:
+                c.status = "completed"
+                c.phase = "completed"
+                c.completed_at = datetime.utcnow()
+            else:
+                freq = c.payment_frequency or "monthly"
+                c.next_payment_tick = current_tick + ANNUITY_PAYMENT_TICKS.get(freq, 518_400)
+
+        if contracts:
+            db.commit()
+    except Exception as e:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        print(f"[Brokerage] Annuity payment error: {e}")
+        return
+    finally:
+        db.close()
+
+    # Notifications outside DB session
+    for c in contracts:
+        try:
+            from stats_ux import log_transaction as _lt
+            from push_ux import create_game_notification, send_push_notification
+            import auth as _auth
+
+            pmt = c.payment_amount or 0.0
+            ann_val = c.annuitized_value or c.total_contributions or 0.0
+            n = max(1, c.total_payments or 1)
+            principal_per_pmt = ann_val / n
+            tax = _calc_annuity_tax(pmt, principal_per_pmt, c.is_qualified or False)
+            exec_bonus = 0.0
+            try:
+                from executive import get_player_job_bonus, get_db as exec_get_db
+                _edb = exec_get_db()
+                try:
+                    exec_bonus = get_player_job_bonus(_edb, c.player_id, "banking") or 0.0
+                finally:
+                    _edb.close()
+            except Exception:
+                pass
+            net_pmt = round(max(0.0, pmt * (1.0 + exec_bonus) - tax), 4)
+
+            _lt(c.player_id, "annuity_payout", "money", net_pmt,
+                description=f"Annuity payment {c.payments_made}/{c.total_payments} — "
+                            f"${net_pmt:,.2f} net (tax: ${tax:,.2f})",
+                reference_id=str(c.id))
+
+            create_game_notification(
+                c.player_id,
+                "💰 Annuity Payment",
+                f"${net_pmt:,.2f} received — payment {c.payments_made}/{c.total_payments or '?'}",
+                url="/brokerage/annuities",
+            )
+
+            if c.status == "completed":
+                _lt(c.player_id, "annuity_maturity", "money", 0.0,
+                    description=f"Annuity #{c.id} matured — all {c.total_payments} payments complete, "
+                                f"${(c.total_paid_out or 0.0):,.2f} total received",
+                    reference_id=str(c.id))
+                try:
+                    _adb = _auth.get_db()
+                    _player = _adb.query(_auth.Player).filter(_auth.Player.id == c.player_id).first()
+                    can_push = getattr(_player, "notif_push_annuities", True) if _player else True
+                    _adb.close()
+                except Exception:
+                    can_push = True
+                if can_push:
+                    send_push_notification(
+                        c.player_id,
+                        "🎉 Annuity Matured",
+                        f"Your annuity is complete! All {c.total_payments} payments paid. "
+                        f"Total received: ${(c.total_paid_out or 0.0):,.2f}",
+                        url="/brokerage/annuities",
+                        notif_type="annuities",
+                    )
+        except Exception:
+            pass
+
+
+def _process_annuity_auto_annuitizations(current_tick: int):
+    """Auto-annuitize deferred contracts whose accumulation term has ended."""
+    db = get_db()
+    try:
+        contracts = db.query(AnnuityContract).filter(
+            AnnuityContract.phase == "accumulation",
+            AnnuityContract.status == "active",
+            AnnuityContract.accumulation_end_tick.isnot(None),
+            AnnuityContract.accumulation_end_tick <= current_tick,
+        ).all()
+        due = [(c.id, c.player_id, c.accumulated_value or 0.0) for c in contracts]
+    finally:
+        db.close()
+
+    for cid, pid, acc_val in due:
+        try:
+            if acc_val >= ANNUITY_MIN_TO_ANNUITIZE:
+                annuitize_deferred(pid, cid, 365, "monthly", current_tick)
+            else:
+                # Not enough to annuitize — surrender it back
+                surrender_annuity(pid, cid, current_tick)
+        except Exception as e:
+            print(f"[Brokerage] Auto-annuitization error for contract {cid}: {e}")
+
+
+# ==========================
 # TICK HANDLER
 # ==========================
 
@@ -4220,6 +4967,10 @@ async def tick(current_tick: int, now: datetime, bank_entity=None):
             pass
     
     process_dividends(current_tick)
+
+    _process_annuity_credits(current_tick)
+    _process_annuity_payments(current_tick)
+    _process_annuity_auto_annuitizations(current_tick)
 
     # Monthly listing fees: check every hour
     if current_tick % 3600 == 0:

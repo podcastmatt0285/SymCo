@@ -504,6 +504,10 @@ def send_push_notification(
             print(f"[Push] tasks/events notifications disabled for player {player_id} — skipping")
             db.close()
             return
+        if notif_type == "annuities" and not getattr(player, "notif_push_annuities", True):
+            print(f"[Push] annuity notifications disabled for player {player_id} — skipping")
+            db.close()
+            return
 
         # Also write an in-game banner (same preference gates above already passed)
         try:

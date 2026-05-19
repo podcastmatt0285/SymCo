@@ -85,6 +85,7 @@ def admin_shell(title: str, body: str, player_name: str = "", active_nav: str = 
         ("/admin/landbank", "Land Bank"),
         ("/admin/etf", "ETF Banks"),
         ("/admin/bonds", "Bonds"),
+        ("/admin/annuities", "Annuities"),
         ("/admin/logs", "Logs"),
         ("/admin/wiki", "Wiki Media"),
         ("/admin/item-routes", "Item Routes"),
@@ -549,6 +550,7 @@ def admin_dashboard(session_token: Optional[str] = Cookie(None)):
         <a href="/admin/p2p" class="link-card"><div class="lc-icon">📋</div><div class="lc-title">P2P Contracts</div><div class="lc-desc">View activity</div></a>
         <a href="/admin/landbank" class="link-card"><div class="lc-icon">🏦</div><div class="lc-title">Land Bank</div><div class="lc-desc">Manage plots</div></a>
         <a href="/admin/etf" class="link-card"><div class="lc-icon">📈</div><div class="lc-title">ETF Banks</div><div class="lc-desc">Share audit &amp; repair</div></a>
+        <a href="/admin/annuities" class="link-card"><div class="lc-icon">📋</div><div class="lc-title">Annuities</div><div class="lc-desc">Contracts &amp; liability</div></a>
         <a href="/admin/logs" class="link-card"><div class="lc-icon">📜</div><div class="lc-title">Audit Log</div><div class="lc-desc">Admin actions</div></a>
         <a href="/admin/wiki" class="link-card"><div class="lc-icon">📖</div><div class="lc-title">Wiki / Media</div><div class="lc-desc">Tutorial videos &amp; audio</div></a>
         <a href="/admin/soundtrack" class="link-card"><div class="lc-icon">🎵</div><div class="lc-title">WLOL 92.8 FM</div><div class="lc-desc">Music playlist uploads</div></a>
@@ -2773,6 +2775,171 @@ def post_landbank_remove(session_token: Optional[str] = Cookie(None), land_plot_
 
 # ==========================
 # AUDIT LOG
+# ==========================
+
+
+@router.get("/admin/annuities", response_class=HTMLResponse)
+def admin_annuities(session_token: Optional[str] = Cookie(None)):
+    """Admin overview of all annuity contracts, outstanding liability, and monthly totals."""
+    admin = require_admin(session_token)
+    if not admin:
+        return RedirectResponse(url="/login", status_code=303)
+
+    try:
+        from banks.brokerage_firm import AnnuityContract, AnnuityContribution, get_db as get_firm_db
+        from datetime import datetime as _dt, timedelta as _td
+        from stats_ux import TransactionLog
+        from database import SessionLocal as _SL
+
+        db = get_firm_db()
+        try:
+            active_payout = db.query(AnnuityContract).filter(
+                AnnuityContract.phase == "payout",
+                AnnuityContract.status == "active",
+            ).all()
+            active_accum = db.query(AnnuityContract).filter(
+                AnnuityContract.phase == "accumulation",
+                AnnuityContract.status == "active",
+            ).all()
+            all_active = active_payout + active_accum
+            completed_count   = db.query(AnnuityContract).filter(AnnuityContract.status == "completed").count()
+            surrendered_count = db.query(AnnuityContract).filter(AnnuityContract.status == "surrendered").count()
+        finally:
+            db.close()
+
+        # Outstanding payout liability
+        outstanding_liability = sum(
+            (c.payment_amount or 0.0) * max(0, c.payments_remaining or 0)
+            for c in active_payout
+        )
+        total_accum_balance = sum((c.accumulated_value or 0.0) for c in active_accum)
+
+        # Monthly paid out from transaction log
+        now = _dt.utcnow()
+        cutoff_30d = now - _td(days=30)
+        tdb = _SL()
+        try:
+            monthly_paid = tdb.query(TransactionLog).filter(
+                TransactionLog.transaction_type == "annuity_payout",
+                TransactionLog.timestamp >= cutoff_30d,
+                TransactionLog.amount > 0,
+            ).all()
+            total_30d = sum(t.amount for t in monthly_paid)
+        finally:
+            tdb.close()
+
+        # Build payout contracts table
+        def _name(pid):
+            try:
+                import auth as _a; adb = _a.get_db()
+                p = adb.query(_a.Player).filter(_a.Player.id == pid).first()
+                n = p.business_name if p else f"#{pid}"
+                adb.close(); return n
+            except Exception:
+                return f"#{pid}"
+
+        payout_rows = ""
+        for c in sorted(active_payout, key=lambda x: (x.payments_remaining or 999)):
+            liability = (c.payment_amount or 0.0) * max(0, c.payments_remaining or 0)
+            qual_label = "✅ Q" if c.is_qualified else "NON-Q"
+            payout_rows += f"""
+            <tr>
+              <td style="color:#94a3b8;font-size:10px;">#{c.id}</td>
+              <td>{_name(c.player_id)}</td>
+              <td style="color:#0891b2;">{qual_label}</td>
+              <td>{c.payout_term_days or '—'}d @ {(c.payout_rate or 0)*100:.0f}%</td>
+              <td style="color:#22c55e;">${(c.payment_amount or 0):,.2f}</td>
+              <td style="color:#e2e8f0;">{c.payments_made or 0}/{c.total_payments or 0}</td>
+              <td style="color:#f59e0b;">${liability:,.2f}</td>
+            </tr>"""
+        if not payout_rows:
+            payout_rows = '<tr><td colspan="7" style="color:#64748b;text-align:center;padding:10px;">No active payout contracts.</td></tr>'
+
+        accum_rows = ""
+        for c in sorted(active_accum, key=lambda x: -(x.accumulated_value or 0)):
+            term_label = f"{c.accumulation_term_days}d" if c.accumulation_term_days else "Open"
+            accum_rows += f"""
+            <tr>
+              <td style="color:#94a3b8;font-size:10px;">#{c.id}</td>
+              <td>{_name(c.player_id)}</td>
+              <td style="color:#22c55e;">${(c.accumulated_value or 0):,.2f}</td>
+              <td style="color:#a78bfa;">{(c.credited_rate or 0.05)*100:.1f}%</td>
+              <td style="color:#e2e8f0;">${(c.total_contributions or 0):,.2f}</td>
+              <td style="color:#64748b;">{term_label}</td>
+            </tr>"""
+        if not accum_rows:
+            accum_rows = '<tr><td colspan="6" style="color:#64748b;text-align:center;padding:10px;">No accumulation accounts.</td></tr>'
+
+        body = f"""
+<h2 style="color:#38bdf8;">📋 Annuity Contracts — Admin Overview</h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px;">
+  <div style="background:#1e293b;border:1px solid #334155;border-radius:6px;padding:14px;">
+    <div style="color:#64748b;font-size:9px;">PAYOUT CONTRACTS</div>
+    <div style="color:#22c55e;font-size:22px;font-weight:bold;">{len(active_payout)}</div>
+  </div>
+  <div style="background:#1e293b;border:1px solid #334155;border-radius:6px;padding:14px;">
+    <div style="color:#64748b;font-size:9px;">ACCUMULATION ACCOUNTS</div>
+    <div style="color:#a78bfa;font-size:22px;font-weight:bold;">{len(active_accum)}</div>
+  </div>
+  <div style="background:#1e293b;border:1px solid #334155;border-radius:6px;padding:14px;">
+    <div style="color:#64748b;font-size:9px;">OUTSTANDING LIABILITY</div>
+    <div style="color:#ef4444;font-size:18px;font-weight:bold;">${outstanding_liability:,.0f}</div>
+  </div>
+  <div style="background:#1e293b;border:1px solid #334155;border-radius:6px;padding:14px;">
+    <div style="color:#64748b;font-size:9px;">DEFERRED BALANCE (TOTAL)</div>
+    <div style="color:#38bdf8;font-size:18px;font-weight:bold;">${total_accum_balance:,.0f}</div>
+  </div>
+  <div style="background:#1e293b;border:1px solid #334155;border-radius:6px;padding:14px;">
+    <div style="color:#64748b;font-size:9px;">PAID OUT (30D)</div>
+    <div style="color:#22c55e;font-size:18px;font-weight:bold;">${total_30d:,.0f}</div>
+  </div>
+  <div style="background:#1e293b;border:1px solid #334155;border-radius:6px;padding:14px;">
+    <div style="color:#64748b;font-size:9px;">COMPLETED / SURRENDERED</div>
+    <div style="color:#64748b;font-size:18px;font-weight:bold;">{completed_count} / {surrendered_count}</div>
+  </div>
+</div>
+
+<h3 style="color:#22c55e;margin:16px 0 8px;">Active Payout Contracts</h3>
+<div style="overflow-x:auto;">
+<table style="width:100%;border-collapse:collapse;font-size:11px;">
+  <thead><tr style="color:#64748b;font-size:9px;border-bottom:1px solid #334155;">
+    <th style="text-align:left;padding:5px 8px;">ID</th>
+    <th style="text-align:left;padding:5px 8px;">PLAYER</th>
+    <th style="text-align:left;padding:5px 8px;">TAX TYPE</th>
+    <th style="text-align:left;padding:5px 8px;">TERM / RATE</th>
+    <th style="text-align:left;padding:5px 8px;">PMT</th>
+    <th style="text-align:left;padding:5px 8px;">PROGRESS</th>
+    <th style="text-align:left;padding:5px 8px;">REMAINING LIABILITY</th>
+  </tr></thead>
+  <tbody style="color:#e2e8f0;">{payout_rows}</tbody>
+</table>
+</div>
+
+<h3 style="color:#a78bfa;margin:20px 0 8px;">Active Accumulation Accounts</h3>
+<div style="overflow-x:auto;">
+<table style="width:100%;border-collapse:collapse;font-size:11px;">
+  <thead><tr style="color:#64748b;font-size:9px;border-bottom:1px solid #334155;">
+    <th style="text-align:left;padding:5px 8px;">ID</th>
+    <th style="text-align:left;padding:5px 8px;">PLAYER</th>
+    <th style="text-align:left;padding:5px 8px;">BALANCE</th>
+    <th style="text-align:left;padding:5px 8px;">RATE</th>
+    <th style="text-align:left;padding:5px 8px;">CONTRIBUTIONS</th>
+    <th style="text-align:left;padding:5px 8px;">TERM</th>
+  </tr></thead>
+  <tbody style="color:#e2e8f0;">{accum_rows}</tbody>
+</table>
+</div>"""
+        return HTMLResponse(admin_shell("Annuities", body, admin.business_name, "/admin/annuities"))
+
+    except Exception as e:
+        import traceback
+        return HTMLResponse(admin_shell(
+            "Annuities",
+            f'<p style="color:#ef4444;">Error: {e}</p><pre style="color:#64748b;font-size:9px;">{traceback.format_exc()}</pre>',
+            admin.business_name,
+        ))
+
+
 # ==========================
 
 @router.get("/admin/logs", response_class=HTMLResponse)
