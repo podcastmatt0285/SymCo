@@ -12544,6 +12544,16 @@ def api_widget_p2p_contacts(device_id: Optional[str] = None,
     from reserve_banks import get_player_display_currency, fmt_usd
     _disp = get_player_display_currency(player.id)
 
+    def _abbr(v):
+        """Abbreviate a USD float to e.g. $1.2M, $450K, $89."""
+        try:
+            v = float(v or 0)
+            if v >= 1_000_000:  return f"${v/1_000_000:.1f}M"
+            if v >= 1_000:      return f"${v/1_000:.0f}K"
+            return f"${v:.0f}"
+        except Exception:
+            return ""
+
     raw = get_contacts(player.id)   # [(Contact, other_id, my_notes)]
     cards = []
     for _row, other_id, _notes in raw:
@@ -12558,7 +12568,7 @@ def api_widget_p2p_contacts(device_id: Optional[str] = None,
                 continue
             name = _other.business_name or f"Player #{other_id}"
 
-            # Level
+            # ── Level ──
             level_label = ""
             try:
                 from events import get_player_level as _gpl
@@ -12567,41 +12577,61 @@ def api_widget_p2p_contacts(device_id: Optional[str] = None,
             except Exception:
                 pass
 
-            # Net worth
-            net_worth = ""
+            # ── Founding Tester ──
+            founding_tester = False
             try:
-                from stats_ux import get_player_net_worth as _gnw
-                _nw = _gnw(other_id)
-                net_worth = fmt_usd(_nw, _disp, precision=0)
+                from beta import has_pocket_empire as _hpe
+                founding_tester = _hpe(other_id)
+            except Exception:
+                pass
+
+            # ── Net Worth & Leaderboard ──
+            net_worth = wealth_rank = ""
+            land_value = biz_value = inv_value = share_value = ""
+            try:
+                from stats_ux import PlayerStats, get_db as _get_sdb
+                _sdb = _get_sdb()
+                try:
+                    _ps = _sdb.query(PlayerStats).filter(PlayerStats.player_id == other_id).first()
+                finally:
+                    _sdb.close()
+                if _ps:
+                    net_worth   = fmt_usd(_ps.total_net_worth or 0, _disp, precision=0)
+                    wealth_rank = f"#{_ps.wealth_rank}" if _ps.wealth_rank else ""
+                    land_value  = _abbr(_ps.land_value or 0)
+                    biz_value   = _abbr(_ps.business_value or 0)
+                    inv_value   = _abbr(_ps.inventory_value or 0)
+                    share_value = _abbr(_ps.share_value or 0)
             except Exception:
                 try:
                     net_worth = fmt_usd(_other.cash_balance or 0, _disp, precision=0)
                 except Exception:
                     pass
 
-            # Cash balance
-            cash = ""
+            # ── Cash Balances ──
+            cash_usd = ""
             try:
-                from reserve_banks import get_usd_balance as _gub
-                cash = fmt_usd(_gub(other_id), _disp, precision=0)
+                cash_usd = fmt_usd(_other.cash_balance or 0, _disp, precision=0)
             except Exception:
                 pass
 
-            # Wealth rank
-            wealth_rank = ""
+            cash_other = ""
             try:
-                from stats_ux import PlayerStats, get_db as _get_sdb
-                _sdb = _get_sdb()
+                from reserve_banks import PlayerCurrencyBalance, get_db as _get_rbdb
+                _rbd = _get_rbdb()
                 try:
-                    _ps = _sdb.query(PlayerStats).filter(PlayerStats.player_id == other_id).first()
-                    if _ps and _ps.wealth_rank:
-                        wealth_rank = f"#{_ps.wealth_rank}"
+                    _bals = _rbd.query(PlayerCurrencyBalance).filter(
+                        PlayerCurrencyBalance.player_id == other_id
+                    ).all()
                 finally:
-                    _sdb.close()
+                    _rbd.close()
+                _parts = [f"{b.currency_code} {b.balance:,.0f}"
+                          for b in _bals if b.balance and b.balance > 0]
+                cash_other = " · ".join(_parts)
             except Exception:
                 pass
 
-            # Total debt (bank liens + brokerage liens + margin debt)
+            # ── Debt ──
             debt = ""
             try:
                 from estate import calculate_total_debts as _ctd
@@ -12616,23 +12646,28 @@ def api_widget_p2p_contacts(device_id: Optional[str] = None,
             except Exception:
                 pass
 
-            # Business count
-            biz_summary = ""
+            # ── Businesses ──
+            biz_list = ""
             try:
                 from database import SessionLocal as _SL
-                from business import Business
+                from business import Business, BUSINESS_TYPES
                 _bdb = _SL()
                 try:
-                    _bc = _bdb.query(Business).filter(
+                    _bizs = _bdb.query(Business).filter(
                         Business.owner_id == other_id, Business.is_active == True
-                    ).count()
-                    biz_summary = f"{_bc} biz"
+                    ).all()
                 finally:
                     _bdb.close()
+                _bnames = [BUSINESS_TYPES.get(b.business_type, {}).get("name",
+                           b.business_type.replace("_", " ").title()) for b in _bizs]
+                if len(_bnames) > 3:
+                    biz_list = ", ".join(_bnames[:3]) + f" +{len(_bnames)-3}"
+                else:
+                    biz_list = ", ".join(_bnames)
             except Exception:
                 pass
 
-            # Land plot count
+            # ── Land ──
             land_count = ""
             try:
                 from land import LandPlot
@@ -12646,16 +12681,32 @@ def api_widget_p2p_contacts(device_id: Optional[str] = None,
             except Exception:
                 pass
 
-            # City + County
-            city = ""
+            # ── Executives ──
+            exec_summary = ""
+            try:
+                from executive import get_active_executives, get_db as _get_edb
+                _edb = _get_edb()
+                try:
+                    _execs = get_active_executives(_edb, other_id)
+                finally:
+                    _edb.close()
+                if _execs:
+                    _enames = [f"{e.first_name} {e.last_name}" for e in _execs]
+                    if len(_enames) > 2:
+                        exec_summary = ", ".join(_enames[:2]) + f" +{len(_enames)-2}"
+                    else:
+                        exec_summary = ", ".join(_enames)
+            except Exception:
+                pass
+
+            # ── City + County ──
+            city = county = ""
             try:
                 from cities import get_player_city as _gpc
                 _ct = _gpc(other_id)
                 city = _ct.name if _ct else ""
             except Exception:
                 pass
-
-            county = ""
             try:
                 from counties import get_player_county as _gpco
                 _co = _gpco(other_id)
@@ -12663,74 +12714,162 @@ def api_widget_p2p_contacts(device_id: Optional[str] = None,
             except Exception:
                 pass
 
-            # Stock positions
-            stock_count = ""
+            # ── Stock Holdings ──
+            stock_detail = ""
             try:
-                from banks.brokerage_firm import ShareholderPosition, get_db as _get_fdb
+                from banks.brokerage_firm import ShareholderPosition, CompanyShares, get_db as _get_fdb
                 _fdb = _get_fdb()
                 try:
-                    _sc = _fdb.query(ShareholderPosition).filter(
+                    _positions = _fdb.query(ShareholderPosition).filter(
                         ShareholderPosition.player_id == other_id,
                         ShareholderPosition.shares_owned > 0,
-                    ).count()
-                    if _sc:
-                        stock_count = f"{_sc} stock{'s' if _sc != 1 else ''}"
+                    ).all()
+                    _sparts = []
+                    for _pos in _positions[:3]:
+                        _co2 = _fdb.query(CompanyShares).filter(
+                            CompanyShares.id == _pos.company_id).first()
+                        _tk = _co2.ticker_symbol if _co2 else f"#{_pos.company_id}"
+                        _sparts.append(f"{_tk} ×{_pos.shares_owned:,.0f}")
+                    if len(_positions) > 3:
+                        _sparts.append(f"+{len(_positions)-3}")
+                    stock_detail = ", ".join(_sparts)
                 finally:
                     _fdb.close()
             except Exception:
                 pass
 
-            # Bond holdings
-            bond_count = ""
+            # ── Bond Holdings ──
+            bond_detail = ""
             try:
                 from database import ReserveSessionLocal as _RSL
                 from reserve_banks import ReserveBankBond
                 _bnd_db = _RSL()
                 try:
-                    _bnc = _bnd_db.query(ReserveBankBond).filter(
+                    _bonds = _bnd_db.query(ReserveBankBond).filter(
                         ReserveBankBond.holder_player_id == other_id,
                         ReserveBankBond.status == "active",
-                    ).count()
-                    if _bnc:
-                        bond_count = f"{_bnc} bond{'s' if _bnc != 1 else ''}"
+                    ).all()
+                    if _bonds:
+                        _bparts = [f"{_abbr(b.face_value)} @{b.yield_rate*100:.1f}%"
+                                   for b in _bonds[:2]]
+                        if len(_bonds) > 2:
+                            _bparts.append(f"+{len(_bonds)-2}")
+                        bond_detail = ", ".join(_bparts)
                 finally:
                     _bnd_db.close()
             except Exception:
                 pass
 
-            # Active P2P offers
-            contracts = ""
+            # ── Dividends ──
+            div_received = div_paid = ""
+            try:
+                from stats_ux import TransactionLog, get_db as _get_sdb2
+                _sdb2 = _get_sdb2()
+                try:
+                    _dpaid = _sdb2.query(TransactionLog).filter(
+                        TransactionLog.player_id == other_id,
+                        TransactionLog.transaction_type == "dividend_paid",
+                    ).all()
+                    _drecv = _sdb2.query(TransactionLog).filter(
+                        TransactionLog.player_id == other_id,
+                        TransactionLog.transaction_type == "dividend",
+                    ).all()
+                finally:
+                    _sdb2.close()
+                _tp = sum(abs(t.amount) for t in _dpaid)
+                _tr = sum(t.amount for t in _drecv if t.amount > 0)
+                if _tp > 0:  div_paid     = fmt_usd(_tp, _disp, precision=0)
+                if _tr > 0:  div_received = fmt_usd(_tr, _disp, precision=0)
+            except Exception:
+                pass
+
+            # ── Market Orders ──
+            commodity_orders = district_orders = 0
+            try:
+                from market import MarketOrder
+                from database import SessionLocal as _SL4
+                _mdb = _SL4()
+                try:
+                    commodity_orders = _mdb.query(MarketOrder).filter(
+                        MarketOrder.player_id == other_id,
+                        MarketOrder.status.in_(["active", "partially_filled"]),
+                    ).count()
+                finally:
+                    _mdb.close()
+            except Exception:
+                pass
+            try:
+                from district_market import get_player_orders as _gpo
+                district_orders = len(_gpo(other_id))
+            except Exception:
+                pass
+
+            # ── P2P Offers ──
+            p2p_offers = 0
             try:
                 from database import SessionLocal as _SL2
                 from p2p import P2POrder
                 _cdb = _SL2()
                 try:
-                    _cc = _cdb.query(P2POrder).filter(
+                    p2p_offers = _cdb.query(P2POrder).filter(
                         P2POrder.seller_id == other_id,
                         P2POrder.status == "open",
                     ).count()
-                    if _cc:
-                        contracts = f"{_cc} open P2P offer{'s' if _cc != 1 else ''}"
                 finally:
                     _cdb.close()
             except Exception:
                 pass
 
+            # ── Mutual Contacts ──
+            contacts_count = 0
+            try:
+                contacts_count = len(get_contacts(other_id))
+            except Exception:
+                pass
+
+            # ── Bankruptcy ──
+            bankruptcy_active = False
+            try:
+                from corporate_actions import BankruptcyRecord, get_db as _get_cadb
+                _cadb = _get_cadb()
+                try:
+                    bankruptcy_active = _cadb.query(BankruptcyRecord).filter(
+                        BankruptcyRecord.player_id == other_id,
+                        BankruptcyRecord.is_active == True,
+                    ).count() > 0
+                finally:
+                    _cadb.close()
+            except Exception:
+                pass
+
             cards.append({
-                "id":          other_id,
-                "name":        name,
-                "level_label": level_label,
-                "net_worth":   net_worth,
-                "wealth_rank": wealth_rank,
-                "cash":        cash,
-                "debt":        debt,
-                "biz_summary": biz_summary,
-                "land_count":  land_count,
-                "city":        city,
-                "county":      county,
-                "stock_count": stock_count,
-                "bond_count":  bond_count,
-                "contracts":   contracts,
+                "id":                other_id,
+                "name":              name,
+                "level_label":       level_label,
+                "founding_tester":   founding_tester,
+                "net_worth":         net_worth,
+                "wealth_rank":       wealth_rank,
+                "land_value":        land_value,
+                "biz_value":         biz_value,
+                "inv_value":         inv_value,
+                "share_value":       share_value,
+                "cash_usd":          cash_usd,
+                "cash_other":        cash_other,
+                "debt":              debt,
+                "biz_list":          biz_list,
+                "land_count":        land_count,
+                "exec_summary":      exec_summary,
+                "city":              city,
+                "county":            county,
+                "stock_detail":      stock_detail,
+                "bond_detail":       bond_detail,
+                "div_received":      div_received,
+                "div_paid":          div_paid,
+                "commodity_orders":  commodity_orders,
+                "district_orders":   district_orders,
+                "p2p_offers":        p2p_offers,
+                "contacts_count":    contacts_count,
+                "bankruptcy_active": bankruptcy_active,
             })
         except Exception:
             continue

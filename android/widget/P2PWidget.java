@@ -76,6 +76,23 @@ public class P2PWidget extends AppWidgetProvider {
         }
     }
 
+    /** Clear all data rows to blank before fetch or on error. */
+    private static void clearRows(Context ctx, RemoteViews views) {
+        views.setTextViewText(id(ctx, "widget_p2p_founding"),    "");
+        views.setTextViewText(id(ctx, "widget_p2p_networth"),    "");
+        views.setTextViewText(id(ctx, "widget_p2p_worth_detail"),"");
+        views.setTextViewText(id(ctx, "widget_p2p_cash"),        "");
+        views.setTextViewText(id(ctx, "widget_p2p_cash_other"),  "");
+        views.setTextViewText(id(ctx, "widget_p2p_debt"),        "");
+        views.setTextViewText(id(ctx, "widget_p2p_biz"),         "");
+        views.setTextViewText(id(ctx, "widget_p2p_execs"),       "");
+        views.setTextViewText(id(ctx, "widget_p2p_city"),        "");
+        views.setTextViewText(id(ctx, "widget_p2p_stocks"),      "");
+        views.setTextViewText(id(ctx, "widget_p2p_divs"),        "");
+        views.setTextViewText(id(ctx, "widget_p2p_orders"),      "");
+        views.setTextViewText(id(ctx, "widget_p2p_bankrupt"),    "");
+    }
+
     static void updateWidget(Context ctx, AppWidgetManager mgr, int widgetId) {
         RemoteViews views = new RemoteViews(ctx.getPackageName(), layoutId(ctx));
 
@@ -93,29 +110,23 @@ public class P2PWidget extends AppWidgetProvider {
         views.setOnClickPendingIntent(id(ctx, "widget_p2p_avatar"),
                 PendingIntent.getActivity(ctx, 41, launch, piFlags));
 
-        // Prev button
+        // Prev / Next buttons
         Intent prevI = new Intent(ACTION_PREV);
         prevI.setComponent(new ComponentName(ctx, P2PWidget.class));
         views.setOnClickPendingIntent(id(ctx, "widget_p2p_prev"),
                 PendingIntent.getBroadcast(ctx, 42, prevI, muFlags));
 
-        // Next button
         Intent nextI = new Intent(ACTION_NEXT);
         nextI.setComponent(new ComponentName(ctx, P2PWidget.class));
         views.setOnClickPendingIntent(id(ctx, "widget_p2p_next"),
                 PendingIntent.getBroadcast(ctx, 43, nextI, muFlags));
 
+        // Loading state
         views.setTextViewText(id(ctx, "widget_p2p_name"), "Loading…");
-        views.setTextViewText(id(ctx, "widget_p2p_page"), "");
-        views.setTextViewText(id(ctx, "widget_p2p_avatar"), "?");
         views.setTextViewText(id(ctx, "widget_p2p_level"), "");
-        views.setTextViewText(id(ctx, "widget_p2p_networth"), "");
-        views.setTextViewText(id(ctx, "widget_p2p_cash"), "");
-        views.setTextViewText(id(ctx, "widget_p2p_debt"), "");
-        views.setTextViewText(id(ctx, "widget_p2p_biz"), "");
-        views.setTextViewText(id(ctx, "widget_p2p_city"), "");
-        views.setTextViewText(id(ctx, "widget_p2p_stocks"), "");
-        views.setTextViewText(id(ctx, "widget_p2p_contracts"), "");
+        views.setTextViewText(id(ctx, "widget_p2p_avatar"), "?");
+        views.setTextViewText(id(ctx, "widget_p2p_page"), "");
+        clearRows(ctx, views);
         mgr.updateAppWidget(widgetId, views);
 
         final String deviceHash = getDeviceHash(ctx);
@@ -142,7 +153,6 @@ public class P2PWidget extends AppWidgetProvider {
                 if (httpCode != 200) {
                     views.setTextViewText(id(ctx, "widget_p2p_name"),
                             httpCode == 401 ? "Open app to log in" : "Server error " + httpCode);
-                    views.setTextViewText(id(ctx, "widget_p2p_page"), "");
                     mgr.updateAppWidget(widgetId, views);
                     return;
                 }
@@ -166,44 +176,110 @@ public class P2PWidget extends AppWidgetProvider {
                     return;
                 }
 
-                // Clamp index (may be out of range after contacts are removed)
+                // Clamp index
                 int idx = Math.min(requestedIndex, total - 1);
                 if (idx != requestedIndex)
                     prefs.edit().putInt(KEY_INDEX, idx).apply();
 
                 JSONObject c = contacts.getJSONObject(idx);
-                String name       = c.optString("name", "Unknown");
-                String initials   = name.length() > 0 ? String.valueOf(name.charAt(0)).toUpperCase() : "?";
-                String level      = c.optString("level_label", "");
-                String netWorth   = c.optString("net_worth", "");
-                String wealthRank = c.optString("wealth_rank", "");
-                String cash       = c.optString("cash", "");
-                String debt       = c.optString("debt", "");
-                String biz        = c.optString("biz_summary", "");
-                String land       = c.optString("land_count", "");
-                String city       = c.optString("city", "");
-                String county     = c.optString("county", "");
-                String stocks     = c.optString("stock_count", "");
-                String bonds      = c.optString("bond_count", "");
-                String contracts  = c.optString("contracts", "");
 
-                // Net worth + rank on one line
+                // Identity
+                String name     = c.optString("name", "Unknown");
+                String initials = name.length() > 0 ? String.valueOf(name.charAt(0)).toUpperCase() : "?";
+                String level    = c.optString("level_label", "");
+                boolean founding = c.optBoolean("founding_tester", false);
+
+                // Net worth & breakdown
+                String netWorth   = c.optString("net_worth", "");
+                String rank       = c.optString("wealth_rank", "");
+                String landVal    = c.optString("land_value", "");
+                String bizVal     = c.optString("biz_value", "");
+                String invVal     = c.optString("inv_value", "");
+                String shareVal   = c.optString("share_value", "");
+
+                // Cash
+                String cashUsd   = c.optString("cash_usd", "");
+                String cashOther = c.optString("cash_other", "");
+
+                // Debt
+                String debt = c.optString("debt", "");
+
+                // Business + land
+                String bizList   = c.optString("biz_list", "");
+                String landCount = c.optString("land_count", "");
+
+                // Executives
+                String execSummary = c.optString("exec_summary", "");
+
+                // City + county
+                String city   = c.optString("city", "");
+                String county = c.optString("county", "");
+
+                // Stocks + bonds
+                String stockDetail = c.optString("stock_detail", "");
+                String bondDetail  = c.optString("bond_detail", "");
+
+                // Dividends
+                String divRecv = c.optString("div_received", "");
+                String divPaid = c.optString("div_paid", "");
+
+                // Orders + social
+                int comOrders  = c.optInt("commodity_orders", 0);
+                int distOrders = c.optInt("district_orders", 0);
+                int p2pOffers  = c.optInt("p2p_offers", 0);
+                int contacts2  = c.optInt("contacts_count", 0);
+
+                // Bankruptcy
+                boolean bankrupt = c.optBoolean("bankruptcy_active", false);
+
+                // ── Render ──
+
+                views.setTextViewText(id(ctx, "widget_p2p_avatar"), initials);
+                views.setTextViewText(id(ctx, "widget_p2p_name"), name);
+                views.setTextViewText(id(ctx, "widget_p2p_page"), (idx + 1) + " / " + total);
+                views.setTextViewText(id(ctx, "widget_p2p_level"), level);
+
+                views.setTextViewText(id(ctx, "widget_p2p_founding"),
+                        founding ? "📱 Founding Tester" : "");
+
+                // Net worth + rank
                 String nwLine = "";
-                if (!netWorth.isEmpty() && !wealthRank.isEmpty())
-                    nwLine = "💰 " + netWorth + "  ·  Rank " + wealthRank;
+                if (!netWorth.isEmpty() && !rank.isEmpty())
+                    nwLine = "💰 " + netWorth + "  ·  Rank " + rank;
                 else if (!netWorth.isEmpty())
                     nwLine = "💰 " + netWorth;
+                views.setTextViewText(id(ctx, "widget_p2p_networth"), nwLine);
 
-                // Biz + land on one line
+                // Worth breakdown
+                StringBuilder wdSb = new StringBuilder();
+                if (!landVal.isEmpty())  { if (wdSb.length()>0) wdSb.append(" · "); wdSb.append("Land ").append(landVal); }
+                if (!bizVal.isEmpty())   { if (wdSb.length()>0) wdSb.append(" · "); wdSb.append("Biz ").append(bizVal); }
+                if (!invVal.isEmpty())   { if (wdSb.length()>0) wdSb.append(" · "); wdSb.append("Inv ").append(invVal); }
+                if (!shareVal.isEmpty()) { if (wdSb.length()>0) wdSb.append(" · "); wdSb.append("Stk ").append(shareVal); }
+                views.setTextViewText(id(ctx, "widget_p2p_worth_detail"),
+                        wdSb.length() > 0 ? "  " + wdSb : "");
+
+                views.setTextViewText(id(ctx, "widget_p2p_cash"),
+                        cashUsd.isEmpty() ? "" : "💵 USD " + cashUsd);
+                views.setTextViewText(id(ctx, "widget_p2p_cash_other"),
+                        cashOther.isEmpty() ? "" : "     " + cashOther);
+                views.setTextViewText(id(ctx, "widget_p2p_debt"),
+                        debt.isEmpty() ? "" : "💳 Debt: " + debt);
+
+                // Business list + land
                 String bizLine = "";
-                if (!biz.isEmpty() && !land.isEmpty())
-                    bizLine = "🏭 " + biz + "  ·  🌍 " + land;
-                else if (!biz.isEmpty())
-                    bizLine = "🏭 " + biz;
-                else if (!land.isEmpty())
-                    bizLine = "🌍 " + land;
+                if (!bizList.isEmpty() && !landCount.isEmpty())
+                    bizLine = "🏭 " + bizList + "  ·  🌍 " + landCount;
+                else if (!bizList.isEmpty())
+                    bizLine = "🏭 " + bizList;
+                else if (!landCount.isEmpty())
+                    bizLine = "🌍 " + landCount;
+                views.setTextViewText(id(ctx, "widget_p2p_biz"), bizLine);
 
-                // City + county on one line
+                views.setTextViewText(id(ctx, "widget_p2p_execs"),
+                        execSummary.isEmpty() ? "" : "👔 " + execSummary);
+
+                // City + county
                 String cityLine = "";
                 if (!city.isEmpty() && !county.isEmpty())
                     cityLine = "🏙️ " + city + "  ·  🗺️ " + county;
@@ -211,30 +287,38 @@ public class P2PWidget extends AppWidgetProvider {
                     cityLine = "🏙️ " + city;
                 else if (!county.isEmpty())
                     cityLine = "🗺️ " + county;
-
-                // Stocks + bonds on one line
-                String stockLine = "";
-                if (!stocks.isEmpty() && !bonds.isEmpty())
-                    stockLine = "📈 " + stocks + "  ·  🏦 " + bonds;
-                else if (!stocks.isEmpty())
-                    stockLine = "📈 " + stocks;
-                else if (!bonds.isEmpty())
-                    stockLine = "🏦 " + bonds;
-
-                views.setTextViewText(id(ctx, "widget_p2p_avatar"), initials);
-                views.setTextViewText(id(ctx, "widget_p2p_name"), name);
-                views.setTextViewText(id(ctx, "widget_p2p_page"), (idx + 1) + " / " + total);
-                views.setTextViewText(id(ctx, "widget_p2p_level"), level);
-                views.setTextViewText(id(ctx, "widget_p2p_networth"), nwLine);
-                views.setTextViewText(id(ctx, "widget_p2p_cash"),
-                        cash.isEmpty() ? "" : "💵 Cash: " + cash);
-                views.setTextViewText(id(ctx, "widget_p2p_debt"),
-                        debt.isEmpty() ? "" : "💳 Debt: " + debt);
-                views.setTextViewText(id(ctx, "widget_p2p_biz"), bizLine);
                 views.setTextViewText(id(ctx, "widget_p2p_city"), cityLine);
-                views.setTextViewText(id(ctx, "widget_p2p_stocks"), stockLine);
-                views.setTextViewText(id(ctx, "widget_p2p_contracts"),
-                        contracts.isEmpty() ? "" : "📄 " + contracts);
+
+                // Stocks + bonds
+                String mktLine = "";
+                if (!stockDetail.isEmpty() && !bondDetail.isEmpty())
+                    mktLine = "📈 " + stockDetail + "  ·  🏦 " + bondDetail;
+                else if (!stockDetail.isEmpty())
+                    mktLine = "📈 " + stockDetail;
+                else if (!bondDetail.isEmpty())
+                    mktLine = "🏦 " + bondDetail;
+                views.setTextViewText(id(ctx, "widget_p2p_stocks"), mktLine);
+
+                // Dividends
+                String divLine = "";
+                if (!divRecv.isEmpty() && !divPaid.isEmpty())
+                    divLine = "💸 Recv " + divRecv + "  ·  Paid " + divPaid;
+                else if (!divRecv.isEmpty())
+                    divLine = "💸 Recv " + divRecv;
+                else if (!divPaid.isEmpty())
+                    divLine = "💸 Paid out " + divPaid;
+                views.setTextViewText(id(ctx, "widget_p2p_divs"), divLine);
+
+                // Orders + P2P + contacts
+                StringBuilder ordSb = new StringBuilder();
+                if (comOrders > 0)  ordSb.append("📋 ").append(comOrders).append(" orders");
+                if (distOrders > 0) { if (ordSb.length()>0) ordSb.append("  ·  "); ordSb.append("🏗️ ").append(distOrders); }
+                if (p2pOffers > 0)  { if (ordSb.length()>0) ordSb.append("  ·  "); ordSb.append("📄 ").append(p2pOffers).append(" P2P"); }
+                if (contacts2 > 0)  { if (ordSb.length()>0) ordSb.append("  ·  "); ordSb.append("🤝 ").append(contacts2); }
+                views.setTextViewText(id(ctx, "widget_p2p_orders"), ordSb.toString());
+
+                views.setTextViewText(id(ctx, "widget_p2p_bankrupt"),
+                        bankrupt ? "⚖️ 🔴 ACTIVE BANKRUPTCY" : "");
 
                 mgr.updateAppWidget(widgetId, views);
 

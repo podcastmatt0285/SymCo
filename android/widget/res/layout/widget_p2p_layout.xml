@@ -11,7 +11,7 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp">
+        android:layout_marginBottom="6dp">
 
         <TextView
             android:layout_width="wrap_content"
@@ -23,7 +23,6 @@
             android:textSize="9sp"
             android:textStyle="bold" />
 
-        <!-- Right side: prev · page indicator · next -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -61,24 +60,24 @@
 
     </RelativeLayout>
 
-    <!-- Avatar + name row -->
+    <!-- Avatar + name + level -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginBottom="8dp">
+        android:layout_marginBottom="6dp">
 
         <TextView
             android:id="@+id/widget_p2p_avatar"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:gravity="center"
             android:textColor="#38bdf8"
-            android:textSize="20sp"
+            android:textSize="18sp"
             android:textStyle="bold"
             android:background="@drawable/widget_background"
-            android:layout_marginEnd="12dp"
+            android:layout_marginEnd="10dp"
             android:text="?" />
 
         <LinearLayout
@@ -93,7 +92,7 @@
                 android:layout_height="wrap_content"
                 android:text="—"
                 android:textColor="#e2e8f0"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:textStyle="bold"
                 android:maxLines="1"
                 android:ellipsize="end" />
@@ -104,73 +103,147 @@
                 android:layout_height="wrap_content"
                 android:text=""
                 android:textColor="#a5b4fc"
-                android:textSize="9sp" />
+                android:textSize="8sp" />
 
         </LinearLayout>
 
     </LinearLayout>
 
-    <!-- Stats rows -->
+    <!-- Founding Tester badge (hidden when empty) -->
+    <TextView
+        android:id="@+id/widget_p2p_founding"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#fbbf24"
+        android:textSize="8sp"
+        android:layout_marginBottom="2dp" />
+
+    <!-- Net worth + wealth rank -->
     <TextView
         android:id="@+id/widget_p2p_networth"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
-        android:textColor="#94a3b8"
+        android:textColor="#22c55e"
         android:textSize="9sp"
-        android:layout_marginBottom="3dp" />
+        android:textStyle="bold"
+        android:layout_marginBottom="2dp" />
 
+    <!-- Worth breakdown: land / biz / inv / stocks -->
+    <TextView
+        android:id="@+id/widget_p2p_worth_detail"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#64748b"
+        android:textSize="8sp"
+        android:layout_marginBottom="2dp" />
+
+    <!-- USD cash -->
     <TextView
         android:id="@+id/widget_p2p_cash"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
         android:textColor="#94a3b8"
-        android:textSize="9sp"
-        android:layout_marginBottom="3dp" />
+        android:textSize="8sp"
+        android:layout_marginBottom="2dp" />
 
+    <!-- Other currency balances (hidden when empty) -->
+    <TextView
+        android:id="@+id/widget_p2p_cash_other"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#94a3b8"
+        android:textSize="8sp"
+        android:layout_marginBottom="2dp" />
+
+    <!-- Debt (hidden when clean) -->
     <TextView
         android:id="@+id/widget_p2p_debt"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
-        android:textColor="#94a3b8"
-        android:textSize="9sp"
-        android:layout_marginBottom="3dp" />
+        android:textColor="#ef4444"
+        android:textSize="8sp"
+        android:layout_marginBottom="2dp" />
 
+    <!-- Business types + land plots -->
     <TextView
         android:id="@+id/widget_p2p_biz"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
-        android:textColor="#94a3b8"
-        android:textSize="9sp"
-        android:layout_marginBottom="3dp" />
+        android:textColor="#a78bfa"
+        android:textSize="8sp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:layout_marginBottom="2dp" />
 
+    <!-- Executives (hidden when none) -->
+    <TextView
+        android:id="@+id/widget_p2p_execs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#94a3b8"
+        android:textSize="8sp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:layout_marginBottom="2dp" />
+
+    <!-- City + County -->
     <TextView
         android:id="@+id/widget_p2p_city"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
         android:textColor="#94a3b8"
-        android:textSize="9sp"
-        android:layout_marginBottom="3dp" />
+        android:textSize="8sp"
+        android:layout_marginBottom="2dp" />
 
+    <!-- Stock tickers + bond holdings -->
     <TextView
         android:id="@+id/widget_p2p_stocks"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
         android:textColor="#94a3b8"
-        android:textSize="9sp"
-        android:layout_marginBottom="3dp" />
+        android:textSize="8sp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:layout_marginBottom="2dp" />
 
+    <!-- Dividends received / paid -->
     <TextView
-        android:id="@+id/widget_p2p_contracts"
+        android:id="@+id/widget_p2p_divs"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
         android:textColor="#94a3b8"
-        android:textSize="9sp" />
+        android:textSize="8sp"
+        android:layout_marginBottom="2dp" />
+
+    <!-- Market orders + P2P offers + contacts -->
+    <TextView
+        android:id="@+id/widget_p2p_orders"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#94a3b8"
+        android:textSize="8sp"
+        android:layout_marginBottom="2dp" />
+
+    <!-- Bankruptcy alert (hidden when clean) -->
+    <TextView
+        android:id="@+id/widget_p2p_bankrupt"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#ef4444"
+        android:textSize="8sp"
+        android:textStyle="bold" />
 
 </LinearLayout>
