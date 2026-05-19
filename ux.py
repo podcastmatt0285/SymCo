@@ -11066,17 +11066,13 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
     disp = get_player_display_currency(player.id)
 
     try:
-        import time as _time
+        from app import current_tick
         from banks.brokerage_firm import (
             get_player_annuities, ANNUITY_IMMEDIATE_RATES, ANNUITY_CREDITED_RATE,
             ANNUITY_IMMEDIATE_MIN, ANNUITY_MIN_TO_ANNUITIZE, ANNUITY_PAYMENT_TICKS,
             ANNUITY_NONQUAL_TAX_RATE, ANNUITY_QUAL_TAX_RATE, ANNUITY_ISSUANCE_FEE,
             ANNUITY_SURRENDER_SCHEDULE, _calc_pmt,
         )
-        import math as _math
-
-        # Epoch seconds → approximate game tick (rough estimate for display only)
-        current_tick = int(_time.time())
 
         data = get_player_annuities(player.id, current_tick)
         active    = data["active"]
@@ -11108,10 +11104,12 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
 
         # ── Active contract cards ───────────────────────────────────────────
         def _tick_to_approx_date(tick):
-            """Very rough: treat tick as unix timestamp."""
+            """Convert a future game tick to a human-readable ETA."""
             try:
-                from datetime import datetime as _dt
-                return _dt.utcfromtimestamp(tick).strftime("%b %d %H:%M UTC")
+                from datetime import datetime as _dt, timedelta as _td
+                secs = (tick - current_tick) * 5  # 5 real seconds per tick
+                eta = _dt.utcnow() + _td(seconds=secs)
+                return eta.strftime("%b %d %H:%M UTC")
             except Exception:
                 return "—"
 
@@ -11652,7 +11650,7 @@ async def api_open_immediate_annuity(
     if isinstance(player, RedirectResponse):
         return JSONResponse({"ok": False, "error": "Unauthorized"}, status_code=401)
     try:
-        import time as _time
+        from app import current_tick
         from banks.brokerage_firm import open_immediate_annuity
         result = open_immediate_annuity(
             player_id=player.id,
@@ -11660,7 +11658,7 @@ async def api_open_immediate_annuity(
             term_days=term_days,
             payment_frequency=payment_frequency,
             is_qualified=bool(is_qualified and is_qualified not in ("0", "false", "")),
-            current_tick=int(_time.time()),
+            current_tick=current_tick,
         )
         return JSONResponse(result)
     except Exception as e:
@@ -11679,7 +11677,7 @@ async def api_open_deferred_annuity(
     if isinstance(player, RedirectResponse):
         return JSONResponse({"ok": False, "error": "Unauthorized"}, status_code=401)
     try:
-        import time as _time
+        from app import current_tick
         from banks.brokerage_firm import open_deferred_annuity
         acc_days = int(accumulation_term_days) if accumulation_term_days and accumulation_term_days.isdigit() else None
         result = open_deferred_annuity(
@@ -11687,7 +11685,7 @@ async def api_open_deferred_annuity(
             initial_premium=initial_premium or 0.0,
             accumulation_term_days=acc_days,
             is_qualified=bool(is_qualified and is_qualified not in ("0", "false", "")),
-            current_tick=int(_time.time()),
+            current_tick=current_tick,
         )
         return JSONResponse(result)
     except Exception as e:
@@ -11705,13 +11703,13 @@ async def api_contribute_annuity(
     if isinstance(player, RedirectResponse):
         return JSONResponse({"ok": False, "error": "Unauthorized"}, status_code=401)
     try:
-        import time as _time
+        from app import current_tick
         from banks.brokerage_firm import contribute_to_deferred
         result = contribute_to_deferred(
             player_id=player.id,
             contract_id=contract_id,
             amount=amount,
-            current_tick=int(_time.time()),
+            current_tick=current_tick,
         )
         return JSONResponse(result)
     except Exception as e:
@@ -11730,14 +11728,14 @@ async def api_annuitize(
     if isinstance(player, RedirectResponse):
         return JSONResponse({"ok": False, "error": "Unauthorized"}, status_code=401)
     try:
-        import time as _time
+        from app import current_tick
         from banks.brokerage_firm import annuitize_deferred
         result = annuitize_deferred(
             player_id=player.id,
             contract_id=contract_id,
             payout_term_days=payout_term_days,
             payment_frequency=payment_frequency,
-            current_tick=int(_time.time()),
+            current_tick=current_tick,
         )
         return JSONResponse(result)
     except Exception as e:
@@ -11754,12 +11752,12 @@ async def api_surrender_annuity(
     if isinstance(player, RedirectResponse):
         return JSONResponse({"ok": False, "error": "Unauthorized"}, status_code=401)
     try:
-        import time as _time
+        from app import current_tick
         from banks.brokerage_firm import surrender_annuity
         result = surrender_annuity(
             player_id=player.id,
             contract_id=contract_id,
-            current_tick=int(_time.time()),
+            current_tick=current_tick,
         )
         return JSONResponse(result)
     except Exception as e:

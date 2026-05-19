@@ -4748,6 +4748,7 @@ def get_player_annuities(player_id: int, current_tick: int) -> dict:
 def _process_annuity_credits(current_tick: int):
     """Credit monthly interest to deferred annuity accumulation accounts."""
     db = get_db()
+    credit_log = []  # (player_id, contract_id, interest_amount, rate)
     try:
         contracts = db.query(AnnuityContract).filter(
             AnnuityContract.phase == "accumulation",
@@ -4760,20 +4761,9 @@ def _process_annuity_credits(current_tick: int):
             interest = round(acc * rate / 12.0, 4)
             c.accumulated_value = acc + interest
             c.next_credit_tick = current_tick + ANNUITY_CREDIT_INTERVAL
+            credit_log.append((c.player_id, c.id, interest, rate))
         if contracts:
             db.commit()
-        # Log and notify outside transaction to avoid session conflicts
-        for c in contracts:
-            try:
-                from stats_ux import log_transaction as _lt
-                rate = c.credited_rate or ANNUITY_CREDITED_RATE
-                acc_before = (c.accumulated_value or 0.0) - round((c.accumulated_value or 0.0) * rate / 12.0, 4)
-                interest_amount = round(acc_before * rate / 12.0, 4)
-                _lt(c.player_id, "annuity_interest", "money", interest_amount,
-                    description=f"Deferred annuity interest @ {rate*100:.1f}% annual (monthly credit)",
-                    reference_id=str(c.id))
-            except Exception:
-                pass
     except Exception as e:
         try:
             db.rollback()
@@ -4783,11 +4773,23 @@ def _process_annuity_credits(current_tick: int):
     finally:
         db.close()
 
+    for pid, cid, interest_amount, rate in credit_log:
+        try:
+            from stats_ux import log_transaction as _lt
+            _lt(pid, "annuity_interest", "money", interest_amount,
+                description=f"Deferred annuity interest @ {rate*100:.1f}% annual (monthly credit)",
+                reference_id=str(cid))
+        except Exception:
+            pass
+
 
 def _process_annuity_payments(current_tick: int):
     """Process due annuity payments to players."""
-    from reserve_banks import credit_usd, spend_player_funds
+    from reserve_banks import credit_usd
     db = get_db()
+    # Cache computed values for the notification pass (avoids second exec DB lookup)
+    pmt_cache = {}  # contract_id -> (net_pmt, tax)
+    contracts = []
     try:
         contracts = db.query(AnnuityContract).filter(
             AnnuityContract.phase == "payout",
@@ -4798,6 +4800,7 @@ def _process_annuity_payments(current_tick: int):
         for c in contracts:
             pmt = c.payment_amount or 0.0
             if pmt <= 0:
+                pmt_cache[c.id] = (0.0, 0.0)
                 continue
 
             ann_val = c.annuitized_value or c.total_contributions or 0.0
@@ -4805,7 +4808,6 @@ def _process_annuity_payments(current_tick: int):
             principal_per_pmt = ann_val / n
             tax = _calc_annuity_tax(pmt, principal_per_pmt, c.is_qualified or False)
 
-            # Executive banking bonus on net payout
             exec_bonus = 0.0
             try:
                 from executive import get_player_job_bonus, get_db as exec_get_db
@@ -4818,19 +4820,19 @@ def _process_annuity_payments(current_tick: int):
                 pass
 
             net_pmt = round(max(0.0, pmt * (1.0 + exec_bonus) - tax), 4)
+            pmt_cache[c.id] = (net_pmt, tax)
 
             firm_deduct_cash(pmt, "annuity_payment", f"Annuity payment to player {c.player_id}")
             credit_usd(c.player_id, net_pmt)
             if tax > 0:
-                credit_usd(0, tax)   # government
+                credit_usd(0, tax)
 
             c.payments_made = (c.payments_made or 0) + 1
             c.payments_remaining = max(0, (c.payments_remaining or 1) - 1)
             c.total_paid_out = (c.total_paid_out or 0.0) + pmt
             c.total_interest_paid = (c.total_interest_paid or 0.0) + max(0.0, pmt - principal_per_pmt)
 
-            is_mature = c.payments_remaining <= 0
-            if is_mature:
+            if c.payments_remaining <= 0:
                 c.status = "completed"
                 c.phase = "completed"
                 c.completed_at = datetime.utcnow()
@@ -4850,29 +4852,15 @@ def _process_annuity_payments(current_tick: int):
     finally:
         db.close()
 
-    # Notifications outside DB session
+    # Notifications and ledger entries — outside DB session, use cached pmt values
     for c in contracts:
         try:
+            net_pmt, tax = pmt_cache.get(c.id, (0.0, 0.0))
+            if net_pmt <= 0:
+                continue
             from stats_ux import log_transaction as _lt
             from push_ux import create_game_notification, send_push_notification
             import auth as _auth
-
-            pmt = c.payment_amount or 0.0
-            ann_val = c.annuitized_value or c.total_contributions or 0.0
-            n = max(1, c.total_payments or 1)
-            principal_per_pmt = ann_val / n
-            tax = _calc_annuity_tax(pmt, principal_per_pmt, c.is_qualified or False)
-            exec_bonus = 0.0
-            try:
-                from executive import get_player_job_bonus, get_db as exec_get_db
-                _edb = exec_get_db()
-                try:
-                    exec_bonus = get_player_job_bonus(_edb, c.player_id, "banking") or 0.0
-                finally:
-                    _edb.close()
-            except Exception:
-                pass
-            net_pmt = round(max(0.0, pmt * (1.0 + exec_bonus) - tax), 4)
 
             _lt(c.player_id, "annuity_payout", "money", net_pmt,
                 description=f"Annuity payment {c.payments_made}/{c.total_payments} — "
