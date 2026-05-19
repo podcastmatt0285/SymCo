@@ -139,11 +139,9 @@ public class BondsWidget extends AppWidgetProvider {
                         String code     = r.optString("code", "");
                         double yPct     = r.optDouble("yield_pct", 0);
                         double chBp     = r.optDouble("change_bp", 0);
-                        String spark    = r.optString("sparkline", "");
-                        String chStr    = chBp == 0 ? "" : (chBp > 0 ? "+" : "") + String.format("%.1f", chBp) + "bp";
-                        String row      = flag + " " + code + "  " + String.format("%.2f%%", yPct)
-                                        + (chStr.isEmpty() ? "" : "  " + chStr)
-                                        + (spark.isEmpty() ? "" : "  " + spark);
+                        String chStr    = chBp == 0 ? "   —  " : (chBp > 0 ? "+" : "") + String.format("%.1f", chBp) + "bp";
+                        String row      = flag + " " + code + "   " + String.format("%.3f%%", yPct)
+                                        + "   " + chStr;
                         views.setTextViewText(id(ctx, rowIds[i]), row);
                         // colour change indicator
                         if (chBp > 0)

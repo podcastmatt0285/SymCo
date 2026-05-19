@@ -217,6 +217,8 @@ echo "  Copied ChatWidgetBase, GlobalChatWidget, TradeChatWidget → ${JAVA_DIR}
 sed "s/PACKAGE_NAME/${PACKAGE}/g" "${WIDGET_DIR}/BondsWidget.java" > "${JAVA_DIR}/BondsWidget.java"
 sed "s/PACKAGE_NAME/${PACKAGE}/g" "${WIDGET_DIR}/ForexWidget.java" > "${JAVA_DIR}/ForexWidget.java"
 echo "  Copied BondsWidget, ForexWidget → ${JAVA_DIR}/"
+sed "s/PACKAGE_NAME/${PACKAGE}/g" "${WIDGET_DIR}/P2PWidget.java"   > "${JAVA_DIR}/P2PWidget.java"
+echo "  Copied P2PWidget.java → ${JAVA_DIR}/"
 
 # Custom Application subclass — pre-seeds notification channels with our
 # sound at startup before Chrome/TWA can create them with the system default.
@@ -256,6 +258,8 @@ cp "${WIDGET_DIR}/res/xml/trade_chat_widget_info.xml"     app/src/main/res/xml/
 cp "${WIDGET_DIR}/res/xml/wbc_widget_info.xml"            app/src/main/res/xml/
 cp "${WIDGET_DIR}/res/xml/bonds_widget_info.xml"          app/src/main/res/xml/
 cp "${WIDGET_DIR}/res/xml/forex_widget_info.xml"          app/src/main/res/xml/
+cp "${WIDGET_DIR}/res/xml/p2p_widget_info.xml"            app/src/main/res/xml/
+cp "${WIDGET_DIR}/res/layout/widget_p2p_layout.xml"       app/src/main/res/layout/
 cp "${WIDGET_DIR}/res/drawable/widget_background.xml"     app/src/main/res/drawable/
 echo "  Copied widget layout, xml, drawable resources"
 
@@ -414,6 +418,16 @@ else
     echo "  Injected ForexWidget receiver into AndroidManifest.xml"
 fi
 
+# 9. Inject P2PWidget receiver
+P2P_BLOCK="        <receiver android:name=\"${PACKAGE}.P2PWidget\" android:label=\"P2P Contacts\" android:exported=\"true\"><intent-filter><action android:name=\"android.appwidget.action.APPWIDGET_UPDATE\"/><action android:name=\"${PACKAGE}.P2P_PREV\"/><action android:name=\"${PACKAGE}.P2P_NEXT\"/><action android:name=\"${PACKAGE}.P2P_REFRESH\"/></intent-filter><meta-data android:name=\"android.appwidget.provider\" android:resource=\"@xml/p2p_widget_info\"/></receiver>"
+
+if grep -q "P2PWidget" "$MANIFEST"; then
+    echo "  P2PWidget already in AndroidManifest.xml — skipping"
+else
+    sed -i "s|</application>|${P2P_BLOCK}\n    </application>|" "$MANIFEST"
+    echo "  Injected P2PWidget receiver into AndroidManifest.xml"
+fi
+
 # ProGuard/R8 keep rules
 PROGUARD_RULES="app/proguard-rules.pro"
 if grep -q "WadsworthWidget" "$PROGUARD_RULES" 2>/dev/null; then
@@ -431,6 +445,7 @@ else
 -keep class PACKAGE_PLACEHOLDER.TradeChatWidget { *; }
 -keep class PACKAGE_PLACEHOLDER.BondsWidget { *; }
 -keep class PACKAGE_PLACEHOLDER.ForexWidget { *; }
+-keep class PACKAGE_PLACEHOLDER.P2PWidget { *; }
 EOF
     sed -i "s/PACKAGE_PLACEHOLDER/${PACKAGE}/g" "$PROGUARD_RULES"
     echo "  Added ProGuard keep rules"

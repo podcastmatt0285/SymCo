@@ -12516,10 +12516,125 @@ def api_widget_forex(device_id: Optional[str] = None,
     return JSONResponse({"pairs": pairs})
 
 
+@router.get("/api/widget/p2p-contacts")
+def api_widget_p2p_contacts(device_id: Optional[str] = None,
+                            session_token: Optional[str] = Cookie(None)):
+    """Accepted contact list with summary card data for the P2P home-screen widget."""
+    if device_id:
+        pid = _WIDGET_DEVICE_MAP.get(device_id)
+        if not pid:
+            _load_device_map()
+            pid = _WIDGET_DEVICE_MAP.get(device_id)
+        if not pid:
+            return JSONResponse({"error": "not authenticated"}, status_code=401)
+        import auth as _auth
+        _db2 = _auth.get_db()
+        try:
+            player = _db2.query(_auth.Player).filter(_auth.Player.id == pid).first()
+        finally:
+            _db2.close()
+        if not player:
+            return JSONResponse({"error": "not authenticated"}, status_code=401)
+    else:
+        player = require_auth(session_token)
+        if isinstance(player, RedirectResponse):
+            return JSONResponse({"error": "not authenticated"}, status_code=401)
 
-# ==========================
-# JSON API ENDPOINT
-# ==========================
+    from contacts import get_contacts
+    from reserve_banks import get_player_display_currency, fmt_usd
+    _disp = get_player_display_currency(player.id)
+
+    raw = get_contacts(player.id)   # [(Contact, other_id, my_notes)]
+    cards = []
+    for _row, other_id, _notes in raw:
+        try:
+            import auth as _auth2
+            _adb = _auth2.get_db()
+            try:
+                _other = _adb.query(_auth2.Player).filter(_auth2.Player.id == other_id).first()
+            finally:
+                _adb.close()
+            if not _other:
+                continue
+            name = _other.business_name or f"Player #{other_id}"
+
+            # Level
+            level_label = ""
+            try:
+                from events import get_player_level as _gpl
+                _lv = _gpl(other_id)
+                level_label = f"Lv {_lv['level']} · {_lv['trophies']:,} ★"
+            except Exception:
+                pass
+
+            # Net worth
+            net_worth = ""
+            try:
+                from stats_ux import get_player_net_worth as _gnw
+                _nw = _gnw(other_id)
+                net_worth = fmt_usd(_nw, _disp, precision=0)
+            except Exception:
+                try:
+                    net_worth = fmt_usd(_other.cash_balance or 0, _disp, precision=0)
+                except Exception:
+                    pass
+
+            # Cash balance
+            cash = ""
+            try:
+                from reserve_banks import get_usd_balance as _gub
+                cash = fmt_usd(_gub(other_id), _disp, precision=0)
+            except Exception:
+                pass
+
+            # Business count
+            biz_summary = ""
+            try:
+                from database import SessionLocal as _SL
+                from businesses import Business
+                _bdb = _SL()
+                try:
+                    _bc = _bdb.query(Business).filter(Business.player_id == other_id).count()
+                    biz_summary = f"{_bc} business{'es' if _bc != 1 else ''}"
+                finally:
+                    _bdb.close()
+            except Exception:
+                pass
+
+            # Active P2P contracts / market orders count
+            contracts = ""
+            try:
+                from database import SessionLocal as _SL2
+                from p2p import P2POrder
+                _cdb = _SL2()
+                try:
+                    _cc = _cdb.query(P2POrder).filter(
+                        P2POrder.seller_id == other_id,
+                        P2POrder.status == "open",
+                    ).count()
+                    if _cc:
+                        contracts = f"{_cc} open P2P offer{'s' if _cc != 1 else ''}"
+                finally:
+                    _cdb.close()
+            except Exception:
+                pass
+
+            cards.append({
+                "id":          other_id,
+                "name":        name,
+                "level_label": level_label,
+                "net_worth":   net_worth,
+                "cash":        cash,
+                "biz_summary": biz_summary,
+                "contracts":   contracts,
+            })
+        except Exception:
+            continue
+
+    return JSONResponse({"contacts": cards})
+
+
+
 
 @router.get("/api/production-costs")
 async def api_production_costs(

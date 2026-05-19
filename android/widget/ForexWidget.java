@@ -139,17 +139,15 @@ public class ForexWidget extends AppWidgetProvider {
                         String code    = p.optString("code", "");
                         String units   = p.optString("units_str", "");
                         double chPct   = p.optDouble("change_pct", 0);
-                        String spark   = p.optString("sparkline", "");
-                        String chStr   = chPct == 0 ? "" : (chPct > 0 ? "\u2191" : "\u2193")
-                                       + String.format("%.2f%%", Math.abs(chPct));
+                        String chStr   = chPct == 0 ? "  —  "
+                                       : (chPct > 0 ? "\u2191" : "\u2193")
+                                         + String.format("%.2f%%", Math.abs(chPct));
                         // Skip USD row — it's always 1:1
                         if ("USD".equals(code)) {
                             views.setTextViewText(id(ctx, rowIds[i]), "");
                             continue;
                         }
-                        String row = flag + " " + code + "  " + units
-                                   + (chStr.isEmpty() ? "" : "  " + chStr)
-                                   + (spark.isEmpty() ? "" : "  " + spark);
+                        String row = flag + " " + code + "   " + units + "   " + chStr;
                         views.setTextViewText(id(ctx, rowIds[i]), row);
                         views.setTextColor(id(ctx, rowIds[i]),
                                 chPct > 0 ? 0xFF22C55E : (chPct < 0 ? 0xFFEF4444 : 0xFF94A3B8));
