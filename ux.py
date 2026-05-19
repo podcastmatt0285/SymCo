@@ -12587,21 +12587,118 @@ def api_widget_p2p_contacts(device_id: Optional[str] = None,
             except Exception:
                 pass
 
+            # Wealth rank
+            wealth_rank = ""
+            try:
+                from stats_ux import PlayerStats, get_db as _get_sdb
+                _sdb = _get_sdb()
+                try:
+                    _ps = _sdb.query(PlayerStats).filter(PlayerStats.player_id == other_id).first()
+                    if _ps and _ps.wealth_rank:
+                        wealth_rank = f"#{_ps.wealth_rank}"
+                finally:
+                    _sdb.close()
+            except Exception:
+                pass
+
+            # Total debt
+            debt = ""
+            try:
+                from reserve_banks import BankDebt, get_db as _get_rbdb
+                _rbd = _get_rbdb()
+                try:
+                    _debts = _rbd.query(BankDebt).filter(BankDebt.player_id == other_id).all()
+                    _dtotal = sum(d.amount_owed for d in _debts)
+                    if _dtotal:
+                        debt = fmt_usd(_dtotal, _disp, precision=0)
+                finally:
+                    _rbd.close()
+            except Exception:
+                pass
+
             # Business count
             biz_summary = ""
             try:
                 from database import SessionLocal as _SL
-                from businesses import Business
+                from business import Business
                 _bdb = _SL()
                 try:
-                    _bc = _bdb.query(Business).filter(Business.player_id == other_id).count()
-                    biz_summary = f"{_bc} business{'es' if _bc != 1 else ''}"
+                    _bc = _bdb.query(Business).filter(
+                        Business.owner_id == other_id, Business.is_active == True
+                    ).count()
+                    biz_summary = f"{_bc} biz"
                 finally:
                     _bdb.close()
             except Exception:
                 pass
 
-            # Active P2P contracts / market orders count
+            # Land plot count
+            land_count = ""
+            try:
+                from land import LandPlot
+                from database import SessionLocal as _SL3
+                _ldb = _SL3()
+                try:
+                    _lc = _ldb.query(LandPlot).filter(LandPlot.owner_id == other_id).count()
+                    land_count = f"{_lc} plot{'s' if _lc != 1 else ''}"
+                finally:
+                    _ldb.close()
+            except Exception:
+                pass
+
+            # City + County
+            city = ""
+            try:
+                from cities import get_player_city as _gpc
+                _ct = _gpc(other_id)
+                city = _ct.name if _ct else ""
+            except Exception:
+                pass
+
+            county = ""
+            try:
+                from counties import get_player_county as _gpco
+                _co = _gpco(other_id)
+                county = _co.name if _co else ""
+            except Exception:
+                pass
+
+            # Stock positions
+            stock_count = ""
+            try:
+                from banks.brokerage_firm import ShareholderPosition, get_db as _get_fdb
+                _fdb = _get_fdb()
+                try:
+                    _sc = _fdb.query(ShareholderPosition).filter(
+                        ShareholderPosition.player_id == other_id,
+                        ShareholderPosition.shares_owned > 0,
+                    ).count()
+                    if _sc:
+                        stock_count = f"{_sc} stock{'s' if _sc != 1 else ''}"
+                finally:
+                    _fdb.close()
+            except Exception:
+                pass
+
+            # Bond holdings
+            bond_count = ""
+            try:
+                from database import ReserveSessionLocal as _RSL
+                from reserve_banks import ReserveBankBond
+                _bnd_db = _RSL()
+                try:
+                    _bnc = _bnd_db.query(ReserveBankBond).filter(
+                        ReserveBankBond.holder_player_id == other_id,
+                        ReserveBankBond.status == "active",
+                    ).count()
+                    if _bnc:
+                        bond_count = f"{_bnc} bond{'s' if _bnc != 1 else ''}"
+                finally:
+                    _bnd_db.close()
+            except Exception:
+                pass
+
+            # Active P2P offers
             contracts = ""
             try:
                 from database import SessionLocal as _SL2
@@ -12624,8 +12721,15 @@ def api_widget_p2p_contacts(device_id: Optional[str] = None,
                 "name":        name,
                 "level_label": level_label,
                 "net_worth":   net_worth,
+                "wealth_rank": wealth_rank,
                 "cash":        cash,
+                "debt":        debt,
                 "biz_summary": biz_summary,
+                "land_count":  land_count,
+                "city":        city,
+                "county":      county,
+                "stock_count": stock_count,
+                "bond_count":  bond_count,
                 "contracts":   contracts,
             })
         except Exception:

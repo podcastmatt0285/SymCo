@@ -67,7 +67,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginBottom="10dp">
+        android:layout_marginBottom="8dp">
 
         <TextView
             android:id="@+id/widget_p2p_avatar"
@@ -130,7 +130,34 @@
         android:layout_marginBottom="3dp" />
 
     <TextView
+        android:id="@+id/widget_p2p_debt"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#94a3b8"
+        android:textSize="9sp"
+        android:layout_marginBottom="3dp" />
+
+    <TextView
         android:id="@+id/widget_p2p_biz"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#94a3b8"
+        android:textSize="9sp"
+        android:layout_marginBottom="3dp" />
+
+    <TextView
+        android:id="@+id/widget_p2p_city"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#94a3b8"
+        android:textSize="9sp"
+        android:layout_marginBottom="3dp" />
+
+    <TextView
+        android:id="@+id/widget_p2p_stocks"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""

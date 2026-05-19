@@ -111,7 +111,10 @@ public class P2PWidget extends AppWidgetProvider {
         views.setTextViewText(id(ctx, "widget_p2p_level"), "");
         views.setTextViewText(id(ctx, "widget_p2p_networth"), "");
         views.setTextViewText(id(ctx, "widget_p2p_cash"), "");
+        views.setTextViewText(id(ctx, "widget_p2p_debt"), "");
         views.setTextViewText(id(ctx, "widget_p2p_biz"), "");
+        views.setTextViewText(id(ctx, "widget_p2p_city"), "");
+        views.setTextViewText(id(ctx, "widget_p2p_stocks"), "");
         views.setTextViewText(id(ctx, "widget_p2p_contracts"), "");
         mgr.updateAppWidget(widgetId, views);
 
@@ -169,24 +172,67 @@ public class P2PWidget extends AppWidgetProvider {
                     prefs.edit().putInt(KEY_INDEX, idx).apply();
 
                 JSONObject c = contacts.getJSONObject(idx);
-                String name      = c.optString("name", "Unknown");
-                String initials  = name.length() > 0 ? String.valueOf(name.charAt(0)).toUpperCase() : "?";
-                String level     = c.optString("level_label", "");
-                String netWorth  = c.optString("net_worth", "");
-                String cash      = c.optString("cash", "");
-                String biz       = c.optString("biz_summary", "");
-                String contracts = c.optString("contracts", "");
+                String name       = c.optString("name", "Unknown");
+                String initials   = name.length() > 0 ? String.valueOf(name.charAt(0)).toUpperCase() : "?";
+                String level      = c.optString("level_label", "");
+                String netWorth   = c.optString("net_worth", "");
+                String wealthRank = c.optString("wealth_rank", "");
+                String cash       = c.optString("cash", "");
+                String debt       = c.optString("debt", "");
+                String biz        = c.optString("biz_summary", "");
+                String land       = c.optString("land_count", "");
+                String city       = c.optString("city", "");
+                String county     = c.optString("county", "");
+                String stocks     = c.optString("stock_count", "");
+                String bonds      = c.optString("bond_count", "");
+                String contracts  = c.optString("contracts", "");
+
+                // Net worth + rank on one line
+                String nwLine = "";
+                if (!netWorth.isEmpty() && !wealthRank.isEmpty())
+                    nwLine = "💰 " + netWorth + "  ·  Rank " + wealthRank;
+                else if (!netWorth.isEmpty())
+                    nwLine = "💰 " + netWorth;
+
+                // Biz + land on one line
+                String bizLine = "";
+                if (!biz.isEmpty() && !land.isEmpty())
+                    bizLine = "🏭 " + biz + "  ·  🌍 " + land;
+                else if (!biz.isEmpty())
+                    bizLine = "🏭 " + biz;
+                else if (!land.isEmpty())
+                    bizLine = "🌍 " + land;
+
+                // City + county on one line
+                String cityLine = "";
+                if (!city.isEmpty() && !county.isEmpty())
+                    cityLine = "🏙️ " + city + "  ·  🗺️ " + county;
+                else if (!city.isEmpty())
+                    cityLine = "🏙️ " + city;
+                else if (!county.isEmpty())
+                    cityLine = "🗺️ " + county;
+
+                // Stocks + bonds on one line
+                String stockLine = "";
+                if (!stocks.isEmpty() && !bonds.isEmpty())
+                    stockLine = "📈 " + stocks + "  ·  🏦 " + bonds;
+                else if (!stocks.isEmpty())
+                    stockLine = "📈 " + stocks;
+                else if (!bonds.isEmpty())
+                    stockLine = "🏦 " + bonds;
 
                 views.setTextViewText(id(ctx, "widget_p2p_avatar"), initials);
                 views.setTextViewText(id(ctx, "widget_p2p_name"), name);
                 views.setTextViewText(id(ctx, "widget_p2p_page"), (idx + 1) + " / " + total);
                 views.setTextViewText(id(ctx, "widget_p2p_level"), level);
-                views.setTextViewText(id(ctx, "widget_p2p_networth"),
-                        netWorth.isEmpty() ? "" : "💰 Net worth: " + netWorth);
+                views.setTextViewText(id(ctx, "widget_p2p_networth"), nwLine);
                 views.setTextViewText(id(ctx, "widget_p2p_cash"),
-                        cash.isEmpty() ? "" : "💵 Cash:      " + cash);
-                views.setTextViewText(id(ctx, "widget_p2p_biz"),
-                        biz.isEmpty() ? "" : "🏭 " + biz);
+                        cash.isEmpty() ? "" : "💵 Cash: " + cash);
+                views.setTextViewText(id(ctx, "widget_p2p_debt"),
+                        debt.isEmpty() ? "" : "💳 Debt: " + debt);
+                views.setTextViewText(id(ctx, "widget_p2p_biz"), bizLine);
+                views.setTextViewText(id(ctx, "widget_p2p_city"), cityLine);
+                views.setTextViewText(id(ctx, "widget_p2p_stocks"), stockLine);
                 views.setTextViewText(id(ctx, "widget_p2p_contracts"),
                         contracts.isEmpty() ? "" : "📄 " + contracts);
 
