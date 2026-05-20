@@ -160,6 +160,18 @@ def create_order(
         db.close()
         return None
 
+    # 1b. Market shutdown check
+    try:
+        from events import get_active_market_shutdown
+        if get_active_market_shutdown():
+            _push_market(player_id, "Market Closed — Pandemic",
+                         "All markets are temporarily shut down due to a public health emergency. "
+                         "No orders can be placed until the event ends.")
+            db.close()
+            return None
+    except Exception as _e:
+        print(f"[Market] Shutdown check error: {_e}")
+
     # 2. Cash Validation: Prevent buy orders if player is broke
     if order_type == OrderType.BUY:
         from auth import Player

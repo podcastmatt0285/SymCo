@@ -5217,6 +5217,16 @@ def admin_event_start(session_token: Optional[str] = Cookie(None), event_id: int
                 edb.commit()
                 _invalidate_event_cache()
                 edb.refresh(ev)
+                # If this is a market shutdown event, immediately cancel all open orders
+                try:
+                    import json as _ej
+                    _ed = _ej.loads(ev.effect_data or "{}")
+                    if _ed.get("market_shutdown"):
+                        from events import cancel_all_open_market_orders
+                        _n = cancel_all_open_market_orders()
+                        print(f"[Admin] Marketplace Shutdown activated — {_n} orders cancelled")
+                except Exception as _se:
+                    print(f"[Admin] market_shutdown order cancellation error: {_se}")
                 msg = f"'{ev.title}' started — ends {ev.ends_at.strftime('%Y-%m-%d %H:%M UTC') if ev.ends_at else 'never'}."
             else:
                 msg = "Event not found."

@@ -323,6 +323,66 @@ def get_active_market_price_factor() -> float:
     return factor
 
 
+def get_active_market_shutdown() -> bool:
+    """Return True if a Marketplace Shutdown event is currently active."""
+    for eff in get_active_effects():
+        if eff.get("effect_data", {}).get("market_shutdown"):
+            return True
+    return False
+
+
+def cancel_all_open_market_orders() -> int:
+    """Cancel every ACTIVE/PARTIALLY_FILLED order on both commodity and district markets.
+
+    Called once when a market_shutdown event is activated. Returns total orders cancelled.
+    All imports are local to avoid circular imports (market/district_market import events).
+    """
+    cancelled = 0
+
+    # Commodity market
+    try:
+        from market import get_db as _mkt_db, MarketOrder, OrderStatus as _OS
+        mdb = _mkt_db()
+        try:
+            rows = mdb.query(MarketOrder).filter(
+                MarketOrder.status.in_([_OS.ACTIVE, _OS.PARTIALLY_FILLED])
+            ).all()
+            for row in rows:
+                row.status = _OS.CANCELLED
+                cancelled += 1
+            mdb.commit()
+        except Exception as _e:
+            mdb.rollback()
+            print(f"[Events] cancel commodity orders: {_e}")
+        finally:
+            mdb.close()
+    except Exception as _e:
+        print(f"[Events] cancel commodity orders import error: {_e}")
+
+    # District market
+    try:
+        from district_market import get_db as _dmt_db, DistrictMarketOrder, OrderStatus as _DOS
+        ddb = _dmt_db()
+        try:
+            rows = ddb.query(DistrictMarketOrder).filter(
+                DistrictMarketOrder.status.in_([_DOS.ACTIVE, _DOS.PARTIALLY_FILLED])
+            ).all()
+            for row in rows:
+                row.status = _DOS.CANCELLED
+                cancelled += 1
+            ddb.commit()
+        except Exception as _e:
+            ddb.rollback()
+            print(f"[Events] cancel district orders: {_e}")
+        finally:
+            ddb.close()
+    except Exception as _e:
+        print(f"[Events] cancel district orders import error: {_e}")
+
+    print(f"[Events] Marketplace Shutdown: cancelled {cancelled} open orders")
+    return cancelled
+
+
 def get_active_production_factor() -> float:
     """Return combined production output multiplier from active production/city events.
 
@@ -547,6 +607,19 @@ def _rearm_on_startup():
 import json as _json_mod
 
 _DEFAULT_SPECIAL_EVENTS = [
+    {
+        "title":          "Marketplace Shutdown",
+        "description":    (
+            "A rapidly spreading pandemic has forced health authorities to issue an emergency "
+            "order closing all commodity and district markets until further notice. "
+            "All pending buy and sell orders have been cancelled. Markets will reopen "
+            "once the public health emergency is lifted."
+        ),
+        "duration_class": "special",
+        "event_type":     "market",
+        "effect_data":    {"market_shutdown": True},
+        "trophy_reward":  0,
+    },
     {
         "title":          "Crypto Scam",
         "description":    (

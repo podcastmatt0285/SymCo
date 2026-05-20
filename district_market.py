@@ -208,6 +208,18 @@ def create_order(
         db.close()
         return None
 
+    # Market shutdown check
+    try:
+        from events import get_active_market_shutdown
+        if get_active_market_shutdown():
+            _push_district(player_id, "Market Closed — Pandemic",
+                           "All markets are temporarily shut down due to a public health emergency. "
+                           "No orders can be placed until the event ends.")
+            db.close()
+            return None
+    except Exception as _e:
+        print(f"[DistrictMarket] Shutdown check error: {_e}")
+
     # Cash validation for buy orders
     if order_type == OrderType.BUY:
         from auth import Player

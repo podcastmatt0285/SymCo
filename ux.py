@@ -5707,28 +5707,44 @@ def _market_page_impl(session_token: Optional[str] = None, item: str = "apple_se
                 </div>
             </div>'''
 
-        # Active event price-effect banner
+        # Active event banners (shutdown takes priority over price-effect)
         _mkt_event_banner = ""
+        _mkt_shutdown_active = False
         try:
             from events import get_active_effects
-            _mkt_effs = [e for e in get_active_effects() if "price_factor" in e.get("effect_data", {})]
-            if _mkt_effs:
-                _banner_parts = []
-                for _eff in _mkt_effs:
-                    _pf = _eff["effect_data"]["price_factor"]
-                    _dir = "▲" if _pf > 1.0 else "▼"
-                    _pct = abs(_pf - 1.0) * 100
-                    _col = "#fca5a5" if _pf > 1.0 else "#86efac"
-                    _banner_parts.append(
-                        f'<b style="color:{_col};">{_eff["title"]}</b>: prices {_dir} {_pct:.0f}%'
-                    )
+            _all_effs = get_active_effects()
+            _shutdown_effs = [e for e in _all_effs if e.get("effect_data", {}).get("market_shutdown")]
+            if _shutdown_effs:
+                _mkt_shutdown_active = True
                 _mkt_event_banner = (
-                    '<div style="background:#1a1a0a;border:1px solid #92400e;border-radius:6px;'
-                    'padding:10px 14px;margin-bottom:14px;font-size:0.82rem;">'
-                    '<span style="color:#f59e0b;font-weight:700;margin-right:8px;">⚡ Active Market Event</span>'
-                    + " &nbsp;·&nbsp; ".join(_banner_parts)
-                    + "</div>"
+                    '<div style="background:#2a0a0a;border:2px solid #ef4444;border-radius:6px;'
+                    'padding:14px 18px;margin-bottom:14px;text-align:center;">'
+                    '<div style="color:#ef4444;font-weight:700;font-size:1.05rem;">🔴 MARKET CLOSED — PANDEMIC EMERGENCY</div>'
+                    '<div style="color:#fca5a5;font-size:0.85rem;margin-top:6px;">'
+                    'Health authorities have ordered all markets closed. '
+                    'No orders can be placed. All pending orders have been cancelled. '
+                    'Markets will reopen when the emergency is lifted.'
+                    '</div></div>'
                 )
+            else:
+                _mkt_effs = [e for e in _all_effs if "price_factor" in e.get("effect_data", {})]
+                if _mkt_effs:
+                    _banner_parts = []
+                    for _eff in _mkt_effs:
+                        _pf = _eff["effect_data"]["price_factor"]
+                        _dir = "▲" if _pf > 1.0 else "▼"
+                        _pct = abs(_pf - 1.0) * 100
+                        _col = "#fca5a5" if _pf > 1.0 else "#86efac"
+                        _banner_parts.append(
+                            f'<b style="color:{_col};">{_eff["title"]}</b>: prices {_dir} {_pct:.0f}%'
+                        )
+                    _mkt_event_banner = (
+                        '<div style="background:#1a1a0a;border:1px solid #92400e;border-radius:6px;'
+                        'padding:10px 14px;margin-bottom:14px;font-size:0.82rem;">'
+                        '<span style="color:#f59e0b;font-weight:700;margin-right:8px;">⚡ Active Market Event</span>'
+                        + " &nbsp;·&nbsp; ".join(_banner_parts)
+                        + "</div>"
+                    )
         except Exception:
             pass
 
@@ -5762,7 +5778,7 @@ def _market_page_impl(session_token: Optional[str] = None, item: str = "apple_se
                 {search_script}
                 
                 <!-- Order Placement Form -->
-                <div class="card">
+                <div class="card" style="display:{'none' if _mkt_shutdown_active else 'block'}">
                     <h3>Place Limit Order</h3>
                     {f'<div style="background:#2d0a0a;border:1px solid #ef4444;border-radius:4px;padding:10px 14px;color:#fca5a5;font-size:0.85rem;margin-bottom:12px;">⚠ {order_err}</div>' if order_err else ''}
                     <div style="font-size:0.8rem;color:#64748b;margin-bottom:10px;">
