@@ -10,6 +10,10 @@
   },
   "seed": {
     "starting_cash": 6000000,
+    "starting_inventory": {
+      "bees": 500,
+      "queen_bee": 50
+    },
     "land_plots": [
       {
         "terrain_type": "prairie",
@@ -33,7 +37,8 @@
       "district_id": null,
       "active_lines": [
         "pollen",
-        "honey"
+        "honey",
+        "bees"
       ]
     },
     {
@@ -52,8 +57,8 @@
       "market": "regular"
     },
     "queen_bee": {
-      "target_inventory": 100,
-      "reorder_at": 10,
+      "target_inventory": 500,
+      "reorder_at": 50,
       "max_price_multiplier": 1.1,
       "market": "regular"
     },
