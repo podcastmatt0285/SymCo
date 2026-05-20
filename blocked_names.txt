@@ -1,84 +1,261 @@
 # blocked_names.txt
-# One lowercase term per line. Substring-matched after leet-speak normalization.
+# One lowercase term per line.
+# Both stored terms AND input names are normalized before matching:
+#   - lowercase
+#   - leet-speak collapsed: 0->o  1->i  3->e  4->a  5->s  @->a  $->s  !->i  7->t
+#   - spaces, hyphens, underscores, and punctuation stripped
+# So "Wh1te P0wer" and "W H I T E P O W E R" both match "white power".
 # Lines starting with # are ignored.
+#
+# KNOWN TRADE-OFFS:
+#   "trump"  also blocks "Trumpet Industries"  — accepted per platform owner.
+#   "maga"   also blocks names beginning with those 4 letters  — rare in practice.
+#   "fag"    also blocks British usage (cigarette) — accepted.
 
-# ── Racial slurs ──
+
+# ══════════════════════════════════════════
+# RACIAL SLURS — anti-Black
+# ══════════════════════════════════════════
 nigger
 nigga
 niggah
 niggar
 niga
-wigger
-chink
-gook
-spic
-spick
-wetback
-beaner
-zipperhead
-kike
-yid
-hymie
 coon
 jigaboo
 porch monkey
 jungle bunny
 sambo
+darkie
+pickaninny
+tar baby
+spearchucker
+bootlip
+
+
+# ══════════════════════════════════════════
+# RACIAL SLURS — anti-Hispanic
+# ══════════════════════════════════════════
+spic
+spick
+wetback
+beaner
+greaser
+taco nigger
+
+
+# ══════════════════════════════════════════
+# RACIAL SLURS — anti-Asian
+# ══════════════════════════════════════════
+chink
+gook
+jap
+zipperhead
+slope
+slant eye
+ching chong
+rice nigger
+yellow nigger
+
+
+# ══════════════════════════════════════════
+# RACIAL SLURS — anti-South Asian / Middle Eastern
+# ══════════════════════════════════════════
+paki
 raghead
 towelhead
 sandnigger
 camel jockey
+sand monkey
 curry muncher
-paki
-slope
-slant
-cracker
-whitey
-honky
-redneck cracker
+dune coon
+desert nigger
+
+
+# ══════════════════════════════════════════
+# RACIAL SLURS — anti-Indigenous
+# ══════════════════════════════════════════
 redskin
 squaw
 injun
-heeb
-jap
+wagon burner
 
-# ── Homophobic slurs ──
+
+# ══════════════════════════════════════════
+# RACIAL SLURS — anti-Jewish
+# ══════════════════════════════════════════
+kike
+yid
+hymie
+heeb
+sheeny
+jewboy
+christ killer
+oven dodger
+
+
+# ══════════════════════════════════════════
+# RACIAL SLURS — other ethnic
+# ══════════════════════════════════════════
+wop
+dago
+polack
+bohunk
+wigger
+mulatto halfbreed
+
+
+# ══════════════════════════════════════════
+# HOMOPHOBIC / TRANSPHOBIC SLURS
+# ══════════════════════════════════════════
 faggot
 fag
 dyke
 tranny
 shemale
-homo
-queer slur
 batty boy
 poofter
-ponce
-
-# ── Transphobic slurs ──
-tranny
+sodomite
+he she corp
 ladyboy
 
-# ── Antisemitic slurs / hate symbols ──
-1488
-14words
-heil
-sieg heil
-zyklon
-auschwitz corp
-holocaust
-gas the jews
-jew bastard
-jewish slur
 
-# ── General hate / white-supremacist terms ──
-white power
-white supremacy
-kkk
-ku klux
-aryan nation
+# ══════════════════════════════════════════
+# NAZI IDEOLOGY — Third Reich
+# ══════════════════════════════════════════
+heil
 nazi
 nsdap
 third reich
+national socialist
+fuhrer
 master race
-death camp
+aryan supremacy
+aryan brotherhood
+aryan nation
+aryan race
+untermensch
+nordic supremacy
+aryan corp
+
+
+# ══════════════════════════════════════════
+# NAZI IDEOLOGY — Holocaust & extermination
+# ══════════════════════════════════════════
+1488
+14 words
+sieg heil
+heil hitler
+gas the jews
 final solution
+zyklon
+auschwitz
+kristallnacht
+judenrein
+judenfrei
+six million lies
+death camp corp
+holocaust denial
+
+
+# ══════════════════════════════════════════
+# NAZI / WHITE SUPREMACIST OCCULT SYMBOLS
+# (text references to visual symbols)
+# ══════════════════════════════════════════
+totenkopf
+schwarze sonne
+black sun corp
+wolfsangel
+death head corp
+punisher skull
+
+
+# ══════════════════════════════════════════
+# WHITE SUPREMACIST SLOGANS
+# ══════════════════════════════════════════
+white power
+white supremacy
+white pride
+white lives matter
+white genocide
+great replacement
+replacement theory
+blood and soil
+blood honor
+race war now
+day of the rope
+rahowa
+racial holy war
+race traitor corp
+white nationalist
+white nation corp
+white aryan
+
+
+# ══════════════════════════════════════════
+# WHITE SUPREMACIST ORGANISATIONS
+# ══════════════════════════════════════════
+ku klux klan
+kkk
+white aryan resistance
+national vanguard
+national alliance
+american nazi party
+patriot front
+atomwaffen
+stormfront corp
+daily stormer
+proud boys
+national front
+aryan nations
+
+
+# ══════════════════════════════════════════
+# WHITE SUPREMACIST EXTREMIST MOVEMENTS
+# ══════════════════════════════════════════
+boogaloo
+accelerationist
+rwds
+zog corp
+zionist occupied
+judeo bolshevik
+
+
+# ══════════════════════════════════════════
+# NAMED WHITE SUPREMACIST LEADERS / PROPAGANDISTS
+# ══════════════════════════════════════════
+david duke
+richard spencer
+andrew anglin
+nick fuentes
+george lincoln rockwell
+william luther pierce
+tom metzger
+don black
+julius streicher
+heinrich himmler
+joseph goebbels
+josef mengele
+adolf hitler
+ernst roehm
+
+
+# ══════════════════════════════════════════
+# TRUMP / MAGA — toxic political branding in-game
+# (per platform owner decision)
+# NOTE: "trump" also blocks "Trumpet Inc" — trade-off accepted by owner.
+# ══════════════════════════════════════════
+maga
+trump
+make america great again
+
+
+# ══════════════════════════════════════════
+# GENERAL INCITEMENT / HATE PHRASES
+# ══════════════════════════════════════════
+kill all
+death to all
+lynch mob
+gas chamber
+genocide corp
+ethnic cleansing

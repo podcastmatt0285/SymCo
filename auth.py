@@ -319,7 +319,7 @@ def _load_blocked_terms():
     path = _os.path.join(_os.path.dirname(__file__), "blocked_names.txt")
     try:
         with open(path) as f:
-            _BLOCKED_TERMS = {line.strip().lower() for line in f if line.strip() and not line.startswith("#")}
+            _BLOCKED_TERMS = {_normalize_for_filter(line.strip()) for line in f if line.strip() and not line.startswith("#")}
     except FileNotFoundError:
         pass
 
