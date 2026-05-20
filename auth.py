@@ -300,6 +300,45 @@ def transfer_cash(from_player_id: int, to_player_id: int, amount: float) -> bool
     return True
 
 # ==========================
+# BUSINESS NAME FILTER
+# ==========================
+import os as _os, re as _re
+
+def _normalize_for_filter(s: str) -> str:
+    """Lowercase + collapse leet-speak + strip punctuation/spaces for substring matching."""
+    s = s.lower()
+    for src, dst in [("0","o"),("1","i"),("3","e"),("4","a"),("5","s"),("@","a"),("$","s"),("!","i"),("7","t")]:
+        s = s.replace(src, dst)
+    s = _re.sub(r"[\s\-_.,!?'\"*]", "", s)
+    return s
+
+_BLOCKED_TERMS: set = set()
+
+def _load_blocked_terms():
+    global _BLOCKED_TERMS
+    path = _os.path.join(_os.path.dirname(__file__), "blocked_names.txt")
+    try:
+        with open(path) as f:
+            _BLOCKED_TERMS = {line.strip().lower() for line in f if line.strip() and not line.startswith("#")}
+    except FileNotFoundError:
+        pass
+
+_load_blocked_terms()
+
+def validate_business_name(name: str):
+    """Returns None if acceptable, or an error string if not."""
+    stripped = name.strip()
+    if len(stripped) < 2:
+        return "Business name must be at least 2 characters"
+    if len(stripped) > 40:
+        return "Business name must be 40 characters or fewer"
+    normalized = _normalize_for_filter(stripped)
+    for term in _BLOCKED_TERMS:
+        if term in normalized:
+            return "Business name contains prohibited content"
+    return None
+
+# ==========================
 # AUTHENTICATION LOGIC
 # ==========================
 def create_player(db: Session, business_name: str, password: str,
@@ -1108,6 +1147,16 @@ async def register(
         return RedirectResponse(
             url="/login?error=Password%20must%20be%20at%20least%208%20characters",
             status_code=303
+        )
+
+    # Business name content filter
+    import urllib.parse as _up
+    name_error = validate_business_name(business_name)
+    if name_error:
+        db.close()
+        return RedirectResponse(
+            url=f"/login?error={_up.quote(name_error)}",
+            status_code=303,
         )
 
     # Resolve the client IP, honouring a reverse-proxy X-Forwarded-For header.

@@ -1,0 +1,84 @@
+# blocked_names.txt
+# One lowercase term per line. Substring-matched after leet-speak normalization.
+# Lines starting with # are ignored.
+
+# ── Racial slurs ──
+nigger
+nigga
+niggah
+niggar
+niga
+wigger
+chink
+gook
+spic
+spick
+wetback
+beaner
+zipperhead
+kike
+yid
+hymie
+coon
+jigaboo
+porch monkey
+jungle bunny
+sambo
+raghead
+towelhead
+sandnigger
+camel jockey
+curry muncher
+paki
+slope
+slant
+cracker
+whitey
+honky
+redneck cracker
+redskin
+squaw
+injun
+heeb
+jap
+
+# ── Homophobic slurs ──
+faggot
+fag
+dyke
+tranny
+shemale
+homo
+queer slur
+batty boy
+poofter
+ponce
+
+# ── Transphobic slurs ──
+tranny
+ladyboy
+
+# ── Antisemitic slurs / hate symbols ──
+1488
+14words
+heil
+sieg heil
+zyklon
+auschwitz corp
+holocaust
+gas the jews
+jew bastard
+jewish slur
+
+# ── General hate / white-supremacist terms ──
+white power
+white supremacy
+kkk
+ku klux
+aryan nation
+nazi
+nsdap
+third reich
+master race
+death camp
+final solution
