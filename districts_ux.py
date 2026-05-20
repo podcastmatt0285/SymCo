@@ -1004,12 +1004,35 @@ def district_market_page(session_token: Optional[str] = Cookie(None), item: str 
         item_desc = item_info.get("description", "") if item_info else ""
         item_cat = item_info.get("category", "other") if item_info else "other"
         
+        # Shutdown / event banner
+        _dmt_event_banner = ""
+        _dmt_shutdown_active = False
+        try:
+            from events import get_active_effects as _gae
+            _all_effs = _gae()
+            _sd_effs = [e for e in _all_effs if e.get("effect_data", {}).get("market_shutdown")]
+            if _sd_effs:
+                _dmt_shutdown_active = True
+                _dmt_event_banner = (
+                    '<div style="background:#2a0a0a;border:2px solid #ef4444;border-radius:6px;'
+                    'padding:14px 18px;margin-bottom:14px;text-align:center;">'
+                    '<div style="color:#ef4444;font-weight:700;font-size:1.05rem;">🔴 MARKET CLOSED — PANDEMIC EMERGENCY</div>'
+                    '<div style="color:#fca5a5;font-size:0.85rem;margin-top:6px;">'
+                    'Health authorities have ordered all markets closed. '
+                    'No orders can be placed. All pending orders have been cancelled. '
+                    'Markets will reopen when the emergency is lifted.'
+                    '</div></div>'
+                )
+        except Exception:
+            pass
+
         # Build market HTML
         market_html = f'''
         <a href="/districts" style="color: #38bdf8;"><- Districts Dashboard</a>
         <div style="display: flex; gap: 20px; max-width: 100%;">
             <div style="flex: 2; min-width: 0;">
                 <h1>📈 District Market</h1>
+                {_dmt_event_banner}
                 <div style="margin-bottom: 16px; padding: 12px; background: #0f172a; border-left: 4px solid {cat_colors.get(item_cat, "#64748b")};">
                     <div style="font-size: 1.2rem; font-weight: bold; color: #38bdf8;">{item_name}</div>
                     <div style="color: #64748b; font-size: 0.85rem; margin-top: 4px;">{item_desc}</div>
@@ -1021,7 +1044,7 @@ def district_market_page(session_token: Optional[str] = Cookie(None), item: str 
                 {search_script}
                 
                 <!-- Order Placement Form -->
-                <div class="card">
+                <div class="card" style="display:{'none' if _dmt_shutdown_active else 'block'}">
                     <h3>Place Limit Order</h3>
                     <form action="/api/district-market/order" method="post" style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px;">
                         <input type="hidden" name="item_type" value="{item}">

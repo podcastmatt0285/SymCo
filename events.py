@@ -337,7 +337,13 @@ def cancel_all_open_market_orders() -> int:
     Called once when a market_shutdown event is activated. Returns total orders cancelled.
     All imports are local to avoid circular imports (market/district_market import events).
     """
+    import collections as _col
+    import threading as _thr
     cancelled = 0
+    _mkt_by_player: dict = {}
+    _mkt_order_info: list = []
+    _dmt_by_player: dict = {}
+    _dmt_order_info: list = []
 
     # Commodity market
     try:
@@ -347,13 +353,20 @@ def cancel_all_open_market_orders() -> int:
             rows = mdb.query(MarketOrder).filter(
                 MarketOrder.status.in_([_OS.ACTIVE, _OS.PARTIALLY_FILLED])
             ).all()
+            _mkt_by_player = _col.defaultdict(int)
+            _mkt_order_info = [
+                (r.id, r.player_id, r.order_type, r.item_type, r.quantity) for r in rows
+            ]
             for row in rows:
                 row.status = _OS.CANCELLED
+                _mkt_by_player[row.player_id] += 1
                 cancelled += 1
             mdb.commit()
         except Exception as _e:
             mdb.rollback()
             print(f"[Events] cancel commodity orders: {_e}")
+            _mkt_by_player = {}
+            _mkt_order_info = []
         finally:
             mdb.close()
     except Exception as _e:
@@ -367,18 +380,77 @@ def cancel_all_open_market_orders() -> int:
             rows = ddb.query(DistrictMarketOrder).filter(
                 DistrictMarketOrder.status.in_([_DOS.ACTIVE, _DOS.PARTIALLY_FILLED])
             ).all()
+            _dmt_by_player = _col.defaultdict(int)
+            _dmt_order_info = [
+                (r.id, r.player_id, r.order_type, r.item_type, r.quantity) for r in rows
+            ]
             for row in rows:
                 row.status = _DOS.CANCELLED
+                _dmt_by_player[row.player_id] += 1
                 cancelled += 1
             ddb.commit()
         except Exception as _e:
             ddb.rollback()
             print(f"[Events] cancel district orders: {_e}")
+            _dmt_by_player = {}
+            _dmt_order_info = []
         finally:
             ddb.close()
     except Exception as _e:
         print(f"[Events] cancel district orders import error: {_e}")
 
+    # Notify affected players + log ledger entries in background (non-blocking)
+    def _notify_and_log():
+        try:
+            from push_ux import send_push_notification as _push
+            from stats_ux import log_transaction as _log_tx
+        except Exception as _ie:
+            print(f"[Events] shutdown notify imports failed: {_ie}")
+            return
+
+        for pid, count in _mkt_by_player.items():
+            try:
+                _s = "s" if count != 1 else ""
+                _push(pid, "Pandemic — Market Closed",
+                      f"Your {count} commodity market order{_s} "
+                      f"{'were' if count != 1 else 'was'} cancelled due to the emergency closure.",
+                      url="/market", notif_type="trades",
+                      tag=f"shutdown-mkt-{pid}")
+            except Exception as _e:
+                print(f"[Events] shutdown push error (player {pid}): {_e}")
+
+        for pid, count in _dmt_by_player.items():
+            try:
+                _s = "s" if count != 1 else ""
+                _push(pid, "Pandemic — Market Closed",
+                      f"Your {count} district market order{_s} "
+                      f"{'were' if count != 1 else 'was'} cancelled due to the emergency closure.",
+                      url="/district-market", notif_type="trades",
+                      tag=f"shutdown-dmt-{pid}")
+            except Exception as _e:
+                print(f"[Events] shutdown push error district (player {pid}): {_e}")
+
+        for oid, pid, otype, itype, qty in _mkt_order_info:
+            try:
+                _log_tx(pid, "order_cancelled",
+                        "money" if otype == "buy" else "resource",
+                        0.0,
+                        description=f"Pandemic shutdown: {otype} order cancelled",
+                        reference_id=str(oid), item_type=itype, quantity=qty)
+            except Exception as _e:
+                print(f"[Events] log_tx error order {oid}: {_e}")
+
+        for oid, pid, otype, itype, qty in _dmt_order_info:
+            try:
+                _log_tx(pid, "order_cancelled",
+                        "money" if otype == "buy" else "resource",
+                        0.0,
+                        description=f"Pandemic shutdown: district {otype} order cancelled",
+                        reference_id=str(oid), item_type=itype, quantity=qty)
+            except Exception as _e:
+                print(f"[Events] log_tx error district order {oid}: {_e}")
+
+    _thr.Thread(target=_notify_and_log, daemon=True).start()
     print(f"[Events] Marketplace Shutdown: cancelled {cancelled} open orders")
     return cancelled
 

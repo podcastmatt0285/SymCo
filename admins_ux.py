@@ -491,6 +491,13 @@ def admin_dashboard(session_token: Optional[str] = Cookie(None)):
 
     econ = get_economy_stats()
 
+    _admin_market_closed = False
+    try:
+        from events import get_active_market_shutdown as _gams
+        _admin_market_closed = _gams()
+    except Exception:
+        pass
+
     logs = get_admin_logs(limit=15)
     log_rows = ""
     for log in logs:
@@ -536,6 +543,7 @@ def admin_dashboard(session_token: Optional[str] = Cookie(None)):
             <div class="stat-box"><div class="stat-value" style="color:#22c55e;font-size:1rem;">{fmt_usd(total_cash, disp, precision=0)}</div><div class="stat-label">Cash in Economy</div></div>
             <div class="stat-box"><div class="stat-value" style="color:#38bdf8;font-size:1rem;">{fmt_usd(econ["market_volume_24h"], disp, precision=0)}</div><div class="stat-label">Market Volume 24h</div></div>
             <div class="stat-box"><div class="stat-value" style="font-size:1rem;">{econ["active_orders"]:,}</div><div class="stat-label">Open Orders</div></div>
+            {'<div class="stat-box" style="border:1px solid #ef4444;"><div class="stat-value" style="color:#ef4444;font-size:0.85rem;font-weight:700;">🔴 CLOSED</div><div class="stat-label">Markets</div></div>' if _admin_market_closed else ''}
             <div class="stat-box"><div class="stat-value" style="color:#a78bfa;font-size:1rem;">{econ["active_businesses"]:,}</div><div class="stat-label">Active Businesses</div></div>
             <div class="stat-box"><div class="stat-value" style="color:#f59e0b;font-size:1rem;">{econ["total_items"]:,}</div><div class="stat-label">Items in Circulation</div></div>
         </div>

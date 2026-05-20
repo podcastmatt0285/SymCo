@@ -166,9 +166,10 @@ public class P2PWidget extends AppWidgetProvider {
                 String line;
                 while ((line = reader.readLine()) != null) sb.append(line);
 
-                JSONObject data     = new JSONObject(sb.toString());
-                JSONArray  contacts = data.optJSONArray("contacts");
-                int        total    = contacts != null ? contacts.length() : 0;
+                JSONObject data        = new JSONObject(sb.toString());
+                JSONArray  contacts    = data.optJSONArray("contacts");
+                boolean    mktClosed   = data.optBoolean("market_closed", false);
+                int        total       = contacts != null ? contacts.length() : 0;
 
                 if (total == 0) {
                     views.setTextViewText(id(ctx, "widget_p2p_name"), "No contacts yet");
@@ -313,8 +314,12 @@ public class P2PWidget extends AppWidgetProvider {
 
                 // Orders + P2P + contacts
                 StringBuilder ordSb = new StringBuilder();
-                if (comOrders > 0)  ordSb.append("📋 ").append(comOrders).append(" orders");
-                if (distOrders > 0) { if (ordSb.length()>0) ordSb.append("  ·  "); ordSb.append("🏗️ ").append(distOrders); }
+                if (mktClosed) {
+                    ordSb.append("⛔ MARKET CLOSED — PANDEMIC");
+                } else {
+                    if (comOrders > 0)  ordSb.append("📋 ").append(comOrders).append(" orders");
+                    if (distOrders > 0) { if (ordSb.length()>0) ordSb.append("  ·  "); ordSb.append("🏗️ ").append(distOrders); }
+                }
                 if (p2pOffers > 0)  { if (ordSb.length()>0) ordSb.append("  ·  "); ordSb.append("📄 ").append(p2pOffers).append(" P2P"); }
                 if (contacts2 > 0)  { if (ordSb.length()>0) ordSb.append("  ·  "); ordSb.append("🤝 ").append(contacts2); }
                 views.setTextViewText(id(ctx, "widget_p2p_orders"), ordSb.toString());

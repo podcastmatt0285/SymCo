@@ -12975,6 +12975,13 @@ def api_widget_data(request: Request, session_token: Optional[str] = Cookie(None
     except Exception as _e:
         print(f"[widget/data] error: {_e}")
 
+    # Market shutdown flag for Android widget
+    try:
+        from events import get_active_market_shutdown as _gams
+        result["market_closed"] = _gams()
+    except Exception:
+        result["market_closed"] = False
+
     # Land restoration status for Android widget
     try:
         from land_restoration import get_active_restoration as _get_ar
@@ -13604,7 +13611,13 @@ def api_widget_p2p_contacts(device_id: Optional[str] = None,
         except Exception:
             continue
 
-    return JSONResponse({"contacts": cards})
+    _p2p_market_closed = False
+    try:
+        from events import get_active_market_shutdown as _gams2
+        _p2p_market_closed = _gams2()
+    except Exception:
+        pass
+    return JSONResponse({"contacts": cards, "market_closed": _p2p_market_closed})
 
 
 
