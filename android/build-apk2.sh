@@ -19,8 +19,8 @@ set -e
 DOMAIN="wadsworth.notifly.cc"
 APP_NAME="Wadsworth"
 PACKAGE="cc.notifly.wadsworth"           # ← change if yours differs
-VERSION_CODE=22
-VERSION_NAME="1.22"
+VERSION_CODE=23
+VERSION_NAME="2.01"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 WIDGET_DIR="${SCRIPT_DIR}/widget"
