@@ -1791,8 +1791,8 @@ async def chat_websocket(websocket: WebSocket):
                             "message": "Message not sent — prohibited content.",
                         })
                         continue
-                except Exception:
-                    pass
+                except Exception as _fe:
+                    print(f"[Chat] Content filter error (player {player_id}): {_fe}")
 
                 saved = save_message(room_id, player_id, player_name, content)
                 if saved:

@@ -4839,9 +4839,12 @@ def _process_annuity_payments(current_tick: int):
             pmt_cache[c.id] = (net_pmt, tax)
 
             if not firm_deduct_cash(pmt, "annuity_payment", f"Annuity payment to player {c.player_id}"):
-                # Firm reserves too low — skip this payment, retry next tick
+                # Firm reserves too low — defer to next normal payment interval.
+                # Must update next_payment_tick or this contract retries every tick.
                 pmt_cache[c.id] = (0.0, 0.0)
-                print(f"[Brokerage] Insufficient reserves for annuity payment on contract {c.id} — deferred")
+                freq = c.payment_frequency or "monthly"
+                c.next_payment_tick = current_tick + ANNUITY_PAYMENT_TICKS.get(freq, 518_400)
+                print(f"[Brokerage] Insufficient reserves for annuity payment on contract {c.id} — deferred to tick {c.next_payment_tick}")
                 continue
             credit_usd(c.player_id, net_pmt)
             if tax > 0:
@@ -4896,7 +4899,7 @@ def _process_annuity_payments(current_tick: int):
 
             if c.status == "completed":
                 _lt(c.player_id, "annuity_maturity", "money", 0.0,
-                    description=f"Annuity #{c.id} matured — all {c.total_payments} payments complete, "
+                    description=f"Annuity #{c.id} matured — all {c.total_payments or '?'} payments complete, "
                                 f"${(c.total_paid_out or 0.0):,.2f} total received",
                     reference_id=str(c.id))
                 try:

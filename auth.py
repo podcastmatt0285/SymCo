@@ -305,34 +305,77 @@ def transfer_cash(from_player_id: int, to_player_id: int, amount: float) -> bool
 import os as _os, re as _re, unicodedata as _ud
 
 # Homoglyph characters that survive NFKD decomposition but look like ASCII letters.
-# Covers the most common Unicode bypass attempts (Cyrillic lookalikes, IPA letters, etc.).
+# Covers common Unicode bypass attempts: Cyrillic, IPA, Greek, Armenian confusables.
 _HOMOGLYPHS = str.maketrans({
+    # ── Cyrillic lowercase (most common bypass chars) ──
     "а": "a",  # а Cyrillic a
-    "Ӑ": "a",  # А Cyrillic a with breve
     "е": "e",  # е Cyrillic ie
     "ё": "e",  # ё Cyrillic io
+    "з": "e",  # з Cyrillic ze (looks like 3; map directly to e, skipping leet step)
     "і": "i",  # і Cyrillic byelorussian i
-    "ı": "i",  # ı Latin dotless i
-    "ɪ": "i",  # ɪ Latin small capital I
     "о": "o",  # о Cyrillic o
-    "р": "p",  # р Cyrillic er (looks like p)
+    "р": "p",  # р Cyrillic er
     "с": "c",  # с Cyrillic es
+    "у": "y",  # у Cyrillic u
     "х": "x",  # х Cyrillic ha
-    "у": "y",  # у Cyrillic u (looks like y)
-    "ɡ": "g",  # ɡ Latin script g (IPA)
-    "ɢ": "g",  # ɢ Latin small capital G
-    "ɡ": "g",  # ɡ duplicate safety
-    "ո": "u",  # ո Armenian vo
-    "һ": "h",  # ħ Cyrillic shha
-    "ј": "j",  # ј Cyrillic je
+    "г": "g",  # г Cyrillic ge
+    "д": "d",  # д Cyrillic de
+    "м": "m",  # м Cyrillic em
+    "в": "b",  # в Cyrillic ve (looks like b)
+    "ф": "f",  # ф Cyrillic ef
+    "ш": "w",  # ш Cyrillic sha
+    "ю": "u",  # ю Cyrillic yu
+    "я": "a",  # я Cyrillic ya (looks like backwards R, closest to a)
+    "ь": "b",  # ь Cyrillic soft sign
+    "ъ": "b",  # ъ Cyrillic hard sign
+    "н": "h",  # н Cyrillic en (looks like h)
+    "ц": "c",  # ц Cyrillic tse
+    "п": "n",  # п Cyrillic pe (looks like n)
     "ѕ": "s",  # ѕ Cyrillic dze
-    "з": "3",  # з Cyrillic ze (looks like 3, then leet->e)
+    "ј": "j",  # ј Cyrillic je
+    "һ": "h",  # һ Cyrillic shha
+    # ── Cyrillic uppercase ──
+    "А": "a",  # А Cyrillic capital A
+    "Е": "e",  # Е Cyrillic capital IE
+    "О": "o",  # О Cyrillic capital O
+    "Р": "p",  # Р Cyrillic capital ER
+    "С": "c",  # С Cyrillic capital ES
+    "Х": "x",  # Х Cyrillic capital HA
+    "В": "b",  # В Cyrillic capital VE
+    "М": "m",  # М Cyrillic capital EM
+    "Н": "h",  # Н Cyrillic capital EN
+    # ── Greek lowercase ──
+    "α": "a",  # α alpha
+    "β": "b",  # β beta
+    "γ": "g",  # γ gamma
+    "δ": "d",  # δ delta
+    "ε": "e",  # ε epsilon
+    "θ": "o",  # θ theta (closest visual to o)
+    "ι": "i",  # ι iota
+    "μ": "u",  # μ mu
+    "ν": "v",  # ν nu
+    "ο": "o",  # ο omicron
+    "ρ": "p",  # ρ rho
+    "σ": "o",  # σ sigma (visual similarity to o)
+    "τ": "t",  # τ tau
+    "υ": "u",  # υ upsilon
+    "ω": "w",  # ω omega
+    # ── Greek uppercase ──
+    "Α": "a",  # Α capital alpha
+    "Β": "b",  # Β capital beta
+    "Ε": "e",  # Ε capital epsilon
+    "Ι": "i",  # Ι capital iota
+    "Ο": "o",  # Ο capital omicron
+    "Ρ": "p",  # Ρ capital rho
+    "Τ": "t",  # Τ capital tau
+    # ── IPA / Latin extensions ──
+    "ɡ": "g",  # ɡ Latin script g (U+0261)
+    "ɢ": "g",  # ɢ Latin small capital G
+    "ɪ": "i",  # ɪ Latin small capital I
+    "ı": "i",  # ı Latin dotless i
+    # ── Armenian ──
+    "ո": "u",  # ո Armenian vo
     "չ": "c",  # չ Armenian cha
-    "ο": "o",  # ο Greek omicron
-    "α": "a",  # α Greek alpha
-    "ε": "e",  # ε Greek epsilon
-    "ρ": "p",  # ρ Greek rho
-    "ν": "v",  # ν Greek nu
 })
 
 def _normalize_for_filter(s: str) -> str:
@@ -356,17 +399,36 @@ def _normalize_for_filter(s: str) -> str:
 
 _BLOCKED_TERMS: set = set()
 
+_BLOCKED_TERMS: set = set()
+# Terms long enough for a safe reverse-string check (≥5 chars).
+# Short terms like "wop" (3 chars) are excluded because their reverse appears in
+# legitimate words — e.g. "wop" reversed is "pow", which is a substring of "power".
+_BLOCKED_TERMS_LONG: set = set()
+
 def _load_blocked_terms():
-    global _BLOCKED_TERMS
+    global _BLOCKED_TERMS, _BLOCKED_TERMS_LONG
     path = _os.path.join(_os.path.dirname(__file__), "blocked_names.txt")
     try:
         with open(path) as f:
-            _BLOCKED_TERMS = {_normalize_for_filter(line.strip()) for line in f if line.strip() and not line.startswith("#")}
-        _BLOCKED_TERMS.discard("")
+            raw = {_normalize_for_filter(line.strip()) for line in f if line.strip() and not line.startswith("#")}
+        raw.discard("")
+        _BLOCKED_TERMS = raw
+        _BLOCKED_TERMS_LONG = {t for t in raw if len(t) >= 5}
     except FileNotFoundError:
-        pass
+        print("[Auth] WARNING: blocked_names.txt not found — content filtering disabled!")
 
 _load_blocked_terms()
+
+def _contains_slur(normalized: str) -> bool:
+    """Substring check (forward) + reverse check only for long terms."""
+    rev = normalized[::-1]
+    for term in _BLOCKED_TERMS:
+        if term in normalized:
+            return True
+    for term in _BLOCKED_TERMS_LONG:
+        if term in rev:
+            return True
+    return False
 
 def validate_business_name(name: str):
     """Returns None if acceptable, or an error string if not."""
@@ -375,18 +437,13 @@ def validate_business_name(name: str):
         return "Business name must be at least 2 characters"
     if len(stripped) > 40:
         return "Business name must be 40 characters or fewer"
-    normalized = _normalize_for_filter(stripped)
-    rev = normalized[::-1]          # catches backwards-spelled slurs (reggin, reltih, etc.)
-    for term in _BLOCKED_TERMS:
-        if term in normalized or term in rev:
-            return "Business name contains prohibited content"
+    if _contains_slur(_normalize_for_filter(stripped)):
+        return "Business name contains prohibited content"
     return None
 
 def contains_prohibited_content(text: str) -> bool:
     """Returns True if text contains any blocked term (for chat/DM filtering)."""
-    normalized = _normalize_for_filter(text)
-    rev = normalized[::-1]
-    return any(term and (term in normalized or term in rev) for term in _BLOCKED_TERMS)
+    return _contains_slur(_normalize_for_filter(text))
 
 # ==========================
 # AUTHENTICATION LOGIC

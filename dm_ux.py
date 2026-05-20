@@ -2071,8 +2071,8 @@ async def api_dm_reply(
         from auth import contains_prohibited_content
         if contains_prohibited_content(content):
             return JSONResponse({"error": "prohibited content"}, status_code=400)
-    except Exception:
-        pass
+    except Exception as _fe:
+        print(f"[DM/reply] Content filter error: {_fe}")
 
     try:
         conv    = get_or_create_conversation(player.id, other_id)
@@ -2526,8 +2526,8 @@ async def dm_websocket(websocket: WebSocket):
                             "message": "Message not sent — prohibited content.",
                         })
                         continue
-                except Exception:
-                    pass
+                except Exception as _fe:
+                    print(f"[DM] Content filter error (player {player_id}): {_fe}")
 
                 if conv_id.startswith("grp_"):
                     participant_ids = get_group_participant_ids(conv_id)
