@@ -1782,6 +1782,18 @@ async def chat_websocket(websocket: WebSocket):
                 except ImportError:
                     pass
 
+                # Hate-speech / slur filter
+                try:
+                    from auth import contains_prohibited_content
+                    if contains_prohibited_content(content):
+                        await manager.send_to_user(player_id, {
+                            "type": "error",
+                            "message": "Message not sent — prohibited content.",
+                        })
+                        continue
+                except Exception:
+                    pass
+
                 saved = save_message(room_id, player_id, player_name, content)
                 if saved:
                     saved["type"] = "message"

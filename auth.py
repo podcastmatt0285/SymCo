@@ -382,6 +382,12 @@ def validate_business_name(name: str):
             return "Business name contains prohibited content"
     return None
 
+def contains_prohibited_content(text: str) -> bool:
+    """Returns True if text contains any blocked term (for chat/DM filtering)."""
+    normalized = _normalize_for_filter(text)
+    rev = normalized[::-1]
+    return any(term and (term in normalized or term in rev) for term in _BLOCKED_TERMS)
+
 # ==========================
 # AUTHENTICATION LOGIC
 # ==========================

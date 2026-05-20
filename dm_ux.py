@@ -2068,6 +2068,13 @@ async def api_dm_reply(
         return JSONResponse({"error": "empty message"}, status_code=400)
 
     try:
+        from auth import contains_prohibited_content
+        if contains_prohibited_content(content):
+            return JSONResponse({"error": "prohibited content"}, status_code=400)
+    except Exception:
+        pass
+
+    try:
         conv    = get_or_create_conversation(player.id, other_id)
         conv_id = conv["id"]
         player_name = get_player_name(player.id)
@@ -2509,6 +2516,18 @@ async def dm_websocket(websocket: WebSocket):
                 content = data.get("content", "").strip()
                 if not conv_id or not content or len(content) > MAX_DM_LENGTH:
                     continue
+
+                # Hate-speech / slur filter
+                try:
+                    from auth import contains_prohibited_content
+                    if contains_prohibited_content(content):
+                        await dm_manager.send_to_user(player_id, {
+                            "type": "error",
+                            "message": "Message not sent — prohibited content.",
+                        })
+                        continue
+                except Exception:
+                    pass
 
                 if conv_id.startswith("grp_"):
                     participant_ids = get_group_participant_ids(conv_id)
