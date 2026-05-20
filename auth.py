@@ -302,14 +302,56 @@ def transfer_cash(from_player_id: int, to_player_id: int, amount: float) -> bool
 # ==========================
 # BUSINESS NAME FILTER
 # ==========================
-import os as _os, re as _re
+import os as _os, re as _re, unicodedata as _ud
+
+# Homoglyph characters that survive NFKD decomposition but look like ASCII letters.
+# Covers the most common Unicode bypass attempts (Cyrillic lookalikes, IPA letters, etc.).
+_HOMOGLYPHS = str.maketrans({
+    "а": "a",  # а Cyrillic a
+    "Ӑ": "a",  # А Cyrillic a with breve
+    "е": "e",  # е Cyrillic ie
+    "ё": "e",  # ё Cyrillic io
+    "і": "i",  # і Cyrillic byelorussian i
+    "ı": "i",  # ı Latin dotless i
+    "ɪ": "i",  # ɪ Latin small capital I
+    "о": "o",  # о Cyrillic o
+    "р": "p",  # р Cyrillic er (looks like p)
+    "с": "c",  # с Cyrillic es
+    "х": "x",  # х Cyrillic ha
+    "у": "y",  # у Cyrillic u (looks like y)
+    "ɡ": "g",  # ɡ Latin script g (IPA)
+    "ɢ": "g",  # ɢ Latin small capital G
+    "ɡ": "g",  # ɡ duplicate safety
+    "ո": "u",  # ո Armenian vo
+    "һ": "h",  # ħ Cyrillic shha
+    "ј": "j",  # ј Cyrillic je
+    "ѕ": "s",  # ѕ Cyrillic dze
+    "з": "3",  # з Cyrillic ze (looks like 3, then leet->e)
+    "չ": "c",  # չ Armenian cha
+    "ο": "o",  # ο Greek omicron
+    "α": "a",  # α Greek alpha
+    "ε": "e",  # ε Greek epsilon
+    "ρ": "p",  # ρ Greek rho
+    "ν": "v",  # ν Greek nu
+})
 
 def _normalize_for_filter(s: str) -> str:
-    """Lowercase + collapse leet-speak + strip punctuation/spaces for substring matching."""
+    """
+    Normalize for blocklist substring matching:
+      1. Explicit homoglyph map for chars that survive NFKD (Cyrillic, IPA, Greek confusables)
+      2. Unicode NFKD decomposition — turns fullwidth chars and accented letters into ASCII
+      3. Strip diacritics and any remaining non-ASCII
+      4. Lowercase
+      5. Leet-speak collapse: 0->o 1->i 3->e 4->a 5->s @->a $->s !->i 7->t
+      6. Strip all punctuation, spaces, separators
+    """
+    s = s.translate(_HOMOGLYPHS)
+    s = _ud.normalize("NFKD", s)
+    s = s.encode("ascii", errors="ignore").decode("ascii")
     s = s.lower()
     for src, dst in [("0","o"),("1","i"),("3","e"),("4","a"),("5","s"),("@","a"),("$","s"),("!","i"),("7","t")]:
         s = s.replace(src, dst)
-    s = _re.sub(r"[\s\-_.,!?'\"*]", "", s)
+    s = _re.sub(r"[\s\-_.,!?'\"*/\\|+=#%^&(){}\[\]<>~`]", "", s)
     return s
 
 _BLOCKED_TERMS: set = set()
@@ -320,6 +362,7 @@ def _load_blocked_terms():
     try:
         with open(path) as f:
             _BLOCKED_TERMS = {_normalize_for_filter(line.strip()) for line in f if line.strip() and not line.startswith("#")}
+        _BLOCKED_TERMS.discard("")
     except FileNotFoundError:
         pass
 
@@ -333,8 +376,9 @@ def validate_business_name(name: str):
     if len(stripped) > 40:
         return "Business name must be 40 characters or fewer"
     normalized = _normalize_for_filter(stripped)
+    rev = normalized[::-1]          # catches backwards-spelled slurs (reggin, reltih, etc.)
     for term in _BLOCKED_TERMS:
-        if term in normalized:
+        if term in normalized or term in rev:
             return "Business name contains prohibited content"
     return None
 

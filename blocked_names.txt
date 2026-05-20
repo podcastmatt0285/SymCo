@@ -223,7 +223,9 @@ judeo bolshevik
 
 # ══════════════════════════════════════════
 # NAMED WHITE SUPREMACIST LEADERS / PROPAGANDISTS
+# Full names AND unambiguous bare surnames so leet variants (H1tl3r) are caught.
 # ══════════════════════════════════════════
+# Full names
 david duke
 richard spencer
 andrew anglin
@@ -238,6 +240,17 @@ joseph goebbels
 josef mengele
 adolf hitler
 ernst roehm
+# Bare unambiguous surnames (no legitimate business use)
+hitler
+himmler
+goebbels
+mengele
+streicher
+eichmann
+roehm
+heydrich
+bormann
+goering
 
 
 # ══════════════════════════════════════════
