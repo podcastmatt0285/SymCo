@@ -3600,6 +3600,8 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
             paused_line_idxs = set(_json.loads(biz.paused_lines or "[]"))
             paused_prod_keys = set(_json.loads(biz.paused_products or "[]"))
 
+            _wage_est_note = "" if is_tut_reward else " <span title=\"Actual charge may vary with city wage buffs\" style=\"cursor:help;\">(est.)</span>"
+
             if not is_tut_reward:
                 _bw   = config.get("base_wage_cost", 0)
                 _eff  = max(0.005, min(1.0, plot.efficiency / 100.0)) if plot else 1.0
@@ -3731,7 +3733,7 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
                             <span id="status-badge-{biz.id}" class="badge" style="background:{status_color};color:#020617;">{status_label}</span>
                             <span class="badge" style="background:{class_color};color:#020617;">{biz_class.upper()}</span>
                         </div>
-                        <div style="font-size:0.75rem;color:#64748b;margin-top:3px;">{plot_info} · ID #{biz.id} · Start {fmt_usd(startup_cost, disp)} · Wage {fmt_usd(wage_cost, disp)}/cycle</div>
+                        <div style="font-size:0.75rem;color:#64748b;margin-top:3px;">{plot_info} · ID #{biz.id} · Start {fmt_usd(startup_cost, disp)} · Wage {fmt_usd(wage_cost, disp)}/cycle{_wage_est_note}</div>
                     </div>
                     <div class="biz-actions">
                         {stock_btn_html}
@@ -4792,7 +4794,7 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
 
                 land_html += f'''
                 <div class="card" style="border-left: 4px solid {terrain_color}; margin-bottom: 12px;">
-                    <div class="land-card-row" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+                    <div class="land-card-row" style="display: flex; justify-content: flex-start; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
                         {_tile_html}
                         <div class="land-card-main" style="flex: 1; min-width: 250px;">
                             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">

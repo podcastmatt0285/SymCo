@@ -465,7 +465,7 @@ def process_business_tick(db):
         # ===== FINALIZE: pay wages once, reset progress, commit =====
         # Retail finalizes only when at least one product is active (not all paused).
         # Pure-production only finalizes when something was produced.
-        _active_prod_set = set(config.get("products", {})) - paused_product_keys
+        _active_prod_set = set(config.get("products", {}).keys()) - paused_product_keys
         should_finalize = (has_retail and bool(_active_prod_set)) or lines_successfully_produced > 0
         if should_finalize:
             # Pay city production subsidy on any production that ran
@@ -538,23 +538,29 @@ def process_business_tick(db):
             biz.progress_ticks = 0
             db.commit()
             if wage_cost > 0:
-                log_transaction(
-                    biz.owner_id,
-                    "wage_payment",
-                    "money",
-                    -wage_cost,
-                    f"Wages: {config.get('name', biz.business_type)}",
-                    str(biz.id)
-                )
+                try:
+                    log_transaction(
+                        biz.owner_id,
+                        "wage_payment",
+                        "money",
+                        -wage_cost,
+                        f"Wages: {config.get('name', biz.business_type)}",
+                        str(biz.id)
+                    )
+                except Exception as _lt_e:
+                    print(f"[Business] wage log error biz {biz.id}: {_lt_e}")
             if net_revenue > 0:
-                log_transaction(
-                    biz.owner_id,
-                    "retail_sale",
-                    "money",
-                    founder_credit,
-                    f"Retail revenue: {biz.business_type}",
-                    str(biz.id)
-                )
+                try:
+                    log_transaction(
+                        biz.owner_id,
+                        "retail_sale",
+                        "money",
+                        founder_credit,
+                        f"Retail revenue: {biz.business_type}",
+                        str(biz.id)
+                    )
+                except Exception as _lt_e:
+                    print(f"[Business] retail log error biz {biz.id}: {_lt_e}")
 
 def create_business(player_id: int, plot_id: int, business_type_key: str):
     """Create a business on a vacant land plot owned by the player."""

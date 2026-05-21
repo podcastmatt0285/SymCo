@@ -127,7 +127,7 @@ def log_transaction(
     
     Args:
         player_id: Player involved
-        transaction_type: market_buy, market_sell, production, retail_sale, banking, dividend, tax, order_cancelled
+        transaction_type: market_buy, market_sell, production, retail_sale, banking, dividend, tax, order_cancelled, wage_payment, resource_use, resource_gain
         category: money or resource
         amount: Cash amount (positive=gain, negative=loss)
         description: Human-readable description

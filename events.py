@@ -436,7 +436,7 @@ def cancel_all_open_market_orders() -> int:
             from push_ux import send_push_notification as _push
             from stats_ux import log_transaction as _log_tx
         except Exception as _ie:
-            print(f"[Events] shutdown notify imports failed: {_ie}")
+            print(f"[Events] CRITICAL: shutdown notify imports failed — player notifications will not be sent: {_ie}")
             return
 
         for pid, count in _mkt_by_player.items():
