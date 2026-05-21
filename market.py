@@ -160,7 +160,8 @@ def create_order(
         db.close()
         return None
 
-    # 1b. Market shutdown check
+    # 1b. Market shutdown check — fail-open intentionally so an events DB glitch
+    #     doesn't accidentally block all trading when no shutdown is active.
     try:
         from events import get_active_market_shutdown
         if get_active_market_shutdown():

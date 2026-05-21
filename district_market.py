@@ -208,7 +208,7 @@ def create_order(
         db.close()
         return None
 
-    # Market shutdown check
+    # Market shutdown check — fail-open intentionally (same rationale as market.py)
     try:
         from events import get_active_market_shutdown
         if get_active_market_shutdown():

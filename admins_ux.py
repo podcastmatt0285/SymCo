@@ -5271,7 +5271,19 @@ def admin_event_stop(session_token: Optional[str] = Cookie(None), event_id: int 
             edb.close()
         if ev:
             cancel_event_timers(event_id)
-            broadcast_event_push(ev.id, f"🏁 {ev.title} has ended", "The event is over — check /events for details.", tag=f"event-{ev.id}-ended")
+            # Market shutdown events get a specific "markets reopening" push in addition to the generic end push
+            try:
+                import json as _ej
+                _ed = _ej.loads(ev.effect_data or "{}")
+                if _ed.get("market_shutdown"):
+                    broadcast_event_push(ev.id, "📈 Markets Reopening",
+                                         "The pandemic emergency has lifted. All commodity and district "
+                                         "markets are now operational — you can place orders again.",
+                                         tag=f"event-{ev.id}-reopening")
+                else:
+                    broadcast_event_push(ev.id, f"🏁 {ev.title} has ended", "The event is over — check /events for details.", tag=f"event-{ev.id}-ended")
+            except Exception:
+                broadcast_event_push(ev.id, f"🏁 {ev.title} has ended", "The event is over — check /events for details.", tag=f"event-{ev.id}-ended")
         return RedirectResponse(f"/admin/events?msg={urllib.parse.quote(msg)}", status_code=303)
     except Exception as e:
         return RedirectResponse(f"/admin/events?err={urllib.parse.quote(str(e)[:120])}", status_code=303)
