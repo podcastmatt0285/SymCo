@@ -463,9 +463,10 @@ def process_business_tick(db):
                 lines_successfully_produced += 1
 
         # ===== FINALIZE: pay wages once, reset progress, commit =====
-        # Retail always finalizes (wages due even with no sales).
+        # Retail finalizes only when at least one product is active (not all paused).
         # Pure-production only finalizes when something was produced.
-        should_finalize = has_retail or lines_successfully_produced > 0
+        _active_prod_set = set(config.get("products", {})) - paused_product_keys
+        should_finalize = (has_retail and bool(_active_prod_set)) or lines_successfully_produced > 0
         if should_finalize:
             # Pay city production subsidy on any production that ran
             if production_lines and lines_successfully_produced > 0:
@@ -536,6 +537,15 @@ def process_business_tick(db):
                 credit_usd(player.id, founder_credit)
             biz.progress_ticks = 0
             db.commit()
+            if wage_cost > 0:
+                log_transaction(
+                    biz.owner_id,
+                    "wage_payment",
+                    "money",
+                    -wage_cost,
+                    f"Wages: {config.get('name', biz.business_type)}",
+                    str(biz.id)
+                )
             if net_revenue > 0:
                 log_transaction(
                     biz.owner_id,

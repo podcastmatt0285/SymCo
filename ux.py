@@ -3566,7 +3566,7 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
             plot         = d["plot"]
             is_tut_reward = getattr(biz, 'is_tutorial_reward', False)
             startup_cost = 0 if is_tut_reward else config.get("startup_cost", 0)
-            wage_cost    = 0 if is_tut_reward else config.get("base_wage_cost", 0)
+            wage_cost    = 0  # computed accurately below, after paused sets are parsed
             if plot:
                 tax_label = '<span style="color:#4ade80;font-weight:bold;">FREE</span>' if getattr(plot, 'is_tutorial_reward', False) else fmt_usd(plot.monthly_tax, disp) + "/mo"
                 plot_info = f"Plot #{plot.id} · {plot.terrain_type.replace('_',' ').title()} · Tax: {tax_label}"
@@ -3599,6 +3599,13 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
             toggle_cls       = "btn-sm-orange" if biz.is_active else "btn-sm-green"
             paused_line_idxs = set(_json.loads(biz.paused_lines or "[]"))
             paused_prod_keys = set(_json.loads(biz.paused_products or "[]"))
+
+            if not is_tut_reward:
+                _bw   = config.get("base_wage_cost", 0)
+                _eff  = max(0.005, min(1.0, plot.efficiency / 100.0)) if plot else 1.0
+                _nact = (sum(1 for i in range(len(config.get("production_lines", []))) if i not in paused_line_idxs) +
+                         sum(1 for pk in config.get("products", {}) if pk not in paused_prod_keys))
+                wage_cost = _bw * _nact / _eff
 
             if biz_class == "production":
                 lines_html = ""
