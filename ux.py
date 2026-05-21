@@ -4541,6 +4541,65 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
             "district_utilities": "#0ea5e9", "district_zoo": "#84cc16"
         }
 
+        _TERRAIN_IMG = {
+            "prairie":  ["/static/iso/tiles/terrain_grass.png",
+                         "/static/iso/tiles/terrain_grass_v2.png",
+                         "/static/iso/tiles/terrain_grass_v3.png",
+                         "/static/iso/tiles/terrain_grass_v4.png",
+                         "/static/iso/tiles/terrain_grass_v5.png"],
+            "forest":   ["/static/iso/tiles/terrain_grass_v3.png",
+                         "/static/iso/tiles/terrain_grass_v4.png",
+                         "/static/iso/tiles/terrain_grass_v5.png"],
+            "jungle":   ["/static/iso/tiles/terrain_grass_v2.png",
+                         "/static/iso/tiles/terrain_grass_v3.png"],
+            "hills":    ["/static/iso/tiles/terrain_grass.png",
+                         "/static/iso/tiles/terrain_grass_v4.png"],
+            "desert":   ["/static/iso/tiles/terrain_arid.png",
+                         "/static/iso/tiles/terrain_arid2.png",
+                         "/static/iso/tiles/terrain_arid3.png",
+                         "/static/iso/tiles/terrain_arid_v2.png",
+                         "/static/iso/tiles/terrain_arid_v3.png",
+                         "/static/iso/tiles/terrain_arid_v4.png"],
+            "savanna":  ["/static/iso/tiles/terrain_savanna.png",
+                         "/static/iso/tiles/terrain_savanna2.png",
+                         "/static/iso/tiles/terrain_savanna3.png",
+                         "/static/iso/tiles/terrain_savanna_v2.png",
+                         "/static/iso/tiles/terrain_savanna_v3.png"],
+            "tundra":   ["/static/iso/tiles/terrain_snow.png",
+                         "/static/iso/tiles/terrain_snow2.png",
+                         "/static/iso/tiles/terrain_snow3.png",
+                         "/static/iso/tiles/terrain_snow_v2.png",
+                         "/static/iso/tiles/terrain_snow_v3.png",
+                         "/static/iso/tiles/terrain_snow_v4.png"],
+            "mountain": ["/static/iso/tiles/terrain_snow_v2.png",
+                         "/static/iso/tiles/terrain_snow_v3.png"],
+            "marsh":    ["/static/iso/tiles/terrain_water_a.png",
+                         "/static/iso/tiles/terrain_water_b.png"],
+            "island":   ["/static/iso/tiles/terrain_water_a.png"],
+            "coastal":  ["/static/iso/tiles/terrain_water_b.png"],
+            "ocean":    ["/static/iso/tiles/water1.png",
+                         "/static/iso/tiles/water2.png",
+                         "/static/iso/tiles/water3.png"],
+            "lake":     ["/static/iso/tiles/water3.png",
+                         "/static/iso/tiles/terrain_water_a.png"],
+        }
+        _TERRAIN_EMOJI = {
+            "prairie": "🌾", "forest": "🌲", "desert": "🏜️", "marsh": "🌿",
+            "mountain": "⛰️", "tundra": "❄️", "jungle": "🌴", "savanna": "🦁",
+            "hills": "🏔️", "island": "🏝️", "coastal": "🌊", "ocean": "🌐", "lake": "💧",
+            "district_food": "🍔", "district_hospital": "🏥", "district_industrial": "🏭",
+            "district_medical": "💊", "district_neighborhood": "🏘️", "district_transport": "🚊",
+            "district_utilities": "⚡", "district_zoo": "🦁", "district_tech": "💻",
+            "district_education": "🎓", "district_entertainment": "🎭", "district_mall": "🏬",
+            "district_military": "🪖", "district_prison": "🔒", "district_shipyard": "⚓",
+            "district_coastal": "🌊", "district_aerospace": "🚀", "district_food_court": "🍽️",
+            "district_airport": "✈️", "district_convention_center": "🏛️",
+            "district_entertainment_district": "🎪", "district_mega_mall": "🏪",
+            "district_military_base": "🛡️", "district_prison_complex": "🔐",
+            "district_research_campus": "🔬", "district_seaport": "🚢",
+            "district_tech_park": "🖥️",
+        }
+
         # Build sort toggle helper
         def sort_link(field, label):
             new_order = "desc" if (sort == field and order == "asc") else "asc"
@@ -4706,9 +4765,28 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
                 listing_id_for_plot = listing_id_by_plot.get(plot.id)
                 listed_badge = '<span class="badge" style="background: #f59e0b; color: #020617;">LISTED</span>' if is_listed else ""
 
+                _tile_variants = _TERRAIN_IMG.get(plot.terrain_type)
+                if _tile_variants:
+                    _tile_url = _tile_variants[plot.id % len(_tile_variants)]
+                    _tile_html = (
+                        f'<div style="width:72px;height:72px;flex-shrink:0;border-radius:8px;'
+                        f'overflow:hidden;background:#0a1628;border:1px solid #1e293b;">'
+                        f'<img src="{_tile_url}" alt="{plot.terrain_type}" loading="lazy"'
+                        f' style="width:100%;height:100%;object-fit:cover;"></div>'
+                    )
+                else:
+                    _tile_emoji = _TERRAIN_EMOJI.get(plot.terrain_type, "🏙️")
+                    _tile_html = (
+                        f'<div style="width:72px;height:72px;flex-shrink:0;border-radius:8px;'
+                        f'display:flex;align-items:center;justify-content:center;'
+                        f'background:{terrain_color}22;border:1px solid {terrain_color}44;'
+                        f'font-size:2rem;">{_tile_emoji}</div>'
+                    )
+
                 land_html += f'''
                 <div class="card" style="border-left: 4px solid {terrain_color}; margin-bottom: 12px;">
                     <div class="land-card-row" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+                        {_tile_html}
                         <div class="land-card-main" style="flex: 1; min-width: 250px;">
                             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                 <h3 style="margin: 0;">Plot #{plot.id}</h3>
