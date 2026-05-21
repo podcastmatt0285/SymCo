@@ -4865,7 +4865,7 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
                                         onchange="showBizPreview('{plot.id}', this.value)">
                                     <option value="">Build Business...</option>'''
 
-                        for btype, config in sorted(ALL_BUSINESS_TYPES.items(), key=lambda x: x[1].get("name", x[0])):
+                        for btype, config in sorted(((k, v) for k, v in ALL_BUSINESS_TYPES.items() if isinstance(v, dict)), key=lambda x: x[1].get("name", x[0])):
                             if plot.terrain_type in config.get("allowed_terrain", []):
                                 base_cost = config.get("startup_cost", 2500.0)
                                 multiplier = max(1.25, owned_businesses_count)
