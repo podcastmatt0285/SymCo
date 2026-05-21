@@ -312,7 +312,19 @@ def process_business_tick(db):
         if getattr(biz, 'is_tutorial_reward', False):
             wage_cost = 0.0
         else:
-            wage_cost = base_wage / eff_multiplier
+            # Parse paused sets here (needed for per-line wage count)
+            paused_line_idxs = set(json.loads(biz.paused_lines or "[]"))
+            paused_product_keys = set(json.loads(biz.paused_products or "[]"))
+            _n_active_lines = sum(
+                1 for i in range(len(config.get("production_lines", [])))
+                if i not in paused_line_idxs
+            )
+            _n_active_products = sum(
+                1 for pk in config.get("products", {})
+                if pk not in paused_product_keys
+            )
+            _active_count = _n_active_lines + _n_active_products
+            wage_cost = base_wage * _active_count / eff_multiplier
 
         # Apply city project production buffs (if player is a city member)
         _city_output_mult = 1.0
@@ -342,9 +354,11 @@ def process_business_tick(db):
         has_retail = bool(config.get("products"))
         production_lines = config.get("production_lines", [])
 
-        # Load per-line pause sets
-        paused_line_idxs = set(json.loads(biz.paused_lines or "[]"))
-        paused_product_keys = set(json.loads(biz.paused_products or "[]"))
+        # paused_line_idxs and paused_product_keys already parsed above for wage calc
+        # (tutorial-reward path skips the parse, so ensure they exist here)
+        if getattr(biz, 'is_tutorial_reward', False):
+            paused_line_idxs = set(json.loads(biz.paused_lines or "[]"))
+            paused_product_keys = set(json.loads(biz.paused_products or "[]"))
 
         # ===== RETAIL PROCESSING =====
         if has_retail:
