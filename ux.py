@@ -4445,6 +4445,59 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
         land_db = get_land_db()
         owned_businesses_count = land_db.query(Business).filter(Business.owner_id == player.id).count()
 
+        # Build supply chain maps across all occupied plots for vertical integration display
+        # player_produces: item_key -> [business_display_name, ...]
+        # player_consumes: item_key -> [business_display_name, ...]
+        player_produces: dict = {}
+        player_consumes: dict = {}
+        for _p in plots:
+            if not _p.occupied_by_business_id:
+                continue
+            _pb = land_db.query(Business).filter(Business.id == _p.occupied_by_business_id).first()
+            if not _pb:
+                continue
+            _pc = BUSINESS_TYPES.get(_pb.business_type, {})
+            _pn = _pc.get("name", _pb.business_type.replace("_", " ").title())
+            for _ln in _pc.get("production_lines", []):
+                _oi = _ln.get("output_item")
+                if _oi:
+                    player_produces.setdefault(_oi, []).append(_pn)
+                for _ii in _ln.get("inputs", []):
+                    _ik = _ii.get("item")
+                    if _ik:
+                        player_consumes.setdefault(_ik, []).append(_pn)
+            for _pk in _pc.get("products", {}):
+                player_consumes.setdefault(_pk, []).append(_pn)
+
+        # Build compact compatibility JSON for the build-picker JS preview
+        import json as _json
+        _SKIP_UNIVERSAL = {"water", "energy", "paper"}
+        _btype_compat = {}
+        for _bt, _bc in BUSINESS_TYPES.items():
+            _outputs, _inputs_set = [], set()
+            for _ln in _bc.get("production_lines", []):
+                if _ln.get("output_item"):
+                    _outputs.append({"item": _ln["output_item"].replace("_", " ").title(),
+                                     "qty": _ln.get("output_qty", 0),
+                                     "raw": _ln["output_item"]})
+                for _i in _ln.get("inputs", []):
+                    if _i.get("item") and _i["item"] not in _SKIP_UNIVERSAL:
+                        _inputs_set.add(_i["item"])
+            for _pk in _bc.get("products", {}):
+                _inputs_set.discard(_pk)
+            _covered = [i.replace("_", " ").title() for i in _inputs_set if i in player_produces]
+            _missing  = [i.replace("_", " ").title() for i in _inputs_set if i not in player_produces]
+            _feeds    = [o["item"] for o in _outputs if o["raw"] in player_consumes]
+            _btype_compat[_bt] = {
+                "name":    _bc.get("name", _bt),
+                "desc":    _bc.get("description", ""),
+                "outputs": _outputs,
+                "covered": _covered,
+                "missing": _missing,
+                "feeds":   _feeds,
+            }
+        _compat_json = _json.dumps(_btype_compat)
+
         # Fetch active listings owned by this player
         from land_market import LandListing
         from database import SessionLocal as _MainSession
@@ -4495,15 +4548,16 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
                 arrow = " ▲" if order == "asc" else " ▼"
             return f'<a href="/land?sort={field}&order={new_order}" style="padding: 6px 12px; font-size: 0.8rem; background: {"#1e293b" if sort == field else "#0f172a"}; color: {"#38bdf8" if sort == field else "#94a3b8"}; border: 1px solid #1e293b; border-radius: 3px; text-decoration: none; white-space: nowrap;">{label}{arrow}</a>'
 
-        land_html = '''<style>
-        @media (max-width: 600px) {
-            .land-card-row { flex-direction: column !important; }
-            .land-card-main { min-width: 0 !important; }
-            .land-card-actions { min-width: 0 !important; width: 100% !important; }
-            .land-eff-bar { width: 100% !important; }
-            .land-form-row select { min-width: 0 !important; width: 100% !important; }
-        }
+        land_html = f'''<style>
+        @media (max-width: 600px) {{
+            .land-card-row {{ flex-direction: column !important; }}
+            .land-card-main {{ min-width: 0 !important; }}
+            .land-card-actions {{ min-width: 0 !important; width: 100% !important; }}
+            .land-eff-bar {{ width: 100% !important; }}
+            .land-form-row select {{ min-width: 0 !important; width: 100% !important; }}
+        }}
         </style>
+        <script>const BIZ_COMPAT={_compat_json};</script>
         <a href="/" style="color: #38bdf8;"><- Dashboard</a>'''
 
         _land_success = {"listing_cancelled": "Listing cancelled.", "land_listed": "Plot listed on the market."}
@@ -4708,9 +4762,11 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
                     else:
                         # Vacant and not listed — show build + list forms
                         land_html += f'''
-                            <form action="/api/business/create" method="post" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                            <form action="/api/business/create" method="post" style="display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; flex-direction: column;">
                                 <input type="hidden" name="land_plot_id" value="{plot.id}">
-                                <select name="business_type" required style="flex: 1; min-width: 140px;">
+                                <div style="display:flex;gap:8px;align-items:center;width:100%;">
+                                <select name="business_type" required style="flex: 1; min-width: 140px;"
+                                        onchange="showBizPreview('{plot.id}', this.value)">
                                     <option value="">Build Business...</option>'''
 
                         for btype, config in sorted(BUSINESS_TYPES.items(), key=lambda x: x[1].get("name", x[0])):
@@ -4721,7 +4777,10 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
                                 business_name = config.get("name", btype)
                                 land_html += f'<option value="{btype}">{business_name} ({fmt_usd(actual_cost, disp, precision=0)})</option>'
 
-                        land_html += f'''</select><button type="submit" class="btn-blue">Build</button>
+                        land_html += f'''</select><button type="submit" class="btn-blue">Build</button></div>
+                                <div id="bprev_{plot.id}" style="font-size:0.78rem;color:#94a3b8;width:100%;
+                                     background:#0a1628;border-radius:4px;padding:0;max-height:0;overflow:hidden;
+                                     transition:max-height 0.2s ease,padding 0.2s ease;"></div>
                             </form>
                             <form action="/api/land-market/list-land" method="post" style="display: flex; gap: 8px; align-items: center;">
                                 <input type="hidden" name="land_plot_id" value="{plot.id}">
@@ -4730,16 +4789,90 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
                             </form>'''
                     land_html += '</div>'
                 else:
-                    # Show which business occupies this plot
+                    # Show business name + supply chain connections
                     biz = land_db.query(Business).filter(Business.id == plot.occupied_by_business_id).first()
-                    biz_name = biz.business_type.replace("_", " ").title() if biz else f"Business #{plot.occupied_by_business_id}"
+                    biz_cfg  = BUSINESS_TYPES.get(biz.business_type, {}) if biz else {}
+                    biz_name = biz_cfg.get("name", biz.business_type.replace("_", " ").title()) if biz else f"Business #{plot.occupied_by_business_id}"
+
+                    # Build output rows
+                    _sc_out = []
+                    for _ln in biz_cfg.get("production_lines", []):
+                        _oi = _ln.get("output_item", "")
+                        _oq = _ln.get("output_qty", 0)
+                        _consumers = [b for b in player_consumes.get(_oi, []) if b != biz_name]
+                        _tag = (f'<span style="color:#86efac;font-size:0.72rem;">→ {", ".join(_consumers)}</span>'
+                                if _consumers else '<span style="color:#475569;font-size:0.72rem;">→ market</span>')
+                        _sc_out.append(f'<div style="margin:2px 0;"><span style="color:#fde68a;">▶ {_oq:,}× {_oi.replace("_"," ").title()}</span> {_tag}</div>')
+
+                    # Build input rows (skip universal commodities)
+                    _sc_inp = []
+                    _seen = set()
+                    for _ln in biz_cfg.get("production_lines", []):
+                        for _ii in _ln.get("inputs", []):
+                            _ik = _ii.get("item", "")
+                            if _ik in _SKIP_UNIVERSAL or _ik in _seen:
+                                continue
+                            _seen.add(_ik)
+                            _iq = _ii.get("quantity", 0)
+                            _suppliers = [b for b in player_produces.get(_ik, []) if b != biz_name]
+                            if _suppliers:
+                                _stag = f'<span style="color:#86efac;font-size:0.72rem;">✓ {", ".join(_suppliers)}</span>'
+                            else:
+                                _stag = '<span style="color:#f87171;font-size:0.72rem;">✗ market</span>'
+                            _sc_inp.append(f'<div style="margin:2px 0;"><span style="color:#93c5fd;">◀ {_iq:,}× {_ik.replace("_"," ").title()}</span> {_stag}</div>')
+
+                    _has_conn = any("✓" in r for r in _sc_inp) or any("→ " in r and "market" not in r for r in _sc_out)
+                    _open_attr = "open" if _has_conn else ""
+                    _sc_html = ""
+                    if _sc_out or _sc_inp:
+                        _div = '<hr style="border:0;border-top:1px solid #1e293b;margin:4px 0;">' if (_sc_out and _sc_inp) else ""
+                        _sc_html = f'''<details {_open_attr} style="margin-top:6px;">
+                          <summary style="color:#94a3b8;font-size:0.75rem;cursor:pointer;user-select:none;list-style:none;">
+                            ⛓ Supply Chain {"🔗" if _has_conn else ""}</summary>
+                          <div style="margin-top:5px;font-size:0.79rem;line-height:1.65;">{"".join(_sc_out)}{_div}{"".join(_sc_inp)}</div>
+                        </details>'''
+
                     land_html += f'''
                         <div style="min-width: 180px; text-align: right;">
                             <div style="font-size: 0.8rem; color: #64748b;">Business</div>
                             <div style="font-size: 0.9rem; color: #e5e7eb; font-weight: 500;">{biz_name}</div>
+                            {_sc_html}
                         </div>'''
 
                 land_html += '</div></div>'
+
+        # Build-picker live preview JS (uses BIZ_COMPAT embedded at page top)
+        land_html += '''<script>
+function showBizPreview(plotId, btype) {
+    var el = document.getElementById('bprev_' + plotId);
+    if (!el) return;
+    if (!btype || !BIZ_COMPAT[btype]) {
+        el.style.maxHeight = '0'; el.style.padding = '0'; el.innerHTML = ''; return;
+    }
+    var b = BIZ_COMPAT[btype];
+    var html = '';
+    if (b.desc) html += '<div style="color:#cbd5e1;margin-bottom:4px;">' + b.desc + '</div>';
+    if (b.outputs.length) {
+        html += '<div style="color:#fde68a;">Produces: ' +
+            b.outputs.map(function(o){return o.qty.toLocaleString()+'\\u00d7 '+o.item;}).join(', ') + '</div>';
+    }
+    if (b.feeds.length) {
+        html += '<div style="color:#86efac;">🔗 Feeds your: ' + b.feeds.join(', ') + '</div>';
+    }
+    if (b.covered.length) {
+        html += '<div style="color:#86efac;">✓ Inputs you supply: ' + b.covered.join(', ') + '</div>';
+    }
+    if (b.missing.length) {
+        html += '<div style="color:#f87171;">✗ Buy on market: ' + b.missing.join(', ') + '</div>';
+    }
+    if (!b.outputs.length && !b.covered.length && !b.missing.length) {
+        html += '<div style="color:#64748b;">Retail / service business.</div>';
+    }
+    el.innerHTML = html;
+    el.style.padding = '6px 8px';
+    el.style.maxHeight = '200px';
+}
+</script>'''
 
         land_db.close()
 
