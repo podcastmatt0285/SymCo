@@ -1392,6 +1392,17 @@ def _player_moderation_tab(pid, detail, is_full_admin: bool = False):
             revoke_btn = f'<form method="post" action="/admin/player/{pid}/revoke" style="display:inline;margin-left:6px;"><input type="hidden" name="ban_id" value="{b["id"]}"><button type="submit" class="btn btn-green" style="font-size:0.65rem;padding:2px 6px;">Revoke</button></form>'
         ban_rows += f'<tr><td>#{b["id"]}</td><td>{b["ban_type"].upper()}</td><td style="color:#94a3b8;">{b["reason"] or "-"}</td><td style="color:#64748b;">{_ts(b["created_at"])}</td><td style="color:#64748b;">{exp}</td><td>{status}{revoke_btn}</td></tr>'
 
+    # Admin action log entries (renames, kicks, etc.)
+    action_rows = ""
+    try:
+        admin_logs = get_player_admin_logs(pid, limit=20)
+        _action_label = {"rename": "RENAME", "kick": "KICK", "timeout": "TIMEOUT", "ban": "BAN", "unban": "REVOKE", "mute": "MUTE", "unmute": "UNMUTE"}
+        for entry in admin_logs:
+            label = _action_label.get(entry["action"], entry["action"].upper())
+            action_rows += f'<tr><td>#{entry["id"]}</td><td>{label}</td><td style="color:#94a3b8;">{entry["details"] or "-"}</td><td style="color:#64748b;">{_ts(entry["created_at"])}</td></tr>'
+    except Exception:
+        pass
+
     ban_form = ""
     if is_full_admin:
         ban_form = f"""
@@ -1429,7 +1440,11 @@ def _player_moderation_tab(pid, detail, is_full_admin: bool = False):
     <div class="card">
         <h3>Rename Player <span style="font-size:0.7rem;color:#f59e0b;">Admin Only</span></h3>
         <form method="post" action="/admin/player/{pid}/rename">
-            <div class="form-row"><div style="flex:1;"><input type="text" name="new_name" placeholder="New business name" required maxlength="40"></div><button type="submit" class="btn btn-yellow">Rename</button></div>
+            <div class="form-row">
+                <div style="flex:1;"><input type="text" name="new_name" placeholder="New business name" required maxlength="40"></div>
+                <div style="flex:1;"><input type="text" name="reason" placeholder="Reason (e.g. inappropriate name)" maxlength="200"></div>
+                <button type="submit" class="btn btn-yellow">Rename</button>
+            </div>
         </form>
     </div>
     <div class="card">
@@ -1451,8 +1466,12 @@ def _player_moderation_tab(pid, detail, is_full_admin: bool = False):
     {mute_card}
     {ban_form}
     <div class="card">
-        <h3>History</h3>
-        {f'<div class="table-wrap"><table><tr><th>ID</th><th>Type</th><th>Reason</th><th>Date</th><th>Expires</th><th>Status</th></tr>{ban_rows}</table></div>' if ban_rows else '<p style="color:#64748b;font-size:0.75rem;">No moderation history.</p>'}
+        <h3>Ban / Timeout History</h3>
+        {f'<div class="table-wrap"><table><tr><th>ID</th><th>Type</th><th>Reason</th><th>Date</th><th>Expires</th><th>Status</th></tr>{ban_rows}</table></div>' if ban_rows else '<p style="color:#64748b;font-size:0.75rem;">No ban history.</p>'}
+    </div>
+    <div class="card">
+        <h3>Admin Action Log</h3>
+        {f'<div class="table-wrap"><table><tr><th>ID</th><th>Action</th><th>Details</th><th>Date</th></tr>{action_rows}</table></div>' if action_rows else '<p style="color:#64748b;font-size:0.75rem;">No admin actions recorded.</p>'}
     </div>
     """
 
@@ -2274,7 +2293,7 @@ def post_kick(pid: int, session_token: Optional[str] = Cookie(None), reason: str
 
 
 @router.post("/admin/player/{pid}/rename")
-def post_rename(pid: int, session_token: Optional[str] = Cookie(None), new_name: str = Form(...)):
+def post_rename(pid: int, session_token: Optional[str] = Cookie(None), new_name: str = Form(...), reason: str = Form("")):
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
@@ -2283,21 +2302,38 @@ def post_rename(pid: int, session_token: Optional[str] = Cookie(None), new_name:
     if err:
         return RedirectResponse(url=f"/admin/player/{pid}?tab=moderation&err={err}", status_code=303)
     db = _auth_db()
+    new_name_clean = new_name.strip()
+    old_name = None
     try:
         from auth import Player
         target = db.query(Player).filter(Player.id == pid).first()
         if not target:
             return RedirectResponse(url=f"/admin/player/{pid}?tab=moderation&err=Player+not+found", status_code=303)
-        existing = db.query(Player).filter(Player.business_name == new_name.strip()).first()
+        existing = db.query(Player).filter(Player.business_name == new_name_clean).first()
         if existing and existing.id != pid:
             return RedirectResponse(url=f"/admin/player/{pid}?tab=moderation&err=Name+already+taken", status_code=303)
         old_name = target.business_name
-        target.business_name = new_name.strip()
+        target.business_name = new_name_clean
         db.commit()
-        print(f"[Admin] {admin.business_name} renamed player {pid} from '{old_name}' to '{new_name.strip()}'")
     finally:
         db.close()
-    return RedirectResponse(url=f"/admin/player/{pid}?tab=moderation&msg=Renamed+to+{new_name.strip()}", status_code=303)
+    if old_name is not None:
+        reason_clean = reason.strip()
+        detail = f"'{old_name}' → '{new_name_clean}'"
+        if reason_clean:
+            detail += f" — {reason_clean}"
+        log_action(admin.id, "rename", pid, detail)
+        _invalidate_sessions(pid)
+        print(f"[Admin] {admin.business_name} renamed player {pid}: {detail}")
+        try:
+            from push_ux import send_push_notification
+            push_body = f"An admin renamed your account to '{new_name_clean}'."
+            if reason_clean:
+                push_body += f" Reason: {reason_clean}"
+            send_push_notification(pid, "Your name was changed", push_body, "/", "general", f"rename-{pid}")
+        except Exception:
+            pass
+    return RedirectResponse(url=f"/admin/player/{pid}?tab=moderation&msg=Renamed+to+{new_name_clean}", status_code=303)
 
 
 @router.post("/admin/player/{pid}/timeout")

@@ -381,19 +381,24 @@ _HOMOGLYPHS = str.maketrans({
 def _normalize_for_filter(s: str) -> str:
     """
     Normalize for blocklist substring matching:
-      1. Explicit homoglyph map for chars that survive NFKD (Cyrillic, IPA, Greek confusables)
-      2. Unicode NFKD decomposition — turns fullwidth chars and accented letters into ASCII
-      3. Strip diacritics and any remaining non-ASCII
-      4. Lowercase
-      5. Leet-speak collapse: 0->o 1->i 3->e 4->a 5->s @->a $->s !->i 7->t
-      6. Strip all punctuation, spaces, separators
+      1. Strip zero-width / invisible Unicode spacers evaders insert between chars
+      2. Explicit homoglyph map for chars that survive NFKD (Cyrillic, IPA, Greek confusables)
+      3. Unicode NFKD decomposition — turns fullwidth chars and accented letters into ASCII
+      4. Strip diacritics and any remaining non-ASCII
+      5. Lowercase
+      6. Leet-speak collapse: 0->o 1->i 3->e 4->a 5->s @->a $->s !->i 7->t
+      7. Collapse 3+ repeated chars: "coooock" -> "cock", "niggggger" -> "niger"
+      8. Strip all punctuation, spaces, separators
     """
+    # Zero-width spaces, joiners, soft-hyphens, Arabic/Mongolian formatting marks
+    s = _re.sub(r"[­؜᠎​‌‍⁠-⁤﻿]", "", s)
     s = s.translate(_HOMOGLYPHS)
     s = _ud.normalize("NFKD", s)
     s = s.encode("ascii", errors="ignore").decode("ascii")
     s = s.lower()
     for src, dst in [("0","o"),("1","i"),("3","e"),("4","a"),("5","s"),("@","a"),("$","s"),("!","i"),("7","t")]:
         s = s.replace(src, dst)
+    s = _re.sub(r"(.)\1{2,}", r"\1", s)
     s = _re.sub(r"[\s\-_.,!?'\"*/\\|+=#%^&(){}\[\]<>~`]", "", s)
     return s
 
