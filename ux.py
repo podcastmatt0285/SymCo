@@ -3480,10 +3480,12 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
         biz_data = []
         for biz in player_businesses:
             config = BUSINESS_TYPES.get(biz.business_type)
-            if not config:
+            if not isinstance(config, dict) or not config:
                 from business import get_district_business_types
                 district_types = get_district_business_types()
-                config = district_types.get(biz.business_type, {})
+                config = district_types.get(biz.business_type)
+                if not isinstance(config, dict):
+                    config = {}
             biz_name = config.get("name", biz.business_type)
             biz_class = config.get("class", "production")
             cycles_total = config.get("cycles_to_complete", 1)
@@ -3612,6 +3614,8 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
             if biz_class == "production":
                 lines_html = ""
                 for li, line in enumerate(config.get("production_lines", [])):
+                    if not isinstance(line, dict):
+                        continue
                     inp_parts = [f"{req['quantity']:,}× {req['item'].replace('_',' ').title()}" for req in line.get("inputs", [])]
                     inp_str   = " + ".join(inp_parts) if inp_parts else "No inputs"
                     out_str   = f"{line['output_qty']:,}× {line['output_item'].replace('_',' ').title()}"
