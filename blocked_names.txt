@@ -264,6 +264,30 @@ make america great again
 
 
 # ══════════════════════════════════════════
+# SEXUAL / GENITALIA — explicit terms
+# NOTE: "cock" also blocks "Cockney", "Cockatoo" etc. — trade-off accepted.
+# ══════════════════════════════════════════
+cock
+dick
+pussy
+cunt
+penis
+vagina
+boner
+dildo
+anal
+blowjob
+handjob
+cumshot
+jizz
+tits
+boobs
+hairy cock
+big cock
+little cock
+
+
+# ══════════════════════════════════════════
 # GENERAL INCITEMENT / HATE PHRASES
 # ══════════════════════════════════════════
 kill all

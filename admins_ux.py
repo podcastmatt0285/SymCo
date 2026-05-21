@@ -1427,6 +1427,12 @@ def _player_moderation_tab(pid, detail, is_full_admin: bool = False):
 
     return f"""
     <div class="card">
+        <h3>Rename Player <span style="font-size:0.7rem;color:#f59e0b;">Admin Only</span></h3>
+        <form method="post" action="/admin/player/{pid}/rename">
+            <div class="form-row"><div style="flex:1;"><input type="text" name="new_name" placeholder="New business name" required maxlength="40"></div><button type="submit" class="btn btn-yellow">Rename</button></div>
+        </form>
+    </div>
+    <div class="card">
         <h3>Kick (disconnect now)</h3>
         <form method="post" action="/admin/player/{pid}/kick">
             <div class="form-row"><div style="flex:1;"><input type="text" name="reason" placeholder="Reason (optional)"></div><button type="submit" class="btn btn-yellow">Kick</button></div>
@@ -2265,6 +2271,33 @@ def post_kick(pid: int, session_token: Optional[str] = Cookie(None), reason: str
     _force_disconnect(pid)
     _invalidate_sessions(pid)
     return RedirectResponse(url=f"/admin/player/{pid}?tab=moderation&msg=Player+kicked", status_code=303)
+
+
+@router.post("/admin/player/{pid}/rename")
+def post_rename(pid: int, session_token: Optional[str] = Cookie(None), new_name: str = Form(...)):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    from auth import validate_business_name, get_db as _auth_db
+    err = validate_business_name(new_name)
+    if err:
+        return RedirectResponse(url=f"/admin/player/{pid}?tab=moderation&err={err}", status_code=303)
+    db = _auth_db()
+    try:
+        from auth import Player
+        target = db.query(Player).filter(Player.id == pid).first()
+        if not target:
+            return RedirectResponse(url=f"/admin/player/{pid}?tab=moderation&err=Player+not+found", status_code=303)
+        existing = db.query(Player).filter(Player.business_name == new_name.strip()).first()
+        if existing and existing.id != pid:
+            return RedirectResponse(url=f"/admin/player/{pid}?tab=moderation&err=Name+already+taken", status_code=303)
+        old_name = target.business_name
+        target.business_name = new_name.strip()
+        db.commit()
+        print(f"[Admin] {admin.business_name} renamed player {pid} from '{old_name}' to '{new_name.strip()}'")
+    finally:
+        db.close()
+    return RedirectResponse(url=f"/admin/player/{pid}?tab=moderation&msg=Renamed+to+{new_name.strip()}", status_code=303)
 
 
 @router.post("/admin/player/{pid}/timeout")
