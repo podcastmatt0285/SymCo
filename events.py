@@ -399,6 +399,37 @@ def cancel_all_open_market_orders() -> int:
     except Exception as _e:
         print(f"[Events] cancel district orders import error: {_e}")
 
+    # Wipe trade history so all prices reset to 0 when markets reopen
+    try:
+        from market import get_db as _mkt_db2, Trade as _Trade
+        _mdb2 = _mkt_db2()
+        try:
+            _mdb2.query(_Trade).delete()
+            _mdb2.commit()
+            print("[Events] Marketplace Shutdown: commodity trade history cleared (prices reset to 0)")
+        except Exception as _e:
+            _mdb2.rollback()
+            print(f"[Events] clear commodity trades: {_e}")
+        finally:
+            _mdb2.close()
+    except Exception as _e:
+        print(f"[Events] clear commodity trades import error: {_e}")
+
+    try:
+        from district_market import get_db as _dmt_db2, DistrictTrade as _DTrade
+        _ddb2 = _dmt_db2()
+        try:
+            _ddb2.query(_DTrade).delete()
+            _ddb2.commit()
+            print("[Events] Marketplace Shutdown: district trade history cleared (prices reset to 0)")
+        except Exception as _e:
+            _ddb2.rollback()
+            print(f"[Events] clear district trades: {_e}")
+        finally:
+            _ddb2.close()
+    except Exception as _e:
+        print(f"[Events] clear district trades import error: {_e}")
+
     # Notify affected players + log ledger entries in background (non-blocking)
     def _notify_and_log():
         try:
