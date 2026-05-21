@@ -387,7 +387,7 @@ def _normalize_for_filter(s: str) -> str:
       4. Strip diacritics and any remaining non-ASCII
       5. Lowercase
       6. Leet-speak collapse: 0->o 1->i 3->e 4->a 5->s @->a $->s !->i 7->t
-      7. Collapse 3+ repeated chars: "coooock" -> "cock", "niggggger" -> "niger"
+      7. Collapse 3+ repeated chars to exactly 2: "fagggot" -> "faggot", "niggggger" -> "nigger"
       8. Strip all punctuation, spaces, separators
     """
     # Zero-width spaces, joiners, soft-hyphens, Arabic/Mongolian formatting marks
@@ -398,7 +398,9 @@ def _normalize_for_filter(s: str) -> str:
     s = s.lower()
     for src, dst in [("0","o"),("1","i"),("3","e"),("4","a"),("5","s"),("@","a"),("$","s"),("!","i"),("7","t")]:
         s = s.replace(src, dst)
-    s = _re.sub(r"(.)\1{2,}", r"\1", s)
+    # Collapse runs of 3+ identical chars to exactly 2: catches "fagggot"->"faggot",
+    # "niggggger"->"niger", while keeping "kkk"->"kk" (not "k") to avoid mass false-positives.
+    s = _re.sub(r"(.)\1{2,}", r"\1\1", s)
     s = _re.sub(r"[\s\-_.,!?'\"*/\\|+=#%^&(){}\[\]<>~`]", "", s)
     return s
 

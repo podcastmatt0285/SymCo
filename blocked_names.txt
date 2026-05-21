@@ -296,3 +296,169 @@ lynch mob
 gas chamber
 genocide corp
 ethnic cleansing
+
+
+# ══════════════════════════════════════════
+# PROFANITY — COMMON GENERAL
+# NOTE: "shit" also blocks "shiitake" (rare trade-off, accepted).
+# ══════════════════════════════════════════
+fuck
+shit
+bitch
+asshole
+bastard
+dumbass
+shithead
+fuckhead
+fucktard
+motherfucker
+
+
+# ══════════════════════════════════════════
+# ABLEIST SLURS
+# NOTE: "gimp" also blocks GIMP software brand — accepted.
+# NOTE: "cripple" also blocks "Cripple Creek" (city name) — accepted.
+# ══════════════════════════════════════════
+retard
+retarded
+spaz
+spastic
+mongoloid
+cripple
+gimp
+
+
+# ══════════════════════════════════════════
+# MISOGYNISTIC SLURS
+# ══════════════════════════════════════════
+slut
+whore
+thot
+skank
+cum dumpster
+cumdumpster
+women are inferior
+women are property
+make women submissive
+
+
+# ══════════════════════════════════════════
+# SEXUAL VIOLENCE & EXPLOITATION
+# NOTE: bare "rape" omitted — false-positive in "grape" / "draper".
+#       Using "rapist" / "raping" + compound forms instead.
+# ══════════════════════════════════════════
+rapist
+raping
+molest
+molestation
+gang rape
+date rape
+child rape
+baby rape
+sexual assault
+
+
+# ══════════════════════════════════════════
+# CHILD SAFETY — PEDOPHILIA & CSAM
+# NOTE: "pedo" also blocks "Pedro" — accepted; child safety takes priority.
+# ══════════════════════════════════════════
+pedo
+pedophile
+pedophilia
+child porn
+kiddie porn
+kid porn
+jailbait
+lolicon
+csam
+child groomer
+child abuse
+
+
+# ══════════════════════════════════════════
+# EXPLICIT SEXUAL ACTS & PORNOGRAPHIC TERMS
+# (genitalia already covered above)
+# ══════════════════════════════════════════
+gangbang
+bukakke
+bukake
+orgasm
+masturbat
+piss
+scat play
+zoophilia
+bestiality
+incest
+brothel
+whorehouse
+porn star
+pornstar
+onlyfans
+
+
+# ══════════════════════════════════════════
+# INCEL & MANOSPHERE IDEOLOGY
+# ══════════════════════════════════════════
+incel
+mgtow
+redpill
+blackpill
+cuckold
+betacuck
+femoid
+foid
+roastie
+
+
+# ══════════════════════════════════════════
+# TERRORIST ORGANISATIONS & MASS VIOLENCE
+# NOTE: "isis" is a goddess/river name; using "isis corp" pattern.
+# ══════════════════════════════════════════
+isis corp
+islamic state
+al qaeda
+al shabab
+boko haram
+# Space stripping happens AFTER collapse, so "Mass Shooter" (spaced) strips to "massshooter"
+# (3 s's never seen by collapse), while "MassShooter" (camel) collapses sss->ss first.
+# Three entries cover all forms:
+mass shooter
+masshooter
+mashooter
+school shooter
+serial killer
+bomb maker
+
+
+# ══════════════════════════════════════════
+# ISLAMOPHOBIC SLURS
+# (supplements the anti-South Asian / Middle Eastern section above)
+# ══════════════════════════════════════════
+goatfucker
+goat fucker
+bomb vest
+bombvest
+suicide bomber
+muzrat
+muzzie
+
+
+# ══════════════════════════════════════════
+# ADDITIONAL ANTI-LGBTQ+ SLURS
+# (supplements the homophobic / transphobic section above)
+# ══════════════════════════════════════════
+butt pirate
+rectum ranger
+shirt lifter
+nancy boy
+fairy boy
+queer bait
+sissy boy
+
+
+# ══════════════════════════════════════════
+# CASTE DISCRIMINATION
+# ══════════════════════════════════════════
+untouchable caste
+caste slur
+dalit slur
