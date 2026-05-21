@@ -906,6 +906,22 @@ def school_confirm(executive_id: int, session_token: Optional[str] = Cookie(None
         from reserve_banks import get_player_display_currency, fmt_usd
         sc_disp = get_player_display_currency(player.id)
 
+        # Resolve actual legal-tender balance for display — same logic as exec_shell
+        # header. fmt_usd(player.cash_balance) would convert USD via exchange rate,
+        # giving a different number than the real ANA balance in PlayerCurrencyBalance.
+        _bal_sym = sc_disp.get("symbol", "$")
+        _bal_val = player.cash_balance
+        try:
+            _bal_tender = get_player_legal_tender(player.id)
+            if _bal_tender != "USD":
+                for _bb in get_player_currency_balances(player.id):
+                    if _bb["currency_code"] == _bal_tender:
+                        _bal_sym = _bb["currency_symbol"]
+                        _bal_val = _bb["balance"]
+                        break
+        except Exception:
+            pass
+
         # Show what abilities will be boosted
         ability_keys = [a for a in (ex.abilities or "").split(",") if a]
 
@@ -946,7 +962,7 @@ def school_confirm(executive_id: int, session_token: Optional[str] = Cookie(None
             </div>
             <div class="stat-row">
                 <span class="stat-label">Your Balance</span>
-                <span class="stat-value green">{fmt_usd(player.cash_balance, sc_disp)}</span>
+                <span class="stat-value green">{_bal_sym}{_bal_val:,.2f} {sc_disp.get("code", "USD")}</span>
             </div>
             {disc_html}
             <br>
