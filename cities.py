@@ -1303,8 +1303,10 @@ def exchange_currency_for_member(player_id: int, quantity: float) -> Tuple[bool,
         if player_qty < quantity:
             return False, f"Insufficient {bank.currency_type}"
         
-        # Get market price
-        market_price = market.get_market_price(bank.currency_type) or 1.0
+        # Get market price — require a real price; 1.0 fallback would cheat the player
+        market_price = market.get_market_price(bank.currency_type)
+        if not market_price:
+            return False, "Market price unavailable — try again when markets reopen"
         total_value = quantity * market_price
         
         # Check bank can afford it
@@ -1479,8 +1481,10 @@ def enforce_reserve_requirement(player_id: int) -> Tuple[bool, str]:
         if not ok:
             return False, f"Reserve fee payment failed: {err}"
         
-        # Calculate how much currency to buy
-        currency_price = market.get_market_price(city.currency_type) or 1.0
+        # Calculate how much currency to buy — require a real price to avoid 500× inflated orders
+        currency_price = market.get_market_price(city.currency_type)
+        if not currency_price:
+            return False, "No market price available — reserve enforcement deferred until markets reopen"
         quantity_to_buy = shortfall / currency_price
         
         # Try to buy from market (create market buy order)

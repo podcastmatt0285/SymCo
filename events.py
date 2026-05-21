@@ -404,7 +404,7 @@ def cancel_all_open_market_orders() -> int:
         from market import get_db as _mkt_db2, Trade as _Trade
         _mdb2 = _mkt_db2()
         try:
-            _mdb2.query(_Trade).delete()
+            _mdb2.query(_Trade).delete(synchronize_session=False)
             _mdb2.commit()
             print("[Events] Marketplace Shutdown: commodity trade history cleared (prices reset to 0)")
         except Exception as _e:
@@ -419,7 +419,7 @@ def cancel_all_open_market_orders() -> int:
         from district_market import get_db as _dmt_db2, DistrictTrade as _DTrade
         _ddb2 = _dmt_db2()
         try:
-            _ddb2.query(_DTrade).delete()
+            _ddb2.query(_DTrade).delete(synchronize_session=False)
             _ddb2.commit()
             print("[Events] Marketplace Shutdown: district trade history cleared (prices reset to 0)")
         except Exception as _e:
