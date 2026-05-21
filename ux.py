@@ -4493,8 +4493,10 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
                 for _i in _ln.get("inputs", []):
                     if _i.get("item") and _i["item"] not in _SKIP_UNIVERSAL:
                         _inputs_set.add(_i["item"])
+            _self_out_keys = {o["raw"] for o in _outputs}
             for _pk in _bc.get("products", {}):
-                _inputs_set.discard(_pk)
+                if _pk not in _self_out_keys:   # don't flag items the business itself produces
+                    _inputs_set.add(_pk)
             _covered = [i.replace("_", " ").title() for i in _inputs_set if i in player_produces]
             _missing  = [i.replace("_", " ").title() for i in _inputs_set if i not in player_produces]
             _feeds    = [o["item"] for o in _outputs if o["raw"] in player_consumes]
