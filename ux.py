@@ -4488,6 +4488,8 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
         _SKIP_UNIVERSAL = {"water", "energy", "paper"}
         _btype_compat = {}
         for _bt, _bc in ALL_BUSINESS_TYPES.items():
+            if not isinstance(_bc, dict):
+                continue
             _outputs, _inputs_set = [], set()
             for _ln in _bc.get("production_lines", []):
                 if _ln.get("output_item"):
