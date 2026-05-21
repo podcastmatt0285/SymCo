@@ -4445,18 +4445,19 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
         land_db = get_land_db()
         owned_businesses_count = land_db.query(Business).filter(Business.owner_id == player.id).count()
 
-        # Build supply chain maps across all occupied plots for vertical integration display
+        # Load ALL player businesses once (land + district) to avoid N+1 queries
+        from business import get_district_business_types
+        _all_player_bizs = land_db.query(Business).filter(Business.owner_id == player.id).all()
+        _biz_by_id = {b.id: b for b in _all_player_bizs}
+        ALL_BUSINESS_TYPES = {**BUSINESS_TYPES, **get_district_business_types()}
+
+        # Build supply chain maps across ALL player businesses (land + district)
         # player_produces: item_key -> [business_display_name, ...]
         # player_consumes: item_key -> [business_display_name, ...]
         player_produces: dict = {}
         player_consumes: dict = {}
-        for _p in plots:
-            if not _p.occupied_by_business_id:
-                continue
-            _pb = land_db.query(Business).filter(Business.id == _p.occupied_by_business_id).first()
-            if not _pb:
-                continue
-            _pc = BUSINESS_TYPES.get(_pb.business_type, {})
+        for _pb in _all_player_bizs:
+            _pc = ALL_BUSINESS_TYPES.get(_pb.business_type, {})
             _pn = _pc.get("name", _pb.business_type.replace("_", " ").title())
             for _ln in _pc.get("production_lines", []):
                 _oi = _ln.get("output_item")
@@ -4473,7 +4474,7 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
         import json as _json
         _SKIP_UNIVERSAL = {"water", "energy", "paper"}
         _btype_compat = {}
-        for _bt, _bc in BUSINESS_TYPES.items():
+        for _bt, _bc in ALL_BUSINESS_TYPES.items():
             _outputs, _inputs_set = [], set()
             for _ln in _bc.get("production_lines", []):
                 if _ln.get("output_item"):
@@ -4769,7 +4770,7 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
                                         onchange="showBizPreview('{plot.id}', this.value)">
                                     <option value="">Build Business...</option>'''
 
-                        for btype, config in sorted(BUSINESS_TYPES.items(), key=lambda x: x[1].get("name", x[0])):
+                        for btype, config in sorted(ALL_BUSINESS_TYPES.items(), key=lambda x: x[1].get("name", x[0])):
                             if plot.terrain_type in config.get("allowed_terrain", []):
                                 base_cost = config.get("startup_cost", 2500.0)
                                 multiplier = max(1.25, owned_businesses_count)
@@ -4790,8 +4791,8 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
                     land_html += '</div>'
                 else:
                     # Show business name + supply chain connections
-                    biz = land_db.query(Business).filter(Business.id == plot.occupied_by_business_id).first()
-                    biz_cfg  = BUSINESS_TYPES.get(biz.business_type, {}) if biz else {}
+                    biz = _biz_by_id.get(plot.occupied_by_business_id)
+                    biz_cfg  = ALL_BUSINESS_TYPES.get(biz.business_type, {}) if biz else {}
                     biz_name = biz_cfg.get("name", biz.business_type.replace("_", " ").title()) if biz else f"Business #{plot.occupied_by_business_id}"
 
                     # Build output rows
@@ -4822,12 +4823,13 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
                             _sc_inp.append(f'<div style="margin:2px 0;"><span style="color:#93c5fd;">◀ {_iq:,}× {_ik.replace("_"," ").title()}</span> {_stag}</div>')
 
                     _has_conn = any("✓" in r for r in _sc_inp) or any("→ " in r and "market" not in r for r in _sc_out)
-                    _open_attr = "open" if _has_conn else ""
+                    _open_attr = "open " if _has_conn else ""
                     _sc_html = ""
                     if _sc_out or _sc_inp:
                         _div = '<hr style="border:0;border-top:1px solid #1e293b;margin:4px 0;">' if (_sc_out and _sc_inp) else ""
-                        _sc_html = f'''<details {_open_attr} style="margin-top:6px;">
+                        _sc_html = f'''<details {_open_attr}style="margin-top:6px;text-align:left;">
                           <summary style="color:#94a3b8;font-size:0.75rem;cursor:pointer;user-select:none;list-style:none;">
+                            <style>details summary::-webkit-details-marker{{display:none}}</style>
                             ⛓ Supply Chain {"🔗" if _has_conn else ""}</summary>
                           <div style="margin-top:5px;font-size:0.79rem;line-height:1.65;">{"".join(_sc_out)}{_div}{"".join(_sc_inp)}</div>
                         </details>'''
@@ -4870,7 +4872,7 @@ function showBizPreview(plotId, btype) {
     }
     el.innerHTML = html;
     el.style.padding = '6px 8px';
-    el.style.maxHeight = '200px';
+    el.style.maxHeight = '400px';
 }
 </script>'''
 
