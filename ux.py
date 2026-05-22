@@ -928,7 +928,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             <div class="header-right">
                 {lien_html}
                 {_level_html}
-                <span class="balance">{disp_sym}{disp_balance:,.2f}{disp_usd_note}</span>
+                <span class="balance" id="player-balance">{disp_sym}{disp_balance:,.2f}{disp_usd_note}</span>
                 <a href="/api/logout" style="color: #ef4444; font-size: 0.85rem;">Logout</a>
             </div>
         </div>
@@ -1143,6 +1143,36 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 _ws.onerror = function() {{ _ws.close(); }};
             }}
 
+            connect();
+            window.addEventListener('pagehide', function() {{
+                clearTimeout(_reconnTimer);
+                if (_ws) _ws.close();
+            }});
+        }})();
+        </script>
+        <script data-cfasync="false">
+        /* ── Live Player Balance WebSocket client ──────────────────────────
+           Connects to /ws/player-feed, receives balance snapshots every ~30 s
+           and immediately on connect. Updates the header balance span.
+           Reconnects automatically after 15 s on disconnect.
+        ── */
+        (function() {{
+            var _proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            var _ws, _reconnTimer;
+            function connect() {{
+                _ws = new WebSocket(_proto + '//' + location.host + '/ws/player-feed');
+                _ws.onmessage = function(e) {{
+                    try {{
+                        var d = JSON.parse(e.data);
+                        if (d.type === 'balance') {{
+                            var el = document.getElementById('player-balance');
+                            if (el) el.textContent = d.display;
+                        }}
+                    }} catch(_) {{}}
+                }};
+                _ws.onclose = function() {{ _reconnTimer = setTimeout(connect, 15000); }};
+                _ws.onerror = function() {{ _ws.close(); }};
+            }}
             connect();
             window.addEventListener('pagehide', function() {{
                 clearTimeout(_reconnTimer);
