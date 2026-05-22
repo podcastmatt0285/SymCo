@@ -6336,6 +6336,48 @@
             "quantity": 10
           }
         ]
+      },
+      {
+        "output_item": "gaming_setup",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "desktop_computer",
+            "quantity": 20
+          },
+          {
+            "item": "lcd_panel",
+            "quantity": 20
+          },
+          {
+            "item": "processor",
+            "quantity": 40
+          },
+          {
+            "item": "memory_module",
+            "quantity": 60
+          },
+          {
+            "item": "circuit_board",
+            "quantity": 40
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 80
+          },
+          {
+            "item": "plastic",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 35000
+          },
+          {
+            "item": "paper",
+            "quantity": 40
+          }
+        ]
       }
     ],
     "startup_cost": 10000000
@@ -8753,6 +8795,36 @@
         ],
         "output_item": "gyro",
         "output_qty": 250
+      },
+      {
+        "output_item": "premium_sashimi",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "sea_bass_fillet",
+            "quantity": 50
+          },
+          {
+            "item": "smoked_trout",
+            "quantity": 30
+          },
+          {
+            "item": "smoked_sea_trout",
+            "quantity": 25
+          },
+          {
+            "item": "rice_wine",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 3000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ]
       }
     ],
     "startup_cost": 4000000
@@ -22340,5 +22412,243 @@
     "class": "production",
     "cycles_to_complete": 86400,
     "base_wage_cost": 90000
+  },
+  "luxury_jewelry_boutique": {
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "allowed_terrain": [
+      "district_mall",
+      "district_mega_mall",
+      "district_entertainment_district",
+      "district_neighborhood"
+    ],
+    "base_wage_cost": 8000,
+    "class": "retail",
+    "cycles_to_complete": 14400,
+    "description": "Crafts and sells fine jewelry and luxury watches from precious gems and metals",
+    "name": "Luxury Jewelry Boutique",
+    "startup_cost": 1500000,
+    "production_lines": [
+      {
+        "output_item": "diamond_ring",
+        "output_qty": 5,
+        "inputs": [
+          {
+            "item": "cut_diamond",
+            "quantity": 5
+          },
+          {
+            "item": "gold",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 2000
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          }
+        ]
+      },
+      {
+        "output_item": "ruby_ring",
+        "output_qty": 8,
+        "inputs": [
+          {
+            "item": "cut_ruby",
+            "quantity": 8
+          },
+          {
+            "item": "gold",
+            "quantity": 12
+          },
+          {
+            "item": "energy",
+            "quantity": 2000
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          }
+        ]
+      },
+      {
+        "output_item": "emerald_necklace",
+        "output_qty": 8,
+        "inputs": [
+          {
+            "item": "cut_emerald",
+            "quantity": 8
+          },
+          {
+            "item": "gold",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 2000
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          }
+        ]
+      },
+      {
+        "output_item": "sapphire_bracelet",
+        "output_qty": 10,
+        "inputs": [
+          {
+            "item": "cut_sapphire",
+            "quantity": 10
+          },
+          {
+            "item": "silver",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 2000
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          }
+        ]
+      },
+      {
+        "output_item": "amethyst_pendant",
+        "output_qty": 12,
+        "inputs": [
+          {
+            "item": "cut_amethyst",
+            "quantity": 12
+          },
+          {
+            "item": "silver",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 1500
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          }
+        ]
+      },
+      {
+        "output_item": "gem_pendant",
+        "output_qty": 10,
+        "inputs": [
+          {
+            "item": "cut_garnet",
+            "quantity": 10
+          },
+          {
+            "item": "silver",
+            "quantity": 12
+          },
+          {
+            "item": "energy",
+            "quantity": 1500
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          }
+        ]
+      },
+      {
+        "output_item": "gemstone_bracelet",
+        "output_qty": 8,
+        "inputs": [
+          {
+            "item": "cut_tourmaline",
+            "quantity": 8
+          },
+          {
+            "item": "gold",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 1500
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          }
+        ]
+      },
+      {
+        "output_item": "luxury_watch",
+        "output_qty": 4,
+        "inputs": [
+          {
+            "item": "cut_sapphire",
+            "quantity": 4
+          },
+          {
+            "item": "gold",
+            "quantity": 20
+          },
+          {
+            "item": "brass",
+            "quantity": 15
+          },
+          {
+            "item": "crystal_oscillator",
+            "quantity": 4
+          },
+          {
+            "item": "energy",
+            "quantity": 3000
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          }
+        ]
+      }
+    ],
+    "products": {
+      "diamond_ring": {
+        "base_sale_chance": 0.0002,
+        "elasticity": 1.8
+      },
+      "ruby_ring": {
+        "base_sale_chance": 0.0003,
+        "elasticity": 1.7
+      },
+      "emerald_necklace": {
+        "base_sale_chance": 0.0003,
+        "elasticity": 1.7
+      },
+      "sapphire_bracelet": {
+        "base_sale_chance": 0.0004,
+        "elasticity": 1.6
+      },
+      "amethyst_pendant": {
+        "base_sale_chance": 0.0005,
+        "elasticity": 1.5
+      },
+      "gem_pendant": {
+        "base_sale_chance": 0.0004,
+        "elasticity": 1.5
+      },
+      "gemstone_bracelet": {
+        "base_sale_chance": 0.0003,
+        "elasticity": 1.6
+      },
+      "luxury_watch": {
+        "base_sale_chance": 0.0001,
+        "elasticity": 2.0
+      }
+    }
   }
 }
