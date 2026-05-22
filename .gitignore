@@ -14,6 +14,7 @@ android/twa-project/
 widget_devices.json
 Task
 cloudflared.log
+tick_state.txt
 
 # Dev-only / scratch files
 cheat.txt
