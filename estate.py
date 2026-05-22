@@ -1523,37 +1523,40 @@ def buy_gov_estate_listing(listing_id: int, qty: float, buyer_id: int):
         if buyer.cash_balance < cost:
             return False, f"Insufficient funds — need ${cost:,.2f}"
 
-        # Debit buyer, credit government
+        # Stage cash changes — do NOT commit yet; inventory must succeed first
         buyer.cash_balance -= cost
-        gov = adb.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
+        gov = adb.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).with_for_update().first()
         if gov:
             gov.cash_balance += cost
-        adb.commit()
 
         # Transfer inventory from government (player 0) to buyer
         gov_item = (idb.query(InventoryItem)
                       .filter(InventoryItem.player_id == GOVERNMENT_PLAYER_ID,
                               InventoryItem.item_type == listing.item_type)
-                      .first())
+                      .with_for_update().first())
         if gov_item:
             gov_item.quantity = max(0.0, gov_item.quantity - qty)
+        else:
+            print(f"[Estate] gov has no inventory row for {listing.item_type!r} (listing #{listing_id})")
         buyer_item = (idb.query(InventoryItem)
                         .filter(InventoryItem.player_id == buyer_id,
                                 InventoryItem.item_type == listing.item_type)
-                        .first())
+                        .with_for_update().first())
         if buyer_item:
             buyer_item.quantity += qty
         else:
             idb.add(InventoryItem(player_id=buyer_id,
                                   item_type=listing.item_type,
                                   quantity=qty))
-        idb.commit()
+        idb.commit()  # Inventory committed first — cash rollback still possible if this raises
 
         # Update listing
         listing.quantity -= qty
         if listing.quantity <= 1e-6:
             listing.sold = True
         db.commit()
+
+        adb.commit()  # Cash committed last — both inventory and listing already safe
 
         try:
             from govt_ledger import log_gov_event

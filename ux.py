@@ -3457,7 +3457,8 @@ def buy_gov_estate_listing_route(
     from estate import buy_gov_estate_listing
     ok, msg = buy_gov_estate_listing(listing_id, quantity, player.id)
     param = "success" if ok else "error"
-    safe_msg = msg.replace(" ", "+").replace("&", "and")[:120]
+    from urllib.parse import quote_plus
+    safe_msg = quote_plus(str(msg)[:200])
     return RedirectResponse(f"/government?{param}={safe_msg}#estate-section", status_code=303)
 
 

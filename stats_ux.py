@@ -1766,6 +1766,7 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
 @media (max-width: 640px) {{
   .fin-kpi-val {{ font-size: 1.1rem; }}
   .kpi-grid {{ grid-template-columns: repeat(2, 1fr) !important; }}
+  .kpi-grid > *:last-child:nth-child(odd) {{ grid-column: span 2; }}
   .two-col {{ grid-template-columns: 1fr !important; }}
   .chart-height {{ height: 200px !important; }}
 }}
