@@ -592,6 +592,18 @@ def get_player_from_session(db: Session, session_token: Optional[str]) -> Option
     return player
 
 # ==========================
+def validate_session_ws(session_token: str):
+    """Validate a session token for WebSocket use. Returns Player or None."""
+    try:
+        db = get_db()
+        player = get_player_from_session(db, session_token)
+        db.close()
+        return player
+    except Exception:
+        return None
+
+
+# ==========================
 # ROUTER
 # ==========================
 router = APIRouter()

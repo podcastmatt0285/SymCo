@@ -13,10 +13,19 @@ class _PlayerFeedManager:
         self._conns: Dict[int, WebSocket] = {}
 
     async def connect(self, ws: WebSocket, player_id: int):
+        # Close any existing connection for this player (e.g. second tab, refresh).
+        old = self._conns.get(player_id)
+        if old is not None:
+            try:
+                await old.close(code=1008, reason="Replaced by new connection")
+            except Exception:
+                pass
         self._conns[player_id] = ws
 
-    def disconnect(self, player_id: int):
-        self._conns.pop(player_id, None)
+    def disconnect(self, player_id: int, ws: WebSocket):
+        # Only remove if the stored WebSocket is still the one that disconnected.
+        if self._conns.get(player_id) is ws:
+            self._conns.pop(player_id, None)
 
     @property
     def connected_ids(self):
@@ -28,7 +37,7 @@ class _PlayerFeedManager:
             try:
                 await ws.send_json(payload)
             except Exception:
-                self.disconnect(player_id)
+                self._conns.pop(player_id, None)
 
 
 _mgr = _PlayerFeedManager()
@@ -45,7 +54,9 @@ async def player_feed_ws(websocket: WebSocket):
         await websocket.close(code=4001, reason="Not authenticated")
         return
     from auth import validate_session_ws
-    player = validate_session_ws(session_token)
+    # validate_session_ws is a synchronous DB call; run it off the event loop.
+    loop = asyncio.get_running_loop()
+    player = await loop.run_in_executor(None, validate_session_ws, session_token)
     if not player:
         await websocket.close(code=4001, reason="Not authenticated")
         return
@@ -59,7 +70,7 @@ async def player_feed_ws(websocket: WebSocket):
     except Exception:
         pass
     finally:
-        _mgr.disconnect(player.id)
+        _mgr.disconnect(player.id, websocket)
 
 
 # ── Tick integration ────────────────────────────────────────────────────────
@@ -69,14 +80,13 @@ async def tick(current_tick: int, now):
         return
     if current_tick % _BROADCAST_EVERY != 0:
         return
-    loop = asyncio.get_event_loop()
     for pid in list(_mgr.connected_ids):
-        loop.create_task(_send_state(pid))
+        asyncio.create_task(_send_state(pid))
 
 
 async def _send_state(player_id: int):
     try:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         payload = await loop.run_in_executor(None, _build_payload, player_id)
         await _mgr.send(player_id, payload)
     except Exception as e:
@@ -89,8 +99,11 @@ def _build_payload(player_id: int) -> dict:
         get_player_currency_balances,
         get_player_legal_tender,
     )
-    usd_bal = get_usd_balance(player_id)
-    tender  = get_player_legal_tender(player_id)
+    try:
+        usd_bal = get_usd_balance(player_id)
+        tender  = get_player_legal_tender(player_id)
+    except Exception:
+        return {"type": "balance", "display": "—", "ts": int(time.time())}
 
     sym, bal, note = "$", usd_bal, ""
     if tender != "USD":

@@ -1170,8 +1170,15 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                         }}
                     }} catch(_) {{}}
                 }};
-                _ws.onclose = function() {{ _reconnTimer = setTimeout(connect, 15000); }};
-                _ws.onerror = function() {{ _ws.close(); }};
+                _ws.onclose = function(e) {{
+                    // code 4001 = auth failure (no session cookie or invalid token).
+                    // Don't retry — the page has no login context.
+                    if (e.code === 4001) return;
+                    _reconnTimer = setTimeout(connect, 15000);
+                }};
+                // Clear any pending timer before closing to prevent double-reconnect
+                // (onerror → close() → onclose would otherwise queue two timers).
+                _ws.onerror = function() {{ clearTimeout(_reconnTimer); _ws.close(); }};
             }}
             connect();
             window.addEventListener('pagehide', function() {{
