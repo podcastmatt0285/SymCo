@@ -1460,6 +1460,16 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         f'{svg_labels}'
         f'</svg>'
     )
+    chart_json = json.dumps({
+        "labels":   [cd["date"].strftime("%-m/%-d") for cd in chart_days],
+        "income":   [round(cd["inc"], 2) for cd in chart_days],
+        "expense":  [round(cd["exp"], 2) for cd in chart_days],
+        "net_cum":  [round(v, 2) for v in cum_pts],
+        "tx_count": [
+            sum(1 for tx in txs if tx.timestamp and tx.timestamp.date() == cd["date"])
+            for cd in chart_days
+        ],
+    })
 
     # ── Net Worth donut SVG ───────────────────────────────────────────────────
     NW = stats["total_net_worth"] or 1
@@ -1690,62 +1700,92 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
     body = f"""
 <style>
 .fin-kpi {{
-  background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);
-  border:1px solid #1e293b; border-radius:10px; padding:16px 20px;
-  position:relative; overflow:hidden;
+  background: linear-gradient(135deg, #080f1e 0%, #0d1829 100%);
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color .2s;
 }}
 .fin-kpi::before {{
-  content:''; position:absolute; inset:0; border-radius:10px;
-  background:var(--kpi-glow,transparent); opacity:0.04; pointer-events:none;
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 2px;
+  background: var(--kpi-glow, #38bdf8);
+  opacity: 0.85;
 }}
-.fin-kpi-label {{ font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:#64748b; margin-bottom:6px; }}
-.fin-kpi-val {{ font-size:1.4rem; font-weight:800; font-family:monospace; line-height:1.1; }}
-.fin-kpi-sub {{ font-size:0.72rem; color:#475569; margin-top:4px; }}
+.fin-kpi-label {{ color: #64748b; font-size: 0.68rem; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 6px; }}
+.fin-kpi-val   {{ font-size: 1.4rem; font-weight: 800; font-family: monospace; line-height: 1.1; }}
+.fin-kpi-sub   {{ color: #475569; font-size: 0.72rem; margin-top: 5px; }}
+.chart-card {{
+  background: #060c1a;
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  padding: 20px 22px;
+  margin-bottom: 16px;
+}}
+.chart-toggle-btn {{
+  padding: 5px 14px; border: 1px solid #334155; border-radius: 20px;
+  background: transparent; color: #64748b; font-size: 0.75rem;
+  cursor: pointer; transition: all .15s; font-family: inherit;
+}}
+.chart-toggle-btn:hover {{ border-color: #475569; color: #94a3b8; }}
+.chart-toggle-btn.active {{ background: #1e293b; color: #e2e8f0; border-color: #475569; }}
 .txr {{
-  display:flex; align-items:center; gap:10px;
-  padding:10px 14px 10px 0;
-  border-bottom:1px solid #0f172a;
-  transition:background 0.15s;
-  cursor:default;
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px 12px 0;
+  border-bottom: 1px solid #0f172a;
+  transition: background .12s; cursor: default;
 }}
-.txr:hover {{ background:#0f172a; }}
-.txr:last-child {{ border-bottom:none; }}
+.txr:hover {{ background: #0a1120; }}
+.txr:last-child {{ border-bottom: none; }}
 .txchip {{
-  display:inline-flex; align-items:center;
-  padding:4px 10px; border-radius:14px; font-size:0.78rem; font-weight:500;
-  border:1px solid #1e293b; background:#0f172a; color:#64748b;
-  cursor:pointer; transition:all 0.15s; white-space:nowrap;
+  display: inline-flex; align-items: center;
+  padding: 4px 10px; border-radius: 14px; font-size: 0.75rem; font-weight: 500;
+  border: 1px solid #1e293b; background: #0f172a; color: #64748b;
+  cursor: pointer; transition: all 0.15s; white-space: nowrap; font-family: inherit;
 }}
-.txchip:hover {{ border-color:#334155; color:#94a3b8; }}
-.txchip-active {{ background:#1e3a5f; border-color:#3b82f6; color:#93c5fd; }}
+.txchip:hover {{ border-color: #334155; color: #94a3b8; }}
+.txchip-active {{ background: #1e3a5f; border-color: #3b82f6; color: #93c5fd; }}
 .txsort {{
-  display:inline-flex; align-items:center;
-  padding:3px 9px; border-radius:12px; font-size:0.75rem; font-weight:500;
-  border:1px solid #1e293b; background:#0f172a; color:#475569;
-  cursor:pointer; transition:all 0.15s; white-space:nowrap;
+  display: inline-flex; align-items: center;
+  padding: 3px 9px; border-radius: 12px; font-size: 0.75rem; font-weight: 500;
+  border: 1px solid #1e293b; background: #0f172a; color: #475569;
+  cursor: pointer; transition: all 0.15s; white-space: nowrap; font-family: inherit;
 }}
-.txsort:hover {{ border-color:#334155; color:#94a3b8; }}
-.txsort-active {{ background:#1a2744; border-color:#6366f1; color:#a5b4fc; }}
-.avg-tbl {{ width:100%; border-collapse:collapse; }}
+.txsort:hover {{ border-color: #334155; color: #94a3b8; }}
+.txsort-active {{ background: #1a2744; border-color: #6366f1; color: #a5b4fc; }}
+.avg-tbl {{ width: 100%; border-collapse: collapse; }}
 .avg-tbl thead th {{
-  padding:8px 10px; text-align:left; font-size:0.72rem; font-weight:600;
-  text-transform:uppercase; letter-spacing:0.06em; color:#475569;
-  border-bottom:1px solid #1e293b;
+  padding: 8px 10px; text-align: left; font-size: 0.72rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.06em; color: #475569;
+  border-bottom: 1px solid #1e293b;
 }}
-.avg-tbl tbody tr:hover td {{ background:#0f172a22; }}
+.avg-tbl tbody tr:hover td {{ background: rgba(15,23,42,0.4); }}
+@media (max-width: 640px) {{
+  .fin-kpi-val {{ font-size: 1.1rem; }}
+  .kpi-grid {{ grid-template-columns: repeat(2, 1fr) !important; }}
+  .two-col {{ grid-template-columns: 1fr !important; }}
+  .chart-height {{ height: 200px !important; }}
+}}
 </style>
 
-<div style="margin-bottom:6px;display:flex;align-items:baseline;gap:12px;">
+<div style="margin-bottom:16px;display:flex;align-items:baseline;gap:12px;">
   <h1 style="margin:0;font-size:1.4rem;color:#f1f5f9;font-weight:800;">Financial Statement</h1>
   <span style="font-size:0.78rem;color:#475569;">{player.business_name}</span>
 </div>
 
-<!-- KPI strip -->
-<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+<div class="kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px;margin-bottom:20px;">
   <div class="fin-kpi" style="--kpi-glow:#22d3ee;">
     <div class="fin-kpi-label">Net Worth</div>
     <div class="fin-kpi-val" style="color:#22d3ee;">{fmt_usd(stats['total_net_worth'],disp)}</div>
-    <div class="fin-kpi-sub">All assets combined</div>
+    <div class="fin-kpi-sub">All assets</div>
+  </div>
+  <div class="fin-kpi" style="--kpi-glow:#38bdf8;">
+    <div class="fin-kpi-label">Cash Balance</div>
+    <div class="fin-kpi-val" style="color:#38bdf8;">{fmt_usd(stats['cash_balance'],disp)}</div>
+    <div class="fin-kpi-sub">Available funds</div>
   </div>
   <div class="fin-kpi" style="--kpi-glow:#22c55e;">
     <div class="fin-kpi-label">30-Day Income</div>
@@ -1755,41 +1795,48 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
   <div class="fin-kpi" style="--kpi-glow:#ef4444;">
     <div class="fin-kpi-label">30-Day Expenses</div>
     <div class="fin-kpi-val" style="color:#ef4444;">-{fmt_usd(abs(total_expenses),disp)}</div>
-    <div class="fin-kpi-sub">Costs & purchases</div>
+    <div class="fin-kpi-sub">Costs &amp; purchases</div>
   </div>
   <div class="fin-kpi" style="--kpi-glow:{net_color};">
     <div class="fin-kpi-label">Net Flow</div>
     <div class="fin-kpi-val" style="color:{net_color};">{net_sign}{fmt_usd(net,disp)}</div>
-    <div class="fin-kpi-sub">Largest: {biggest_str[:36]}</div>
+    <div class="fin-kpi-sub">Peak: {fmt_usd(max_daily_val,disp)}/day</div>
   </div>
 </div>
 
-<!-- Cash flow chart -->
-<div class="card" style="margin-bottom:16px;cursor:default;">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>var _CHART_DATA = {chart_json};</script>
+
+<div class="chart-card">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
     <div>
-      <div style="font-size:0.85rem;font-weight:700;color:#e2e8f0;">30-Day Cash Flow</div>
-      <div style="font-size:0.72rem;color:#475569;margin-top:2px;">
+      <div style="font-size:0.88rem;font-weight:700;color:#e2e8f0;">30-Day Financial Overview</div>
+      <div style="font-size:0.72rem;color:#475569;margin-top:3px;">
         <span style="color:#22c55e;">■</span> Income &nbsp;
         <span style="color:#ef4444;">■</span> Expenses &nbsp;
-        <span style="color:{line_color};">— </span> Cumulative net
+        <span style="color:#38bdf8;font-size:0.9rem;">—</span> Net Position
       </div>
     </div>
-    <div style="text-align:right;font-size:0.75rem;color:#475569;">
-      Peak day: {fmt_usd(max_daily_val,disp)}
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      <button class="chart-toggle-btn active" onclick="setChartMode('cashflow',this)">Cash Flow</button>
+      <button class="chart-toggle-btn" onclick="setChartMode('net',this)">Net Position</button>
+      <button class="chart-toggle-btn" onclick="setChartMode('activity',this)">Activity</button>
     </div>
   </div>
-  {chart_svg}
+  <div class="chart-height" style="position:relative;height:260px;">
+    <canvas id="masterChart"></canvas>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:0.72rem;color:#475569;">
+    <span>Last 30 days · {tx_count} transactions</span>
+    <span>Peak day: {fmt_usd(max_daily_val,disp)}</span>
+  </div>
 </div>
 
-<!-- Two-column: Category breakdown + Net Worth donut -->
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
-
+<div class="two-col" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
   <div class="card" style="cursor:default;">
     <div style="font-size:0.85rem;font-weight:700;color:#e2e8f0;margin-bottom:12px;">Income &amp; Expense by Category</div>
     {cat_html}
   </div>
-
   <div class="card" style="cursor:default;">
     <div style="font-size:0.85rem;font-weight:700;color:#e2e8f0;margin-bottom:12px;">Net Worth Breakdown</div>
     <div style="display:flex;gap:16px;align-items:flex-start;">
@@ -1800,25 +1847,32 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
   </div>
 </div>
 
-<!-- Cost averages -->
 {"" if not averages else f'''
-<div class="card" style="margin-bottom:16px;cursor:default;overflow-x:auto;">
-  <div style="font-size:0.85rem;font-weight:700;color:#e2e8f0;margin-bottom:10px;">Purchase Cost Averages</div>
-  <table class="avg-tbl">
-    <thead>
-      <tr>
-        <th>Item</th>
-        <th style="text-align:right;">Avg Cost</th>
-        <th style="text-align:right;">Qty</th>
-        <th style="text-align:right;">Total Spent</th>
-        <th>Relative</th>
-      </tr>
-    </thead>
-    <tbody>{avg_rows}</tbody>
-  </table>
-</div>'''}
+<details style="margin-bottom:16px;">
+  <summary style="cursor:pointer;background:linear-gradient(135deg,#0f172a,#1e293b);
+    border:1px solid #334155;border-radius:8px;padding:14px 20px;
+    font-size:0.85rem;font-weight:700;color:#e2e8f0;list-style:none;
+    display:flex;align-items:center;justify-content:space-between;outline:none;">
+    <span>Purchase Cost Averages</span>
+    <span style="color:#64748b;font-size:0.75rem;font-weight:400;">{len(averages)} items &#9658;</span>
+  </summary>
+  <div style="background:linear-gradient(135deg,#0f172a,#1e293b);border:1px solid #334155;
+    border-top:none;border-radius:0 0 8px 8px;padding:0 0 4px;overflow-x:auto;">
+    <table class="avg-tbl">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th style="text-align:right;">Avg Cost</th>
+          <th style="text-align:right;">Qty</th>
+          <th style="text-align:right;">Total Spent</th>
+          <th>Relative</th>
+        </tr>
+      </thead>
+      <tbody>{avg_rows}</tbody>
+    </table>
+  </div>
+</details>'''}
 
-<!-- Transaction ledger -->
 <div class="card" style="cursor:default;">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:10px;">
     <div>
@@ -1830,7 +1884,6 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
              border-radius:20px;font-size:0.82rem;width:200px;outline:none;">
   </div>
 
-  <!-- Sort controls -->
   <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
     <span style="font-size:0.72rem;color:#475569;letter-spacing:0.05em;text-transform:uppercase;">Sort:</span>
     <button class="txsort txsort-active" onclick="txSortBy('newest',this)">Newest first</button>
@@ -1839,18 +1892,128 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
     <button class="txsort" onclick="txSortBy('amount_asc',this)">$ Low → High</button>
   </div>
 
-  <!-- Filter chips -->
   <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">
     {filter_chips_html}
   </div>
 
-  <!-- Ledger rows -->
   <div id="transactions" style="border:1px solid #1e293b;border-radius:8px;overflow:hidden;">
     {tx_html if tx_html else '<div style="padding:32px;text-align:center;color:#475569;">No transactions recorded yet.</div>'}
   </div>
 
   <div id="tx-pagination" style="display:flex;justify-content:center;align-items:center;gap:6px;margin-top:14px;flex-wrap:wrap;"></div>
 </div>
+
+<script>
+(function() {{
+  var d = _CHART_DATA;
+  var ctx = document.getElementById('masterChart');
+  if (!ctx || typeof Chart === 'undefined') return;
+  var _origIncome = d.income.slice();
+  var chart = new Chart(ctx.getContext('2d'), {{
+    type: 'bar',
+    data: {{
+      labels: d.labels,
+      datasets: [
+        {{
+          label: 'Income',
+          data: d.income,
+          backgroundColor: 'rgba(34,197,94,0.7)',
+          borderRadius: 3,
+          order: 2,
+        }},
+        {{
+          label: 'Expenses',
+          data: d.expense.map(function(v) {{ return -v; }}),
+          backgroundColor: 'rgba(239,68,68,0.65)',
+          borderRadius: 3,
+          order: 2,
+        }},
+        {{
+          label: 'Net Position',
+          data: d.net_cum,
+          type: 'line',
+          borderColor: '#38bdf8',
+          backgroundColor: 'rgba(56,189,248,0.07)',
+          borderWidth: 2,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          fill: true,
+          tension: 0.35,
+          yAxisID: 'y2',
+          order: 1,
+        }},
+      ],
+    }},
+    options: {{
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: {{ duration: 500 }},
+      interaction: {{ mode: 'index', intersect: false }},
+      plugins: {{
+        legend: {{ display: false }},
+        tooltip: {{
+          backgroundColor: '#0f172a',
+          borderColor: '#334155',
+          borderWidth: 1,
+          titleColor: '#94a3b8',
+          bodyColor: '#e2e8f0',
+          callbacks: {{
+            label: function(c) {{
+              var v = c.raw;
+              var s = c.dataset.label + ': ';
+              if (typeof v === 'number') {{
+                s += (v >= 0 ? '+' : '') + '$' + Math.abs(v).toLocaleString('en-US', {{minimumFractionDigits:2,maximumFractionDigits:2}});
+              }}
+              return s;
+            }},
+          }},
+        }},
+      }},
+      scales: {{
+        x: {{ grid: {{ color: '#0f172a' }}, ticks: {{ color: '#475569', font: {{ size: 10 }} }} }},
+        y: {{
+          grid: {{ color: '#111827' }},
+          ticks: {{
+            color: '#64748b', font: {{ size: 10 }},
+            callback: function(v) {{ return v >= 0 ? '$'+v.toLocaleString() : '-$'+(-v).toLocaleString(); }},
+          }},
+        }},
+        y2: {{
+          position: 'right',
+          grid: {{ drawOnChartArea: false }},
+          ticks: {{ color: '#38bdf8', font: {{ size: 10 }} }},
+        }},
+      }},
+    }},
+  }});
+
+  window.setChartMode = function(mode, btn) {{
+    document.querySelectorAll('.chart-toggle-btn').forEach(function(b) {{ b.classList.remove('active'); }});
+    btn.classList.add('active');
+    if (mode === 'cashflow') {{
+      chart.data.datasets[0].data = _origIncome;
+      chart.data.datasets[0].label = 'Income';
+      chart.data.datasets[0].hidden = false;
+      chart.data.datasets[1].hidden = false;
+      chart.data.datasets[2].hidden = false;
+      chart.options.scales.y2.display = true;
+    }} else if (mode === 'net') {{
+      chart.data.datasets[0].hidden = true;
+      chart.data.datasets[1].hidden = true;
+      chart.data.datasets[2].hidden = false;
+      chart.options.scales.y2.display = true;
+    }} else if (mode === 'activity') {{
+      chart.data.datasets[0].data = d.tx_count;
+      chart.data.datasets[0].label = 'Transactions';
+      chart.data.datasets[0].hidden = false;
+      chart.data.datasets[1].hidden = true;
+      chart.data.datasets[2].hidden = true;
+      chart.options.scales.y2.display = false;
+    }}
+    chart.update();
+  }};
+}})();
+</script>
 
 <script>
 (function() {{
@@ -1872,7 +2035,7 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
       if (_sort === 'oldest')      return at - bt;
       if (_sort === 'amount_desc') return ba - aa;
       if (_sort === 'amount_asc')  return aa - ba;
-      return bt - at; // newest (default)
+      return bt - at;
     }});
   }}
 
@@ -1893,9 +2056,7 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
 
   function _render() {{
     var cont = document.getElementById('transactions');
-    // Hide every row first
     _all.forEach(function(el) {{ el.style.display = 'none'; }});
-    // Show + re-order the current page slice via appendChild
     _vis.slice(_page * PAGE, _page * PAGE + PAGE).forEach(function(el) {{
       el.style.display = '';
       cont.appendChild(el);
