@@ -105,6 +105,26 @@ def get_recent_events(limit: int = 100, event_type: str = None):
         db.close()
 
 
+def get_revenue_summary(hours: int = 24) -> dict:
+    """Return total in/out amounts for the last `hours` hours."""
+    from sqlalchemy import func
+    from datetime import timedelta
+    cutoff = datetime.utcnow() - timedelta(hours=hours)
+    db = get_db()
+    try:
+        rows = (db.query(GovernmentLedger.direction,
+                         func.sum(GovernmentLedger.amount).label("total"))
+                  .filter(GovernmentLedger.timestamp >= cutoff)
+                  .group_by(GovernmentLedger.direction)
+                  .all())
+        result = {"in": 0.0, "out": 0.0}
+        for row in rows:
+            result[row.direction] = float(row.total or 0)
+        return result
+    finally:
+        db.close()
+
+
 def initialize():
     Base.metadata.create_all(bind=engine)
     print("[GovLedger] Table ready.")

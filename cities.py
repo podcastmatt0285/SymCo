@@ -2934,11 +2934,13 @@ def tick_city_bank_charter_fees(current_tick: int):
             try:
                 from auth import get_db as _adb, Player as _Player
                 _adb_conn = _adb()
-                gov = _adb_conn.query(_Player).filter(_Player.id == GOVERNMENT_PLAYER_ID).first()
-                if gov:
-                    gov.cash_balance = (gov.cash_balance or 0.0) + total_collected
-                    _adb_conn.commit()
-                _adb_conn.close()
+                try:
+                    gov = _adb_conn.query(_Player).filter(_Player.id == GOVERNMENT_PLAYER_ID).first()
+                    if gov:
+                        gov.cash_balance = (gov.cash_balance or 0.0) + total_collected
+                        _adb_conn.commit()
+                finally:
+                    _adb_conn.close()
             except Exception as _e:
                 print(f"[Cities] Charter fee gov credit error: {_e}")
             try:

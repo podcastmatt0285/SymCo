@@ -2557,6 +2557,7 @@ def government_dashboard(
     session_token: Optional[str] = Cookie(None),
     success: str = "",
     error: str = "",
+    ledger_type: str = "",
 ):
     """Federal Government of Wadsworth — full fiscal transparency dashboard."""
     player = require_auth(session_token)
@@ -2689,21 +2690,23 @@ def government_dashboard(
         from land import LandPlot as _LP, get_db as _ldb
         _lm = _lmdb()
         _ld = _ldb()
-        for auc in _lm.query(_GA).filter(_GA.is_active == True).order_by(_GA.end_time).all():
-            plot = _ld.query(_LP).filter(_LP.id == auc.land_plot_id).first()
-            gov_auctions.append({
-                "id": auc.id,
-                "terrain": plot.terrain_type.replace("_", " ").title() if plot else "Unknown",
-                "features": plot.proximity_features if plot else "",
-                "size": plot.size if plot else 1.0,
-                "start_price": auc.starting_price,
-                "current_price": auc.current_price,
-                "min_price": auc.minimum_price,
-                "ends": auc.end_time,
-                "hours_left": max(0, int((auc.end_time - _dt.utcnow()).total_seconds() / 3600)) if auc.end_time else 0,
-            })
-        _lm.close()
-        _ld.close()
+        try:
+            for auc in _lm.query(_GA).filter(_GA.is_active == True).order_by(_GA.end_time).all():
+                plot = _ld.query(_LP).filter(_LP.id == auc.land_plot_id).first()
+                gov_auctions.append({
+                    "id": auc.id,
+                    "terrain": plot.terrain_type.replace("_", " ").title() if plot else "Unknown",
+                    "features": plot.proximity_features if plot else "",
+                    "size": plot.size if plot else 1.0,
+                    "start_price": auc.starting_price,
+                    "current_price": auc.current_price,
+                    "min_price": auc.minimum_price,
+                    "ends": auc.end_time,
+                    "hours_left": max(0, int((auc.end_time - _dt.utcnow()).total_seconds() / 3600)) if auc.end_time else 0,
+                })
+        finally:
+            _lm.close()
+            _ld.close()
     except Exception:
         pass
 
@@ -2869,8 +2872,10 @@ def government_dashboard(
         try:
             from counties import get_db as _crydb2, County as _Cty2
             _cdb2 = _crydb2()
-            _county_id_to_sym = {c.id: c.crypto_symbol for c in _cdb2.query(_Cty2).all()}
-            _cdb2.close()
+            try:
+                _county_id_to_sym = {c.id: c.crypto_symbol for c in _cdb2.query(_Cty2).all()}
+            finally:
+                _cdb2.close()
         except Exception:
             _county_id_to_sym = {}
         for w in _db.query(_MCW).filter(_MCW.player_id == 0, _MCW.balance > 0).all():
@@ -2897,6 +2902,7 @@ def government_dashboard(
         _db = _estdb()
         for lst in _db.query(_GEL).filter(_GEL.sold == False).order_by(_GEL.listed_at.desc()).all():
             gov_estate.append({
+                "id":          lst.id,
                 "item_type":   lst.item_type,
                 "quantity":    lst.quantity,
                 "price":       lst.listed_price,
@@ -3224,22 +3230,83 @@ def government_dashboard(
             + _td(_usd(lst["total_val"]), "#fbbf24", right=True)
             + _td(f'Player #{lst["deceased_id"]}', "#475569")
             + _td(lst["listed_at"].strftime("%Y-%m-%d") if lst["listed_at"] else "—", "#475569")
+            + f'<td style="padding:6px 10px;">'
+              f'<form action="/api/estate/buy-gov-listing" method="post" style="display:flex;gap:5px;align-items:center;">'
+              f'<input type="hidden" name="listing_id" value="{lst["id"]}">'
+              f'<input type="number" name="quantity" min="0.01" max="{lst["quantity"]:.4f}" step="0.01" value="1"'
+              f' style="width:66px;background:#0a1628;border:1px solid #334155;color:#e2e8f0;'
+              f'padding:3px 6px;border-radius:4px;font-size:0.75rem;">'
+              f'<button type="submit" style="background:#7c3aed;color:#fff;border:none;border-radius:4px;'
+              f'padding:4px 10px;font-size:0.75rem;cursor:pointer;white-space:nowrap;">Buy</button>'
+              f'</form></td>'
             + "</tr>"
             for lst in gov_estate
         )
-        estate_html = f'<p style="color:#475569;font-size:0.75rem;margin:0 0 12px 0;">Assets seized from deleted or inactive player accounts being liquidated by the government.</p>' + f"<table {ts}><thead><tr>" + "".join(_th(h) for h in ["Item","Quantity","Unit Price","Total Value","Estate Of","Listed"]) + "</tr></thead><tbody>" + rows + "</tbody></table>"
+        estate_html = (
+            f'<p style="color:#475569;font-size:0.75rem;margin:0 0 12px 0;">'
+            f'Assets seized from deleted or inactive player accounts being liquidated by the government. '
+            f'Purchase items at the listed price — proceeds go to the federal treasury.</p>'
+            + f"<div style='overflow-x:auto;'><table {ts}><thead><tr>"
+            + "".join(_th(h) for h in ["Item","Quantity","Unit Price","Total Value","Estate Of","Listed",""])
+            + "</tr></thead><tbody>" + rows + "</tbody></table></div>"
+        )
     else:
         estate_html = '<p style="color:#475569;font-size:0.85rem;">No estate listings active.</p>'
+
+    # ── 24 h revenue summary ──────────────────────────────────────────────────
+    _rev24 = {"in": 0.0, "out": 0.0}
+    try:
+        from govt_ledger import get_revenue_summary
+        _rev24 = get_revenue_summary(24)
+    except Exception:
+        pass
+    _net24 = _rev24["in"] - _rev24["out"]
+    _net_color = "#4ade80" if _net24 >= 0 else "#f87171"
+    _rev_strip = f"""
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+                background:#060c1a;border:1px solid #1e293b;border-radius:6px;
+                padding:12px 16px;margin-bottom:14px;" id="ledger">
+        <div>
+            <div style="color:#64748b;font-size:0.68rem;letter-spacing:.05em;">24 H REVENUE IN</div>
+            <div style="color:#4ade80;font-size:1.05rem;font-weight:700;">{_usd(_rev24["in"])}</div>
+        </div>
+        <div>
+            <div style="color:#64748b;font-size:0.68rem;letter-spacing:.05em;">24 H OUTLAYS</div>
+            <div style="color:#f87171;font-size:1.05rem;font-weight:700;">{_usd(_rev24["out"])}</div>
+        </div>
+        <div>
+            <div style="color:#64748b;font-size:0.68rem;letter-spacing:.05em;">24 H NET</div>
+            <div style="color:{_net_color};font-size:1.05rem;font-weight:700;">
+                {"+" if _net24 >= 0 else ""}{_usd(_net24)}
+            </div>
+        </div>
+    </div>"""
 
     # ── Government Activity Ledger ────────────────────────────────────────────
     try:
         from govt_ledger import EVENT_META as _LEDGER_META
     except Exception:
         _LEDGER_META = {}
+    _filter_options = "".join(
+        f'<option value="{k}"{" selected" if k == ledger_type else ""}>'
+        f'{v[0]}</option>'
+        for k, v in sorted(_LEDGER_META.items(), key=lambda x: x[1][0])
+    )
+    _filter_select = f"""
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <label style="color:#64748b;font-size:0.75rem;white-space:nowrap;">Filter by type:</label>
+        <select id="ledger-filter" onchange="location.href='/government?ledger_type='+this.value+'#ledger'"
+                style="background:#0a1628;border:1px solid #334155;color:#e2e8f0;
+                       padding:4px 8px;border-radius:4px;font-size:0.78rem;">
+            <option value="{'' if ledger_type else ''}"{"" if ledger_type else " selected"}>All events</option>
+            {_filter_options}
+        </select>
+        {"" if not ledger_type else f'<a href="/government#ledger" style="color:#64748b;font-size:0.75rem;text-decoration:none;">✕ Clear</a>'}
+    </div>"""
     ledger_html = ""
     try:
         from govt_ledger import get_recent_events
-        _ledger_events = get_recent_events(limit=75)
+        _ledger_events = get_recent_events(limit=75, event_type=ledger_type or None)
         if _ledger_events:
             _lrows = []
             for ev in _ledger_events:
@@ -3262,17 +3329,20 @@ def government_dashboard(
                     f"<td style='padding:7px 10px;color:#475569;font-size:0.75rem;white-space:nowrap;'>{ts_str}</td>"
                     f"</tr>"
                 )
+            _type_note = f' — filtered to <strong style="color:#e2e8f0;">{_LEDGER_META.get(ledger_type, (ledger_type,))[0]}</strong>' if ledger_type else ""
             ledger_html = (
-                f'<p style="color:#475569;font-size:0.75rem;margin:0 0 12px 0;">Showing the 75 most recent government fiscal events. ↓ = money flowing in to federal treasury, ↑ = money flowing out.</p>'
-                f'<table style="width:100%;border-collapse:collapse;">'
-                f'<thead><tr>'
+                _rev_strip
+                + _filter_select
+                + f'<p style="color:#475569;font-size:0.75rem;margin:0 0 12px 0;">Showing the 75 most recent government fiscal events{_type_note}. ↓ = money flowing in to federal treasury, ↑ = money flowing out.</p>'
+                + f'<table style="width:100%;border-collapse:collapse;">'
+                + f'<thead><tr>'
                 + "".join(_th(h) for h in ["", "Event", "Amount", "Counterparty", "Description", "Time"])
                 + f'</tr></thead><tbody>'
                 + "".join(_lrows)
                 + f'</tbody></table>'
             )
         else:
-            ledger_html = '<p style="color:#475569;font-size:0.85rem;">No government fiscal events recorded yet. Events will appear here as the economy runs.</p>'
+            ledger_html = _rev_strip + _filter_select + '<p style="color:#475569;font-size:0.85rem;">No government fiscal events recorded yet. Events will appear here as the economy runs.</p>'
     except Exception as _le:
         ledger_html = f'<p style="color:#475569;font-size:0.85rem;">Ledger unavailable: {_le}</p>'
 
@@ -3312,7 +3382,7 @@ def government_dashboard(
     {_sec("Outstanding Loans to City Banks", "#f87171", loan_html)}
     {_sec("Government-Owned Land", "#22c55e", land_html)}
     {_sec("Active Land Auctions", "#f5d76e", auction_html)}
-    {_sec("Estate Liquidation", "#fbbf24", estate_html)}
+    <div id="estate-section">{_sec("Estate Liquidation", "#fbbf24", estate_html)}</div>
     {_sec("Revenue &amp; Fiscal Mechanics", "#94a3b8", fiscal_html)}
     {_sec("Government Activity Log", "#38bdf8", ledger_html)}
 
@@ -3374,6 +3444,21 @@ def gov_force_charter_fees(session_token: Optional[str] = Cookie(None)):
         return _RR("/admin?success=Charter+fees+collected", status_code=303)
     except Exception as e:
         return _RR(f"/admin?error={str(e)[:80]}", status_code=303)
+
+
+@router.post("/api/estate/buy-gov-listing")
+def buy_gov_estate_listing_route(
+    session_token: Optional[str] = Cookie(None),
+    listing_id: int = Form(...),
+    quantity: float = Form(...),
+):
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse): return player
+    from estate import buy_gov_estate_listing
+    ok, msg = buy_gov_estate_listing(listing_id, quantity, player.id)
+    param = "success" if ok else "error"
+    safe_msg = msg.replace(" ", "+").replace("&", "and")[:120]
+    return RedirectResponse(f"/government?{param}={safe_msg}#estate-section", status_code=303)
 
 
 # ── Beta program API routes ───────────────────────────────────────────────────

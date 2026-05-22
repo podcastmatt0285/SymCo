@@ -1493,6 +1493,91 @@ def check_idle_players(current_tick: int):
 # MODULE LIFECYCLE
 # ==========================
 
+def buy_gov_estate_listing(listing_id: int, qty: float, buyer_id: int):
+    """Purchase qty units from a government estate listing.
+
+    Debits buyer cash, credits government cash, transfers inventory,
+    reduces listing quantity (marks sold when fully cleared).
+    Returns (success: bool, message: str).
+    """
+    from auth import get_db as _adb, Player
+    from inventory import get_db as _idb, InventoryItem
+    db   = get_db()
+    adb  = _adb()
+    idb  = _idb()
+    try:
+        listing = (db.query(GovernmentEstateListing)
+                     .filter(GovernmentEstateListing.id == listing_id,
+                             GovernmentEstateListing.sold == False)
+                     .with_for_update().first())
+        if not listing:
+            return False, "Listing not found or already sold"
+        if qty <= 0 or qty > listing.quantity + 1e-9:
+            return False, f"Invalid quantity (max {listing.quantity:.2f})"
+        qty = min(qty, listing.quantity)
+        cost = round(listing.listed_price * qty, 2)
+
+        buyer = adb.query(Player).filter(Player.id == buyer_id).with_for_update().first()
+        if not buyer:
+            return False, "Player not found"
+        if buyer.cash_balance < cost:
+            return False, f"Insufficient funds — need ${cost:,.2f}"
+
+        # Debit buyer, credit government
+        buyer.cash_balance -= cost
+        gov = adb.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
+        if gov:
+            gov.cash_balance += cost
+        adb.commit()
+
+        # Transfer inventory from government (player 0) to buyer
+        gov_item = (idb.query(InventoryItem)
+                      .filter(InventoryItem.player_id == GOVERNMENT_PLAYER_ID,
+                              InventoryItem.item_type == listing.item_type)
+                      .first())
+        if gov_item:
+            gov_item.quantity = max(0.0, gov_item.quantity - qty)
+        buyer_item = (idb.query(InventoryItem)
+                        .filter(InventoryItem.player_id == buyer_id,
+                                InventoryItem.item_type == listing.item_type)
+                        .first())
+        if buyer_item:
+            buyer_item.quantity += qty
+        else:
+            idb.add(InventoryItem(player_id=buyer_id,
+                                  item_type=listing.item_type,
+                                  quantity=qty))
+        idb.commit()
+
+        # Update listing
+        listing.quantity -= qty
+        if listing.quantity <= 1e-6:
+            listing.sold = True
+        db.commit()
+
+        try:
+            from govt_ledger import log_gov_event
+            log_gov_event("estate_sale", "in", cost, "USD",
+                          f"Player #{buyer_id}",
+                          f"{qty:.2f}× {listing.item_type} @ ${listing.listed_price:,.2f}")
+        except Exception:
+            pass
+
+        return True, f"Purchased {qty:.2f}× {listing.item_type.replace('_',' ').title()} for ${cost:,.2f}"
+    except Exception as e:
+        try: db.rollback()
+        except Exception: pass
+        try: adb.rollback()
+        except Exception: pass
+        try: idb.rollback()
+        except Exception: pass
+        return False, str(e)[:120]
+    finally:
+        db.close()
+        adb.close()
+        idb.close()
+
+
 def initialize():
     """Initialize estate module."""
     print("[Estate] Creating database tables...")
@@ -1615,6 +1700,7 @@ __all__ = [
     'set_heir',
     'remove_heir',
     'liquidate_estate',
+    'buy_gov_estate_listing',
     'calculate_estate_value',
     'calculate_total_debts',
     'get_crypto_inheritance_notifications',
