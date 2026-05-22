@@ -2919,7 +2919,7 @@ def government_dashboard(
                            + sum(m["usd_val"] for m in gov_meme_coins))
     grand_total         = (gov_treasury + total_foreign_usd + total_bond_face
                            + total_bond_interest + gov_land_value_est + total_equity_val
-                           + total_bank_invested + total_crypto_usd)
+                           + total_bank_invested + total_crypto_usd + total_loan_debt)
 
     def _usd(v): return fmt_usd(v, disp)
 
@@ -2946,10 +2946,10 @@ def government_dashboard(
               f"{sum(gov_commodities.values()):,.1f} total units held" if gov_commodities else "None held yet", "#fb923c")}
         {_kpi("LAND HOLDINGS", f"{gov_land_total:,} plots",
               f"~{_usd(gov_land_value_est)} estimated (10× annual tax)", "#22c55e")}
-        {_kpi("LOANS TO CITY BANKS", _usd(total_loan_debt),
-              f"{len(gov_loans)} active loan{'s' if len(gov_loans) != 1 else ''}", "#f87171")}
+        {_kpi("LOAN RECEIVABLES", _usd(total_loan_debt),
+              f"{len(gov_loans)} active loan{'s' if len(gov_loans) != 1 else ''} — owed to federal gov", "#34d399")}
         {_kpi("TOTAL ASSETS (EST.)", _usd(grand_total),
-              "treasury + currencies + bonds + interest + equity + crypto + land", "#a78bfa")}
+              "treasury + currencies + bonds + equity + crypto + land + loan receivables", "#a78bfa")}
     </div>"""
 
     # ── Shared helpers ────────────────────────────────────────────────────────
@@ -3032,7 +3032,7 @@ def government_dashboard(
             + "</tr>"
             for ln in gov_loans
         )
-        loan_note = '<p style="color:#475569;font-size:0.75rem;margin:0 0 12px 0;">Emergency loans issued automatically when a city bank becomes insolvent. Repaid in 30 installments at 7% interest over 15 days.</p>'
+        loan_note = '<p style="color:#475569;font-size:0.75rem;margin:0 0 12px 0;">Emergency loans issued automatically when a city bank becomes insolvent. Repaid in 30 installments over 15 days — each installment includes 7% of the original principal as interest (total owed = 3.1× principal).</p>'
         loan_html = loan_note + f"<table {ts}><thead><tr>" + "".join(_th(h) for h in ["City","Principal","Total Owed","Paid","Remaining","Installments","Issued"]) + "</tr></thead><tbody>" + rows + "</tbody></table>"
     else:
         loan_html = '<p style="color:#4ade80;font-size:0.85rem;">No outstanding city bank loans.</p>'
@@ -3087,7 +3087,7 @@ def government_dashboard(
         _row("Estate / Death Tax",           "15% of inheritance",          "Deducted from estates before heir payout — kept by federal government", "#f472b6"),
         _row("Forex Transaction Fee",        "3% per party per swap",       "Each reserve bank in an interbank currency swap pays 3% of swap value in USD to federal gov; reserves may go negative", "#38bdf8"),
         _row("Petrodollar Customs Share",    "50% of customs fee",          "Credited to government operating cash when outsiders trade in city currencies", "#4ade80"),
-        _row("City Bank Emergency Loans",    "7% interest, 30 installments","Government lends to insolvent city banks; repayments return to operating cash", "#fbbf24"),
+        _row("City Bank Emergency Loans",    "7% per installment × 30 = 210% total","Government lends to insolvent city banks; total_owed = principal × 3.1; repayments return to operating cash", "#fbbf24"),
         _row("Bond Investment (outflow)",    f"25% of cash above {_usd(100_000)}","Auto-invests surplus into USD reserve bank bonds every 12 h", "#94a3b8"),
         _row("City Bank Grants (outflow)",   "2% of operating cash",        "Distributed equally to all city banks every 12 h to fund bank reserves", "#f87171"),
         _row("City Project Sales Tax",       "0.2%–0.6% per project level", "Charged on market sales of city members — goes to city bank reserves, NOT federal gov", "#475569"),
@@ -3283,15 +3283,23 @@ def government_dashboard(
     elif error:
         flash_html = f'<div style="background:#1c0505;border:1px solid #b91c1c;border-radius:6px;padding:10px 16px;margin-bottom:18px;color:#f87171;font-size:0.85rem;">✗ {error}</div>'
 
+    from datetime import datetime as _nowdt
+    _page_ts = _nowdt.utcnow().strftime("%Y-%m-%d %H:%M UTC")
     body = f"""
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;flex-wrap:wrap;">
         <span style="font-size:2rem;">🏛️</span>
-        <div>
+        <div style="flex:1;min-width:220px;">
             <h2 style="margin:0;color:#e2e8f0;">Federal Government of Wadsworth</h2>
             <p style="margin:4px 0 0;color:#475569;font-size:0.82rem;">
-                Federal treasury, holdings, and fiscal operations — updated every page load.
+                Federal treasury, holdings, and fiscal operations &mdash; as of {_page_ts}.
             </p>
         </div>
+        <a href="/government" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;
+            background:#0f172a;border:1px solid #334155;border-radius:6px;color:#94a3b8;
+            font-size:0.8rem;text-decoration:none;white-space:nowrap;"
+            title="Reload this page to refresh all figures">
+            ↻ Refresh
+        </a>
     </div>
     {flash_html}
     {kpis}

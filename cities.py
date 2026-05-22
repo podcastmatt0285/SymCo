@@ -1631,7 +1631,7 @@ def request_government_loan(city_id: int, amount: float, current_tick: int) -> T
             city = db.query(City).filter(City.id == city_id).first()
             log_gov_event("loan_disbursement", "out", amount, "USD",
                           city.name if city else f"City {city_id}",
-                          f"Emergency loan — ${total_owed:,.2f} total owed at 7% interest")
+                          f"Emergency loan — ${total_owed:,.2f} total owed (7% per installment × 30)")
         except Exception:
             pass
         return loan, "Loan granted"

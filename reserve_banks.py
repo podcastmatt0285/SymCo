@@ -655,9 +655,19 @@ def _mature_bonds(db, bank: StateReserveBank, now: datetime):
         # Reduce WSC holdings — this WSC is now being redeemed as bank currency
         bank.wsc_holdings = max(0.0, bank.wsc_holdings - bond.face_value_wsc)
 
-        # Interbank bonds (holder_player_id == 0) have no player to pay out to.
-        # They exist solely to throttle swap frequency; just expire them silently.
         if bond.holder_player_id <= 0:
+            # Short-maturity interbank bonds (3-day) throttle swap frequency — expire silently.
+            # Long-maturity bonds (>3 days) are government investment bonds — return principal
+            # to the government's USD PlayerCurrencyBalance so the next sweep picks it up.
+            if (bond.maturity_days or 0) > INTERBANK_BOND_MATURITY_DAYS:
+                _adjust_currency_balance(db, 0, "USD", bond.face_value_wsc)
+                try:
+                    from govt_ledger import log_gov_event
+                    log_gov_event("bond_sale", "in", bond.face_value_wsc, "USD",
+                                  f"{bank.currency_code} Reserve Bank",
+                                  f"Bond matured — ${bond.face_value_wsc:,.2f} principal returned")
+                except Exception:
+                    pass
             continue
 
         # Return face value in the bank's own currency using the FX rate that was
