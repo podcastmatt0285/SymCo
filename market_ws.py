@@ -243,7 +243,7 @@ async def tick(current_tick: int, now: datetime):
     if not _connections:
         return
     try:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         snap = await loop.run_in_executor(None, collect_snapshot)
         _last_snapshot = snap
         payload = json.dumps(snap)
