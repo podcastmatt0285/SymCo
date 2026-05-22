@@ -2497,9 +2497,12 @@ def home(request: Request, session_token: Optional[str] = Cookie(None)):
         // Active Duty daily check-in — fires on every dashboard load.
         // Server deduplicates to once per UTC day per player.
         // Chrome 108+ removed automatic X-Requested-With headers in TWA,
-        // so we set it explicitly, gated on standalone display mode.
+        // so we set it explicitly, gated on app display mode (standalone or fullscreen).
+        // The Wadsworth TWA manifest declares display:fullscreen, not standalone.
         (function() {{
-            if (!window.matchMedia('(display-mode: standalone)').matches) return;
+            var _isApp = window.matchMedia('(display-mode: standalone)').matches
+                      || window.matchMedia('(display-mode: fullscreen)').matches;
+            if (!_isApp) return;
             var xhr = new XMLHttpRequest();
             xhr.open('GET', '/api/twa-checkin', true);
             xhr.withCredentials = true;
@@ -15981,7 +15984,9 @@ def events_page(request: Request,
     {empty_html}
     <script>
     (function() {{
-        if (!window.matchMedia('(display-mode: standalone)').matches) return;
+        var _isApp = window.matchMedia('(display-mode: standalone)').matches
+                  || window.matchMedia('(display-mode: fullscreen)').matches;
+        if (!_isApp) return;
         var xhr = new XMLHttpRequest();
         xhr.open('GET', '/api/twa-checkin', true);
         xhr.withCredentials = true;
