@@ -532,9 +532,6 @@ app = FastAPI(
 )
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
-app.mount("/assets/iso", StaticFiles(directory="isometric-city/public/assets"), name="isometric_assets")
-app.mount("/assets/kenney", StaticFiles(directory="kenney_isometric-roads/png"), name="kenney_iso")
-app.mount("/assets/farmlife", StaticFiles(directory="Farm Life/Farm Life"), name="farmlife")
 
 # PWA — these must be served from the root so the service worker scope covers
 # the whole app and browsers can discover the manifest automatically.
