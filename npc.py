@@ -1046,7 +1046,7 @@ def seed_npcs_background():
 
     from auth import Player
     from inventory import InventoryItem
-    from reserve_banks import PlayerCurrencyBalance
+    from reserve_banks import PlayerCurrencyBalance, get_db as rb_get_db
 
     all_cfgs       = list(_NPC_CONFIGS.values())
     _seeding_total  = len(all_cfgs)
@@ -1087,16 +1087,21 @@ def seed_npcs_background():
             db.commit()
             print(f"[NPC]   {len(fresh_cfgs)} Player rows inserted")
 
-            # 2b. All USD currency balances in one commit.
-            db.add_all([
-                PlayerCurrencyBalance(
-                    player_id     = c["player_id"],
-                    currency_code = "USD",
-                    balance       = float(c.get("seed", {}).get("starting_cash", 50_000.0)),
-                )
-                for c in fresh_cfgs
-            ])
-            db.commit()
+            # 2b. All USD currency balances — must use reserve_banks session,
+            # not the main-app session (player_currency_balances lives there).
+            rb_db = rb_get_db()
+            try:
+                rb_db.add_all([
+                    PlayerCurrencyBalance(
+                        player_id     = c["player_id"],
+                        currency_code = "USD",
+                        balance       = float(c.get("seed", {}).get("starting_cash", 50_000.0)),
+                    )
+                    for c in fresh_cfgs
+                ])
+                rb_db.commit()
+            finally:
+                rb_db.close()
             print(f"[NPC]   {len(fresh_cfgs)} currency balances inserted")
 
             # 2c. All starting inventory items in one commit.
