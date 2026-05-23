@@ -1,0 +1,59 @@
+{
+  "player_id": -2063,
+  "business_name": "Bayshore Shellfish Co.",
+  "description": "Coastal shellfish and crustacean operation. Shellfish beds produce scallops, oysters, clams, and mussels; crustacean trappers supply lobster, dungeness crab, blue crab, and langoustine to the open market.",
+  "cash_caps": {
+    "hard_high": 20000000,
+    "soft_high": 8000000,
+    "soft_low": 2000000,
+    "hard_low": 600000
+  },
+  "seed": {
+    "starting_cash": 5000000,
+    "starting_inventory": {
+      "dredger": 5,
+      "bio_fuel": 1500,
+      "scallops": 200,
+      "oysters": 200,
+      "clams": 300,
+      "lobster": 100
+    },
+    "land_plots": [
+      { "terrain_type": "coastal", "proximity_features": ["coastal"], "size": 1 },
+      { "terrain_type": "coastal", "proximity_features": ["coastal"], "size": 1 }
+    ]
+  },
+  "businesses": [
+    {
+      "business_type": "shellfish_beds",
+      "district_id": null,
+      "active_lines": ["scallops", "oysters", "clams", "mussels"]
+    },
+    {
+      "business_type": "crustacean_trappers",
+      "district_id": null,
+      "active_lines": ["lobster", "dungeness_crab", "blue_crab", "langoustine"]
+    }
+  ],
+  "buy_items": {
+    "dredger":  { "target_inventory": 10,   "reorder_at": 2,    "max_price_multiplier": 1.20, "market": "regular" },
+    "bio_fuel": { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.10, "market": "regular" },
+    "energy":   { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.10, "market": "regular" },
+    "paper":    { "target_inventory": 300,   "reorder_at": 60,   "max_price_multiplier": 1.10, "market": "regular" }
+  },
+  "sell_items": {
+    "scallops":       { "min_inventory_to_keep": 300, "max_order_quantity": 1000, "market": "regular" },
+    "oysters":        { "min_inventory_to_keep": 300, "max_order_quantity": 1000, "market": "regular" },
+    "clams":          { "min_inventory_to_keep": 400, "max_order_quantity": 1200, "market": "regular" },
+    "mussels":        { "min_inventory_to_keep": 400, "max_order_quantity": 1500, "market": "regular" },
+    "lobster":        { "min_inventory_to_keep": 100, "max_order_quantity": 400,  "market": "regular" },
+    "dungeness_crab": { "min_inventory_to_keep": 150, "max_order_quantity": 500,  "market": "regular" },
+    "blue_crab":      { "min_inventory_to_keep": 200, "max_order_quantity": 600,  "market": "regular" },
+    "langoustine":    { "min_inventory_to_keep": 100, "max_order_quantity": 400,  "market": "regular" }
+  },
+  "ipo": {
+    "ticker": "BSSC",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
+  }
+}

@@ -205,6 +205,26 @@
       "min_inventory_to_keep": 200,
       "max_order_quantity": 1000,
       "market": "regular"
+    },
+    "shrimp_trawler": {
+      "min_inventory_to_keep": 3,
+      "max_order_quantity": 10,
+      "market": "regular"
+    },
+    "aquaculture_raft": {
+      "min_inventory_to_keep": 3,
+      "max_order_quantity": 10,
+      "market": "regular"
+    },
+    "dredger": {
+      "min_inventory_to_keep": 2,
+      "max_order_quantity": 8,
+      "market": "regular"
+    },
+    "longliner": {
+      "min_inventory_to_keep": 2,
+      "max_order_quantity": 6,
+      "market": "regular"
     }
   },
   "ipo": {

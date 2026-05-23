@@ -1,0 +1,66 @@
+{
+  "player_id": -2062,
+  "business_name": "Tidewater Marine Outfitters",
+  "description": "Coastal boat yard specializing in commercial fishing and aquaculture vessels. Builds shrimp trawlers, aquaculture rafts, trawlers, longliners, lobster boats, and dredgers for the fishing industry.",
+  "cash_caps": {
+    "hard_high": 40000000,
+    "soft_high": 16000000,
+    "soft_low": 4000000,
+    "hard_low": 1200000
+  },
+  "seed": {
+    "starting_cash": 10000000,
+    "starting_inventory": {
+      "hull": 20,
+      "outboard_motor": 20,
+      "propeller": 20,
+      "iron": 3000,
+      "rope": 2000,
+      "rubber": 1000,
+      "lumber": 1500,
+      "fiberglass": 800,
+      "car_battery": 100,
+      "fuel_tank": 100,
+      "salt": 500
+    },
+    "land_plots": [
+      { "terrain_type": "marsh", "proximity_features": ["coastal"], "size": 1 },
+      { "terrain_type": "marsh", "proximity_features": ["coastal"], "size": 1 }
+    ]
+  },
+  "businesses": [
+    {
+      "business_type": "boat_yard",
+      "district_id": null,
+      "active_lines": ["shrimp_trawler", "aquaculture_raft", "trawler", "longliner", "lobster_boat", "dredger"]
+    }
+  ],
+  "buy_items": {
+    "hull":           { "target_inventory": 40,    "reorder_at": 10,   "max_price_multiplier": 1.15, "market": "regular" },
+    "outboard_motor": { "target_inventory": 40,    "reorder_at": 10,   "max_price_multiplier": 1.15, "market": "regular" },
+    "propeller":      { "target_inventory": 40,    "reorder_at": 10,   "max_price_multiplier": 1.15, "market": "regular" },
+    "iron":           { "target_inventory": 8000,  "reorder_at": 1500, "max_price_multiplier": 1.10, "market": "regular" },
+    "rope":           { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.10, "market": "regular" },
+    "rubber":         { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.10, "market": "regular" },
+    "lumber":         { "target_inventory": 4000,  "reorder_at": 800,  "max_price_multiplier": 1.10, "market": "regular" },
+    "fiberglass":     { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.15, "market": "regular" },
+    "car_battery":    { "target_inventory": 300,   "reorder_at": 60,   "max_price_multiplier": 1.15, "market": "regular" },
+    "fuel_tank":      { "target_inventory": 300,   "reorder_at": 60,   "max_price_multiplier": 1.15, "market": "regular" },
+    "salt":           { "target_inventory": 1500,  "reorder_at": 300,  "max_price_multiplier": 1.05, "market": "regular" },
+    "energy":         { "target_inventory": 15000, "reorder_at": 3000, "max_price_multiplier": 1.10, "market": "regular" },
+    "paper":          { "target_inventory": 1000,  "reorder_at": 200,  "max_price_multiplier": 1.10, "market": "regular" }
+  },
+  "sell_items": {
+    "shrimp_trawler":  { "min_inventory_to_keep": 3, "max_order_quantity": 10, "market": "regular" },
+    "aquaculture_raft": { "min_inventory_to_keep": 3, "max_order_quantity": 10, "market": "regular" },
+    "trawler":         { "min_inventory_to_keep": 2, "max_order_quantity": 8,  "market": "regular" },
+    "longliner":       { "min_inventory_to_keep": 2, "max_order_quantity": 6,  "market": "regular" },
+    "lobster_boat":    { "min_inventory_to_keep": 2, "max_order_quantity": 8,  "market": "regular" },
+    "dredger":         { "min_inventory_to_keep": 2, "max_order_quantity": 8,  "market": "regular" }
+  },
+  "ipo": {
+    "ticker": "TDMR",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
+  }
+}
