@@ -1958,6 +1958,32 @@ def home(request: Request, session_token: Optional[str] = Cookie(None)):
     from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
 
+    # NPC seeding banner — shown only during first-boot background seeding.
+    _npc_banner = ""
+    try:
+        import npc as _npc_mod
+        if not _npc_mod.is_ready():
+            _st = _npc_mod.seeding_status()
+            _npc_banner = f"""<div id="npc-seeding-banner" style="background:linear-gradient(135deg,#0c1a2e,#0f2035);border:1px solid #1e4a7a;border-radius:6px;padding:12px 18px;margin-bottom:16px;display:flex;align-items:center;gap:12px;">
+  <span style="display:inline-block;width:14px;height:14px;border:2px solid #3b82f6;border-top-color:transparent;border-radius:50%;animation:npc-spin 0.8s linear infinite;flex-shrink:0;"></span>
+  <span style="color:#93c5fd;font-size:0.85rem;">Market makers initializing ({_st['progress']}/{_st['total']})&nbsp;&mdash;&nbsp;NPC orders will appear once seeding completes.</span>
+</div>
+<style>@keyframes npc-spin{{to{{transform:rotate(360deg)}}}}</style>
+<script>
+(function(){{
+  var el=document.getElementById('npc-seeding-banner');
+  if(!el)return;
+  var t=setInterval(function(){{
+    fetch('/npc/status').then(function(r){{return r.json();}}).then(function(d){{
+      if(d.ready){{el.remove();clearInterval(t);}}
+      else{{var s=el.querySelector('span:last-child');if(s)s.textContent='Market makers initializing ('+d.progress+'/'+d.total+') — NPC orders will appear once seeding completes.';}}
+    }}).catch(function(){{}});
+  }},3000);
+}})();
+</script>"""
+    except Exception:
+        pass
+
     # Reseed guard: silently re-run registration seeding if a new player has $0
     _reseed_banner = ""
     try:
@@ -2263,7 +2289,7 @@ def home(request: Request, session_token: Optional[str] = Cookie(None)):
     except Exception:
         game_notif_banners = ""
 
-    dashboard_top = _reseed_banner + (tutorial_overlay or tutorial_banner)
+    dashboard_top = _npc_banner + _reseed_banner + (tutorial_overlay or tutorial_banner)
     if acq_banners:
         dashboard_top = dashboard_top + acq_banners
     if crypto_inherit_banners:
@@ -3481,6 +3507,16 @@ def beta_submit_request(
     except Exception as e:
         import urllib.parse
         return _RR(f"/events?error={urllib.parse.quote(str(e)[:120])}", status_code=303)
+
+
+@router.get("/npc/status")
+def npc_status():
+    """NPC seeding progress — polled by the dashboard loading banner."""
+    try:
+        import npc as _npc
+        return JSONResponse(_npc.seeding_status())
+    except Exception:
+        return JSONResponse({"ready": True, "progress": 0, "total": 0})
 
 
 @router.get("/api/public/ticker")

@@ -62,10 +62,24 @@ _SELL_CANCEL_ROSE_THRESHOLD = 0.10   # market > listed * 1.10
 _NPC_CONFIGS: dict = {}   # config_key  -> config dict
 _NPC_PLAYERS: dict = {}   # player_id   -> config dict  (populated after seeding)
 
+# Populated by seed_npcs_background(); read by is_ready() and the status endpoint.
+_seeding_done:     bool = False
+_seeding_progress: int  = 0
+_seeding_total:    int  = 0
+
 
 # ===========================
 # CONFIG LOADING
 # ===========================
+
+def is_ready() -> bool:
+    """Return True once all NPC seeding is complete."""
+    return _seeding_done
+
+
+def seeding_status() -> dict:
+    return {"ready": _seeding_done, "progress": _seeding_progress, "total": _seeding_total}
+
 
 def _load_configs():
     """Load all NPC config files from npc_configs/."""
@@ -538,6 +552,9 @@ def _seed_businesses(player_id: int, cfg: dict, db, plot_ids: list,
 
     seeded_district_ids: list of district DB IDs created during this seed run,
     referenced by businesses via the ``district_seed_index`` config field.
+
+    Batches all business inserts into a single commit, then batches all
+    plot/district occupation updates into a second commit.
     """
     from business import Business, BUSINESS_TYPES, get_district_business_types
     from land import LandPlot
@@ -545,6 +562,9 @@ def _seed_businesses(player_id: int, cfg: dict, db, plot_ids: list,
     all_types = {**BUSINESS_TYPES, **get_district_business_types()}
     plot_iter = iter(plot_ids)
     seeded_district_ids = seeded_district_ids or []
+
+    # Accumulate (biz_obj, plot_id, district_id) — insert all at once below.
+    pending = []
 
     for biz_cfg in cfg.get("businesses", []):
         btype = biz_cfg["business_type"]
@@ -555,7 +575,6 @@ def _seed_businesses(player_id: int, cfg: dict, db, plot_ids: list,
         district_id = biz_cfg.get("district_id")
         plot_id     = None
 
-        # Resolve district_seed_index → actual district DB id
         seed_idx = biz_cfg.get("district_seed_index")
         if seed_idx is not None:
             if seed_idx < len(seeded_district_ids):
@@ -570,9 +589,7 @@ def _seed_businesses(player_id: int, cfg: dict, db, plot_ids: list,
                 print(f"[NPC]   WARNING: no land plot available for {btype} — skipping")
                 continue
 
-        paused_lines = _build_paused_lines(btype, biz_cfg.get("active_lines", []))
-
-        # Seed NPC businesses as already-built — no build phase delay.
+        paused_lines       = _build_paused_lines(btype, biz_cfg.get("active_lines", []))
         cycles_to_complete = all_types[btype].get("cycles_to_complete", 1)
 
         biz = Business(
@@ -585,24 +602,27 @@ def _seed_businesses(player_id: int, cfg: dict, db, plot_ids: list,
             progress_ticks  = cycles_to_complete,
         )
         db.add(biz)
-        db.commit()
+        pending.append((biz, plot_id, district_id))
+
+    # Single commit for all businesses in this NPC.
+    db.commit()
+    for biz, _, _ in pending:
         db.refresh(biz)
 
+    # Batch-update plot/district occupation (one commit for all).
+    for biz, plot_id, district_id in pending:
         if plot_id:
             plot = db.query(LandPlot).filter(LandPlot.id == plot_id).first()
             if plot:
                 plot.occupied_by_business_id = biz.id
-                db.commit()
-
         if district_id:
             from districts import District
             dist = db.query(District).filter(District.id == district_id).first()
             if dist:
                 dist.occupied_by_business_id = biz.id
-                db.commit()
-
-        print(f"[NPC]   Business {biz.id} ({btype}) — paused lines: {paused_lines} — on "
+        print(f"[NPC]   Business {biz.id} ({biz.business_type}) — paused: {biz.paused_lines} — "
               f"{'district ' + str(district_id) if district_id else 'plot ' + str(plot_id)}")
+    db.commit()
 
 
 # ===========================
@@ -908,15 +928,236 @@ def _seed_npc(cfg: dict):
 
 
 # ===========================
+# BATCH SEEDING HELPERS
+# ===========================
+
+def _create_land_plots_batch(player_id: int, plot_cfgs: list, db) -> list:
+    """
+    Create all LandPlot rows for one NPC in a single commit.
+    Uses the same tax calculation as land.create_land_plot() but avoids
+    opening a new session per plot.  Returns a list of plot IDs.
+    """
+    if not plot_cfgs:
+        return []
+    from land import LandPlot, TERRAIN_TYPES, PROXIMITY_FEATURES, STARTING_EFFICIENCY
+
+    plots = []
+    for cfg in plot_cfgs:
+        terrain  = cfg.get("terrain_type", "prairie")
+        if terrain not in TERRAIN_TYPES:
+            terrain = "prairie"
+        proximity = cfg.get("proximity_features", [])
+        size      = cfg.get("size", 1.0)
+
+        base_tax  = TERRAIN_TYPES[terrain]["base_tax"]
+        tax_mod   = 1.0
+        for feat in proximity:
+            if feat in PROXIMITY_FEATURES:
+                tax_mod *= PROXIMITY_FEATURES[feat]["tax_modifier"]
+
+        plots.append(LandPlot(
+            owner_id          = player_id,
+            terrain_type      = terrain,
+            proximity_features= ",".join(proximity) if proximity else None,
+            efficiency        = STARTING_EFFICIENCY,
+            size              = size,
+            monthly_tax       = base_tax * size * tax_mod,
+            is_starter_plot   = False,
+            is_government_owned = False,
+        ))
+
+    db.add_all(plots)
+    db.commit()
+    for p in plots:
+        db.refresh(p)
+
+    for p in plots:
+        print(f"[NPC]   Land plot {p.id} ({p.terrain_type})")
+
+    return [p.id for p in plots]
+
+
+def _seed_npc_assets(cfg: dict):
+    """
+    Create land plots, districts, and businesses for an NPC whose Player row,
+    currency balance, and starting inventory have already been batch-inserted.
+    """
+    player_id = cfg["player_id"]
+    seed      = cfg.get("seed", {})
+    db        = SessionLocal()
+    try:
+        plot_ids = _create_land_plots_batch(player_id, seed.get("land_plots", []), db)
+
+        seeded_district_ids = []
+        for dist_cfg in seed.get("districts", []):
+            from districts import District, DISTRICT_TYPES
+            dtype = dist_cfg["district_type"]
+            if dtype not in DISTRICT_TYPES:
+                print(f"[NPC]   WARNING: unknown district_type {dtype!r} — skipping")
+                continue
+            dt_info  = DISTRICT_TYPES[dtype]
+            district = District(
+                owner_id      = player_id,
+                district_type = dtype,
+                terrain_type  = dt_info["district_terrain"],
+                size          = dist_cfg.get("size", 3.0),
+                plots_merged  = dist_cfg.get("plots_merged", 3),
+                monthly_tax   = dt_info["base_tax"],
+            )
+            db.add(district)
+            db.commit()
+            db.refresh(district)
+            seeded_district_ids.append(district.id)
+            print(f"[NPC]   District {district.id} ({dtype})")
+
+        _seed_businesses(player_id, cfg, db, plot_ids,
+                         seeded_district_ids=seeded_district_ids)
+        print(f"[NPC] Seeding complete: {cfg['business_name']}")
+
+    except Exception as e:
+        import traceback
+        print(f"[NPC] Asset seed failed for {cfg.get('business_name')}: {e}")
+        traceback.print_exc()
+        db.rollback()
+    finally:
+        db.close()
+
+
+def seed_npcs_background():
+    """
+    Seed all NPC accounts.  Designed to run in a background thread so the web
+    server can start accepting requests immediately.
+
+    Fresh NPCs (no Player row yet) are batch-inserted in 3 bulk commits
+    (Players → currency balances → inventory items) before per-NPC land/business
+    creation, reducing first-boot DB round-trips by ~7×.
+
+    Existing NPCs go through the regular _seed_npc() update/rescue path.
+
+    Sets _seeding_done = True when finished.
+    """
+    global _seeding_done, _seeding_progress, _seeding_total
+    import traceback
+
+    from auth import Player
+    from inventory import InventoryItem
+    from reserve_banks import PlayerCurrencyBalance
+
+    all_cfgs       = list(_NPC_CONFIGS.values())
+    _seeding_total  = len(all_cfgs)
+
+    # ── Step 1: find which NPCs already have a Player row ─────────────────────
+    db = SessionLocal()
+    try:
+        existing_ids = {
+            row[0] for row in
+            db.query(Player.id)
+              .filter(Player.id.in_([c["player_id"] for c in all_cfgs]))
+              .all()
+        }
+    finally:
+        db.close()
+
+    fresh_cfgs    = [c for c in all_cfgs if c["player_id"] not in existing_ids]
+    existing_cfgs = [c for c in all_cfgs if c["player_id"] in existing_ids]
+
+    # ── Step 2: batch-insert base rows for fresh NPCs ─────────────────────────
+    if fresh_cfgs:
+        db = SessionLocal()
+        batch_ok = False
+        try:
+            print(f"[NPC] Batch-seeding {len(fresh_cfgs)} new NPC(s)…")
+
+            # 2a. All Player rows in one commit.
+            db.add_all([
+                Player(
+                    id             = c["player_id"],
+                    business_name  = c["business_name"],
+                    password_hash  = "npc_no_login_" + str(c["player_id"]),
+                    is_npc         = True,
+                    npc_config_key = c.get("config_key", ""),
+                )
+                for c in fresh_cfgs
+            ])
+            db.commit()
+            print(f"[NPC]   {len(fresh_cfgs)} Player rows inserted")
+
+            # 2b. All USD currency balances in one commit.
+            db.add_all([
+                PlayerCurrencyBalance(
+                    player_id     = c["player_id"],
+                    currency_code = "USD",
+                    balance       = float(c.get("seed", {}).get("starting_cash", 50_000.0)),
+                )
+                for c in fresh_cfgs
+            ])
+            db.commit()
+            print(f"[NPC]   {len(fresh_cfgs)} currency balances inserted")
+
+            # 2c. All starting inventory items in one commit.
+            inv_rows = [
+                InventoryItem(
+                    player_id = c["player_id"],
+                    item_type = item,
+                    quantity  = float(qty),
+                )
+                for c in fresh_cfgs
+                for item, qty in c.get("seed", {}).get("starting_inventory", {}).items()
+                if qty > 0
+            ]
+            if inv_rows:
+                db.add_all(inv_rows)
+                db.commit()
+                print(f"[NPC]   {len(inv_rows)} inventory rows inserted")
+
+            batch_ok = True
+
+        except Exception as e:
+            print(f"[NPC] Batch base-seed failed, falling back to individual seeding: {e}")
+            traceback.print_exc()
+            db.rollback()
+            # Merge all fresh configs into the individual-seed path.
+            existing_cfgs = list(all_cfgs)
+            fresh_cfgs    = []
+        finally:
+            db.close()
+
+        if batch_ok:
+            # 2d. Per fresh NPC: land plots + businesses.
+            for c in fresh_cfgs:
+                try:
+                    _seed_npc_assets(c)
+                    _NPC_PLAYERS[c["player_id"]] = c
+                    _maybe_ipo_npc(c["player_id"], c)
+                except Exception as e:
+                    print(f"[NPC] Asset seed error {c.get('business_name')}: {e}")
+                _seeding_progress += 1
+
+    # ── Step 3: update / rescue existing NPCs via normal path ─────────────────
+    for c in existing_cfgs:
+        try:
+            _seed_npc(c)
+        except Exception as e:
+            print(f"[NPC] Update error {c.get('business_name')}: {e}")
+        _seeding_progress += 1
+
+    _seeding_done = True
+    print(f"[NPC] Background seeding complete — {len(_NPC_PLAYERS)} NPC(s) active")
+
+
+# ===========================
 # MODULE LIFECYCLE
 # ===========================
 
 def initialize():
-    """Load configs, run DB migrations, seed NPC accounts."""
+    """
+    Fast init: DDL migrations + config loading only.
+    NPC account seeding is deferred — call seed_npcs_background() in a
+    background thread (see app.py lifespan) so the web server starts
+    accepting requests immediately.
+    """
     from database import run_ddl_migration
 
-    # These columns are also added by auth.migrate_player_table(), but adding
-    # them here makes npc.py independently safe even if initialised first.
     run_ddl_migration(engine, [
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS is_npc BOOLEAN DEFAULT FALSE",
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS npc_config_key VARCHAR(128)",
@@ -924,12 +1165,8 @@ def initialize():
 
     _load_configs()
 
-    for key, cfg in _NPC_CONFIGS.items():
-        cfg["config_key"] = key
-        _seed_npc(cfg)
-
-    print(f"[NPC] Initialized — {len(_NPC_CONFIGS)} NPC config(s) loaded, "
-          f"{len(_NPC_PLAYERS)} NPC(s) active")
+    print(f"[NPC] Configs loaded: {len(_NPC_CONFIGS)} NPC(s). "
+          "Background seeding will start shortly.")
 
 
 def tick(current_tick: int, now: datetime):
@@ -940,4 +1177,4 @@ def tick(current_tick: int, now: datetime):
         _run_npc_cycle(player_id, cfg)
 
 
-__all__ = ["initialize", "tick"]
+__all__ = ["initialize", "seed_npcs_background", "is_ready", "seeding_status", "tick"]

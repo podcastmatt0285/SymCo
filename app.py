@@ -509,9 +509,26 @@ async def lifespan(app: FastAPI):
     initialize_modules()
     tick_task = asyncio.create_task(tick_loop())
     print(f"Tick loop started (interval: {TICK_INTERVAL}s)")
+    # NPC seeding runs in a background thread — server is ready to accept
+    # requests immediately while NPCs seed in parallel.
+    npc_seed_task = None
+    try:
+        import npc as _npc_mod
+        npc_seed_task = asyncio.create_task(
+            run_in_threadpool(_npc_mod.seed_npcs_background)
+        )
+        print("[App] NPC background seeding started")
+    except ImportError:
+        print("[App] NPC module not found — skipping background seeding")
     print("=" * 50)
     yield
     print("\nShutting down...")
+    if npc_seed_task and not npc_seed_task.done():
+        npc_seed_task.cancel()
+        try:
+            await npc_seed_task
+        except asyncio.CancelledError:
+            pass
     if tick_task:
         tick_task.cancel()
         try:
