@@ -1,0 +1,51 @@
+{
+  "player_id": -2057,
+  "business_name": "Sunrise Dairy Co.",
+  "description": "Dairy and fermentation plant plus a dedicated creamery. Supplies milk, cheese, ice cream, yogurt, butter, and cream to the open market.",
+  "cash_caps": {
+    "hard_high": 25000000,
+    "soft_high": 10000000,
+    "soft_low": 3000000,
+    "hard_low": 800000
+  },
+  "seed": {
+    "starting_cash": 6000000,
+    "starting_inventory": {
+      "cow": 30,
+      "grass": 15000,
+      "milk": 2000,
+      "cream": 200,
+      "sugar": 500
+    },
+    "land_plots": [
+      { "terrain_type": "prairie", "proximity_features": ["riverside", "road"], "size": 1 },
+      { "terrain_type": "hills",   "proximity_features": ["road", "urban"],     "size": 1 }
+    ]
+  },
+  "businesses": [
+    { "business_type": "dairy_and_fermentation", "district_id": null, "active_lines": ["milk", "cream", "ice_cream", "butter", "yogurt"] },
+    { "business_type": "creamery",               "district_id": null, "active_lines": ["cheese"] }
+  ],
+  "buy_items": {
+    "cow":    { "target_inventory": 60,    "reorder_at": 15,   "max_price_multiplier": 1.10, "market": "regular" },
+    "grass":  { "target_inventory": 25000, "reorder_at": 5000, "max_price_multiplier": 1.10, "market": "regular" },
+    "sugar":  { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.10, "market": "regular" },
+    "salt":   { "target_inventory": 500,   "reorder_at": 100,  "max_price_multiplier": 1.05, "market": "regular" },
+    "water":  { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.05, "market": "regular" },
+    "energy": { "target_inventory": 8000,  "reorder_at": 1500, "max_price_multiplier": 1.10, "market": "regular" },
+    "paper":  { "target_inventory": 500,   "reorder_at": 100,  "max_price_multiplier": 1.10, "market": "regular" }
+  },
+  "sell_items": {
+    "milk":      { "min_inventory_to_keep": 1000, "max_order_quantity": 3000, "market": "regular" },
+    "cream":     { "min_inventory_to_keep": 100,  "max_order_quantity": 500,  "market": "regular" },
+    "cheese":    { "min_inventory_to_keep": 500,  "max_order_quantity": 1500, "market": "regular" },
+    "ice_cream": { "min_inventory_to_keep": 500,  "max_order_quantity": 2000, "market": "regular" },
+    "butter":    { "min_inventory_to_keep": 200,  "max_order_quantity": 1000, "market": "regular" },
+    "yogurt":    { "min_inventory_to_keep": 300,  "max_order_quantity": 1500, "market": "regular" }
+  },
+  "ipo": {
+    "ticker": "SDCO",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "player_id": -2056,
+  "business_name": "Heartland Ranches",
+  "description": "Integrated livestock operation: free-range cattle, poultry, hogs, and on-site meat processing. Primary supplier of beef, chicken, pork, and sausage to the open market.",
+  "cash_caps": {
+    "hard_high": 35000000,
+    "soft_high": 15000000,
+    "soft_low": 4000000,
+    "hard_low": 1000000
+  },
+  "seed": {
+    "starting_cash": 8000000,
+    "starting_inventory": {
+      "corn": 5000,
+      "grass": 20000,
+      "cow": 20,
+      "pig": 30,
+      "fish_meal": 500
+    },
+    "land_plots": [
+      { "terrain_type": "prairie", "proximity_features": ["road", "remote"],      "size": 1 },
+      { "terrain_type": "prairie", "proximity_features": ["riverside", "remote"], "size": 1 },
+      { "terrain_type": "hills",   "proximity_features": ["road"],                "size": 1 },
+      { "terrain_type": "prairie", "proximity_features": ["road"],                "size": 1 }
+    ]
+  },
+  "businesses": [
+    { "business_type": "poultry_farm",       "district_id": null, "active_lines": ["pig", "chicken", "eggs"] },
+    { "business_type": "free_range_pasture", "district_id": null, "active_lines": ["cow"] },
+    { "business_type": "rendering_plant",    "district_id": null, "active_lines": ["beef"] },
+    { "business_type": "meat_processing",    "district_id": null, "active_lines": ["pork", "sausage"] }
+  ],
+  "buy_items": {
+    "corn":      { "target_inventory": 8000,  "reorder_at": 1500, "max_price_multiplier": 1.10, "market": "regular" },
+    "grass":     { "target_inventory": 30000, "reorder_at": 6000, "max_price_multiplier": 1.10, "market": "regular" },
+    "fish_meal": { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.10, "market": "regular" },
+    "water":     { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.05, "market": "regular" },
+    "salt":      { "target_inventory": 1000,  "reorder_at": 200,  "max_price_multiplier": 1.05, "market": "regular" },
+    "onions":    { "target_inventory": 1500,  "reorder_at": 300,  "max_price_multiplier": 1.10, "market": "regular" },
+    "energy":    { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.10, "market": "regular" },
+    "paper":     { "target_inventory": 500,   "reorder_at": 100,  "max_price_multiplier": 1.10, "market": "regular" }
+  },
+  "sell_items": {
+    "chicken": { "min_inventory_to_keep": 500,  "max_order_quantity": 2000, "market": "regular" },
+    "pig":     { "min_inventory_to_keep": 100,  "max_order_quantity": 500,  "market": "regular" },
+    "eggs":    { "min_inventory_to_keep": 1000, "max_order_quantity": 5000, "market": "regular" },
+    "cow":     { "min_inventory_to_keep": 50,   "max_order_quantity": 200,  "market": "regular" },
+    "beef":    { "min_inventory_to_keep": 500,  "max_order_quantity": 2000, "market": "regular" },
+    "pork":    { "min_inventory_to_keep": 500,  "max_order_quantity": 2000, "market": "regular" },
+    "sausage": { "min_inventory_to_keep": 500,  "max_order_quantity": 2000, "market": "regular" }
+  },
+  "ipo": {
+    "ticker": "HRTL",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
+  }
+}
