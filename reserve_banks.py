@@ -59,7 +59,7 @@ Forex
 from datetime import datetime, timedelta
 from typing import Optional, List, Tuple
 
-from sqlalchemy import Column, Integer, Float, String, Boolean, DateTime, text, update as sa_update
+from sqlalchemy import Column, Integer, Float, String, Boolean, DateTime, Index, text, update as sa_update
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -200,6 +200,10 @@ class ReserveBankBond(Base):
     interest_accrued = Column(Float,   default=0.0)      # in the bank's own currency
     total_interest_paid = Column(Float, default=0.0)
     status           = Column(String,  default="active") # active / matured / sold / called
+    __table_args__ = (
+        Index("ix_rrb_accrual", "bank_id", "status", "matures_at"),
+        Index("ix_rrb_call",    "bank_id", "status", "purchase_yield"),
+    )
 
 
 class PlayerLegalTender(Base):
@@ -225,6 +229,9 @@ class PlayerCurrencyBalance(Base):
     total_earned  = Column(Float, default=0.0)
     total_spent   = Column(Float, default=0.0)
     updated_at    = Column(DateTime, default=datetime.utcnow)
+    __table_args__ = (
+        Index("ix_pcb_lookup", "player_id", "currency_code"),
+    )
 
 
 class ForexTrade(Base):
@@ -251,6 +258,9 @@ class BondYieldHistory(Base):
     yield_rate    = Column(Float, nullable=False)
     usd_per_unit  = Column(Float, nullable=False)
     recorded_at   = Column(DateTime, default=datetime.utcnow)
+    __table_args__ = (
+        Index("ix_byh_chart", "bank_id", "recorded_at"),
+    )
 
 
 class BankReserveBalance(Base):
@@ -278,6 +288,9 @@ class BankReserveBalance(Base):
     total_received= Column(Float, default=0.0)
     total_paid    = Column(Float, default=0.0)
     updated_at    = Column(DateTime, default=datetime.utcnow)
+    __table_args__ = (
+        Index("ix_brb_lookup", "bank_id", "currency_code"),
+    )
 
 
 class BankDebt(Base):
@@ -360,8 +373,15 @@ def initialize():
     from database import run_ddl_migration
     run_ddl_migration(
         engine,
-        "ALTER TABLE state_reserve_banks"
-        " ADD COLUMN IF NOT EXISTS wsc_holdings FLOAT DEFAULT 0.0",
+        [
+            "ALTER TABLE state_reserve_banks"
+            " ADD COLUMN IF NOT EXISTS wsc_holdings FLOAT DEFAULT 0.0",
+            "CREATE INDEX IF NOT EXISTS ix_rrb_accrual ON reserve_bank_bonds (bank_id, status, matures_at)",
+            "CREATE INDEX IF NOT EXISTS ix_rrb_call    ON reserve_bank_bonds (bank_id, status, purchase_yield)",
+            "CREATE INDEX IF NOT EXISTS ix_pcb_lookup  ON player_currency_balances (player_id, currency_code)",
+            "CREATE INDEX IF NOT EXISTS ix_brb_lookup  ON bank_reserve_balances (bank_id, currency_code)",
+            "CREATE INDEX IF NOT EXISTS ix_byh_chart   ON bond_yield_history (bank_id, recorded_at DESC)",
+        ],
         admin_env_var="RESERVE_DATABASE_ADMIN_URL",
     )
 

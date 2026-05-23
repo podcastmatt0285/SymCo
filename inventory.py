@@ -6,7 +6,7 @@ Inventory management module for the economic simulation.
 
 import json
 from typing import Dict, Optional
-from sqlalchemy import Column, String, Float, Integer, update as sa_update
+from sqlalchemy import Column, String, Float, Integer, Index, update as sa_update
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -41,6 +41,9 @@ class InventoryItem(Base):
     player_id = Column(Integer, index=True, nullable=False)
     item_type = Column(String, index=True, nullable=False)
     quantity = Column(Float, default=0.0)
+    __table_args__ = (
+        Index("ix_inv_lookup", "player_id", "item_type"),
+    )
 
 # ==========================
 # HELPER FUNCTIONS
@@ -139,6 +142,10 @@ def transfer_item(from_player_id: int, to_player_id: int, item_type: str, quanti
 def initialize():
     print("[Inventory] Creating database tables...")
     Base.metadata.create_all(bind=engine)
+    from database import run_ddl_migration
+    run_ddl_migration(engine, [
+        "CREATE INDEX IF NOT EXISTS ix_inv_lookup ON inventory (player_id, item_type)",
+    ])
     load_item_config()
     print("[Inventory] Module initialized")
 

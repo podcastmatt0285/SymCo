@@ -16,7 +16,7 @@ Handles:
 from datetime import datetime
 from typing import Optional, List, Tuple
 from enum import Enum
-from sqlalchemy import Column, String, Float, DateTime, Integer, Boolean
+from sqlalchemy import Column, String, Float, DateTime, Integer, Boolean, Index
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from stats_ux import log_transaction
@@ -77,6 +77,11 @@ class MarketOrder(Base):
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     filled_at = Column(DateTime, nullable=True)
+    __table_args__ = (
+        Index("ix_mo_matching", "item_type", "order_type", "status", "price"),
+        Index("ix_mo_tick",     "status",    "created_at"),
+        Index("ix_mo_npc",      "player_id", "order_type", "item_type", "status"),
+    )
 
 class Trade(Base):
     """Trade history model."""
@@ -91,6 +96,9 @@ class Trade(Base):
     quantity = Column(Float, nullable=False)
     price = Column(Float, nullable=False)
     executed_at = Column(DateTime, default=datetime.utcnow, index=True)
+    __table_args__ = (
+        Index("ix_trades_pd", "item_type", "executed_at"),
+    )
 
 # ==========================
 # STARTER INVENTORY
@@ -939,6 +947,13 @@ def get_market_stats() -> dict:
 def initialize():
     print("[Market] Initializing database...")
     Base.metadata.create_all(bind=engine)
+    from database import run_ddl_migration
+    run_ddl_migration(engine, [
+        "CREATE INDEX IF NOT EXISTS ix_mo_matching ON market_orders (item_type, order_type, status, price)",
+        "CREATE INDEX IF NOT EXISTS ix_mo_tick     ON market_orders (status, created_at)",
+        "CREATE INDEX IF NOT EXISTS ix_mo_npc      ON market_orders (player_id, order_type, item_type, status)",
+        "CREATE INDEX IF NOT EXISTS ix_trades_pd   ON trades (item_type, executed_at DESC)",
+    ])
     print("[Market] Module initialized")
 
 def tick(current_tick: int, now: datetime):

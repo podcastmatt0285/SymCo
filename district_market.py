@@ -19,7 +19,7 @@ import json
 from datetime import datetime, timedelta
 from typing import Optional, List
 from enum import Enum
-from sqlalchemy import Column, String, Float, DateTime, Integer
+from sqlalchemy import Column, String, Float, DateTime, Integer, Index
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -100,6 +100,11 @@ class DistrictMarketOrder(Base):
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     filled_at = Column(DateTime, nullable=True)
+    __table_args__ = (
+        Index("ix_dmo_matching", "item_type", "order_type", "status", "price"),
+        Index("ix_dmo_tick",     "status",    "created_at"),
+        Index("ix_dmo_npc",      "player_id", "order_type", "item_type", "status"),
+    )
 
 class DistrictTrade(Base):
     """District trade history model."""
@@ -114,6 +119,9 @@ class DistrictTrade(Base):
     quantity = Column(Float, nullable=False)
     price = Column(Float, nullable=False)
     executed_at = Column(DateTime, default=datetime.utcnow, index=True)
+    __table_args__ = (
+        Index("ix_dt_pd", "item_type", "executed_at"),
+    )
 
 # ==========================
 # HELPER FUNCTIONS
@@ -695,6 +703,13 @@ def initialize():
     """Initialize district market module."""
     print("[DistrictMarket] Initializing database...")
     Base.metadata.create_all(bind=engine)
+    from database import run_ddl_migration
+    run_ddl_migration(engine, [
+        "CREATE INDEX IF NOT EXISTS ix_dmo_matching ON district_market_orders (item_type, order_type, status, price)",
+        "CREATE INDEX IF NOT EXISTS ix_dmo_tick     ON district_market_orders (status, created_at)",
+        "CREATE INDEX IF NOT EXISTS ix_dmo_npc      ON district_market_orders (player_id, order_type, item_type, status)",
+        "CREATE INDEX IF NOT EXISTS ix_dt_pd        ON district_trades (item_type, executed_at DESC)",
+    ])
     load_district_items()
     print("[DistrictMarket] Module initialized")
 
