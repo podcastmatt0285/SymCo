@@ -38,7 +38,8 @@
       "active_lines": [
         "pollen",
         "honey",
-        "bees"
+        "bees",
+        "beeswax"
       ]
     },
     {
@@ -101,6 +102,16 @@
     "sugar": {
       "min_inventory_to_keep": 500,
       "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "beeswax": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "queen_bee": {
+      "min_inventory_to_keep": 10,
+      "max_order_quantity": 200,
       "market": "regular"
     }
   },

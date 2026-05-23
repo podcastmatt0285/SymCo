@@ -9,9 +9,14 @@
     "hard_low": 1500000
   },
   "seed": {
-    "starting_cash": 12000000,
+    "starting_cash": 25000000,
     "land_plots": [],
     "districts": [
+      {
+        "district_type": "food",
+        "size": 5,
+        "plots_merged": 5
+      },
       {
         "district_type": "food_court",
         "size": 4,
@@ -25,12 +30,20 @@
       "district_seed_index": 0
     },
     {
+      "business_type": "international_cuisine_kitchen",
+      "district_seed_index": 0
+    },
+    {
+      "business_type": "beverage_production",
+      "district_seed_index": 0
+    },
+    {
       "business_type": "food_packaging_factory",
       "district_seed_index": 0
     },
     {
       "business_type": "food_court_district",
-      "district_seed_index": 0
+      "district_seed_index": 1
     }
   ],
   "buy_items": {
@@ -267,6 +280,90 @@
       "reorder_at": 400,
       "max_price_multiplier": 1.1,
       "market": "regular"
+    },
+    "rice": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "rice_paper": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "rice_wine": {
+      "target_inventory": 200,
+      "reorder_at": 40,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "noodles": {
+      "target_inventory": 1500,
+      "reorder_at": 300,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "yogurt": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "peanut": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "vinegar": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "shrimp_paste": {
+      "target_inventory": 300,
+      "reorder_at": 60,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "salmon_fillet": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "tuna_steak": {
+      "target_inventory": 400,
+      "reorder_at": 80,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "milk": {
+      "target_inventory": 1000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "ice_cream": {
+      "target_inventory": 1000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "apples": {
+      "target_inventory": 1000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "soda": {
+      "target_inventory": 1000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
     }
   },
   "sell_items": {
@@ -309,6 +406,86 @@
       "min_inventory_to_keep": 50,
       "max_order_quantity": 300,
       "market": "district"
+    },
+    "burger": {
+      "min_inventory_to_keep": 200,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "fries": {
+      "min_inventory_to_keep": 200,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "hot_dog": {
+      "min_inventory_to_keep": 100,
+      "max_order_quantity": 1500,
+      "market": "regular"
+    },
+    "chicken_nuggets": {
+      "min_inventory_to_keep": 100,
+      "max_order_quantity": 1500,
+      "market": "regular"
+    },
+    "pizza_slice": {
+      "min_inventory_to_keep": 100,
+      "max_order_quantity": 1500,
+      "market": "regular"
+    },
+    "taco": {
+      "min_inventory_to_keep": 100,
+      "max_order_quantity": 1500,
+      "market": "regular"
+    },
+    "burrito": {
+      "min_inventory_to_keep": 100,
+      "max_order_quantity": 1500,
+      "market": "regular"
+    },
+    "sushi_roll": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 800,
+      "market": "regular"
+    },
+    "ramen_bowl": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 600,
+      "market": "regular"
+    },
+    "fried_rice": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "pad_thai": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 600,
+      "market": "regular"
+    },
+    "gyro": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 600,
+      "market": "regular"
+    },
+    "soda_cup": {
+      "min_inventory_to_keep": 100,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "milkshake": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 800,
+      "market": "regular"
+    },
+    "smoothie": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 800,
+      "market": "regular"
+    },
+    "soft_serve": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 1000,
+      "market": "regular"
     }
   },
   "ipo": {

@@ -254,6 +254,21 @@
       "min_inventory_to_keep": 0,
       "max_order_quantity": 1000,
       "market": "regular"
+    },
+    "chitin": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "collagen_powder": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "fish_emulsion": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
     }
   },
   "ipo": {

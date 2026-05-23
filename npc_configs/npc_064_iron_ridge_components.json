@@ -1,0 +1,158 @@
+{
+  "player_id": -2064,
+  "business_name": "Iron Ridge Components",
+  "description": "Prairie-based auto components manufacturer. Stamps chassis frames, seats, and steering wheels, and runs a paint factory producing industrial paint and dye. Primary supplier of chassis and paint to vehicle assemblers and construction firms.",
+  "cash_caps": {
+    "hard_high": 30000000,
+    "soft_high": 12000000,
+    "soft_low": 3000000,
+    "hard_low": 800000
+  },
+  "seed": {
+    "starting_cash": 6000000,
+    "starting_inventory": {
+      "iron": 3000,
+      "rubber": 600,
+      "nails": 1500,
+      "leather": 800,
+      "polyester": 600,
+      "feathers": 1500,
+      "copper": 400,
+      "oil": 800,
+      "water": 5000,
+      "jar": 3000,
+      "energy": 60000,
+      "paper": 3000
+    },
+    "land_plots": [
+      {
+        "terrain_type": "prairie",
+        "proximity_features": ["road"],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": ["road"],
+        "size": 1
+      }
+    ]
+  },
+  "businesses": [
+    {
+      "business_type": "chassis_factory",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "paint_factory",
+      "district_id": null,
+      "active_lines": ["paint", "dye"]
+    }
+  ],
+  "buy_items": {
+    "iron": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "rubber": {
+      "target_inventory": 1500,
+      "reorder_at": 300,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "nails": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "leather": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "polyester": {
+      "target_inventory": 1500,
+      "reorder_at": 300,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "feathers": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "copper": {
+      "target_inventory": 1000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "oil": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "water": {
+      "target_inventory": 8000,
+      "reorder_at": 1600,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "jar": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 80000,
+      "reorder_at": 16000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 4000,
+      "reorder_at": 800,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    }
+  },
+  "sell_items": {
+    "chassis": {
+      "min_inventory_to_keep": 20,
+      "max_order_quantity": 200,
+      "market": "regular"
+    },
+    "car_seat": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "steering_wheel": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 400,
+      "market": "regular"
+    },
+    "paint": {
+      "min_inventory_to_keep": 100,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "dye": {
+      "min_inventory_to_keep": 100,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    }
+  },
+  "ipo": {
+    "ticker": "IRCP",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
+  }
+}

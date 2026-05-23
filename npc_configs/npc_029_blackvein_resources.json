@@ -230,6 +230,11 @@
       "min_inventory_to_keep": 0,
       "max_order_quantity": 2000,
       "market": "regular"
+    },
+    "windshield": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 500,
+      "market": "regular"
     }
   },
   "ipo": {

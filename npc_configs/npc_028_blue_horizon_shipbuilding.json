@@ -225,6 +225,16 @@
       "min_inventory_to_keep": 2,
       "max_order_quantity": 6,
       "market": "regular"
+    },
+    "engine": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "transmission": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 500,
+      "market": "regular"
     }
   },
   "ipo": {

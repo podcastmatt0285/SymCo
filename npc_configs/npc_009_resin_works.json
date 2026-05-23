@@ -25,7 +25,9 @@
       "business_type": "oil_refinery",
       "district_id": null,
       "active_lines": [
-        "plastic"
+        "plastic",
+        "diesel",
+        "gasoline"
       ]
     }
   ],
@@ -59,6 +61,16 @@
     "plastic": {
       "min_inventory_to_keep": 0,
       "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "diesel": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "gasoline": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
       "market": "regular"
     }
   },
