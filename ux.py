@@ -3510,8 +3510,9 @@ def beta_submit_request(
 
 
 @router.get("/npc/status")
-def npc_status():
+def npc_status(session_token: Optional[str] = Cookie(None)):
     """NPC seeding progress — polled by the dashboard loading banner."""
+    require_auth(session_token)
     try:
         import npc as _npc
         return JSONResponse(_npc.seeding_status())

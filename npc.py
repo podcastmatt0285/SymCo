@@ -1182,7 +1182,7 @@ def tick(current_tick: int, now: datetime):
     """Fire NPC decision cycles every NPC_TICK_INTERVAL ticks."""
     if current_tick % NPC_TICK_INTERVAL != 0:
         return
-    for player_id, cfg in _NPC_PLAYERS.items():
+    for player_id, cfg in list(_NPC_PLAYERS.items()):
         _run_npc_cycle(player_id, cfg)
 
 
