@@ -1523,7 +1523,10 @@ def buy_gov_estate_listing(listing_id: int, qty: float, buyer_id: int):
         if buyer.cash_balance < cost:
             return False, f"Insufficient funds — need ${cost:,.2f}"
 
-        # Stage cash changes — do NOT commit yet; inventory must succeed first
+        # NOTE: cash_balance is a @property backed by reserve_banks.set_usd_balance(),
+        # which opens its own session and auto-commits immediately. These two lines
+        # debit/credit cash right now — they are NOT deferred to adb.commit().
+        # adb.commit() below only releases the with_for_update() row locks.
         buyer.cash_balance -= cost
         gov = adb.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).with_for_update().first()
         if gov:
@@ -1548,15 +1551,14 @@ def buy_gov_estate_listing(listing_id: int, qty: float, buyer_id: int):
             idb.add(InventoryItem(player_id=buyer_id,
                                   item_type=listing.item_type,
                                   quantity=qty))
-        idb.commit()  # Inventory committed first — cash rollback still possible if this raises
+        idb.commit()
 
-        # Update listing
         listing.quantity -= qty
         if listing.quantity <= 1e-6:
             listing.sold = True
         db.commit()
 
-        adb.commit()  # Cash committed last — both inventory and listing already safe
+        adb.commit()  # releases the with_for_update() locks on buyer and gov rows
 
         try:
             from govt_ledger import log_gov_event

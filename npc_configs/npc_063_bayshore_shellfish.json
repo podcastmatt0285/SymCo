@@ -11,7 +11,7 @@
   "seed": {
     "starting_cash": 5000000,
     "starting_inventory": {
-      "dredger": 5,
+      "dredger": 10,
       "bio_fuel": 1500,
       "scallops": 200,
       "oysters": 200,
@@ -36,7 +36,7 @@
     }
   ],
   "buy_items": {
-    "dredger":  { "target_inventory": 10,   "reorder_at": 2,    "max_price_multiplier": 1.20, "market": "regular" },
+    "dredger":  { "target_inventory": 15,   "reorder_at": 6,    "max_price_multiplier": 1.20, "market": "regular" },
     "bio_fuel": { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.10, "market": "regular" },
     "energy":   { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.10, "market": "regular" },
     "paper":    { "target_inventory": 300,   "reorder_at": 60,   "max_price_multiplier": 1.10, "market": "regular" }

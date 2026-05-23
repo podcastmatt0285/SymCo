@@ -94,6 +94,7 @@ def _load_configs():
         try:
             with open(os.path.join(config_dir, fname)) as f:
                 cfg = json.load(f)
+            cfg["config_key"] = key   # needed by _seed_npc and batch seeding
             _NPC_CONFIGS[key] = cfg
             print(f"[NPC] Loaded config: {key}")
         except Exception as e:
@@ -604,23 +605,25 @@ def _seed_businesses(player_id: int, cfg: dict, db, plot_ids: list,
         db.add(biz)
         pending.append((biz, plot_id, district_id))
 
-    # Single commit for all businesses in this NPC.
+    # Flush to get DB-assigned IDs via RETURNING before committing.
+    db.flush()
+    # Capture everything we need before commit expires the ORM objects.
+    resolved = [(biz.id, biz.business_type, biz.paused_lines, plot_id, district_id)
+                for biz, plot_id, district_id in pending]
     db.commit()
-    for biz, _, _ in pending:
-        db.refresh(biz)
 
     # Batch-update plot/district occupation (one commit for all).
-    for biz, plot_id, district_id in pending:
+    for biz_id, btype, paused, plot_id, district_id in resolved:
         if plot_id:
             plot = db.query(LandPlot).filter(LandPlot.id == plot_id).first()
             if plot:
-                plot.occupied_by_business_id = biz.id
+                plot.occupied_by_business_id = biz_id
         if district_id:
             from districts import District
             dist = db.query(District).filter(District.id == district_id).first()
             if dist:
-                dist.occupied_by_business_id = biz.id
-        print(f"[NPC]   Business {biz.id} ({biz.business_type}) — paused: {biz.paused_lines} — "
+                dist.occupied_by_business_id = biz_id
+        print(f"[NPC]   Business {biz_id} ({btype}) — paused: {paused} — "
               f"{'district ' + str(district_id) if district_id else 'plot ' + str(plot_id)}")
     db.commit()
 
@@ -967,14 +970,15 @@ def _create_land_plots_batch(player_id: int, plot_cfgs: list, db) -> list:
         ))
 
     db.add_all(plots)
+    db.flush()                         # populates p.id via RETURNING before commit
+    plot_ids = [p.id for p in plots]   # capture IDs before commit expires the objects
+    summaries = [(p.id, p.terrain_type) for p in plots]
     db.commit()
-    for p in plots:
-        db.refresh(p)
 
-    for p in plots:
-        print(f"[NPC]   Land plot {p.id} ({p.terrain_type})")
+    for pid, terrain in summaries:
+        print(f"[NPC]   Land plot {pid} ({terrain})")
 
-    return [p.id for p in plots]
+    return plot_ids
 
 
 def _seed_npc_assets(cfg: dict):
@@ -1019,6 +1023,7 @@ def _seed_npc_assets(cfg: dict):
         print(f"[NPC] Asset seed failed for {cfg.get('business_name')}: {e}")
         traceback.print_exc()
         db.rollback()
+        raise   # propagate so caller skips _NPC_PLAYERS registration
     finally:
         db.close()
 
@@ -1142,6 +1147,10 @@ def seed_npcs_background():
         _seeding_progress += 1
 
     _seeding_done = True
+    missing = _seeding_total - len(_NPC_PLAYERS)
+    if missing > 0:
+        print(f"[NPC] WARNING: {missing} NPC(s) failed seeding and will not participate in "
+              "market cycles. They will be retried on next boot.")
     print(f"[NPC] Background seeding complete — {len(_NPC_PLAYERS)} NPC(s) active")
 
 
