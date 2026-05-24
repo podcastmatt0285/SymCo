@@ -539,7 +539,7 @@ def calc_ASI() -> tuple[float, dict]:
             if p:
                 prices[item] = p
         if not prices:
-            return 0.0, {}
+            return 0.0, {"no_data": True, "breakdown": []}
         avg = sum(prices.values()) / len(prices)
         breakdown = [{"label": k.replace("_", " ").title(), "value": round(v, 4)}
                      for k, v in sorted(prices.items(), key=lambda x: -x[1])]
@@ -736,12 +736,15 @@ def calc_GFI() -> tuple[float, dict]:
         from corporate_actions import SecondaryOffering, BuybackProgram
         db = _get_db()
         try:
-            issued = db.query(func.sum(SecondaryOffering.shares_issued)).scalar() or 1
+            issued = db.query(func.sum(SecondaryOffering.shares_issued)).scalar() or 0
             bought = db.query(func.sum(BuybackProgram.shares_bought)).scalar() or 0
         finally:
             db.close()
-        ratio = float(bought) / max(float(issued), 1.0)
-        signals["Corp Actions"] = _clamp(ratio * 25, 0, 25)
+        if issued == 0 and bought == 0:
+            signals["Corp Actions"] = 12.5  # neutral — no data yet
+        else:
+            ratio = float(bought) / max(float(issued), 1.0)
+            signals["Corp Actions"] = _clamp(ratio * 25, 0, 25)
     except Exception:
         signals["Corp Actions"] = 12.5
 
@@ -818,26 +821,26 @@ _CALCULATORS = {
 # ─────────────────────────────────────────────────────────────────────────────
 
 def calculate_all_indices():
-    """Calculate all indices and store snapshots."""
-    db = _get_db()
-    try:
-        for code, fn in _CALCULATORS.items():
+    """Calculate all indices and store snapshots. Each index commits independently."""
+    for code, fn in _CALCULATORS.items():
+        db = _get_db()
+        try:
+            value, meta = fn()
+            snap = IndexSnapshot(
+                index_code=code,
+                value=float(value),
+                meta_json=json.dumps(meta) if meta else None,
+            )
+            db.add(snap)
+            db.commit()
+        except Exception as e:
+            print(f"[Indices] Snapshot error for {code}: {e}")
             try:
-                value, meta = fn()
-                snap = IndexSnapshot(
-                    index_code=code,
-                    value=float(value),
-                    meta_json=json.dumps(meta) if meta else None,
-                )
-                db.add(snap)
-            except Exception as e:
-                print(f"[Indices] Snapshot error for {code}: {e}")
-        db.commit()
-    except Exception as e:
-        print(f"[Indices] calculate_all_indices error: {e}")
-        db.rollback()
-    finally:
-        db.close()
+                db.rollback()
+            except Exception:
+                pass
+        finally:
+            db.close()
 
 
 def _get_latest(code: str) -> Optional[IndexSnapshot]:
@@ -862,6 +865,14 @@ def _get_history(code: str, days: int) -> list[IndexSnapshot]:
                 .all())
     finally:
         db.close()
+
+
+def _snap_near_24h(snaps: list) -> "IndexSnapshot | None":
+    """Return the snapshot whose timestamp is closest to exactly 24 hours ago."""
+    if not snaps:
+        return None
+    target = datetime.utcnow() - timedelta(hours=24)
+    return min(snaps, key=lambda s: abs((s.timestamp - target).total_seconds()))
 
 
 def _build_ohlcv(snaps: list[IndexSnapshot], bucket_hours: int = 1) -> list[dict]:
@@ -961,10 +972,10 @@ def indices_landing(session_token: Optional[str] = Cookie(None)):
     for code, meta in INDICES.items():
         snap24 = _get_history(code, 2)  # last 2 days for sparkline
         snap_now = snap24[-1] if snap24 else None
-        snap_24h = snap24[0]  if len(snap24) >= 2 else None
+        snap_24h = _snap_near_24h(snap24)
 
         current = snap_now.value if snap_now else 0.0
-        change  = _pct_change(current, snap_24h.value) if snap_24h else 0.0
+        change  = _pct_change(current, snap_24h.value) if snap_24h and snap_24h is not snap_now else 0.0
 
         change_color = "#22c55e" if change >= 0 else "#ef4444"
         change_arrow = "▲" if change >= 0 else "▼"
@@ -1065,8 +1076,9 @@ def index_detail(code: str, session_token: Optional[str] = Cookie(None)):
     snap_now = snaps30[-1] if snaps30 else None
 
     # 24h and 30d change
-    snap_24h = next((s for s in reversed(snaps30)
-                     if s.timestamp <= datetime.utcnow() - timedelta(hours=23, minutes=50)), None)
+    snap_24h = _snap_near_24h(snaps30)
+    if snap_24h is snap_now:
+        snap_24h = None  # not enough history yet
     snap_30d = snaps30[0] if snaps30 else None
 
     current = snap_now.value if snap_now else 0.0
@@ -1144,14 +1156,14 @@ def index_detail(code: str, session_token: Optional[str] = Cookie(None)):
       }}
       .stat-lbl {{ color:#64748b; font-size:.72rem; }}
       .stat-val {{ font-size:1.1rem; font-weight:bold; }}
-      .hm-grid {{
-        display: flex; flex-wrap: wrap; gap: 4px;
-      }}
-      .hm-cell {{
-        border-radius: 4px; padding: 4px 6px;
-        font-size: .65rem; color: #fff; text-align:center;
-        min-width: 48px;
-      }}
+      .bd-list {{ display:flex; flex-direction:column; gap:5px; max-height:220px; overflow-y:auto; }}
+      .bd-row  {{ display:flex; align-items:center; gap:8px; font-size:.72rem; }}
+      .bd-label {{ flex:0 0 110px; color:#cbd5e1; white-space:nowrap; overflow:hidden;
+                   text-overflow:ellipsis; text-align:right; }}
+      .bd-bar-wrap {{ flex:1; background:#1e293b; border-radius:3px; height:14px;
+                      position:relative; display:flex; align-items:center; }}
+      .bd-bar {{ height:100%; border-radius:3px; min-width:2px; }}
+      .bd-val  {{ flex:0 0 70px; text-align:right; color:#94a3b8; font-size:.68rem; }}
     </style>
 
     <a href="/banks/indices" style="color:#38bdf8;font-size:.85rem;">← Indices</a>
@@ -1206,9 +1218,13 @@ def index_detail(code: str, session_token: Optional[str] = Cookie(None)):
         <canvas id="pieChart" height="180"></canvas>
       </div>
 
-      <!-- HEATMAP -->
+      <!-- BREAKDOWN -->
       <div class="chart-box">
-        <h4>🗺️ Distribution Heatmap</h4>
+        <h4>📊 Top Components</h4>
+        <p style="color:#64748b;font-size:.68rem;margin:0 0 8px;">
+          What makes up this index — sorted largest to smallest.
+          Bar width shows each component's share of the biggest value.
+        </p>
         {heatmap_html}
       </div>
     </div>
@@ -1354,30 +1370,36 @@ def index_detail(code: str, session_token: Optional[str] = Cookie(None)):
 def _build_heatmap(code: str, breakdown: list[dict],
                    meta: dict, color: str, unit: str,
                    disp: dict | None = None) -> str:
-    """Build the heatmap HTML for the detail page."""
+    """Build a ranked horizontal bar list of index components."""
     if code == "GFI":
         return _gfi_gauge(meta)
 
+    if meta.get("no_data"):
+        return '<p style="color:#64748b;font-size:.8rem;">No market trades recorded yet — check back once the economy is active.</p>'
+
     if not breakdown:
-        return '<p style="color:#64748b;font-size:.8rem;">No data yet.</p>'
+        return '<p style="color:#64748b;font-size:.8rem;">No component data available.</p>'
 
-    vals = [abs(b["value"]) for b in breakdown]
-    max_v = max(vals) if vals else 1.0
-    if max_v == 0:
-        max_v = 1.0
+    sorted_bd = sorted(breakdown, key=lambda b: abs(b["value"]), reverse=True)[:20]
+    max_v = max(abs(b["value"]) for b in sorted_bd) or 1.0
 
-    cells = ""
-    for b in breakdown[:24]:
+    rows = ""
+    for b in sorted_bd:
         ratio = abs(b["value"]) / max_v
-        bg    = _heatmap_color(ratio)
-        cell_disp = _fmt(b["value"], unit, disp) if unit in ("USD", "USD/hr", "USD/mo", "WSC") \
-                    else str(b["value"])
-        cells += (f'<div class="hm-cell" style="background:{bg};flex:1 0 80px;" '
-                  f'title="{b["label"]}: {cell_disp}">'
-                  f'<div style="font-weight:bold;font-size:.6rem;">{b["label"][:12]}</div>'
-                  f'<div>{cell_disp}</div></div>')
+        pct   = f"{ratio * 100:.0f}%"
+        val_disp = _fmt(b["value"], unit, disp) if unit in ("USD", "USD/hr", "USD/mo", "WSC") \
+                   else str(b["value"])
+        rows += (
+            f'<div class="bd-row">'
+            f'<span class="bd-label" title="{b["label"]}">{b["label"][:16]}</span>'
+            f'<div class="bd-bar-wrap">'
+            f'<div class="bd-bar" style="width:{pct};background:{color};opacity:.85;"></div>'
+            f'</div>'
+            f'<span class="bd-val">{val_disp}</span>'
+            f'</div>'
+        )
 
-    return f'<div class="hm-grid" style="max-height:200px;overflow-y:auto;">{cells}</div>'
+    return f'<div class="bd-list">{rows}</div>'
 
 
 def _gfi_gauge(meta: dict) -> str:
