@@ -156,86 +156,83 @@
     }
   },
   "sell_items": {
-    "oil": {
-      "min_inventory_to_keep": 500,
-      "max_order_quantity": 3000,
-      "market": "regular"
-    },
-    "iron_ore": {
-      "min_inventory_to_keep": 200,
-      "max_order_quantity": 2000,
-      "market": "regular"
-    },
-    "copper_ore": {
-      "min_inventory_to_keep": 200,
-      "max_order_quantity": 2000,
-      "market": "regular"
-    },
-    "zinc_ore": {
-      "min_inventory_to_keep": 200,
-      "max_order_quantity": 2000,
-      "market": "regular"
-    },
-    "iron": {
-      "min_inventory_to_keep": 1000,
-      "max_order_quantity": 5000,
-      "market": "regular"
-    },
-    "copper": {
-      "min_inventory_to_keep": 500,
-      "max_order_quantity": 3000,
-      "market": "regular"
-    },
-    "brass": {
-      "min_inventory_to_keep": 300,
-      "max_order_quantity": 2000,
-      "market": "regular"
-    },
-    "lead_ore": {
-      "min_inventory_to_keep": 100,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "lead": {
-      "min_inventory_to_keep": 100,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "fuel_tank": {
-      "min_inventory_to_keep": 20,
-      "max_order_quantity": 200,
-      "market": "regular"
-    },
-    "car_battery": {
-      "min_inventory_to_keep": 20,
-      "max_order_quantity": 200,
-      "market": "regular"
-    },
-    "spark_plugs": {
-      "min_inventory_to_keep": 50,
-      "max_order_quantity": 500,
-      "market": "regular"
-    },
-    "tires": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 500,
-      "market": "regular"
-    },
-    "brake_pads": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 500,
-      "market": "regular"
-    },
-    "nails": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 2000,
-      "market": "regular"
-    },
-    "windshield": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 500,
-      "market": "regular"
-    }
+    "oil": { "min_inventory_to_keep": 500, "max_order_quantity": 3000, "market": "regular" },
+    "natural_gas": { "min_inventory_to_keep": 500, "max_order_quantity": 3000, "market": "regular" },
+    "iron_ore": { "min_inventory_to_keep": 200, "max_order_quantity": 2000, "market": "regular" },
+    "copper_ore": { "min_inventory_to_keep": 200, "max_order_quantity": 2000, "market": "regular" },
+    "zinc_ore": { "min_inventory_to_keep": 200, "max_order_quantity": 2000, "market": "regular" },
+    "lead_ore": { "min_inventory_to_keep": 100, "max_order_quantity": 1000, "market": "regular" },
+    "tin_ore": { "min_inventory_to_keep": 100, "max_order_quantity": 1000, "market": "regular" },
+    "nickel_ore": { "min_inventory_to_keep": 100, "max_order_quantity": 1000, "market": "regular" },
+    "cobalt_ore": { "min_inventory_to_keep": 100, "max_order_quantity": 1000, "market": "regular" },
+    "chromium_ore": { "min_inventory_to_keep": 100, "max_order_quantity": 1000, "market": "regular" },
+    "manganese_ore": { "min_inventory_to_keep": 100, "max_order_quantity": 1000, "market": "regular" },
+    "molybdenum_ore": { "min_inventory_to_keep": 50, "max_order_quantity": 500, "market": "regular" },
+    "vanadium_ore": { "min_inventory_to_keep": 50, "max_order_quantity": 500, "market": "regular" },
+    "tungsten_ore": { "min_inventory_to_keep": 50, "max_order_quantity": 500, "market": "regular" },
+    "titanium_ore": { "min_inventory_to_keep": 50, "max_order_quantity": 500, "market": "regular" },
+    "lithium_ore": { "min_inventory_to_keep": 50, "max_order_quantity": 500, "market": "regular" },
+    "gold_ore": { "min_inventory_to_keep": 20, "max_order_quantity": 200, "market": "regular" },
+    "silver_ore": { "min_inventory_to_keep": 50, "max_order_quantity": 500, "market": "regular" },
+    "platinum_ore": { "min_inventory_to_keep": 20, "max_order_quantity": 200, "market": "regular" },
+    "uranium_ore": { "min_inventory_to_keep": 10, "max_order_quantity": 100, "market": "regular" },
+    "bismuth_ore": { "min_inventory_to_keep": 20, "max_order_quantity": 200, "market": "regular" },
+    "antimony_ore": { "min_inventory_to_keep": 20, "max_order_quantity": 200, "market": "regular" },
+    "bauxite": { "min_inventory_to_keep": 100, "max_order_quantity": 1000, "market": "regular" },
+    "clay": { "min_inventory_to_keep": 100, "max_order_quantity": 2000, "market": "regular" },
+    "phosphate_rock": { "min_inventory_to_keep": 100, "max_order_quantity": 2000, "market": "regular" },
+    "sulfur": { "min_inventory_to_keep": 100, "max_order_quantity": 2000, "market": "regular" },
+    "quartz": { "min_inventory_to_keep": 100, "max_order_quantity": 1000, "market": "regular" },
+    "potash_ore": { "min_inventory_to_keep": 100, "max_order_quantity": 1000, "market": "regular" },
+    "magnesite": { "min_inventory_to_keep": 50, "max_order_quantity": 500, "market": "regular" },
+    "fluorite": { "min_inventory_to_keep": 50, "max_order_quantity": 500, "market": "regular" },
+    "lree_ore": { "min_inventory_to_keep": 30, "max_order_quantity": 300, "market": "regular" },
+    "hree_ore": { "min_inventory_to_keep": 20, "max_order_quantity": 200, "market": "regular" },
+    "coltan_ore": { "min_inventory_to_keep": 20, "max_order_quantity": 200, "market": "regular" },
+    "beryllium_ore": { "min_inventory_to_keep": 10, "max_order_quantity": 100, "market": "regular" },
+    "zircon_ore": { "min_inventory_to_keep": 10, "max_order_quantity": 100, "market": "regular" },
+    "obsidian": { "min_inventory_to_keep": 20, "max_order_quantity": 200, "market": "regular" },
+    "volcanic_ash": { "min_inventory_to_keep": 20, "max_order_quantity": 200, "market": "regular" },
+    "rough_amethyst": { "min_inventory_to_keep": 0, "max_order_quantity": 100, "market": "regular" },
+    "rough_opal": { "min_inventory_to_keep": 0, "max_order_quantity": 100, "market": "regular" },
+    "rough_peridot": { "min_inventory_to_keep": 0, "max_order_quantity": 100, "market": "regular" },
+    "chalcedony": { "min_inventory_to_keep": 0, "max_order_quantity": 100, "market": "regular" },
+    "agate": { "min_inventory_to_keep": 0, "max_order_quantity": 100, "market": "regular" },
+    "iron": { "min_inventory_to_keep": 1000, "max_order_quantity": 5000, "market": "regular" },
+    "copper": { "min_inventory_to_keep": 500, "max_order_quantity": 3000, "market": "regular" },
+    "brass": { "min_inventory_to_keep": 300, "max_order_quantity": 2000, "market": "regular" },
+    "lead": { "min_inventory_to_keep": 100, "max_order_quantity": 1000, "market": "regular" },
+    "zinc": { "min_inventory_to_keep": 100, "max_order_quantity": 1000, "market": "regular" },
+    "tin": { "min_inventory_to_keep": 100, "max_order_quantity": 1000, "market": "regular" },
+    "nickel": { "min_inventory_to_keep": 100, "max_order_quantity": 1000, "market": "regular" },
+    "cobalt": { "min_inventory_to_keep": 50, "max_order_quantity": 500, "market": "regular" },
+    "chromium": { "min_inventory_to_keep": 50, "max_order_quantity": 500, "market": "regular" },
+    "manganese": { "min_inventory_to_keep": 50, "max_order_quantity": 500, "market": "regular" },
+    "molybdenum": { "min_inventory_to_keep": 30, "max_order_quantity": 300, "market": "regular" },
+    "vanadium": { "min_inventory_to_keep": 30, "max_order_quantity": 300, "market": "regular" },
+    "tungsten": { "min_inventory_to_keep": 30, "max_order_quantity": 300, "market": "regular" },
+    "magnesium": { "min_inventory_to_keep": 50, "max_order_quantity": 500, "market": "regular" },
+    "gold": { "min_inventory_to_keep": 10, "max_order_quantity": 100, "market": "regular" },
+    "silver": { "min_inventory_to_keep": 20, "max_order_quantity": 200, "market": "regular" },
+    "platinum": { "min_inventory_to_keep": 10, "max_order_quantity": 100, "market": "regular" },
+    "titanium": { "min_inventory_to_keep": 30, "max_order_quantity": 300, "market": "regular" },
+    "silicon": { "min_inventory_to_keep": 50, "max_order_quantity": 500, "market": "regular" },
+    "lithium": { "min_inventory_to_keep": 30, "max_order_quantity": 300, "market": "regular" },
+    "uranium_oxide": { "min_inventory_to_keep": 5, "max_order_quantity": 50, "market": "regular" },
+    "bismuth": { "min_inventory_to_keep": 20, "max_order_quantity": 200, "market": "regular" },
+    "antimony": { "min_inventory_to_keep": 20, "max_order_quantity": 200, "market": "regular" },
+    "chromium_oxide": { "min_inventory_to_keep": 20, "max_order_quantity": 200, "market": "regular" },
+    "fuel_tank": { "min_inventory_to_keep": 20, "max_order_quantity": 200, "market": "regular" },
+    "car_battery": { "min_inventory_to_keep": 20, "max_order_quantity": 200, "market": "regular" },
+    "spark_plugs": { "min_inventory_to_keep": 50, "max_order_quantity": 500, "market": "regular" },
+    "tires": { "min_inventory_to_keep": 0, "max_order_quantity": 500, "market": "regular" },
+    "brake_pads": { "min_inventory_to_keep": 0, "max_order_quantity": 500, "market": "regular" },
+    "headlights": { "min_inventory_to_keep": 0, "max_order_quantity": 300, "market": "regular" },
+    "radiator": { "min_inventory_to_keep": 0, "max_order_quantity": 300, "market": "regular" },
+    "exhaust": { "min_inventory_to_keep": 0, "max_order_quantity": 300, "market": "regular" },
+    "catalytic_converter": { "min_inventory_to_keep": 0, "max_order_quantity": 200, "market": "regular" },
+    "nails": { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
+    "windshield": { "min_inventory_to_keep": 0, "max_order_quantity": 500, "market": "regular" }
   },
   "ipo": {
     "ticker": "BKVN",

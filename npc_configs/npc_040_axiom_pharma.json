@@ -377,11 +377,19 @@
       "max_order_quantity": 1000,
       "market": "regular"
     },
-    "cast_material": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 500,
-      "market": "regular"
-    }
+    "cast_material": { "min_inventory_to_keep": 0, "max_order_quantity": 500, "market": "regular" },
+    "surgical_scalpel": { "min_inventory_to_keep": 0, "max_order_quantity": 500, "market": "regular" },
+    "medicine": { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
+    "vitamins": { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
+    "cough_syrup": { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
+    "antiseptic": { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
+    "bandage": { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
+    "ointment": { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
+    "bismuth_subsalicylate": { "min_inventory_to_keep": 0, "max_order_quantity": 500, "market": "regular" },
+    "echinacea_extract": { "min_inventory_to_keep": 0, "max_order_quantity": 500, "market": "regular" },
+    "foxglove_extract": { "min_inventory_to_keep": 0, "max_order_quantity": 300, "market": "regular" },
+    "passionflower_extract": { "min_inventory_to_keep": 0, "max_order_quantity": 300, "market": "regular" },
+    "cardiac_drug": { "min_inventory_to_keep": 0, "max_order_quantity": 300, "market": "regular" }
   },
   "ipo": {
     "ticker": "AXPH",

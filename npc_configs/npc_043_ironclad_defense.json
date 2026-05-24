@@ -459,11 +459,20 @@
       "max_order_quantity": 2000,
       "market": "regular"
     },
-    "barracks_bunk": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 200,
-      "market": "regular"
-    }
+    "barracks_bunk": { "min_inventory_to_keep": 0, "max_order_quantity": 200, "market": "regular" },
+    "rifle_barrel": { "min_inventory_to_keep": 0, "max_order_quantity": 500, "market": "regular" },
+    "rifle_receiver": { "min_inventory_to_keep": 0, "max_order_quantity": 500, "market": "regular" },
+    "grenade_body": { "min_inventory_to_keep": 0, "max_order_quantity": 500, "market": "regular" },
+    "missile_warhead": { "min_inventory_to_keep": 0, "max_order_quantity": 50, "market": "regular" },
+    "ammunition_crate": { "min_inventory_to_keep": 0, "max_order_quantity": 200, "market": "regular" },
+    "det_cord": { "min_inventory_to_keep": 0, "max_order_quantity": 500, "market": "regular" },
+    "sniper_kit": { "min_inventory_to_keep": 0, "max_order_quantity": 50, "market": "regular" },
+    "tank_hull": { "min_inventory_to_keep": 0, "max_order_quantity": 10, "market": "regular" },
+    "tank_turret": { "min_inventory_to_keep": 0, "max_order_quantity": 10, "market": "regular" },
+    "tank_cannon": { "min_inventory_to_keep": 0, "max_order_quantity": 20, "market": "regular" },
+    "apc_hull": { "min_inventory_to_keep": 0, "max_order_quantity": 15, "market": "regular" },
+    "military_truck": { "min_inventory_to_keep": 0, "max_order_quantity": 30, "market": "regular" },
+    "infantry_fighting_vehicle": { "min_inventory_to_keep": 0, "max_order_quantity": 10, "market": "regular" }
   },
   "ipo": {
     "ticker": "IRCD",

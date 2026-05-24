@@ -263,11 +263,29 @@
       "max_order_quantity": 1500,
       "market": "regular"
     },
-    "moonshine": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    }
+    "moonshine": { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
+    "tobacco_seeds": { "min_inventory_to_keep": 500, "max_order_quantity": 2000, "market": "regular" },
+    "tobacco_flower": { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
+    "latakia_leaf": { "min_inventory_to_keep": 500, "max_order_quantity": 2000, "market": "regular" },
+    "perique_leaf": { "min_inventory_to_keep": 500, "max_order_quantity": 2000, "market": "regular" },
+    "cavendish_leaf": { "min_inventory_to_keep": 500, "max_order_quantity": 2000, "market": "regular" },
+    "flue_cured_tobacco": { "min_inventory_to_keep": 500, "max_order_quantity": 3000, "market": "regular" },
+    "air_cured_tobacco": { "min_inventory_to_keep": 500, "max_order_quantity": 3000, "market": "regular" },
+    "fire_cured_tobacco": { "min_inventory_to_keep": 300, "max_order_quantity": 2000, "market": "regular" },
+    "sun_cured_tobacco": { "min_inventory_to_keep": 300, "max_order_quantity": 2000, "market": "regular" },
+    "cavendish_tobacco": { "min_inventory_to_keep": 300, "max_order_quantity": 2000, "market": "regular" },
+    "perique_tobacco": { "min_inventory_to_keep": 200, "max_order_quantity": 1000, "market": "regular" },
+    "cigarette": { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
+    "virginia_cigarette": { "min_inventory_to_keep": 0, "max_order_quantity": 3000, "market": "regular" },
+    "menthol_cigarette": { "min_inventory_to_keep": 0, "max_order_quantity": 3000, "market": "regular" },
+    "turkish_cigarette": { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
+    "clove_cigarette": { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
+    "cigarillo": { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
+    "red_wine": { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
+    "white_wine": { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
+    "rose_wine": { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
+    "champagne": { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
+    "vinegar": { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" }
   },
   "ipo": {
     "ticker": "LVND",
