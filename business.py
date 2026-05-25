@@ -497,7 +497,20 @@ def process_business_tick(db):
                 except Exception:
                     pass
 
-            net_revenue = total_revenue - wage_cost
+            # ── Retail sales tax: 5% of gross retail revenue → federal government ──
+            _retail_tax = 0.0
+            if has_retail and total_revenue > 0:
+                _retail_tax = round(total_revenue * 0.05, 2)
+                try:
+                    from reserve_banks import GOVERNMENT_PLAYER_ID as _RTGOV, credit_usd as _rt_credit
+                    _rt_credit(_RTGOV, _retail_tax)
+                    from govt_ledger import log_gov_event as _rt_lge
+                    _rt_lge("retail_sales_tax", "in", _retail_tax, "USD",
+                            f"Retail sales tax: {config.get('name', biz.business_type)} (biz {biz.id})")
+                except Exception as _rt_e:
+                    print(f"[Business] Retail tax routing error biz {biz.id}: {_rt_e}")
+
+            net_revenue = total_revenue - wage_cost - _retail_tax
 
             # ── Profit siphon: divert a % into the company's dividend escrow ──
             siphon_amount = 0.0
