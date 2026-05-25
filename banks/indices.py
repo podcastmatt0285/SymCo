@@ -1210,6 +1210,22 @@ def index_detail(code: str, session_token: Optional[str] = Cookie(None)):
     # Feature 8: 7-day volatility
     vol7 = _calc_volatility(snaps7)
 
+    # 30-day high / low
+    high30 = max(s.value for s in snaps30) if snaps30 else None
+    low30  = min(s.value for s in snaps30) if snaps30 else None
+
+    # Position within ATH/ATL range (0–100%)
+    range_pct: float | None = None
+    if ath and atl and ath > atl:
+        range_pct = round((current - atl) / (ath - atl) * 100, 1)
+
+    # Last-updated label + snapshot count
+    last_updated = snap_now.timestamp.strftime("%b %d, %H:%M UTC") if snap_now else "—"
+    snap_count   = len(snaps30)
+
+    # Mini sparkline for the header
+    header_spark = _sparkline_svg(snaps30[-48:], color) if len(snaps30) >= 2 else ""
+
     # Latest breakdown for pie + heatmap
     breakdown: list[dict] = []
     latest_meta: dict = {}
@@ -1372,11 +1388,19 @@ def index_detail(code: str, session_token: Optional[str] = Cookie(None)):
     <a href="/banks/indices" style="color:#38bdf8;font-size:.85rem;">← Indices</a>
 
     <!-- Header -->
-    <div style="margin-top:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-      <span style="font-size:1.8rem;">{meta['icon']}</span>
-      <div>
-        <div style="font-size:.7rem;color:{color};font-weight:bold;letter-spacing:.08em;">{meta['code']}</div>
-        <h2 style="margin:0;font-size:1.2rem;">{meta['name']}</h2>
+    <div style="margin-top:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:space-between;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="font-size:1.8rem;">{meta['icon']}</span>
+        <div>
+          <div style="font-size:.7rem;color:{color};font-weight:bold;letter-spacing:.08em;">{meta['code']}</div>
+          <h2 style="margin:0;font-size:1.2rem;">{meta['name']}</h2>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+        {header_spark}
+        <div style="font-size:.63rem;color:#475569;">
+          Updated {last_updated} &nbsp;·&nbsp; {snap_count} snapshots (30d)
+        </div>
       </div>
     </div>
 
@@ -1424,6 +1448,22 @@ def index_detail(code: str, session_token: Optional[str] = Cookie(None)):
       <div class="stat-box">
         <div class="stat-lbl">Volatility (7d)</div>
         <div class="stat-val">{f"{vol7:.2f}%" if vol7 > 0 else '<span style="color:#475569;">—</span>'}</div>
+      </div>
+    </div>
+
+    <!-- Stat row 3: 30d high / 30d low + ATH/ATL range bar -->
+    <div class="stat-row">
+      <div class="stat-box">
+        <div class="stat-lbl">30D High</div>
+        <div class="stat-val" style="color:#22c55e;">{_sv(high30)}</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-lbl">30D Low</div>
+        <div class="stat-val" style="color:#ef4444;">{_sv(low30)}</div>
+      </div>
+      <div class="stat-box" style="flex:2;min-width:160px;">
+        <div class="stat-lbl">Position (ATL → ATH)</div>
+        {'<div style="margin-top:5px;"><div style="background:#1e293b;border-radius:4px;height:8px;position:relative;"><div style="position:absolute;left:0;top:0;height:100%;border-radius:4px;background:' + color + ';width:' + str(range_pct) + '%;opacity:.85;"></div></div><div style="display:flex;justify-content:space-between;margin-top:3px;font-size:.6rem;color:#475569;"><span>' + _sv(atl) + '</span><span style="color:' + color + ';font-weight:bold;">' + str(range_pct) + '%</span><span>' + _sv(ath) + '</span></div></div>' if range_pct is not None else '<span style="color:#475569;font-size:.75rem;">—</span>'}
       </div>
     </div>
 
@@ -1644,8 +1684,7 @@ def _build_heatmap(code: str, breakdown: list[dict],
     for b in sorted_bd:
         ratio = abs(b["value"]) / max_v
         pct   = f"{ratio * 100:.0f}%"
-        val_disp = _fmt(b["value"], unit, disp) if unit in ("USD", "USD/hr", "USD/mo", "WSC") \
-                   else str(b["value"])
+        val_disp = _fmt(b["value"], unit, disp)
         rows += (
             f'<div class="bd-row">'
             f'<span class="bd-label" title="{b["label"]}">{b["label"][:16]}</span>'
@@ -1677,7 +1716,7 @@ def _gfi_gauge(meta: dict) -> str:
         f'<div style="display:flex;justify-content:space-between;padding:2px 0;'
         f'border-bottom:1px solid #1e293b;">'
         f'<span style="color:#94a3b8;font-size:.65rem;">{s["label"]}</span>'
-        f'<span style="color:{_gfi_color(s["value"]/(0.3 if s["label"]=="Momentum" else 0.25 if s["label"] in ("Breadth","Corp Actions") else 0.1)*100)};'
+        f'<span style="color:{_gfi_color(s["value"]/(30 if s["label"]=="Momentum" else 25 if s["label"] in ("Breadth","Corp Actions") else 10)*100)};'
         f'font-size:.65rem;font-weight:bold;">{s["value"]:.1f}</span></div>'
         for s in signals
     )
