@@ -9067,44 +9067,6 @@
       {
         "inputs": [
           {
-            "item": "iris",
-            "quantity": 15
-          },
-          {
-            "item": "peony",
-            "quantity": 10
-          },
-          {
-            "item": "violet",
-            "quantity": 15
-          },
-          {
-            "item": "narcissus",
-            "quantity": 10
-          },
-          {
-            "item": "pollen",
-            "quantity": 65000
-          },
-          {
-            "item": "glass",
-            "quantity": 5
-          },
-          {
-            "item": "paper",
-            "quantity": 10
-          },
-          {
-            "item": "energy",
-            "quantity": 50
-          }
-        ],
-        "output_item": "pressed_flower_art",
-        "output_qty": 5
-      },
-      {
-        "inputs": [
-          {
             "item": "ranunculus",
             "quantity": 15
           },
@@ -12161,40 +12123,6 @@
         ],
         "output_item": "ink",
         "output_qty": 80
-      },
-      {
-        "inputs": [
-          {
-            "item": "oil",
-            "quantity": 10
-          },
-          {
-            "item": "water",
-            "quantity": 30
-          },
-          {
-            "item": "orange_seeds",
-            "quantity": 25
-          },
-          {
-            "item": "apple_seeds",
-            "quantity": 25
-          },
-          {
-            "item": "grass",
-            "quantity": 25
-          },
-          {
-            "item": "cotton_seeds",
-            "quantity": 25
-          },
-          {
-            "item": "paper",
-            "quantity": 1
-          }
-        ],
-        "output_item": "paint",
-        "output_qty": 35
       }
     ],
     "startup_cost": 10000
@@ -15978,28 +15906,6 @@
         ],
         "output_item": "paraffin_wax",
         "output_qty": 120
-      },
-      {
-        "inputs": [
-          {
-            "item": "oil",
-            "quantity": 400
-          },
-          {
-            "item": "energy",
-            "quantity": 2000
-          },
-          {
-            "item": "water",
-            "quantity": 150
-          },
-          {
-            "item": "paper",
-            "quantity": 4
-          }
-        ],
-        "output_item": "plastic",
-        "output_qty": 80
       },
       {
         "inputs": [
@@ -21808,28 +21714,6 @@
         ],
         "output_item": "chromium",
         "output_qty": 30
-      },
-      {
-        "inputs": [
-          {
-            "item": "ilmenite",
-            "quantity": 200
-          },
-          {
-            "item": "energy",
-            "quantity": 300
-          },
-          {
-            "item": "water",
-            "quantity": 100
-          },
-          {
-            "item": "paper",
-            "quantity": 3
-          }
-        ],
-        "output_item": "titanium",
-        "output_qty": 15
       },
       {
         "inputs": [

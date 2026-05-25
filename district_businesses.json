@@ -1702,6 +1702,70 @@
         ],
         "output_item": "stove",
         "output_qty": 40
+      },
+      {
+        "inputs": [
+          {
+            "item": "steel",
+            "quantity": 200
+          },
+          {
+            "item": "nichrome",
+            "quantity": 150
+          },
+          {
+            "item": "heating_element",
+            "quantity": 30
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 80
+          },
+          {
+            "item": "ceramic",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 30000
+          },
+          {
+            "item": "paper",
+            "quantity": 30
+          }
+        ],
+        "output_item": "industrial_heater",
+        "output_qty": 20
+      },
+      {
+        "inputs": [
+          {
+            "item": "washer_dryer",
+            "quantity": 1
+          },
+          {
+            "item": "refrigerator",
+            "quantity": 1
+          },
+          {
+            "item": "stove",
+            "quantity": 1
+          },
+          {
+            "item": "water_heater",
+            "quantity": 1
+          },
+          {
+            "item": "energy",
+            "quantity": 10000
+          },
+          {
+            "item": "paper",
+            "quantity": 50
+          }
+        ],
+        "output_item": "home_appliance_set",
+        "output_qty": 15
       }
     ],
     "startup_cost": 6000000
@@ -3101,6 +3165,20 @@
         ],
         "output_item": "cargo_manifest",
         "output_qty": 200
+      },
+      {
+        "inputs": [
+          {
+            "item": "paper",
+            "quantity": 1000
+          },
+          {
+            "item": "energy",
+            "quantity": 10000
+          }
+        ],
+        "output_item": "cargo_insurance",
+        "output_qty": 200
       }
     ],
     "startup_cost": 12000000
@@ -3145,6 +3223,76 @@
         ],
         "output_item": "casino_floor_credit",
         "output_qty": 500
+      },
+      {
+        "inputs": [
+          {
+            "item": "casino_chips",
+            "quantity": 1000
+          },
+          {
+            "item": "champagne",
+            "quantity": 50
+          },
+          {
+            "item": "whiskey",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 40000
+          },
+          {
+            "item": "paper",
+            "quantity": 100
+          }
+        ],
+        "output_item": "vip_gaming_package",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 30000
+          },
+          {
+            "item": "champagne",
+            "quantity": 50
+          },
+          {
+            "item": "red_wine",
+            "quantity": 50
+          },
+          {
+            "item": "water",
+            "quantity": 2000
+          },
+          {
+            "item": "paper",
+            "quantity": 100
+          }
+        ],
+        "output_item": "casino_dining",
+        "output_qty": 150
+      },
+      {
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 20000
+          },
+          {
+            "item": "paper",
+            "quantity": 200
+          },
+          {
+            "item": "plastic",
+            "quantity": 50
+          }
+        ],
+        "output_item": "premium_show_ticket",
+        "output_qty": 200
       }
     ],
     "products": {
@@ -4824,6 +4972,64 @@
         ],
         "output_item": "conference_pass",
         "output_qty": 200
+      },
+      {
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 20000
+          },
+          {
+            "item": "paper",
+            "quantity": 500
+          },
+          {
+            "item": "water",
+            "quantity": 2000
+          }
+        ],
+        "output_item": "banquet_ticket",
+        "output_qty": 500
+      },
+      {
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 30000
+          },
+          {
+            "item": "steel",
+            "quantity": 50
+          },
+          {
+            "item": "plastic",
+            "quantity": 200
+          },
+          {
+            "item": "paper",
+            "quantity": 500
+          }
+        ],
+        "output_item": "event_booth_package",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 40000
+          },
+          {
+            "item": "plastic",
+            "quantity": 300
+          },
+          {
+            "item": "paper",
+            "quantity": 1000
+          }
+        ],
+        "output_item": "keynote_sponsorship",
+        "output_qty": 50
       }
     ],
     "products": {
@@ -5370,6 +5576,80 @@
           }
         ],
         "output_item": "duty_free_spirits",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "candy_bar",
+            "quantity": 200
+          },
+          {
+            "item": "hard_candy",
+            "quantity": 200
+          },
+          {
+            "item": "cookie",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 5000
+          },
+          {
+            "item": "paper",
+            "quantity": 200
+          }
+        ],
+        "output_item": "duty_free_confections",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "perfume",
+            "quantity": 50
+          },
+          {
+            "item": "jewelry",
+            "quantity": 25
+          },
+          {
+            "item": "luxury_watch",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 8000
+          },
+          {
+            "item": "paper",
+            "quantity": 100
+          }
+        ],
+        "output_item": "duty_free_luxury",
+        "output_qty": 50
+      },
+      {
+        "inputs": [
+          {
+            "item": "cigarette",
+            "quantity": 500
+          },
+          {
+            "item": "corona_cigar",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 5000
+          },
+          {
+            "item": "paper",
+            "quantity": 200
+          }
+        ],
+        "output_item": "duty_free_tobacco",
         "output_qty": 100
       }
     ],
@@ -6378,6 +6658,78 @@
             "quantity": 40
           }
         ]
+      },
+      {
+        "inputs": [
+          {
+            "item": "aluminum",
+            "quantity": 300
+          },
+          {
+            "item": "steel",
+            "quantity": 200
+          },
+          {
+            "item": "microchip",
+            "quantity": 50
+          },
+          {
+            "item": "circuit_board",
+            "quantity": 30
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 100
+          },
+          {
+            "item": "plastic",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 80000
+          },
+          {
+            "item": "paper",
+            "quantity": 50
+          }
+        ],
+        "output_item": "3d_printer_industrial",
+        "output_qty": 5
+      },
+      {
+        "inputs": [
+          {
+            "item": "circuit_board",
+            "quantity": 20
+          },
+          {
+            "item": "router",
+            "quantity": 5
+          },
+          {
+            "item": "sensor_array",
+            "quantity": 5
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 50
+          },
+          {
+            "item": "plastic",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 25000
+          },
+          {
+            "item": "paper",
+            "quantity": 30
+          }
+        ],
+        "output_item": "smart_home_kit",
+        "output_qty": 20
       }
     ],
     "startup_cost": 10000000
@@ -7845,24 +8197,6 @@
         ],
         "output_item": "disposable_utensils",
         "output_qty": 2000
-      },
-      {
-        "inputs": [
-          {
-            "item": "cardboard",
-            "quantity": 300
-          },
-          {
-            "item": "glue",
-            "quantity": 50
-          },
-          {
-            "item": "energy",
-            "quantity": 10000
-          }
-        ],
-        "output_item": "cardboard_box",
-        "output_qty": 600
       }
     ],
     "startup_cost": 2000000
@@ -8581,6 +8915,102 @@
         ],
         "output_item": "standard_room_night",
         "output_qty": 200
+      },
+      {
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 60000
+          },
+          {
+            "item": "water",
+            "quantity": 15000
+          },
+          {
+            "item": "cotton",
+            "quantity": 300
+          },
+          {
+            "item": "champagne",
+            "quantity": 20
+          },
+          {
+            "item": "hospitality_linen_set",
+            "quantity": 60
+          },
+          {
+            "item": "paper",
+            "quantity": 300
+          }
+        ],
+        "output_item": "penthouse_night",
+        "output_qty": 50
+      },
+      {
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 50000
+          },
+          {
+            "item": "water",
+            "quantity": 12000
+          },
+          {
+            "item": "cotton",
+            "quantity": 250
+          },
+          {
+            "item": "hospitality_linen_set",
+            "quantity": 50
+          },
+          {
+            "item": "paper",
+            "quantity": 250
+          }
+        ],
+        "output_item": "suite_night",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 20000
+          },
+          {
+            "item": "paper",
+            "quantity": 200
+          },
+          {
+            "item": "plastic",
+            "quantity": 50
+          }
+        ],
+        "output_item": "concierge_package",
+        "output_qty": 150
+      },
+      {
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 25000
+          },
+          {
+            "item": "champagne",
+            "quantity": 10
+          },
+          {
+            "item": "whiskey",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 100
+          }
+        ],
+        "output_item": "vip_lounge_pass",
+        "output_qty": 200
       }
     ],
     "products": {
@@ -8795,36 +9225,6 @@
         ],
         "output_item": "gyro",
         "output_qty": 250
-      },
-      {
-        "output_item": "premium_sashimi",
-        "output_qty": 30,
-        "inputs": [
-          {
-            "item": "sea_bass_fillet",
-            "quantity": 50
-          },
-          {
-            "item": "smoked_trout",
-            "quantity": 30
-          },
-          {
-            "item": "smoked_sea_trout",
-            "quantity": 25
-          },
-          {
-            "item": "rice_wine",
-            "quantity": 10
-          },
-          {
-            "item": "energy",
-            "quantity": 3000
-          },
-          {
-            "item": "paper",
-            "quantity": 20
-          }
-        ]
       }
     ],
     "startup_cost": 4000000
@@ -9197,32 +9597,6 @@
         ],
         "output_item": "jellyfish",
         "output_qty": 50
-      },
-      {
-        "inputs": [
-          {
-            "item": "beef",
-            "quantity": 150
-          },
-          {
-            "item": "water",
-            "quantity": 2000
-          },
-          {
-            "item": "veterinary_supplies",
-            "quantity": 8
-          },
-          {
-            "item": "paper",
-            "quantity": 30
-          },
-          {
-            "item": "energy",
-            "quantity": 35000
-          }
-        ],
-        "output_item": "octopus",
-        "output_qty": 3
       },
       {
         "inputs": [
@@ -12251,6 +12625,50 @@
         ],
         "output_item": "premium_cocktail",
         "output_qty": 200
+      },
+      {
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 5000
+          },
+          {
+            "item": "paper",
+            "quantity": 50
+          }
+        ],
+        "output_item": "club_entry",
+        "output_qty": 500
+      },
+      {
+        "inputs": [
+          {
+            "item": "champagne",
+            "quantity": 50
+          },
+          {
+            "item": "whiskey",
+            "quantity": 50
+          },
+          {
+            "item": "vodka",
+            "quantity": 50
+          },
+          {
+            "item": "rum",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 10000
+          },
+          {
+            "item": "paper",
+            "quantity": 50
+          }
+        ],
+        "output_item": "bottle_service",
+        "output_qty": 100
       }
     ],
     "products": {
@@ -13053,6 +13471,58 @@
         ],
         "output_item": "reentry_package",
         "output_qty": 40
+      },
+      {
+        "inputs": [
+          {
+            "item": "textbook",
+            "quantity": 100
+          },
+          {
+            "item": "laptop",
+            "quantity": 10
+          },
+          {
+            "item": "taser",
+            "quantity": 20
+          },
+          {
+            "item": "paper",
+            "quantity": 300
+          },
+          {
+            "item": "energy",
+            "quantity": 20000
+          }
+        ],
+        "output_item": "correctional_training",
+        "output_qty": 50
+      },
+      {
+        "inputs": [
+          {
+            "item": "prison_bus",
+            "quantity": 2
+          },
+          {
+            "item": "handcuffs",
+            "quantity": 50
+          },
+          {
+            "item": "taser",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 30000
+          }
+        ],
+        "output_item": "prisoner_transport_service",
+        "output_qty": 50
       }
     ],
     "products": {
@@ -14362,6 +14832,42 @@
         ],
         "output_item": "consulting_contract",
         "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 20000
+          },
+          {
+            "item": "plastic",
+            "quantity": 50
+          },
+          {
+            "item": "paper",
+            "quantity": 500
+          }
+        ],
+        "output_item": "lab_access_package",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 25000
+          },
+          {
+            "item": "laptop",
+            "quantity": 5
+          },
+          {
+            "item": "paper",
+            "quantity": 1000
+          }
+        ],
+        "output_item": "research_grant_contract",
+        "output_qty": 50
       }
     ],
     "products": {
@@ -14473,6 +14979,86 @@
         ],
         "output_item": "robotic_arm_assembly",
         "output_qty": 20
+      },
+      {
+        "inputs": [
+          {
+            "item": "steel",
+            "quantity": 600
+          },
+          {
+            "item": "aluminum",
+            "quantity": 200
+          },
+          {
+            "item": "composite_alloy",
+            "quantity": 100
+          },
+          {
+            "item": "microchip",
+            "quantity": 30
+          },
+          {
+            "item": "circuit_board",
+            "quantity": 20
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 60000
+          },
+          {
+            "item": "paper",
+            "quantity": 50
+          }
+        ],
+        "output_item": "cnc_machine",
+        "output_qty": 5
+      },
+      {
+        "inputs": [
+          {
+            "item": "iron",
+            "quantity": 800
+          },
+          {
+            "item": "copper",
+            "quantity": 400
+          },
+          {
+            "item": "steel",
+            "quantity": 300
+          },
+          {
+            "item": "microchip",
+            "quantity": 100
+          },
+          {
+            "item": "composite_alloy",
+            "quantity": 150
+          },
+          {
+            "item": "polymer_compound",
+            "quantity": 100
+          },
+          {
+            "item": "robotic_arm_assembly",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 120000
+          },
+          {
+            "item": "paper",
+            "quantity": 80
+          }
+        ],
+        "output_item": "industrial_robot_arm",
+        "output_qty": 3
       }
     ],
     "startup_cost": 28000000
@@ -14677,28 +15263,6 @@
         ],
         "output_item": "band_instruments",
         "output_qty": 50
-      },
-      {
-        "inputs": [
-          {
-            "item": "paper",
-            "quantity": 5000
-          },
-          {
-            "item": "glue",
-            "quantity": 25
-          },
-          {
-            "item": "ink",
-            "quantity": 1000
-          },
-          {
-            "item": "energy",
-            "quantity": 15000
-          }
-        ],
-        "output_item": "notebook",
-        "output_qty": 500
       }
     ],
     "startup_cost": 4000000
@@ -14912,6 +15476,50 @@
         ],
         "output_item": "customs_clearance_service",
         "output_qty": 200
+      },
+      {
+        "inputs": [
+          {
+            "item": "concrete",
+            "quantity": 500
+          },
+          {
+            "item": "steel",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 30000
+          },
+          {
+            "item": "paper",
+            "quantity": 500
+          }
+        ],
+        "output_item": "dock_berth_lease",
+        "output_qty": 50
+      },
+      {
+        "inputs": [
+          {
+            "item": "marine_fuel",
+            "quantity": 500
+          },
+          {
+            "item": "shipping_container",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 20000
+          },
+          {
+            "item": "paper",
+            "quantity": 500
+          }
+        ],
+        "output_item": "port_logistics_package",
+        "output_qty": 100
       }
     ],
     "products": {
@@ -15243,32 +15851,6 @@
       {
         "inputs": [
           {
-            "item": "lead",
-            "quantity": 300
-          },
-          {
-            "item": "sulfuric_acid",
-            "quantity": 200
-          },
-          {
-            "item": "plastic",
-            "quantity": 200
-          },
-          {
-            "item": "energy",
-            "quantity": 30000
-          },
-          {
-            "item": "paper",
-            "quantity": 30
-          }
-        ],
-        "output_item": "lead_acid_battery",
-        "output_qty": 150
-      },
-      {
-        "inputs": [
-          {
             "item": "silicon",
             "quantity": 400
           },
@@ -15317,122 +15899,6 @@
         ],
         "output_item": "pcb_substrate",
         "output_qty": 400
-      },
-      {
-        "inputs": [
-          {
-            "item": "lithium",
-            "quantity": 200
-          },
-          {
-            "item": "nickel",
-            "quantity": 150
-          },
-          {
-            "item": "manganese",
-            "quantity": 100
-          },
-          {
-            "item": "cobalt",
-            "quantity": 80
-          },
-          {
-            "item": "graphite",
-            "quantity": 300
-          },
-          {
-            "item": "energy",
-            "quantity": 60000
-          },
-          {
-            "item": "paper",
-            "quantity": 60
-          }
-        ],
-        "output_item": "lithium_nmc_cell",
-        "output_qty": 200
-      },
-      {
-        "inputs": [
-          {
-            "item": "lithium",
-            "quantity": 200
-          },
-          {
-            "item": "iron",
-            "quantity": 150
-          },
-          {
-            "item": "phosphoric_acid",
-            "quantity": 100
-          },
-          {
-            "item": "graphite",
-            "quantity": 300
-          },
-          {
-            "item": "energy",
-            "quantity": 50000
-          },
-          {
-            "item": "paper",
-            "quantity": 50
-          }
-        ],
-        "output_item": "lfp_cell",
-        "output_qty": 200
-      },
-      {
-        "inputs": [
-          {
-            "item": "lithium",
-            "quantity": 200
-          },
-          {
-            "item": "lanthanum",
-            "quantity": 50
-          },
-          {
-            "item": "zirconium",
-            "quantity": 50
-          },
-          {
-            "item": "energy",
-            "quantity": 120000
-          },
-          {
-            "item": "paper",
-            "quantity": 100
-          }
-        ],
-        "output_item": "solid_state_cell",
-        "output_qty": 100
-      },
-      {
-        "inputs": [
-          {
-            "item": "manganese",
-            "quantity": 150
-          },
-          {
-            "item": "iron",
-            "quantity": 100
-          },
-          {
-            "item": "graphite",
-            "quantity": 250
-          },
-          {
-            "item": "energy",
-            "quantity": 40000
-          },
-          {
-            "item": "paper",
-            "quantity": 40
-          }
-        ],
-        "output_item": "sodium_ion_cell",
-        "output_qty": 200
       },
       {
         "inputs": [
@@ -15507,32 +15973,6 @@
         ],
         "output_item": "silicon_carbide_wafer",
         "output_qty": 80
-      },
-      {
-        "inputs": [
-          {
-            "item": "lead",
-            "quantity": 150
-          },
-          {
-            "item": "sulfuric_acid",
-            "quantity": 100
-          },
-          {
-            "item": "plastic",
-            "quantity": 100
-          },
-          {
-            "item": "energy",
-            "quantity": 25000
-          },
-          {
-            "item": "paper",
-            "quantity": 25
-          }
-        ],
-        "output_item": "battery_cell",
-        "output_qty": 200
       },
       {
         "inputs": [
@@ -17114,6 +17554,154 @@
         ],
         "output_item": "coworking_membership",
         "output_qty": 200
+      },
+      {
+        "inputs": [
+          {
+            "item": "apple_seeds",
+            "quantity": 5000
+          },
+          {
+            "item": "paper",
+            "quantity": 300
+          },
+          {
+            "item": "energy",
+            "quantity": 8000
+          }
+        ],
+        "output_item": "apple_seeds_etf_shares",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "paper",
+            "quantity": 400
+          },
+          {
+            "item": "concrete",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 10000
+          }
+        ],
+        "output_item": "city_nav_etf_shares",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "paper",
+            "quantity": 300
+          },
+          {
+            "item": "energy",
+            "quantity": 50000
+          }
+        ],
+        "output_item": "energy_etf_shares",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "paper",
+            "quantity": 300
+          },
+          {
+            "item": "lumber",
+            "quantity": 50
+          },
+          {
+            "item": "concrete",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 8000
+          }
+        ],
+        "output_item": "land_bank_shares",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 20000
+          },
+          {
+            "item": "paper",
+            "quantity": 500
+          },
+          {
+            "item": "laptop",
+            "quantity": 10
+          },
+          {
+            "item": "software_license",
+            "quantity": 3
+          }
+        ],
+        "output_item": "startup_accelerator_seat",
+        "output_qty": 50
+      },
+      {
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 10000
+          },
+          {
+            "item": "paper",
+            "quantity": 200
+          },
+          {
+            "item": "laptop",
+            "quantity": 5
+          }
+        ],
+        "output_item": "tech_consulting_day",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 15000
+          },
+          {
+            "item": "paper",
+            "quantity": 300
+          },
+          {
+            "item": "software_license",
+            "quantity": 5
+          }
+        ],
+        "output_item": "technology_license",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 15000
+          },
+          {
+            "item": "paper",
+            "quantity": 500
+          },
+          {
+            "item": "laptop",
+            "quantity": 5
+          }
+        ],
+        "output_item": "venture_capital_advisory",
+        "output_qty": 100
       }
     ],
     "products": {
@@ -17171,6 +17759,64 @@
         ],
         "output_item": "day_pass",
         "output_qty": 500
+      },
+      {
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 50000
+          },
+          {
+            "item": "plastic",
+            "quantity": 200
+          },
+          {
+            "item": "paper",
+            "quantity": 500
+          }
+        ],
+        "output_item": "annual_pass",
+        "output_qty": 200
+      },
+      {
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 30000
+          },
+          {
+            "item": "plastic",
+            "quantity": 100
+          },
+          {
+            "item": "paper",
+            "quantity": 200
+          }
+        ],
+        "output_item": "vip_experience",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "cotton",
+            "quantity": 200
+          },
+          {
+            "item": "plastic",
+            "quantity": 300
+          },
+          {
+            "item": "paper",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 10000
+          }
+        ],
+        "output_item": "park_merchandise",
+        "output_qty": 300
       }
     ],
     "products": {
@@ -18194,6 +18840,84 @@
         ],
         "output_item": "bulk_grocery_pallet",
         "output_qty": 200
+      },
+      {
+        "inputs": [
+          {
+            "item": "soap",
+            "quantity": 500
+          },
+          {
+            "item": "cotton",
+            "quantity": 200
+          },
+          {
+            "item": "plastic",
+            "quantity": 200
+          },
+          {
+            "item": "cardboard_box",
+            "quantity": 200
+          },
+          {
+            "item": "paper",
+            "quantity": 500
+          },
+          {
+            "item": "energy",
+            "quantity": 15000
+          }
+        ],
+        "output_item": "bulk_household_pallet",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "steel",
+            "quantity": 200
+          },
+          {
+            "item": "copper",
+            "quantity": 100
+          },
+          {
+            "item": "rubber",
+            "quantity": 100
+          },
+          {
+            "item": "plastic",
+            "quantity": 100
+          },
+          {
+            "item": "cardboard_box",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 20000
+          },
+          {
+            "item": "paper",
+            "quantity": 200
+          }
+        ],
+        "output_item": "bulk_industrial_pallet",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 5000
+          },
+          {
+            "item": "paper",
+            "quantity": 200
+          }
+        ],
+        "output_item": "members_subscription",
+        "output_qty": 500
       }
     ],
     "products": {
@@ -18922,77 +19646,6 @@
     ],
     "startup_cost": 4000000
   },
-  "street_flower_cart": {
-    "name": "Street Flower Cart",
-    "description": "A humble wooden cart selling single-stem flowers one at a time. Earns almost nothing per cycle, but costs absolutely nothing to operate \u2014 no startup capital, no wages, no overhead. Can slowly pull a struggling company out of the red while better businesses are being rebuilt.",
-    "class": "retail",
-    "startup_cost": 0,
-    "base_wage_cost": 0,
-    "cycles_to_complete": 60,
-    "allowed_terrain": [
-      "district_aerospace",
-      "district_airport",
-      "district_coastal",
-      "district_convention_center",
-      "district_education",
-      "district_entertainment",
-      "district_entertainment_district",
-      "district_food",
-      "district_food_court",
-      "district_hospital",
-      "district_industrial",
-      "district_mall",
-      "district_medical",
-      "district_mega_mall",
-      "district_military",
-      "district_military_base",
-      "district_neighborhood",
-      "district_prison",
-      "district_prison_complex",
-      "district_research_campus",
-      "district_seaport",
-      "district_shipyard",
-      "district_tech",
-      "district_tech_park",
-      "district_transport",
-      "district_utilities",
-      "district_zoo"
-    ],
-    "products": {
-      "rose": {
-        "base_sale_chance": 0.04,
-        "elasticity": 1.1
-      },
-      "lily": {
-        "base_sale_chance": 0.04,
-        "elasticity": 1.1
-      },
-      "carnation": {
-        "base_sale_chance": 0.04,
-        "elasticity": 1.1
-      },
-      "tulip": {
-        "base_sale_chance": 0.03,
-        "elasticity": 1.1
-      },
-      "sunflower": {
-        "base_sale_chance": 0.03,
-        "elasticity": 1.1
-      },
-      "chrysanthemum": {
-        "base_sale_chance": 0.03,
-        "elasticity": 1.1
-      },
-      "lavender": {
-        "base_sale_chance": 0.03,
-        "elasticity": 1.1
-      },
-      "bouquet": {
-        "base_sale_chance": 0.02,
-        "elasticity": 1.2
-      }
-    }
-  },
   "botanical_garden": {
     "name": "Botanical Garden",
     "description": "Premium public botanical garden offering garden passes, rare orchid cultivation, and botanical research. Requires heavy pollination resources.",
@@ -19165,122 +19818,7 @@
       "district_mega_mall",
       "district_neighborhood"
     ],
-    "production_lines": [
-      {
-        "output_item": "bouquet",
-        "output_qty": 80,
-        "inputs": [
-          {
-            "item": "rose",
-            "quantity": 200
-          },
-          {
-            "item": "lily",
-            "quantity": 150
-          },
-          {
-            "item": "carnation",
-            "quantity": 250
-          },
-          {
-            "item": "tulip",
-            "quantity": 150
-          },
-          {
-            "item": "freesia",
-            "quantity": 100
-          },
-          {
-            "item": "pollen",
-            "quantity": 180000
-          },
-          {
-            "item": "paper",
-            "quantity": 40
-          },
-          {
-            "item": "energy",
-            "quantity": 400
-          }
-        ]
-      },
-      {
-        "output_item": "dried_flower_bundle",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "lavender",
-            "quantity": 300
-          },
-          {
-            "item": "rose",
-            "quantity": 200
-          },
-          {
-            "item": "zinnia",
-            "quantity": 200
-          },
-          {
-            "item": "heather",
-            "quantity": 200
-          },
-          {
-            "item": "chamomile",
-            "quantity": 150
-          },
-          {
-            "item": "pollen",
-            "quantity": 160000
-          },
-          {
-            "item": "paper",
-            "quantity": 30
-          },
-          {
-            "item": "energy",
-            "quantity": 300
-          }
-        ]
-      },
-      {
-        "output_item": "floral_centerpiece",
-        "output_qty": 40,
-        "inputs": [
-          {
-            "item": "hydrangea",
-            "quantity": 150
-          },
-          {
-            "item": "peony",
-            "quantity": 100
-          },
-          {
-            "item": "dahlia",
-            "quantity": 120
-          },
-          {
-            "item": "rose",
-            "quantity": 150
-          },
-          {
-            "item": "pollen",
-            "quantity": 220000
-          },
-          {
-            "item": "glass",
-            "quantity": 40
-          },
-          {
-            "item": "energy",
-            "quantity": 500
-          },
-          {
-            "item": "paper",
-            "quantity": 20
-          }
-        ]
-      }
-    ]
+    "production_lines": []
   },
   "perfume_atelier": {
     "name": "Perfume Atelier",
@@ -22430,192 +22968,7 @@
     "description": "Crafts and sells fine jewelry and luxury watches from precious gems and metals",
     "name": "Luxury Jewelry Boutique",
     "startup_cost": 1500000,
-    "production_lines": [
-      {
-        "output_item": "diamond_ring",
-        "output_qty": 5,
-        "inputs": [
-          {
-            "item": "cut_diamond",
-            "quantity": 5
-          },
-          {
-            "item": "gold",
-            "quantity": 10
-          },
-          {
-            "item": "energy",
-            "quantity": 2000
-          },
-          {
-            "item": "paper",
-            "quantity": 5
-          }
-        ]
-      },
-      {
-        "output_item": "ruby_ring",
-        "output_qty": 8,
-        "inputs": [
-          {
-            "item": "cut_ruby",
-            "quantity": 8
-          },
-          {
-            "item": "gold",
-            "quantity": 12
-          },
-          {
-            "item": "energy",
-            "quantity": 2000
-          },
-          {
-            "item": "paper",
-            "quantity": 5
-          }
-        ]
-      },
-      {
-        "output_item": "emerald_necklace",
-        "output_qty": 8,
-        "inputs": [
-          {
-            "item": "cut_emerald",
-            "quantity": 8
-          },
-          {
-            "item": "gold",
-            "quantity": 15
-          },
-          {
-            "item": "energy",
-            "quantity": 2000
-          },
-          {
-            "item": "paper",
-            "quantity": 5
-          }
-        ]
-      },
-      {
-        "output_item": "sapphire_bracelet",
-        "output_qty": 10,
-        "inputs": [
-          {
-            "item": "cut_sapphire",
-            "quantity": 10
-          },
-          {
-            "item": "silver",
-            "quantity": 20
-          },
-          {
-            "item": "energy",
-            "quantity": 2000
-          },
-          {
-            "item": "paper",
-            "quantity": 5
-          }
-        ]
-      },
-      {
-        "output_item": "amethyst_pendant",
-        "output_qty": 12,
-        "inputs": [
-          {
-            "item": "cut_amethyst",
-            "quantity": 12
-          },
-          {
-            "item": "silver",
-            "quantity": 15
-          },
-          {
-            "item": "energy",
-            "quantity": 1500
-          },
-          {
-            "item": "paper",
-            "quantity": 5
-          }
-        ]
-      },
-      {
-        "output_item": "gem_pendant",
-        "output_qty": 10,
-        "inputs": [
-          {
-            "item": "cut_garnet",
-            "quantity": 10
-          },
-          {
-            "item": "silver",
-            "quantity": 12
-          },
-          {
-            "item": "energy",
-            "quantity": 1500
-          },
-          {
-            "item": "paper",
-            "quantity": 5
-          }
-        ]
-      },
-      {
-        "output_item": "gemstone_bracelet",
-        "output_qty": 8,
-        "inputs": [
-          {
-            "item": "cut_tourmaline",
-            "quantity": 8
-          },
-          {
-            "item": "gold",
-            "quantity": 10
-          },
-          {
-            "item": "energy",
-            "quantity": 1500
-          },
-          {
-            "item": "paper",
-            "quantity": 5
-          }
-        ]
-      },
-      {
-        "output_item": "luxury_watch",
-        "output_qty": 4,
-        "inputs": [
-          {
-            "item": "cut_sapphire",
-            "quantity": 4
-          },
-          {
-            "item": "gold",
-            "quantity": 20
-          },
-          {
-            "item": "brass",
-            "quantity": 15
-          },
-          {
-            "item": "crystal_oscillator",
-            "quantity": 4
-          },
-          {
-            "item": "energy",
-            "quantity": 3000
-          },
-          {
-            "item": "paper",
-            "quantity": 5
-          }
-        ]
-      }
-    ],
+    "production_lines": [],
     "products": {
       "diamond_ring": {
         "base_sale_chance": 0.0002,

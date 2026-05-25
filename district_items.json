@@ -849,11 +849,6 @@
     "description": "Gelatinous sea creature",
     "category": "animals"
   },
-  "octopus": {
-    "name": "Octopus",
-    "description": "Eight-armed cephalopod",
-    "category": "animals"
-  },
   "tropical_fish": {
     "name": "Tropical Fish",
     "description": "Colorful aquarium fish",
@@ -1459,16 +1454,6 @@
     "description": "Salt-cured sturgeon roe, the worlds most prestigious luxury food product",
     "category": "retail_food"
   },
-  "premium_sashimi": {
-    "name": "Premium Sashimi Platter",
-    "description": "Chef-curated assortment of sashimi-grade bluefin tuna and seasonal selections",
-    "category": "retail_food"
-  },
-  "seafood_tower": {
-    "name": "Seafood Tower",
-    "description": "Luxury tiered display of chilled shellfish and seafood for fine dining service",
-    "category": "retail_food"
-  },
   "manta_ray": {
     "name": "Manta Ray",
     "description": "Graceful ocean ray housed in large aquarium exhibits",
@@ -1558,11 +1543,6 @@
     "name": "Composite Alloy",
     "description": "High-performance metal matrix blending iron, copper, and zinc into a lightweight, ultra-strong structural material.",
     "category": "metals"
-  },
-  "polymer_compound": {
-    "name": "Polymer Compound",
-    "description": "Engineered polymer blend derived from rubber and plastic, formulated for high-stress mechanical applications.",
-    "category": "industrial"
   },
   "biotech_compound": {
     "name": "Biotech Compound",
@@ -1864,110 +1844,6 @@
     "description": "Nitinol mesh tube used to keep arteries and ducts open",
     "category": "medical_equipment"
   },
-  "cut_diamond": {
-    "name": "Cut Diamond",
-    "category": "gem",
-    "description": "Precisely faceted diamond gemstone."
-  },
-  "cut_ruby": {
-    "name": "Cut Ruby",
-    "category": "gem",
-    "description": "Faceted ruby; deep red precious stone."
-  },
-  "cut_emerald": {
-    "name": "Cut Emerald",
-    "category": "gem",
-    "description": "Faceted emerald; rich green precious stone."
-  },
-  "cut_sapphire": {
-    "name": "Cut Sapphire",
-    "category": "gem",
-    "description": "Faceted sapphire; royal blue precious stone."
-  },
-  "cut_amethyst": {
-    "name": "Cut Amethyst",
-    "category": "gem",
-    "description": "Faceted amethyst; vivid purple quartz."
-  },
-  "cut_topaz": {
-    "name": "Cut Topaz",
-    "category": "gem",
-    "description": "Faceted topaz gemstone."
-  },
-  "cut_opal": {
-    "name": "Cut Opal",
-    "category": "gem",
-    "description": "Cabochon opal with play-of-colour."
-  },
-  "cut_garnet": {
-    "name": "Cut Garnet",
-    "category": "gem",
-    "description": "Faceted garnet; deep red to green."
-  },
-  "cut_aquamarine": {
-    "name": "Cut Aquamarine",
-    "category": "gem",
-    "description": "Faceted aquamarine; sea-blue beryl."
-  },
-  "cut_tourmaline": {
-    "name": "Cut Tourmaline",
-    "category": "gem",
-    "description": "Faceted tourmaline; multi-colour gem."
-  },
-  "cut_peridot": {
-    "name": "Cut Peridot",
-    "category": "gem",
-    "description": "Faceted peridot; olive-green gem."
-  },
-  "diamond_ring": {
-    "name": "Diamond Ring",
-    "category": "accessories",
-    "description": "Diamond solitaire set in gold."
-  },
-  "ruby_ring": {
-    "name": "Ruby Ring",
-    "category": "accessories",
-    "description": "Ruby set in gold ring."
-  },
-  "emerald_necklace": {
-    "name": "Emerald Necklace",
-    "category": "accessories",
-    "description": "Emerald pendant necklace in gold."
-  },
-  "sapphire_bracelet": {
-    "name": "Sapphire Bracelet",
-    "category": "accessories",
-    "description": "Sapphire bracelet in silver."
-  },
-  "amethyst_pendant": {
-    "name": "Amethyst Pendant",
-    "category": "accessories",
-    "description": "Amethyst pendant in silver."
-  },
-  "gem_pendant": {
-    "name": "Gem Pendant",
-    "category": "accessories",
-    "description": "Garnet pendant in silver."
-  },
-  "gemstone_bracelet": {
-    "name": "Gemstone Bracelet",
-    "category": "accessories",
-    "description": "Tourmaline bracelet in gold."
-  },
-  "mineral_makeup": {
-    "name": "Mineral Makeup",
-    "description": "Foundation, blush, and eyeshadow made from finely milled mica and natural oxides. Prized for clean formulation and natural shimmer.",
-    "category": "cosmetic",
-    "base_price": 100,
-    "rarity": "uncommon"
-  },
-  "luxury_watch": {
-    "name": "Luxury Watch",
-    "description": "High-end mechanical watch with a sapphire crystal face, gold case, and precision movement. Sapphire glass is scratch-proof and far harder than mineral glass.",
-    "category": "accessories",
-    "base_price": 100,
-    "rarity": "uncommon"
-  },
   "ruby_laser": {
     "name": "Ruby Laser Module",
     "description": "Solid-state laser using a synthetic ruby crystal as the lasing medium. Used in rangefinding, targeting systems, tattoo removal, and precision manufacturing.",
@@ -2138,34 +2014,10 @@
     "category": "services",
     "base_price": 0
   },
-  "tulip": {
-    "name": "Tulip",
-    "description": "Spring bulb flower; one of the most traded cut flowers",
-    "category": "flowers",
-    "base_price": 0
-  },
-  "agate": {
-    "name": "Agate",
-    "description": "Banded chalcedony with concentric colour layers from mineral-rich groundwater. Polished slices are sold as decorative specimens.",
-    "category": "gem",
-    "base_price": 0
-  },
   "antimatter_trace": {
     "name": "Antimatter Trace",
     "description": "Nanogram quantities of antihydrogen produced and magnetically trapped in a particle accelerator. Extraordinary value.",
     "category": "materials",
-    "base_price": 0
-  },
-  "rough_garnet": {
-    "name": "Rough Garnet",
-    "description": "Garnet crystal recovered from kimberlite processing and alluvial gravel. Deep red pyrope variety most common.",
-    "category": "gem",
-    "base_price": 0
-  },
-  "rough_peridot": {
-    "name": "Rough Peridot",
-    "description": "Gem-quality olivine from volcanic and mantle-derived rock. Olive-green colour; only gem formed deep in the mantle.",
-    "category": "gem",
     "base_price": 0
   },
   "exotic_isotope": {
@@ -2180,12 +2032,6 @@
     "category": "industrial",
     "base_price": 0
   },
-  "chalcedony": {
-    "name": "Chalcedony",
-    "description": "Microcrystalline quartz from sedimentary and volcanic deposits. Waxy lustre; includes blue and white varieties used in carving and cabochons.",
-    "category": "gem",
-    "base_price": 0
-  },
   "compute_credit": {
     "name": "Compute Credit",
     "description": "A high-tech compute credit, used in electronics, computing, and advanced manufacturing.",
@@ -2196,54 +2042,6 @@
     "name": "Helium-3",
     "description": "Rare light isotope with applications in quantum computing, neutron detection, and advanced fusion concepts.",
     "category": "materials",
-    "base_price": 0
-  },
-  "lily": {
-    "name": "Lily",
-    "description": "Elegant long-stemmed flower for arrangements and funerals",
-    "category": "flowers",
-    "base_price": 0
-  },
-  "chrysanthemum": {
-    "name": "Chrysanthemum",
-    "description": "High-volume cut flower; used in teas and arrangements",
-    "category": "flowers",
-    "base_price": 0
-  },
-  "carnation": {
-    "name": "Carnation",
-    "description": "Mass-market cut flower with long vase life",
-    "category": "flowers",
-    "base_price": 0
-  },
-  "rough_amethyst": {
-    "name": "Rough Amethyst",
-    "description": "Purple quartz crystal formed in volcanic geodes. Common and beautiful; sold raw as a specimen or cut into faceted stones.",
-    "category": "gem",
-    "base_price": 0
-  },
-  "bouquet": {
-    "name": "Flower Bouquet",
-    "description": "Mixed fresh-cut arrangement of seasonal flowers",
-    "category": "floral_products",
-    "base_price": 0
-  },
-  "rose": {
-    "name": "Rose",
-    "description": "Prized cut flower; base of rose oil and rose water",
-    "category": "flowers",
-    "base_price": 0
-  },
-  "lavender": {
-    "name": "Lavender",
-    "description": "Aromatic herb-flower; base of lavender essential oil",
-    "category": "flowers",
-    "base_price": 0
-  },
-  "obsidian": {
-    "name": "Obsidian",
-    "description": "Volcanic glass formed from rapidly cooling lava. Deep black with conchoidal fracture; prized as a specimen and for ornamental carving.",
-    "category": "gem",
     "base_price": 0
   },
   "casino_floor_credit": {
@@ -2268,24 +2066,6 @@
     "name": "Consumer Electronics Bundle",
     "description": "A curated bundle of consumer electronics including devices, accessories, and warranties.",
     "category": "retail_shopping",
-    "base_price": 0
-  },
-  "elderflower_cordial": {
-    "name": "Elderflower Cordial",
-    "description": "Light syrup made from elderflowers and sugar",
-    "category": "beverages",
-    "base_price": 0
-  },
-  "spaghetti": {
-    "name": "Spaghetti",
-    "description": "Long thin pasta strands made from durum wheat",
-    "category": "food",
-    "base_price": 0
-  },
-  "peanut_butter_cookie": {
-    "name": "Peanut Butter Cookie",
-    "description": "Classic baked cookie made with creamy peanut butter",
-    "category": "food",
     "base_price": 0
   },
   "mri_machine": {
@@ -2330,30 +2110,6 @@
     "category": "retail_prison",
     "base_price": 0
   },
-  "religious_book": {
-    "name": "Religious Text",
-    "description": "A thick, leather-bound spiritual manuscript. High value.",
-    "category": "luxury",
-    "base_price": 0
-  },
-  "blessed_sheep": {
-    "name": "Blessed Sheep",
-    "description": "A sheep consecrated through sacred ritual; offered as sacrifice in religious ceremonies.",
-    "category": "luxury",
-    "base_price": 0
-  },
-  "sacred_lamb_offering": {
-    "name": "Sacred Lamb Offering",
-    "description": "A ritually slaughtered and dressed lamb offering, prepared according to ancient rites and anointed with salt and beeswax \u2014 presented at consecrated altars as a sacrificial act of devotion.",
-    "category": "luxury",
-    "base_price": 0
-  },
-  "liturgical_lamb_light": {
-    "name": "Liturgical Lamb Light",
-    "description": "A devotional tallow candle hand-dipped from rendered lamb fat, scented with cinnamon and vanilla, adorned with a golden pearl and set in richly dyed wax \u2014 lit only during the highest religious ceremonies.",
-    "category": "luxury",
-    "base_price": 0
-  },
   "premium_cocktail": {
     "name": "Premium Cocktail",
     "description": "A premium mixed drink crafted with top-shelf spirits, fresh ingredients, and garnishes.",
@@ -2370,30 +2126,6 @@
     "name": "Customs Clearance Service",
     "description": "Professional customs brokerage service handling import/export documentation and clearance.",
     "category": "retail_service",
-    "base_price": 0
-  },
-  "live_lake_scrolls": {
-    "name": "Live Lake Scrolls",
-    "description": "Extraordinarily rare sacred scrolls inscribed on lambskin vellum with concentrated ink, gilded with golden pearls, sealed in clay jars anointed with precious essential oils, cinnamon and beeswax \u2014 a once-in-a-generation religious artefact of incalculable spiritual and monetary value.",
-    "category": "luxury",
-    "base_price": 0
-  },
-  "canned_lamb": {
-    "name": "Canned Lamb",
-    "description": "Salt-preserved lamb packed in tins \u2014 a durable provisions staple with a long shelf life, traded across supply chains and consumed far from any slaughterhouse.",
-    "category": "food",
-    "base_price": 0
-  },
-  "lamb_stew": {
-    "name": "Lamb Stew",
-    "description": "A hearty slow-cooked stew of tender lamb, root vegetables, and lard-based broth \u2014 a warming staple served at soup kitchens and roadside inns.",
-    "category": "food",
-    "base_price": 0
-  },
-  "satay": {
-    "name": "Satay",
-    "description": "Grilled skewered pork served with a rich peanut dipping sauce",
-    "category": "food",
     "base_price": 0
   },
   "coworking_membership": {
@@ -2442,12 +2174,6 @@
     "name": "Nuclear Waste Container",
     "description": "Shielded dry cask for spent nuclear fuel storage.",
     "category": "industrial",
-    "base_price": 0
-  },
-  "sunflower": {
-    "name": "Sunflower",
-    "description": "Large bright flower; seeds yield sunflower oil",
-    "category": "flowers",
     "base_price": 0
   },
   "rare_orchid_specimen": {

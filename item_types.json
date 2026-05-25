@@ -590,9 +590,10 @@
     "name": "Blast-Resistant Glass"
   },
   "blessed_sheep": {
-    "category": "luxury",
+    "name": "Blessed Sheep",
     "description": "A sheep consecrated through sacred ritual; offered as sacrifice in religious ceremonies.",
-    "name": "Blessed Sheep"
+    "category": "luxury",
+    "base_price": 0
   },
   "blood_bag": {
     "category": "health",
@@ -835,9 +836,10 @@
     "name": "Canned Crab"
   },
   "canned_lamb": {
-    "category": "food",
+    "name": "Canned Lamb",
     "description": "Salt-preserved lamb packed in tins \u2014 a durable provisions staple with a long shelf life, traded across supply chains and consumed far from any slaughterhouse.",
-    "name": "Canned Lamb"
+    "category": "food",
+    "base_price": 0
   },
   "canned_mackerel": {
     "category": "canned_goods",
@@ -2825,9 +2827,10 @@
     "name": "Lamb Meat"
   },
   "lamb_stew": {
-    "category": "food",
+    "name": "Lamb Stew",
     "description": "A hearty slow-cooked stew of tender lamb, root vegetables, and lard-based broth \u2014 a warming staple served at soup kitchens and roadside inns.",
-    "name": "Lamb Stew"
+    "category": "food",
+    "base_price": 0
   },
   "land_bank_shares": {
     "category": "financial",
@@ -2990,14 +2993,16 @@
     "name": "Lithium Ore"
   },
   "liturgical_lamb_light": {
-    "category": "luxury",
+    "name": "Liturgical Lamb Light",
     "description": "A devotional tallow candle hand-dipped from rendered lamb fat, scented with cinnamon and vanilla, adorned with a golden pearl and set in richly dyed wax \u2014 lit only during the highest religious ceremonies.",
-    "name": "Liturgical Lamb Light"
+    "category": "luxury",
+    "base_price": 0
   },
   "live_lake_scrolls": {
-    "category": "luxury",
+    "name": "Live Lake Scrolls",
     "description": "Extraordinarily rare sacred scrolls inscribed on lambskin vellum with concentrated ink, gilded with golden pearls, sealed in clay jars anointed with precious essential oils, cinnamon and beeswax \u2014 a once-in-a-generation religious artefact of incalculable spiritual and monetary value.",
-    "name": "Live Lake Scrolls"
+    "category": "luxury",
+    "base_price": 0
   },
   "livestock_product_supply": {
     "category": "livestock",
@@ -3705,9 +3710,10 @@
     "name": "Peanut Butter"
   },
   "peanut_butter_cookie": {
-    "category": "food",
+    "name": "Peanut Butter Cookie",
     "description": "Classic baked cookie made with creamy peanut butter",
-    "name": "Peanut Butter Cookie"
+    "category": "food",
+    "base_price": 0
   },
   "peanut_flour": {
     "category": "food",
@@ -3885,9 +3891,9 @@
     "name": "Polyester"
   },
   "polymer_compound": {
-    "category": "ingredients",
-    "description": "A processed polymer compound, used as an ingredient or chemical in production recipes.",
-    "name": "Polymer Compound"
+    "name": "Polymer Compound",
+    "description": "Engineered polymer blend derived from rubber and plastic, formulated for high-stress mechanical applications.",
+    "category": "industrial"
   },
   "polypay_sheep": {
     "category": "livestock",
@@ -4170,9 +4176,10 @@
     "name": "Rehabilitation Program"
   },
   "religious_book": {
-    "category": "luxury",
+    "name": "Religious Text",
     "description": "A thick, leather-bound spiritual manuscript. High value.",
-    "name": "Religious Text"
+    "category": "luxury",
+    "base_price": 0
   },
   "religious_candle": {
     "category": "luxury",
@@ -4350,9 +4357,10 @@
     "name": "Rum Molasses"
   },
   "sacred_lamb_offering": {
-    "category": "luxury",
+    "name": "Sacred Lamb Offering",
     "description": "A ritually slaughtered and dressed lamb offering, prepared according to ancient rites and anointed with salt and beeswax \u2014 presented at consecrated altars as a sacrificial act of devotion.",
-    "name": "Sacred Lamb Offering"
+    "category": "luxury",
+    "base_price": 0
   },
   "sacred_tobacco": {
     "category": "tobacco",
@@ -4425,9 +4433,10 @@
     "name": "Sardines"
   },
   "satay": {
-    "category": "food",
+    "name": "Satay",
     "description": "Grilled skewered pork served with a rich peanut dipping sauce",
-    "name": "Satay"
+    "category": "food",
+    "base_price": 0
   },
   "satellite_uplink": {
     "category": "components",
@@ -4520,9 +4529,9 @@
     "name": "Seafood Chowder"
   },
   "seafood_tower": {
-    "category": "prepared_food",
-    "description": "An industrial seafood tower, used in manufacturing, processing, and heavy-industry operations.",
-    "name": "Seafood Tower"
+    "name": "Seafood Tower",
+    "description": "Luxury tiered display of chilled shellfish and seafood for fine dining service",
+    "category": "retail_food"
   },
   "seahorse": {
     "category": "livestock",
@@ -4835,9 +4844,10 @@
     "name": "Southdown"
   },
   "spaghetti": {
-    "category": "food",
+    "name": "Spaghetti",
     "description": "Long thin pasta strands made from durum wheat",
-    "name": "Spaghetti"
+    "category": "food",
+    "base_price": 0
   },
   "spark_plugs": {
     "category": "vehicle_parts",
@@ -5742,17 +5752,20 @@
   "rose": {
     "name": "Rose",
     "description": "Prized cut flower; base of rose oil and rose water",
-    "category": "flowers"
+    "category": "flowers",
+    "base_price": 0
   },
   "lily": {
     "name": "Lily",
     "description": "Elegant long-stemmed flower for arrangements and funerals",
-    "category": "flowers"
+    "category": "flowers",
+    "base_price": 0
   },
   "tulip": {
     "name": "Tulip",
     "description": "Spring bulb flower; one of the most traded cut flowers",
-    "category": "flowers"
+    "category": "flowers",
+    "base_price": 0
   },
   "orchid": {
     "name": "Orchid",
@@ -5762,22 +5775,26 @@
   "lavender": {
     "name": "Lavender",
     "description": "Aromatic herb-flower; base of lavender essential oil",
-    "category": "flowers"
+    "category": "flowers",
+    "base_price": 0
   },
   "sunflower": {
     "name": "Sunflower",
     "description": "Large bright flower; seeds yield sunflower oil",
-    "category": "flowers"
+    "category": "flowers",
+    "base_price": 0
   },
   "chrysanthemum": {
     "name": "Chrysanthemum",
     "description": "High-volume cut flower; used in teas and arrangements",
-    "category": "flowers"
+    "category": "flowers",
+    "base_price": 0
   },
   "carnation": {
     "name": "Carnation",
     "description": "Mass-market cut flower with long vase life",
-    "category": "flowers"
+    "category": "flowers",
+    "base_price": 0
   },
   "peony": {
     "name": "Peony",
@@ -6077,7 +6094,8 @@
   "elderflower_cordial": {
     "name": "Elderflower Cordial",
     "description": "Light syrup made from elderflowers and sugar",
-    "category": "beverages"
+    "category": "beverages",
+    "base_price": 0
   },
   "echinacea_extract": {
     "name": "Echinacea Extract",
@@ -6146,8 +6164,9 @@
   },
   "rough_amethyst": {
     "name": "Rough Amethyst",
+    "description": "Purple quartz crystal formed in volcanic geodes. Common and beautiful; sold raw as a specimen or cut into faceted stones.",
     "category": "gem",
-    "description": "Purple quartz crystal formed in volcanic geodes. Common and beautiful; sold raw as a specimen or cut into faceted stones."
+    "base_price": 0
   },
   "rough_topaz": {
     "name": "Rough Topaz",
@@ -6161,8 +6180,9 @@
   },
   "rough_garnet": {
     "name": "Rough Garnet",
+    "description": "Garnet crystal recovered from kimberlite processing and alluvial gravel. Deep red pyrope variety most common.",
     "category": "gem",
-    "description": "Garnet crystal recovered from kimberlite processing and alluvial gravel. Deep red pyrope variety most common."
+    "base_price": 0
   },
   "rough_aquamarine": {
     "name": "Rough Aquamarine",
@@ -6176,63 +6196,64 @@
   },
   "rough_peridot": {
     "name": "Rough Peridot",
+    "description": "Gem-quality olivine from volcanic and mantle-derived rock. Olive-green colour; only gem formed deep in the mantle.",
     "category": "gem",
-    "description": "Gem-quality olivine from volcanic and mantle-derived rock. Olive-green colour; only gem formed deep in the mantle."
+    "base_price": 0
   },
   "cut_diamond": {
     "name": "Cut Diamond",
     "category": "gem",
-    "description": "Precisely faceted diamond; brilliant-cut to maximise light return. The highest-value gem per carat."
+    "description": "Precisely faceted diamond gemstone."
   },
   "cut_ruby": {
     "name": "Cut Ruby",
     "category": "gem",
-    "description": "Faceted ruby gemstone. Deep pigeon-blood red commands the highest prices of all coloured stones."
+    "description": "Faceted ruby; deep red precious stone."
   },
   "cut_emerald": {
     "name": "Cut Emerald",
     "category": "gem",
-    "description": "Faceted emerald; typically cut in the emerald step-cut to minimise chip risk."
+    "description": "Faceted emerald; rich green precious stone."
   },
   "cut_sapphire": {
     "name": "Cut Sapphire",
     "category": "gem",
-    "description": "Faceted sapphire gemstone. Royal blue most prized; also found in yellow, pink, and padparadscha."
+    "description": "Faceted sapphire; royal blue precious stone."
   },
   "cut_amethyst": {
     "name": "Cut Amethyst",
     "category": "gem",
-    "description": "Faceted amethyst; vivid purple quartz popular in mass-market jewellery."
+    "description": "Faceted amethyst; vivid purple quartz."
   },
   "cut_topaz": {
     "name": "Cut Topaz",
     "category": "gem",
-    "description": "Faceted topaz gemstone. Imperial topaz (orange-pink) is rarest; blue topaz most widely sold."
+    "description": "Faceted topaz gemstone."
   },
   "cut_opal": {
     "name": "Cut Opal",
     "category": "gem",
-    "description": "Cabochon-cut opal displaying play-of-colour. Cut en cabochon rather than faceted to showcase spectral fire."
+    "description": "Cabochon opal with play-of-colour."
   },
   "cut_garnet": {
     "name": "Cut Garnet",
     "category": "gem",
-    "description": "Faceted garnet gemstone. Deep red pyrope and demantoid green are most valuable varieties."
+    "description": "Faceted garnet; deep red to green."
   },
   "cut_aquamarine": {
     "name": "Cut Aquamarine",
     "category": "gem",
-    "description": "Faceted aquamarine; sea-blue beryl cut to emphasise clarity and colour depth."
+    "description": "Faceted aquamarine; sea-blue beryl."
   },
   "cut_tourmaline": {
     "name": "Cut Tourmaline",
     "category": "gem",
-    "description": "Faceted tourmaline; available in virtually every colour. Paraiba tourmaline commands exceptional prices."
+    "description": "Faceted tourmaline; multi-colour gem."
   },
   "cut_peridot": {
     "name": "Cut Peridot",
     "category": "gem",
-    "description": "Faceted peridot; warm olive-green gem with high double refraction producing a velvety look."
+    "description": "Faceted peridot; olive-green gem."
   },
   "diamond_dust": {
     "name": "Diamond Dust",
@@ -6276,18 +6297,21 @@
   },
   "obsidian": {
     "name": "Obsidian",
+    "description": "Volcanic glass formed from rapidly cooling lava. Deep black with conchoidal fracture; prized as a specimen and for ornamental carving.",
     "category": "gem",
-    "description": "Volcanic glass formed from rapidly cooling lava. Deep black with conchoidal fracture; prized as a specimen and for ornamental carving."
+    "base_price": 0
   },
   "chalcedony": {
     "name": "Chalcedony",
+    "description": "Microcrystalline quartz from sedimentary and volcanic deposits. Waxy lustre; includes blue and white varieties used in carving and cabochons.",
     "category": "gem",
-    "description": "Microcrystalline quartz from sedimentary and volcanic deposits. Waxy lustre; includes blue and white varieties used in carving and cabochons."
+    "base_price": 0
   },
   "agate": {
     "name": "Agate",
+    "description": "Banded chalcedony with concentric colour layers from mineral-rich groundwater. Polished slices are sold as decorative specimens.",
     "category": "gem",
-    "description": "Banded chalcedony with concentric colour layers from mineral-rich groundwater. Polished slices are sold as decorative specimens."
+    "base_price": 0
   },
   "diamond_ring": {
     "name": "Diamond Ring",
@@ -6326,8 +6350,10 @@
   },
   "mineral_makeup": {
     "name": "Mineral Makeup",
-    "category": "personal_care",
-    "description": "Foundation, blush, and eyeshadow made from finely milled mica and natural oxides. Prized for clean formulation and natural shimmer."
+    "description": "Foundation, blush, and eyeshadow made from finely milled mica and natural oxides. Prized for clean formulation and natural shimmer.",
+    "category": "cosmetic",
+    "base_price": 100,
+    "rarity": "uncommon"
   },
   "luxury_watch": {
     "name": "Luxury Watch",
