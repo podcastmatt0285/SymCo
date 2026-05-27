@@ -10603,82 +10603,6 @@
       {
         "inputs": [
           {
-            "item": "jet_airframe",
-            "quantity": 1
-          },
-          {
-            "item": "turbojet_engine",
-            "quantity": 2
-          },
-          {
-            "item": "avionics_suite",
-            "quantity": 1
-          },
-          {
-            "item": "fire_control_system",
-            "quantity": 1
-          },
-          {
-            "item": "ejection_seat",
-            "quantity": 1
-          },
-          {
-            "item": "radar_system",
-            "quantity": 1
-          },
-          {
-            "item": "missile",
-            "quantity": 4
-          },
-          {
-            "item": "energy",
-            "quantity": 1000000
-          },
-          {
-            "item": "paper",
-            "quantity": 500
-          }
-        ],
-        "output_item": "fighter_jet",
-        "output_qty": 3
-      },
-      {
-        "inputs": [
-          {
-            "item": "helicopter_rotor",
-            "quantity": 1
-          },
-          {
-            "item": "turbojet_engine",
-            "quantity": 1
-          },
-          {
-            "item": "avionics_suite",
-            "quantity": 1
-          },
-          {
-            "item": "fire_control_system",
-            "quantity": 1
-          },
-          {
-            "item": "missile",
-            "quantity": 2
-          },
-          {
-            "item": "energy",
-            "quantity": 500000
-          },
-          {
-            "item": "paper",
-            "quantity": 300
-          }
-        ],
-        "output_item": "military_helicopter",
-        "output_qty": 5
-      },
-      {
-        "inputs": [
-          {
             "item": "titanium_alloy",
             "quantity": 500
           },
@@ -10847,6 +10771,906 @@
         ],
         "output_item": "drone_swarm_unit",
         "output_qty": 10
+      },
+      {
+        "inputs": [
+          {
+            "item": "jet_airframe",
+            "quantity": 1
+          },
+          {
+            "item": "turbojet_engine",
+            "quantity": 2
+          },
+          {
+            "item": "avionics_suite",
+            "quantity": 1
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "ejection_seat",
+            "quantity": 1
+          },
+          {
+            "item": "radar_system",
+            "quantity": 1
+          },
+          {
+            "item": "missile",
+            "quantity": 6
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 300
+          },
+          {
+            "item": "carbon_fiber",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 2500000
+          },
+          {
+            "item": "paper",
+            "quantity": 1000
+          }
+        ],
+        "output_item": "f22_raptor",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "jet_airframe",
+            "quantity": 1
+          },
+          {
+            "item": "turbojet_engine",
+            "quantity": 1
+          },
+          {
+            "item": "avionics_suite",
+            "quantity": 1
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "ejection_seat",
+            "quantity": 1
+          },
+          {
+            "item": "radar_system",
+            "quantity": 1
+          },
+          {
+            "item": "missile",
+            "quantity": 6
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 250
+          },
+          {
+            "item": "carbon_fiber",
+            "quantity": 180
+          },
+          {
+            "item": "energy",
+            "quantity": 2200000
+          },
+          {
+            "item": "paper",
+            "quantity": 900
+          }
+        ],
+        "output_item": "f35_lightning",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "jet_airframe",
+            "quantity": 1
+          },
+          {
+            "item": "turbojet_engine",
+            "quantity": 2
+          },
+          {
+            "item": "avionics_suite",
+            "quantity": 1
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "ejection_seat",
+            "quantity": 1
+          },
+          {
+            "item": "radar_system",
+            "quantity": 1
+          },
+          {
+            "item": "missile",
+            "quantity": 6
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 280
+          },
+          {
+            "item": "carbon_fiber",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 2300000
+          },
+          {
+            "item": "paper",
+            "quantity": 950
+          }
+        ],
+        "output_item": "su57_felon",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "jet_airframe",
+            "quantity": 1
+          },
+          {
+            "item": "turbojet_engine",
+            "quantity": 2
+          },
+          {
+            "item": "avionics_suite",
+            "quantity": 1
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "ejection_seat",
+            "quantity": 1
+          },
+          {
+            "item": "radar_system",
+            "quantity": 1
+          },
+          {
+            "item": "missile",
+            "quantity": 6
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 260
+          },
+          {
+            "item": "carbon_fiber",
+            "quantity": 180
+          },
+          {
+            "item": "energy",
+            "quantity": 2100000
+          },
+          {
+            "item": "paper",
+            "quantity": 900
+          }
+        ],
+        "output_item": "j20_chengdu",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "jet_airframe",
+            "quantity": 1
+          },
+          {
+            "item": "turbojet_engine",
+            "quantity": 2
+          },
+          {
+            "item": "avionics_suite",
+            "quantity": 1
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "ejection_seat",
+            "quantity": 1
+          },
+          {
+            "item": "radar_system",
+            "quantity": 1
+          },
+          {
+            "item": "missile",
+            "quantity": 4
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 220
+          },
+          {
+            "item": "carbon_fiber",
+            "quantity": 160
+          },
+          {
+            "item": "energy",
+            "quantity": 1900000
+          },
+          {
+            "item": "paper",
+            "quantity": 800
+          }
+        ],
+        "output_item": "tai_tfx",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "jet_airframe",
+            "quantity": 1
+          },
+          {
+            "item": "turbojet_engine",
+            "quantity": 1
+          },
+          {
+            "item": "avionics_suite",
+            "quantity": 1
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "ejection_seat",
+            "quantity": 1
+          },
+          {
+            "item": "radar_system",
+            "quantity": 1
+          },
+          {
+            "item": "missile",
+            "quantity": 8
+          },
+          {
+            "item": "energy",
+            "quantity": 1400000
+          },
+          {
+            "item": "paper",
+            "quantity": 600
+          }
+        ],
+        "output_item": "f16_falcon",
+        "output_qty": 2
+      },
+      {
+        "inputs": [
+          {
+            "item": "jet_airframe",
+            "quantity": 1
+          },
+          {
+            "item": "turbojet_engine",
+            "quantity": 2
+          },
+          {
+            "item": "avionics_suite",
+            "quantity": 1
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "ejection_seat",
+            "quantity": 1
+          },
+          {
+            "item": "radar_system",
+            "quantity": 1
+          },
+          {
+            "item": "missile",
+            "quantity": 8
+          },
+          {
+            "item": "energy",
+            "quantity": 1500000
+          },
+          {
+            "item": "paper",
+            "quantity": 650
+          }
+        ],
+        "output_item": "f15_eagle",
+        "output_qty": 2
+      },
+      {
+        "inputs": [
+          {
+            "item": "jet_airframe",
+            "quantity": 1
+          },
+          {
+            "item": "turbojet_engine",
+            "quantity": 2
+          },
+          {
+            "item": "avionics_suite",
+            "quantity": 1
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "ejection_seat",
+            "quantity": 1
+          },
+          {
+            "item": "radar_system",
+            "quantity": 1
+          },
+          {
+            "item": "missile",
+            "quantity": 8
+          },
+          {
+            "item": "energy",
+            "quantity": 1500000
+          },
+          {
+            "item": "paper",
+            "quantity": 650
+          }
+        ],
+        "output_item": "su35_flanker",
+        "output_qty": 2
+      },
+      {
+        "inputs": [
+          {
+            "item": "jet_airframe",
+            "quantity": 1
+          },
+          {
+            "item": "turbojet_engine",
+            "quantity": 2
+          },
+          {
+            "item": "avionics_suite",
+            "quantity": 1
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "ejection_seat",
+            "quantity": 1
+          },
+          {
+            "item": "radar_system",
+            "quantity": 1
+          },
+          {
+            "item": "missile",
+            "quantity": 6
+          },
+          {
+            "item": "energy",
+            "quantity": 1200000
+          },
+          {
+            "item": "paper",
+            "quantity": 550
+          }
+        ],
+        "output_item": "mig29_fulcrum",
+        "output_qty": 2
+      },
+      {
+        "inputs": [
+          {
+            "item": "jet_airframe",
+            "quantity": 1
+          },
+          {
+            "item": "turbojet_engine",
+            "quantity": 2
+          },
+          {
+            "item": "avionics_suite",
+            "quantity": 1
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "ejection_seat",
+            "quantity": 1
+          },
+          {
+            "item": "radar_system",
+            "quantity": 1
+          },
+          {
+            "item": "missile",
+            "quantity": 6
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 1600000
+          },
+          {
+            "item": "paper",
+            "quantity": 700
+          }
+        ],
+        "output_item": "rafale",
+        "output_qty": 2
+      },
+      {
+        "inputs": [
+          {
+            "item": "jet_airframe",
+            "quantity": 1
+          },
+          {
+            "item": "turbojet_engine",
+            "quantity": 2
+          },
+          {
+            "item": "avionics_suite",
+            "quantity": 1
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "ejection_seat",
+            "quantity": 1
+          },
+          {
+            "item": "radar_system",
+            "quantity": 1
+          },
+          {
+            "item": "missile",
+            "quantity": 6
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 1600000
+          },
+          {
+            "item": "paper",
+            "quantity": 700
+          }
+        ],
+        "output_item": "eurofighter_typhoon",
+        "output_qty": 2
+      },
+      {
+        "inputs": [
+          {
+            "item": "jet_airframe",
+            "quantity": 1
+          },
+          {
+            "item": "turbojet_engine",
+            "quantity": 2
+          },
+          {
+            "item": "avionics_suite",
+            "quantity": 1
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "ejection_seat",
+            "quantity": 1
+          },
+          {
+            "item": "radar_system",
+            "quantity": 1
+          },
+          {
+            "item": "missile",
+            "quantity": 8
+          },
+          {
+            "item": "energy",
+            "quantity": 1400000
+          },
+          {
+            "item": "paper",
+            "quantity": 600
+          }
+        ],
+        "output_item": "j16_flanker",
+        "output_qty": 2
+      },
+      {
+        "inputs": [
+          {
+            "item": "jet_airframe",
+            "quantity": 1
+          },
+          {
+            "item": "turbojet_engine",
+            "quantity": 1
+          },
+          {
+            "item": "avionics_suite",
+            "quantity": 1
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "ejection_seat",
+            "quantity": 1
+          },
+          {
+            "item": "radar_system",
+            "quantity": 1
+          },
+          {
+            "item": "missile",
+            "quantity": 4
+          },
+          {
+            "item": "energy",
+            "quantity": 1100000
+          },
+          {
+            "item": "paper",
+            "quantity": 500
+          }
+        ],
+        "output_item": "hal_tejas",
+        "output_qty": 2
+      },
+      {
+        "inputs": [
+          {
+            "item": "jet_airframe",
+            "quantity": 1
+          },
+          {
+            "item": "turbojet_engine",
+            "quantity": 2
+          },
+          {
+            "item": "avionics_suite",
+            "quantity": 1
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "ejection_seat",
+            "quantity": 1
+          },
+          {
+            "item": "radar_system",
+            "quantity": 1
+          },
+          {
+            "item": "missile",
+            "quantity": 6
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 1500000
+          },
+          {
+            "item": "paper",
+            "quantity": 650
+          }
+        ],
+        "output_item": "kf21_boramae",
+        "output_qty": 2
+      },
+      {
+        "inputs": [
+          {
+            "item": "helicopter_rotor",
+            "quantity": 1
+          },
+          {
+            "item": "turbofan_engine",
+            "quantity": 2
+          },
+          {
+            "item": "avionics_suite",
+            "quantity": 1
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "missile",
+            "quantity": 8
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 800000
+          },
+          {
+            "item": "paper",
+            "quantity": 400
+          }
+        ],
+        "output_item": "ah64_apache",
+        "output_qty": 3
+      },
+      {
+        "inputs": [
+          {
+            "item": "helicopter_rotor",
+            "quantity": 2
+          },
+          {
+            "item": "turbofan_engine",
+            "quantity": 2
+          },
+          {
+            "item": "avionics_suite",
+            "quantity": 1
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "missile",
+            "quantity": 6
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 70
+          },
+          {
+            "item": "energy",
+            "quantity": 750000
+          },
+          {
+            "item": "paper",
+            "quantity": 380
+          }
+        ],
+        "output_item": "ka52_alligator",
+        "output_qty": 3
+      },
+      {
+        "inputs": [
+          {
+            "item": "helicopter_rotor",
+            "quantity": 1
+          },
+          {
+            "item": "turbofan_engine",
+            "quantity": 2
+          },
+          {
+            "item": "avionics_suite",
+            "quantity": 1
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "missile",
+            "quantity": 6
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 700000
+          },
+          {
+            "item": "paper",
+            "quantity": 360
+          }
+        ],
+        "output_item": "z10_thunderbolt",
+        "output_qty": 3
+      },
+      {
+        "inputs": [
+          {
+            "item": "helicopter_rotor",
+            "quantity": 1
+          },
+          {
+            "item": "turbofan_engine",
+            "quantity": 2
+          },
+          {
+            "item": "avionics_suite",
+            "quantity": 1
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "missile",
+            "quantity": 4
+          },
+          {
+            "item": "energy",
+            "quantity": 650000
+          },
+          {
+            "item": "paper",
+            "quantity": 340
+          }
+        ],
+        "output_item": "t129_atak",
+        "output_qty": 3
+      },
+      {
+        "inputs": [
+          {
+            "item": "helicopter_rotor",
+            "quantity": 1
+          },
+          {
+            "item": "turbofan_engine",
+            "quantity": 2
+          },
+          {
+            "item": "avionics_suite",
+            "quantity": 1
+          },
+          {
+            "item": "energy",
+            "quantity": 500000
+          },
+          {
+            "item": "paper",
+            "quantity": 300
+          }
+        ],
+        "output_item": "uh60_blackhawk",
+        "output_qty": 5
+      },
+      {
+        "inputs": [
+          {
+            "item": "helicopter_rotor",
+            "quantity": 1
+          },
+          {
+            "item": "turbofan_engine",
+            "quantity": 2
+          },
+          {
+            "item": "avionics_suite",
+            "quantity": 1
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "missile",
+            "quantity": 4
+          },
+          {
+            "item": "energy",
+            "quantity": 600000
+          },
+          {
+            "item": "paper",
+            "quantity": 320
+          }
+        ],
+        "output_item": "mi24_hind",
+        "output_qty": 5
+      },
+      {
+        "inputs": [
+          {
+            "item": "helicopter_rotor",
+            "quantity": 1
+          },
+          {
+            "item": "turbofan_engine",
+            "quantity": 2
+          },
+          {
+            "item": "avionics_suite",
+            "quantity": 1
+          },
+          {
+            "item": "energy",
+            "quantity": 550000
+          },
+          {
+            "item": "paper",
+            "quantity": 300
+          }
+        ],
+        "output_item": "airbus_h225m",
+        "output_qty": 5
+      },
+      {
+        "inputs": [
+          {
+            "item": "helicopter_rotor",
+            "quantity": 1
+          },
+          {
+            "item": "turbofan_engine",
+            "quantity": 1
+          },
+          {
+            "item": "avionics_suite",
+            "quantity": 1
+          },
+          {
+            "item": "energy",
+            "quantity": 400000
+          },
+          {
+            "item": "paper",
+            "quantity": 250
+          }
+        ],
+        "output_item": "hal_dhruv",
+        "output_qty": 5
       }
     ],
     "startup_cost": 60000000
@@ -10865,24 +11689,12 @@
       {
         "inputs": [
           {
-            "item": "tank",
-            "quantity": 3
-          },
-          {
-            "item": "fighter_jet",
-            "quantity": 2
-          },
-          {
-            "item": "naval_destroyer",
-            "quantity": 1
+            "item": "ammunition_crate",
+            "quantity": 100
           },
           {
             "item": "missile",
             "quantity": 50
-          },
-          {
-            "item": "rifle",
-            "quantity": 500
           },
           {
             "item": "ammunition",
@@ -10901,20 +11713,32 @@
             "quantity": 500000
           },
           {
-            "item": "submarine",
-            "quantity": 1
-          },
-          {
-            "item": "military_helicopter",
-            "quantity": 1
-          },
-          {
             "item": "apc",
             "quantity": 5
           },
           {
             "item": "drone",
             "quantity": 10
+          },
+          {
+            "item": "jet_airframe",
+            "quantity": 2
+          },
+          {
+            "item": "tank_hull",
+            "quantity": 3
+          },
+          {
+            "item": "destroyer_hull",
+            "quantity": 1
+          },
+          {
+            "item": "submarine_hull",
+            "quantity": 1
+          },
+          {
+            "item": "helicopter_rotor",
+            "quantity": 2
           }
         ],
         "output_item": "defense_contract",
@@ -10933,10 +11757,6 @@
           {
             "item": "combat_simulator",
             "quantity": 5
-          },
-          {
-            "item": "rifle",
-            "quantity": 100
           },
           {
             "item": "ammunition",
@@ -10977,6 +11797,10 @@
           {
             "item": "tactical_vest",
             "quantity": 100
+          },
+          {
+            "item": "ammunition_crate",
+            "quantity": 10
           }
         ],
         "output_item": "military_training",
@@ -11704,48 +12528,6 @@
       {
         "inputs": [
           {
-            "item": "tank_hull",
-            "quantity": 1
-          },
-          {
-            "item": "tank_turret",
-            "quantity": 1
-          },
-          {
-            "item": "tank_cannon",
-            "quantity": 1
-          },
-          {
-            "item": "diesel_engine",
-            "quantity": 2
-          },
-          {
-            "item": "fire_control_system",
-            "quantity": 1
-          },
-          {
-            "item": "composite_armor_panel",
-            "quantity": 20
-          },
-          {
-            "item": "copper_wire",
-            "quantity": 200
-          },
-          {
-            "item": "energy",
-            "quantity": 400000
-          },
-          {
-            "item": "paper",
-            "quantity": 200
-          }
-        ],
-        "output_item": "tank",
-        "output_qty": 5
-      },
-      {
-        "inputs": [
-          {
             "item": "steel",
             "quantity": 400
           },
@@ -12118,6 +12900,562 @@
         ],
         "output_item": "main_battle_tank",
         "output_qty": 3
+      },
+      {
+        "inputs": [
+          {
+            "item": "tank_hull",
+            "quantity": 1
+          },
+          {
+            "item": "tank_turret",
+            "quantity": 1
+          },
+          {
+            "item": "tank_cannon",
+            "quantity": 1
+          },
+          {
+            "item": "diesel_engine",
+            "quantity": 2
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "composite_armor_panel",
+            "quantity": 30
+          },
+          {
+            "item": "explosive_reactive_armor",
+            "quantity": 30
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 80
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 300
+          },
+          {
+            "item": "energy",
+            "quantity": 600000
+          },
+          {
+            "item": "paper",
+            "quantity": 300
+          }
+        ],
+        "output_item": "m1a2_abrams",
+        "output_qty": 2
+      },
+      {
+        "inputs": [
+          {
+            "item": "tank_hull",
+            "quantity": 1
+          },
+          {
+            "item": "tank_turret",
+            "quantity": 1
+          },
+          {
+            "item": "tank_cannon",
+            "quantity": 1
+          },
+          {
+            "item": "diesel_engine",
+            "quantity": 2
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "composite_armor_panel",
+            "quantity": 28
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 60
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 280
+          },
+          {
+            "item": "energy",
+            "quantity": 580000
+          },
+          {
+            "item": "paper",
+            "quantity": 280
+          }
+        ],
+        "output_item": "leopard_2a7",
+        "output_qty": 2
+      },
+      {
+        "inputs": [
+          {
+            "item": "tank_hull",
+            "quantity": 1
+          },
+          {
+            "item": "tank_turret",
+            "quantity": 1
+          },
+          {
+            "item": "tank_cannon",
+            "quantity": 1
+          },
+          {
+            "item": "diesel_engine",
+            "quantity": 2
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "composite_armor_panel",
+            "quantity": 30
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 60
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 280
+          },
+          {
+            "item": "energy",
+            "quantity": 580000
+          },
+          {
+            "item": "paper",
+            "quantity": 280
+          }
+        ],
+        "output_item": "challenger_3",
+        "output_qty": 2
+      },
+      {
+        "inputs": [
+          {
+            "item": "tank_hull",
+            "quantity": 1
+          },
+          {
+            "item": "tank_turret",
+            "quantity": 1
+          },
+          {
+            "item": "tank_cannon",
+            "quantity": 1
+          },
+          {
+            "item": "diesel_engine",
+            "quantity": 2
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "composite_armor_panel",
+            "quantity": 25
+          },
+          {
+            "item": "explosive_reactive_armor",
+            "quantity": 40
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 60
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 300
+          },
+          {
+            "item": "energy",
+            "quantity": 600000
+          },
+          {
+            "item": "paper",
+            "quantity": 300
+          }
+        ],
+        "output_item": "t14_armata",
+        "output_qty": 2
+      },
+      {
+        "inputs": [
+          {
+            "item": "tank_hull",
+            "quantity": 1
+          },
+          {
+            "item": "tank_turret",
+            "quantity": 1
+          },
+          {
+            "item": "tank_cannon",
+            "quantity": 1
+          },
+          {
+            "item": "diesel_engine",
+            "quantity": 2
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "composite_armor_panel",
+            "quantity": 25
+          },
+          {
+            "item": "explosive_reactive_armor",
+            "quantity": 20
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 50
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 260
+          },
+          {
+            "item": "energy",
+            "quantity": 560000
+          },
+          {
+            "item": "paper",
+            "quantity": 270
+          }
+        ],
+        "output_item": "k2_black_panther",
+        "output_qty": 2
+      },
+      {
+        "inputs": [
+          {
+            "item": "tank_hull",
+            "quantity": 1
+          },
+          {
+            "item": "tank_turret",
+            "quantity": 1
+          },
+          {
+            "item": "tank_cannon",
+            "quantity": 1
+          },
+          {
+            "item": "diesel_engine",
+            "quantity": 2
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "composite_armor_panel",
+            "quantity": 20
+          },
+          {
+            "item": "explosive_reactive_armor",
+            "quantity": 30
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 250
+          },
+          {
+            "item": "energy",
+            "quantity": 500000
+          },
+          {
+            "item": "paper",
+            "quantity": 250
+          }
+        ],
+        "output_item": "t90m_proryv",
+        "output_qty": 3
+      },
+      {
+        "inputs": [
+          {
+            "item": "tank_hull",
+            "quantity": 1
+          },
+          {
+            "item": "tank_turret",
+            "quantity": 1
+          },
+          {
+            "item": "tank_cannon",
+            "quantity": 1
+          },
+          {
+            "item": "diesel_engine",
+            "quantity": 2
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "composite_armor_panel",
+            "quantity": 22
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 40
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 250
+          },
+          {
+            "item": "energy",
+            "quantity": 520000
+          },
+          {
+            "item": "paper",
+            "quantity": 260
+          }
+        ],
+        "output_item": "amx_leclerc",
+        "output_qty": 3
+      },
+      {
+        "inputs": [
+          {
+            "item": "tank_hull",
+            "quantity": 1
+          },
+          {
+            "item": "tank_turret",
+            "quantity": 1
+          },
+          {
+            "item": "tank_cannon",
+            "quantity": 1
+          },
+          {
+            "item": "diesel_engine",
+            "quantity": 2
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "composite_armor_panel",
+            "quantity": 20
+          },
+          {
+            "item": "explosive_reactive_armor",
+            "quantity": 25
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 240
+          },
+          {
+            "item": "energy",
+            "quantity": 500000
+          },
+          {
+            "item": "paper",
+            "quantity": 250
+          }
+        ],
+        "output_item": "type_99a",
+        "output_qty": 3
+      },
+      {
+        "inputs": [
+          {
+            "item": "tank_hull",
+            "quantity": 1
+          },
+          {
+            "item": "tank_turret",
+            "quantity": 1
+          },
+          {
+            "item": "tank_cannon",
+            "quantity": 1
+          },
+          {
+            "item": "diesel_engine",
+            "quantity": 2
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "composite_armor_panel",
+            "quantity": 20
+          },
+          {
+            "item": "explosive_reactive_armor",
+            "quantity": 20
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 240
+          },
+          {
+            "item": "energy",
+            "quantity": 490000
+          },
+          {
+            "item": "paper",
+            "quantity": 245
+          }
+        ],
+        "output_item": "arjun_mk2",
+        "output_qty": 3
+      },
+      {
+        "inputs": [
+          {
+            "item": "tank_hull",
+            "quantity": 1
+          },
+          {
+            "item": "tank_turret",
+            "quantity": 1
+          },
+          {
+            "item": "tank_cannon",
+            "quantity": 1
+          },
+          {
+            "item": "diesel_engine",
+            "quantity": 2
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "composite_armor_panel",
+            "quantity": 18
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 230
+          },
+          {
+            "item": "energy",
+            "quantity": 480000
+          },
+          {
+            "item": "paper",
+            "quantity": 240
+          }
+        ],
+        "output_item": "altay_tank",
+        "output_qty": 3
+      },
+      {
+        "inputs": [
+          {
+            "item": "tank_hull",
+            "quantity": 1
+          },
+          {
+            "item": "tank_turret",
+            "quantity": 1
+          },
+          {
+            "item": "tank_cannon",
+            "quantity": 1
+          },
+          {
+            "item": "diesel_engine",
+            "quantity": 1
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "composite_armor_panel",
+            "quantity": 18
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 40
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 230
+          },
+          {
+            "item": "energy",
+            "quantity": 480000
+          },
+          {
+            "item": "paper",
+            "quantity": 240
+          }
+        ],
+        "output_item": "type10_tank",
+        "output_qty": 3
+      },
+      {
+        "inputs": [
+          {
+            "item": "tank_hull",
+            "quantity": 1
+          },
+          {
+            "item": "tank_turret",
+            "quantity": 1
+          },
+          {
+            "item": "tank_cannon",
+            "quantity": 1
+          },
+          {
+            "item": "diesel_engine",
+            "quantity": 2
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "composite_armor_panel",
+            "quantity": 16
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 440000
+          },
+          {
+            "item": "paper",
+            "quantity": 220
+          }
+        ],
+        "output_item": "ee_t1_osorio",
+        "output_qty": 3
       }
     ],
     "startup_cost": 35000000
@@ -12268,6 +13606,750 @@
         "inputs": [
           {
             "item": "destroyer_hull",
+            "quantity": 4
+          },
+          {
+            "item": "turbofan_engine",
+            "quantity": 12
+          },
+          {
+            "item": "nuclear_reactor_core",
+            "quantity": 2
+          },
+          {
+            "item": "naval_gun_system",
+            "quantity": 6
+          },
+          {
+            "item": "radar_system",
+            "quantity": 6
+          },
+          {
+            "item": "sonar_system",
+            "quantity": 3
+          },
+          {
+            "item": "missile",
+            "quantity": 40
+          },
+          {
+            "item": "marine_piping",
+            "quantity": 400
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 500
+          },
+          {
+            "item": "steel",
+            "quantity": 2000
+          },
+          {
+            "item": "energy",
+            "quantity": 10000000
+          },
+          {
+            "item": "paper",
+            "quantity": 3000
+          }
+        ],
+        "output_item": "ford_class_carrier",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "destroyer_hull",
+            "quantity": 3
+          },
+          {
+            "item": "turbofan_engine",
+            "quantity": 8
+          },
+          {
+            "item": "naval_gun_system",
+            "quantity": 4
+          },
+          {
+            "item": "radar_system",
+            "quantity": 4
+          },
+          {
+            "item": "sonar_system",
+            "quantity": 2
+          },
+          {
+            "item": "missile",
+            "quantity": 30
+          },
+          {
+            "item": "marine_piping",
+            "quantity": 300
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 300
+          },
+          {
+            "item": "steel",
+            "quantity": 1500
+          },
+          {
+            "item": "energy",
+            "quantity": 8000000
+          },
+          {
+            "item": "paper",
+            "quantity": 2500
+          }
+        ],
+        "output_item": "queen_elizabeth_carrier",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "destroyer_hull",
+            "quantity": 3
+          },
+          {
+            "item": "turbofan_engine",
+            "quantity": 6
+          },
+          {
+            "item": "nuclear_reactor_core",
+            "quantity": 2
+          },
+          {
+            "item": "naval_gun_system",
+            "quantity": 4
+          },
+          {
+            "item": "radar_system",
+            "quantity": 4
+          },
+          {
+            "item": "sonar_system",
+            "quantity": 2
+          },
+          {
+            "item": "missile",
+            "quantity": 30
+          },
+          {
+            "item": "marine_piping",
+            "quantity": 280
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 280
+          },
+          {
+            "item": "steel",
+            "quantity": 1400
+          },
+          {
+            "item": "energy",
+            "quantity": 8500000
+          },
+          {
+            "item": "paper",
+            "quantity": 2500
+          }
+        ],
+        "output_item": "charles_degaulle_carrier",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "destroyer_hull",
+            "quantity": 3
+          },
+          {
+            "item": "turbofan_engine",
+            "quantity": 8
+          },
+          {
+            "item": "naval_gun_system",
+            "quantity": 4
+          },
+          {
+            "item": "radar_system",
+            "quantity": 4
+          },
+          {
+            "item": "sonar_system",
+            "quantity": 2
+          },
+          {
+            "item": "missile",
+            "quantity": 30
+          },
+          {
+            "item": "marine_piping",
+            "quantity": 300
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 280
+          },
+          {
+            "item": "steel",
+            "quantity": 1500
+          },
+          {
+            "item": "energy",
+            "quantity": 8000000
+          },
+          {
+            "item": "paper",
+            "quantity": 2500
+          }
+        ],
+        "output_item": "fujian_carrier",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "destroyer_hull",
+            "quantity": 2
+          },
+          {
+            "item": "turbofan_engine",
+            "quantity": 6
+          },
+          {
+            "item": "naval_gun_system",
+            "quantity": 3
+          },
+          {
+            "item": "radar_system",
+            "quantity": 3
+          },
+          {
+            "item": "sonar_system",
+            "quantity": 1
+          },
+          {
+            "item": "missile",
+            "quantity": 20
+          },
+          {
+            "item": "marine_piping",
+            "quantity": 200
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 200
+          },
+          {
+            "item": "steel",
+            "quantity": 1000
+          },
+          {
+            "item": "energy",
+            "quantity": 6500000
+          },
+          {
+            "item": "paper",
+            "quantity": 2000
+          }
+        ],
+        "output_item": "ins_vikrant_carrier",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "submarine_hull",
+            "quantity": 1
+          },
+          {
+            "item": "nuclear_reactor_core",
+            "quantity": 2
+          },
+          {
+            "item": "torpedo",
+            "quantity": 24
+          },
+          {
+            "item": "sonar_system",
+            "quantity": 4
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 3
+          },
+          {
+            "item": "missile",
+            "quantity": 12
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 200
+          },
+          {
+            "item": "marine_piping",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 7000000
+          },
+          {
+            "item": "paper",
+            "quantity": 1400
+          }
+        ],
+        "output_item": "virginia_class_sub",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "submarine_hull",
+            "quantity": 1
+          },
+          {
+            "item": "nuclear_reactor_core",
+            "quantity": 1
+          },
+          {
+            "item": "torpedo",
+            "quantity": 38
+          },
+          {
+            "item": "sonar_system",
+            "quantity": 3
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 2
+          },
+          {
+            "item": "missile",
+            "quantity": 8
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 180
+          },
+          {
+            "item": "marine_piping",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 6500000
+          },
+          {
+            "item": "paper",
+            "quantity": 1300
+          }
+        ],
+        "output_item": "astute_class_sub",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "submarine_hull",
+            "quantity": 1
+          },
+          {
+            "item": "nuclear_reactor_core",
+            "quantity": 1
+          },
+          {
+            "item": "torpedo",
+            "quantity": 20
+          },
+          {
+            "item": "sonar_system",
+            "quantity": 3
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 2
+          },
+          {
+            "item": "missile",
+            "quantity": 8
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 170
+          },
+          {
+            "item": "marine_piping",
+            "quantity": 75
+          },
+          {
+            "item": "energy",
+            "quantity": 6500000
+          },
+          {
+            "item": "paper",
+            "quantity": 1300
+          }
+        ],
+        "output_item": "barracuda_class_sub",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "submarine_hull",
+            "quantity": 1
+          },
+          {
+            "item": "nuclear_reactor_core",
+            "quantity": 1
+          },
+          {
+            "item": "torpedo",
+            "quantity": 30
+          },
+          {
+            "item": "sonar_system",
+            "quantity": 4
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 2
+          },
+          {
+            "item": "missile",
+            "quantity": 16
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 200
+          },
+          {
+            "item": "marine_piping",
+            "quantity": 90
+          },
+          {
+            "item": "energy",
+            "quantity": 7000000
+          },
+          {
+            "item": "paper",
+            "quantity": 1400
+          }
+        ],
+        "output_item": "yasen_class_sub",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "submarine_hull",
+            "quantity": 1
+          },
+          {
+            "item": "nuclear_reactor_core",
+            "quantity": 1
+          },
+          {
+            "item": "torpedo",
+            "quantity": 22
+          },
+          {
+            "item": "sonar_system",
+            "quantity": 3
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 2
+          },
+          {
+            "item": "missile",
+            "quantity": 8
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 170
+          },
+          {
+            "item": "marine_piping",
+            "quantity": 75
+          },
+          {
+            "item": "energy",
+            "quantity": 6000000
+          },
+          {
+            "item": "paper",
+            "quantity": 1200
+          }
+        ],
+        "output_item": "type093_sub",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "submarine_hull",
+            "quantity": 1
+          },
+          {
+            "item": "nuclear_reactor_core",
+            "quantity": 1
+          },
+          {
+            "item": "torpedo",
+            "quantity": 12
+          },
+          {
+            "item": "sonar_system",
+            "quantity": 2
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 2
+          },
+          {
+            "item": "missile",
+            "quantity": 8
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 150
+          },
+          {
+            "item": "marine_piping",
+            "quantity": 70
+          },
+          {
+            "item": "energy",
+            "quantity": 5500000
+          },
+          {
+            "item": "paper",
+            "quantity": 1100
+          }
+        ],
+        "output_item": "arihant_class_sub",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "destroyer_hull",
+            "quantity": 1
+          },
+          {
+            "item": "turbofan_engine",
+            "quantity": 4
+          },
+          {
+            "item": "naval_gun_system",
+            "quantity": 2
+          },
+          {
+            "item": "radar_system",
+            "quantity": 2
+          },
+          {
+            "item": "sonar_system",
+            "quantity": 2
+          },
+          {
+            "item": "missile",
+            "quantity": 12
+          },
+          {
+            "item": "marine_piping",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 4000000
+          },
+          {
+            "item": "paper",
+            "quantity": 900
+          }
+        ],
+        "output_item": "arleigh_burke_destroyer",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "destroyer_hull",
+            "quantity": 1
+          },
+          {
+            "item": "turbofan_engine",
+            "quantity": 4
+          },
+          {
+            "item": "naval_gun_system",
+            "quantity": 2
+          },
+          {
+            "item": "radar_system",
+            "quantity": 2
+          },
+          {
+            "item": "sonar_system",
+            "quantity": 1
+          },
+          {
+            "item": "missile",
+            "quantity": 10
+          },
+          {
+            "item": "marine_piping",
+            "quantity": 45
+          },
+          {
+            "item": "energy",
+            "quantity": 3800000
+          },
+          {
+            "item": "paper",
+            "quantity": 850
+          }
+        ],
+        "output_item": "type045_destroyer",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "destroyer_hull",
+            "quantity": 1
+          },
+          {
+            "item": "turbofan_engine",
+            "quantity": 4
+          },
+          {
+            "item": "naval_gun_system",
+            "quantity": 2
+          },
+          {
+            "item": "radar_system",
+            "quantity": 3
+          },
+          {
+            "item": "sonar_system",
+            "quantity": 2
+          },
+          {
+            "item": "missile",
+            "quantity": 14
+          },
+          {
+            "item": "marine_piping",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 4200000
+          },
+          {
+            "item": "paper",
+            "quantity": 950
+          }
+        ],
+        "output_item": "type055_destroyer",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "destroyer_hull",
+            "quantity": 1
+          },
+          {
+            "item": "turbofan_engine",
+            "quantity": 4
+          },
+          {
+            "item": "naval_gun_system",
+            "quantity": 2
+          },
+          {
+            "item": "radar_system",
+            "quantity": 2
+          },
+          {
+            "item": "sonar_system",
+            "quantity": 1
+          },
+          {
+            "item": "missile",
+            "quantity": 10
+          },
+          {
+            "item": "marine_piping",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 3800000
+          },
+          {
+            "item": "paper",
+            "quantity": 850
+          }
+        ],
+        "output_item": "atago_class_destroyer",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "destroyer_hull",
+            "quantity": 1
+          },
+          {
+            "item": "turbofan_engine",
+            "quantity": 4
+          },
+          {
+            "item": "naval_gun_system",
+            "quantity": 2
+          },
+          {
+            "item": "radar_system",
+            "quantity": 2
+          },
+          {
+            "item": "sonar_system",
+            "quantity": 1
+          },
+          {
+            "item": "missile",
+            "quantity": 10
+          },
+          {
+            "item": "marine_piping",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 3700000
+          },
+          {
+            "item": "paper",
+            "quantity": 820
+          }
+        ],
+        "output_item": "kdx3_destroyer",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "destroyer_hull",
             "quantity": 1
           },
           {
@@ -12292,56 +14374,182 @@
           },
           {
             "item": "marine_piping",
-            "quantity": 30
+            "quantity": 38
           },
           {
             "item": "energy",
-            "quantity": 3000000
-          },
-          {
-            "item": "paper",
-            "quantity": 600
-          }
-        ],
-        "output_item": "naval_destroyer",
-        "output_qty": 1
-      },
-      {
-        "inputs": [
-          {
-            "item": "submarine_hull",
-            "quantity": 1
-          },
-          {
-            "item": "nuclear_reactor_core",
-            "quantity": 1
-          },
-          {
-            "item": "torpedo",
-            "quantity": 12
-          },
-          {
-            "item": "sonar_system",
-            "quantity": 3
-          },
-          {
-            "item": "fire_control_system",
-            "quantity": 2
-          },
-          {
-            "item": "marine_piping",
-            "quantity": 50
-          },
-          {
-            "item": "energy",
-            "quantity": 5000000
+            "quantity": 3500000
           },
           {
             "item": "paper",
             "quantity": 800
           }
         ],
-        "output_item": "submarine",
+        "output_item": "visakhapatnam_destroyer",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "destroyer_hull",
+            "quantity": 1
+          },
+          {
+            "item": "turbofan_engine",
+            "quantity": 3
+          },
+          {
+            "item": "naval_gun_system",
+            "quantity": 2
+          },
+          {
+            "item": "radar_system",
+            "quantity": 2
+          },
+          {
+            "item": "sonar_system",
+            "quantity": 1
+          },
+          {
+            "item": "missile",
+            "quantity": 10
+          },
+          {
+            "item": "marine_piping",
+            "quantity": 35
+          },
+          {
+            "item": "energy",
+            "quantity": 3500000
+          },
+          {
+            "item": "paper",
+            "quantity": 750
+          }
+        ],
+        "output_item": "gorshkov_frigate",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "destroyer_hull",
+            "quantity": 1
+          },
+          {
+            "item": "turbofan_engine",
+            "quantity": 2
+          },
+          {
+            "item": "naval_gun_system",
+            "quantity": 1
+          },
+          {
+            "item": "radar_system",
+            "quantity": 2
+          },
+          {
+            "item": "sonar_system",
+            "quantity": 1
+          },
+          {
+            "item": "missile",
+            "quantity": 6
+          },
+          {
+            "item": "marine_piping",
+            "quantity": 25
+          },
+          {
+            "item": "energy",
+            "quantity": 2500000
+          },
+          {
+            "item": "paper",
+            "quantity": 600
+          }
+        ],
+        "output_item": "milgem_frigate",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "destroyer_hull",
+            "quantity": 1
+          },
+          {
+            "item": "turbofan_engine",
+            "quantity": 2
+          },
+          {
+            "item": "naval_gun_system",
+            "quantity": 2
+          },
+          {
+            "item": "radar_system",
+            "quantity": 2
+          },
+          {
+            "item": "sonar_system",
+            "quantity": 1
+          },
+          {
+            "item": "missile",
+            "quantity": 6
+          },
+          {
+            "item": "marine_piping",
+            "quantity": 28
+          },
+          {
+            "item": "energy",
+            "quantity": 2800000
+          },
+          {
+            "item": "paper",
+            "quantity": 650
+          }
+        ],
+        "output_item": "al_riyadh_frigate",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "steel",
+            "quantity": 300
+          },
+          {
+            "item": "turbofan_engine",
+            "quantity": 2
+          },
+          {
+            "item": "naval_gun_system",
+            "quantity": 1
+          },
+          {
+            "item": "radar_system",
+            "quantity": 1
+          },
+          {
+            "item": "missile",
+            "quantity": 4
+          },
+          {
+            "item": "marine_piping",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 2000000
+          },
+          {
+            "item": "paper",
+            "quantity": 500
+          }
+        ],
+        "output_item": "baynunah_corvette",
         "output_qty": 1
       }
     ],
@@ -17248,7 +19456,11 @@
       {
         "inputs": [
           {
-            "item": "rifle",
+            "item": "rifle_barrel",
+            "quantity": 20
+          },
+          {
+            "item": "rifle_receiver",
             "quantity": 20
           },
           {
@@ -18429,36 +20641,6 @@
       {
         "inputs": [
           {
-            "item": "rifle_barrel",
-            "quantity": 200
-          },
-          {
-            "item": "rifle_receiver",
-            "quantity": 200
-          },
-          {
-            "item": "steel",
-            "quantity": 50
-          },
-          {
-            "item": "plastic",
-            "quantity": 50
-          },
-          {
-            "item": "energy",
-            "quantity": 30000
-          },
-          {
-            "item": "paper",
-            "quantity": 30
-          }
-        ],
-        "output_item": "rifle",
-        "output_qty": 200
-      },
-      {
-        "inputs": [
-          {
             "item": "brass",
             "quantity": 500
           },
@@ -18789,6 +20971,546 @@
         ],
         "output_item": "incendiary_rocket",
         "output_qty": 50
+      },
+      {
+        "inputs": [
+          {
+            "item": "rifle_barrel",
+            "quantity": 100
+          },
+          {
+            "item": "rifle_receiver",
+            "quantity": 100
+          },
+          {
+            "item": "polymer_compound",
+            "quantity": 30
+          },
+          {
+            "item": "steel",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 25000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ],
+        "output_item": "m4_carbine",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "rifle_barrel",
+            "quantity": 80
+          },
+          {
+            "item": "rifle_receiver",
+            "quantity": 80
+          },
+          {
+            "item": "steel",
+            "quantity": 60
+          },
+          {
+            "item": "polymer_compound",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 30000
+          },
+          {
+            "item": "paper",
+            "quantity": 25
+          }
+        ],
+        "output_item": "m249_saw",
+        "output_qty": 80
+      },
+      {
+        "inputs": [
+          {
+            "item": "rifle_barrel",
+            "quantity": 100
+          },
+          {
+            "item": "rifle_receiver",
+            "quantity": 100
+          },
+          {
+            "item": "steel",
+            "quantity": 30
+          },
+          {
+            "item": "polymer_compound",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 22000
+          },
+          {
+            "item": "paper",
+            "quantity": 18
+          }
+        ],
+        "output_item": "ak_47",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "rifle_barrel",
+            "quantity": 100
+          },
+          {
+            "item": "rifle_receiver",
+            "quantity": 100
+          },
+          {
+            "item": "polymer_compound",
+            "quantity": 30
+          },
+          {
+            "item": "steel",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 24000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ],
+        "output_item": "ak_74m",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "rifle_barrel",
+            "quantity": 100
+          },
+          {
+            "item": "rifle_receiver",
+            "quantity": 100
+          },
+          {
+            "item": "polymer_compound",
+            "quantity": 40
+          },
+          {
+            "item": "precision_spring",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 28000
+          },
+          {
+            "item": "paper",
+            "quantity": 22
+          }
+        ],
+        "output_item": "hk416",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "rifle_barrel",
+            "quantity": 100
+          },
+          {
+            "item": "rifle_receiver",
+            "quantity": 100
+          },
+          {
+            "item": "polymer_compound",
+            "quantity": 50
+          },
+          {
+            "item": "steel",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 26000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ],
+        "output_item": "hk_g36",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "rifle_barrel",
+            "quantity": 100
+          },
+          {
+            "item": "rifle_receiver",
+            "quantity": 100
+          },
+          {
+            "item": "polymer_compound",
+            "quantity": 40
+          },
+          {
+            "item": "steel",
+            "quantity": 18
+          },
+          {
+            "item": "energy",
+            "quantity": 26000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ],
+        "output_item": "l85a2",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "rifle_barrel",
+            "quantity": 100
+          },
+          {
+            "item": "rifle_receiver",
+            "quantity": 100
+          },
+          {
+            "item": "polymer_compound",
+            "quantity": 40
+          },
+          {
+            "item": "steel",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 25000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ],
+        "output_item": "famas_f1",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "rifle_barrel",
+            "quantity": 100
+          },
+          {
+            "item": "rifle_receiver",
+            "quantity": 100
+          },
+          {
+            "item": "polymer_compound",
+            "quantity": 35
+          },
+          {
+            "item": "steel",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 22000
+          },
+          {
+            "item": "paper",
+            "quantity": 18
+          }
+        ],
+        "output_item": "qbz_95",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "rifle_barrel",
+            "quantity": 100
+          },
+          {
+            "item": "rifle_receiver",
+            "quantity": 100
+          },
+          {
+            "item": "steel",
+            "quantity": 25
+          },
+          {
+            "item": "polymer_compound",
+            "quantity": 25
+          },
+          {
+            "item": "energy",
+            "quantity": 22000
+          },
+          {
+            "item": "paper",
+            "quantity": 18
+          }
+        ],
+        "output_item": "insas_rifle",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "rifle_barrel",
+            "quantity": 100
+          },
+          {
+            "item": "rifle_receiver",
+            "quantity": 100
+          },
+          {
+            "item": "polymer_compound",
+            "quantity": 35
+          },
+          {
+            "item": "steel",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 25000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ],
+        "output_item": "k2_rifle",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "rifle_barrel",
+            "quantity": 100
+          },
+          {
+            "item": "rifle_receiver",
+            "quantity": 100
+          },
+          {
+            "item": "polymer_compound",
+            "quantity": 30
+          },
+          {
+            "item": "steel",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 23000
+          },
+          {
+            "item": "paper",
+            "quantity": 18
+          }
+        ],
+        "output_item": "mpt_76",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "rifle_barrel",
+            "quantity": 100
+          },
+          {
+            "item": "rifle_receiver",
+            "quantity": 100
+          },
+          {
+            "item": "steel",
+            "quantity": 30
+          },
+          {
+            "item": "polymer_compound",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 21000
+          },
+          {
+            "item": "paper",
+            "quantity": 16
+          }
+        ],
+        "output_item": "vektor_r4",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "rifle_barrel",
+            "quantity": 100
+          },
+          {
+            "item": "rifle_receiver",
+            "quantity": 100
+          },
+          {
+            "item": "polymer_compound",
+            "quantity": 35
+          },
+          {
+            "item": "precision_spring",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 27000
+          },
+          {
+            "item": "paper",
+            "quantity": 22
+          }
+        ],
+        "output_item": "howa_type89",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "rifle_barrel",
+            "quantity": 100
+          },
+          {
+            "item": "rifle_receiver",
+            "quantity": 100
+          },
+          {
+            "item": "precision_spring",
+            "quantity": 60
+          },
+          {
+            "item": "polymer_compound",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 30000
+          },
+          {
+            "item": "paper",
+            "quantity": 24
+          }
+        ],
+        "output_item": "sig_sg550",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "rifle_barrel",
+            "quantity": 100
+          },
+          {
+            "item": "rifle_receiver",
+            "quantity": 100
+          },
+          {
+            "item": "polymer_compound",
+            "quantity": 35
+          },
+          {
+            "item": "steel",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 21000
+          },
+          {
+            "item": "paper",
+            "quantity": 16
+          }
+        ],
+        "output_item": "fx05_xiuhcoatl",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "rifle_barrel",
+            "quantity": 100
+          },
+          {
+            "item": "rifle_receiver",
+            "quantity": 100
+          },
+          {
+            "item": "steel",
+            "quantity": 30
+          },
+          {
+            "item": "polymer_compound",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 22000
+          },
+          {
+            "item": "paper",
+            "quantity": 18
+          }
+        ],
+        "output_item": "imbel_md97",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "rifle_barrel",
+            "quantity": 100
+          },
+          {
+            "item": "rifle_receiver",
+            "quantity": 100
+          },
+          {
+            "item": "polymer_compound",
+            "quantity": 40
+          },
+          {
+            "item": "precision_spring",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 25000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ],
+        "output_item": "caracal_car816",
+        "output_qty": 100
       }
     ],
     "startup_cost": 25000000

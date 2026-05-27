@@ -2199,5 +2199,370 @@
     "description": "Fresh eau de cologne of neroli, jasmine and lavender",
     "category": "luxury",
     "base_price": 0
+  },
+  "m4_carbine": {
+    "name": "M4A1 Carbine",
+    "description": "Standard-issue US assault rifle. Compact, lightweight, and NATO-caliber.",
+    "category": "military"
+  },
+  "m249_saw": {
+    "name": "M249 SAW",
+    "description": "US squad automatic weapon. Provides sustained fire support at the fireteam level.",
+    "category": "military"
+  },
+  "ak_47": {
+    "name": "AK-47",
+    "description": "Iconic Russian assault rifle. Renowned for rugged reliability in any environment.",
+    "category": "military"
+  },
+  "ak_74m": {
+    "name": "AK-74M",
+    "description": "Modernized Russian rifle chambered in 5.45\u00d739mm. Lighter and more accurate than its predecessor.",
+    "category": "military"
+  },
+  "hk416": {
+    "name": "HK416",
+    "description": "German assault rifle by Heckler & Koch. Short-stroke gas piston system favored by NATO special forces.",
+    "category": "military"
+  },
+  "hk_g36": {
+    "name": "HK G36",
+    "description": "German polymer-bodied assault rifle. Standard issue for the Bundeswehr.",
+    "category": "military"
+  },
+  "l85a2": {
+    "name": "L85A2",
+    "description": "British SA80-series bullpup assault rifle. Standard issue for UK armed forces.",
+    "category": "military"
+  },
+  "famas_f1": {
+    "name": "FAMAS F1",
+    "description": "French bullpup assault rifle. Distinctive silhouette of the Arm\u00e9e de Terre.",
+    "category": "military"
+  },
+  "qbz_95": {
+    "name": "QBZ-95",
+    "description": "Chinese bullpup assault rifle. Standard infantry weapon of the People's Liberation Army.",
+    "category": "military"
+  },
+  "insas_rifle": {
+    "name": "INSAS Assault Rifle",
+    "description": "India's domestically designed assault rifle. Produced by the Ordnance Factories Board.",
+    "category": "military"
+  },
+  "k2_rifle": {
+    "name": "K2 Assault Rifle",
+    "description": "South Korean assault rifle. Standard issue for the Republic of Korea Army.",
+    "category": "military"
+  },
+  "mpt_76": {
+    "name": "MPT-76",
+    "description": "Turkish assault rifle produced domestically by MKE. Replaces aging G3 rifles in Turkish service.",
+    "category": "military"
+  },
+  "vektor_r4": {
+    "name": "Vektor R4",
+    "description": "South African assault rifle derived from the Israeli Galil. Standard issue for SANDF troops.",
+    "category": "military"
+  },
+  "howa_type89": {
+    "name": "Howa Type 89",
+    "description": "Japanese Self-Defense Force assault rifle produced by Howa Machinery. Successor to the Type 64.",
+    "category": "military"
+  },
+  "sig_sg550": {
+    "name": "SIG SG 550",
+    "description": "Swiss precision assault rifle. Exceptionally accurate and reliable in all conditions.",
+    "category": "military"
+  },
+  "fx05_xiuhcoatl": {
+    "name": "FX-05 Xiuhcoatl",
+    "description": "Mexican bullpup assault rifle designed and produced by SEDENA. Named for the Aztec fire serpent.",
+    "category": "military"
+  },
+  "imbel_md97": {
+    "name": "IMBEL MD97",
+    "description": "Brazilian assault rifle developed from the FAL design by IMBEL. Used by Brazilian Army and Marines.",
+    "category": "military"
+  },
+  "caracal_car816": {
+    "name": "Caracal CAR 816",
+    "description": "UAE-designed modular assault rifle. Adopted by the UAE armed forces and police.",
+    "category": "military"
+  },
+  "f22_raptor": {
+    "name": "F-22 Raptor",
+    "description": "US 5th-generation stealth air superiority fighter. The most capable air-dominance aircraft ever built.",
+    "category": "military"
+  },
+  "f35_lightning": {
+    "name": "F-35 Lightning II",
+    "description": "US multirole stealth strike fighter. Three variants serve the USAF, Navy, and Marine Corps.",
+    "category": "military"
+  },
+  "f16_falcon": {
+    "name": "F-16 Fighting Falcon",
+    "description": "US lightweight multirole fighter. The most widely operated combat aircraft in the world.",
+    "category": "military"
+  },
+  "f15_eagle": {
+    "name": "F-15 Eagle",
+    "description": "US air superiority fighter with an undefeated 104-0 combat record.",
+    "category": "military"
+  },
+  "su57_felon": {
+    "name": "Su-57 Felon",
+    "description": "Russian 5th-generation stealth multirole fighter. Sukhoi's most advanced combat aircraft.",
+    "category": "military"
+  },
+  "su35_flanker": {
+    "name": "Su-35 Flanker-E",
+    "description": "Russian 4++ generation supermaneuverable air superiority fighter. Thrust-vectoring engines give extreme agility.",
+    "category": "military"
+  },
+  "mig29_fulcrum": {
+    "name": "MiG-29 Fulcrum",
+    "description": "Russian twin-engine tactical fighter. Widely exported and operated across Eastern Europe, Asia, and Africa.",
+    "category": "military"
+  },
+  "rafale": {
+    "name": "Dassault Rafale",
+    "description": "French omnirole 4.5-generation fighter. Combat-proven over Libya, Mali, Syria, and Iraq.",
+    "category": "military"
+  },
+  "eurofighter_typhoon": {
+    "name": "Eurofighter Typhoon",
+    "description": "European multirole air superiority fighter. Built jointly by UK, Germany, Italy, and Spain.",
+    "category": "military"
+  },
+  "j20_chengdu": {
+    "name": "Chengdu J-20",
+    "description": "Chinese 5th-generation stealth fighter. The PLAAF's premier air superiority and strike platform.",
+    "category": "military"
+  },
+  "j16_flanker": {
+    "name": "J-16 Strike Flanker",
+    "description": "Chinese 4th-generation multirole strike aircraft. Upgraded Flanker derivative with AESA radar.",
+    "category": "military"
+  },
+  "hal_tejas": {
+    "name": "HAL Tejas",
+    "description": "Indian light combat aircraft designed by HAL and ADA. The IAF's domestically developed 4th-gen fighter.",
+    "category": "military"
+  },
+  "kf21_boramae": {
+    "name": "KF-21 Boramae",
+    "description": "South Korean 4.5-generation multirole fighter developed by KAI. Advanced AESA radar and IRST.",
+    "category": "military"
+  },
+  "tai_tfx": {
+    "name": "TAI TF-X Kaan",
+    "description": "Turkish 5th-generation stealth multirole fighter developed by Turkish Aerospace Industries.",
+    "category": "military"
+  },
+  "ah64_apache": {
+    "name": "AH-64E Apache",
+    "description": "US twin-engine attack helicopter. The primary anti-armor helicopter of the US Army.",
+    "category": "military"
+  },
+  "uh60_blackhawk": {
+    "name": "UH-60 Black Hawk",
+    "description": "US utility tactical transport helicopter. Ubiquitous US Army and special-operations workhorse.",
+    "category": "military"
+  },
+  "ka52_alligator": {
+    "name": "Ka-52 Alligator",
+    "description": "Russian twin-engine attack helicopter with a unique coaxial rotor system and all-weather capability.",
+    "category": "military"
+  },
+  "mi24_hind": {
+    "name": "Mi-24 Hind",
+    "description": "Russian gunship and troop transport. Feared as the 'Flying Tank' for its combination of firepower and lift.",
+    "category": "military"
+  },
+  "airbus_h225m": {
+    "name": "Airbus H225M Caracal",
+    "description": "French medium military helicopter. Used for special-operations insertion and combat search-and-rescue.",
+    "category": "military"
+  },
+  "z10_thunderbolt": {
+    "name": "Z-10 Thunderbolt",
+    "description": "Chinese dedicated attack helicopter developed by AVIC. The PLAGF's primary anti-armor rotorcraft.",
+    "category": "military"
+  },
+  "t129_atak": {
+    "name": "TAI T129 ATAK",
+    "description": "Turkish attack helicopter developed jointly with Italy's Leonardo. Derived from the AW129 Mangusta.",
+    "category": "military"
+  },
+  "hal_dhruv": {
+    "name": "HAL Dhruv",
+    "description": "Indian advanced light helicopter produced by HAL. Serves all four Indian armed services.",
+    "category": "military"
+  },
+  "m1a2_abrams": {
+    "name": "M1A2 SEPv3 Abrams",
+    "description": "US main battle tank. Depleted-uranium armor, 120mm smoothbore gun, and a gas turbine engine.",
+    "category": "military"
+  },
+  "t90m_proryv": {
+    "name": "T-90M Proryv",
+    "description": "Russian modernized main battle tank. Improved Relikt ERA, Kalina fire-control system, and new turret.",
+    "category": "military"
+  },
+  "t14_armata": {
+    "name": "T-14 Armata",
+    "description": "Russian next-generation MBT with an unmanned turret and active protection system. Future of Russian armor.",
+    "category": "military"
+  },
+  "leopard_2a7": {
+    "name": "Leopard 2A7",
+    "description": "German main battle tank. Widely regarded as one of the finest in the world. Rheinmetall 120mm gun.",
+    "category": "military"
+  },
+  "amx_leclerc": {
+    "name": "AMX-56 Leclerc",
+    "description": "French main battle tank with an integrated autoloader and advanced digital battle management system.",
+    "category": "military"
+  },
+  "challenger_3": {
+    "name": "Challenger 3",
+    "description": "British main battle tank. Upgraded with a Rheinmetall 120mm smoothbore gun and new fire-control system.",
+    "category": "military"
+  },
+  "type_99a": {
+    "name": "Type 99A",
+    "description": "Chinese 3rd-generation main battle tank. The PLA's most capable armored platform with active protection.",
+    "category": "military"
+  },
+  "arjun_mk2": {
+    "name": "Arjun Mk.2",
+    "description": "Indian main battle tank developed by DRDO. Fully domestically designed with reactive armor upgrades.",
+    "category": "military"
+  },
+  "k2_black_panther": {
+    "name": "K2 Black Panther",
+    "description": "South Korean main battle tank by Hyundai Rotem. Among the world's most technologically advanced MBTs.",
+    "category": "military"
+  },
+  "altay_tank": {
+    "name": "Altay MBT",
+    "description": "Turkish main battle tank developed by Otokar and BMC. Turkey's first fully indigenous MBT program.",
+    "category": "military"
+  },
+  "type10_tank": {
+    "name": "Type 10",
+    "description": "Japanese 4th-generation MBT optimized for Japan's mountainous terrain. Light, agile, and highly networked.",
+    "category": "military"
+  },
+  "ee_t1_osorio": {
+    "name": "EE-T1 Os\u00f3rio",
+    "description": "Brazilian main battle tank designed by Engesa. Powerful export competitor with French GIAT 120mm gun.",
+    "category": "military"
+  },
+  "ford_class_carrier": {
+    "name": "Gerald R. Ford-class Carrier",
+    "description": "US nuclear-powered supercarrier displacing 100,000 tons. The most powerful warship ever built.",
+    "category": "military"
+  },
+  "queen_elizabeth_carrier": {
+    "name": "Queen Elizabeth-class Carrier",
+    "description": "British conventional carrier capable of deploying 36 F-35B Lightning II fighters.",
+    "category": "military"
+  },
+  "charles_degaulle_carrier": {
+    "name": "Charles de Gaulle-class Carrier",
+    "description": "French nuclear-powered aircraft carrier. The only nuclear-powered carrier outside the US Navy.",
+    "category": "military"
+  },
+  "fujian_carrier": {
+    "name": "Type 003 Fujian-class Carrier",
+    "description": "Chinese conventional carrier with three electromagnetic catapult tracks. The PLAN's most powerful vessel.",
+    "category": "military"
+  },
+  "ins_vikrant_carrier": {
+    "name": "INS Vikrant-class Carrier",
+    "description": "Indian domestically-designed and built aircraft carrier. India's largest-ever warship.",
+    "category": "military"
+  },
+  "virginia_class_sub": {
+    "name": "Virginia-class Submarine",
+    "description": "US nuclear-powered fast attack submarine. Highly capable hunter-killer with Block V expanded payload.",
+    "category": "military"
+  },
+  "astute_class_sub": {
+    "name": "Astute-class Submarine",
+    "description": "British nuclear-powered attack submarine. The most capable and stealthiest in Royal Navy history.",
+    "category": "military"
+  },
+  "barracuda_class_sub": {
+    "name": "Barracuda-class Submarine",
+    "description": "French nuclear-powered attack submarine. Successor to the Rubis class with reduced acoustic signature.",
+    "category": "military"
+  },
+  "yasen_class_sub": {
+    "name": "Yasen-class Submarine",
+    "description": "Russian nuclear-powered multirole attack submarine. Equipped with Kalibr cruise missiles and Onyx anti-ship missiles.",
+    "category": "military"
+  },
+  "type093_sub": {
+    "name": "Type 093 Submarine",
+    "description": "Chinese nuclear-powered attack submarine. Shang-class PLAAF hunter-killer with improved quieting.",
+    "category": "military"
+  },
+  "arihant_class_sub": {
+    "name": "Arihant-class Submarine",
+    "description": "Indian nuclear-powered ballistic missile submarine. India's strategic SSBN deterrent platform.",
+    "category": "military"
+  },
+  "arleigh_burke_destroyer": {
+    "name": "Arleigh Burke-class Destroyer",
+    "description": "US guided-missile destroyer. Backbone of the US surface fleet with Aegis combat system.",
+    "category": "military"
+  },
+  "type045_destroyer": {
+    "name": "Type 45 Destroyer",
+    "description": "British air-defence destroyer equipped with the Sea Viper missile system. The Royal Navy's premier surface combatant.",
+    "category": "military"
+  },
+  "type055_destroyer": {
+    "name": "Type 055 Destroyer",
+    "description": "Chinese cruiser-sized guided-missile destroyer. The most powerful surface combatant in Asia.",
+    "category": "military"
+  },
+  "atago_class_destroyer": {
+    "name": "Atago-class Destroyer",
+    "description": "Japanese Aegis-equipped guided-missile destroyer. The JMSDF's premiere anti-ballistic missile platform.",
+    "category": "military"
+  },
+  "kdx3_destroyer": {
+    "name": "KDX-III Destroyer",
+    "description": "South Korean Aegis destroyer with ballistic missile defense capability. Batch II variant adds SM-3 interceptors.",
+    "category": "military"
+  },
+  "visakhapatnam_destroyer": {
+    "name": "Visakhapatnam-class Destroyer",
+    "description": "Indian stealth guided-missile destroyer. Fully domestically designed and built by Mazagon Dock.",
+    "category": "military"
+  },
+  "gorshkov_frigate": {
+    "name": "Admiral Gorshkov-class Frigate",
+    "description": "Russian multirole guided-missile frigate. Equipped with hypersonic Zircon and Kalibr cruise missiles.",
+    "category": "military"
+  },
+  "milgem_frigate": {
+    "name": "MILGEM-class Frigate",
+    "description": "Turkish domestically built corvette/frigate. Exported to Pakistan and Ukraine \u2014 a key Turkish defense success story.",
+    "category": "military"
+  },
+  "al_riyadh_frigate": {
+    "name": "Al Riyadh-class Frigate",
+    "description": "Saudi La Fayette-class guided-missile frigate. Operates three vessels as key Saudi Navy surface combatants.",
+    "category": "military"
+  },
+  "baynunah_corvette": {
+    "name": "Baynunah-class Corvette",
+    "description": "UAE fast attack missile corvette. Stealthy hull design with C-802 anti-ship missiles and Exocet capability.",
+    "category": "military"
   }
 }
