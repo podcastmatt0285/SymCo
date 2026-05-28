@@ -30,6 +30,11 @@
         "terrain_type": "prairie",
         "proximity_features": ["road"],
         "size": 1
+      },
+      {
+        "terrain_type": "coastal",
+        "proximity_features": ["coastal"],
+        "size": 1
       }
     ],
     "districts": []
