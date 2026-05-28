@@ -13,37 +13,67 @@
     "land_plots": [
       {
         "terrain_type": "prairie",
-        "proximity_features": [
-          "remote"
-        ],
+        "proximity_features": ["remote"],
         "size": 1
       },
       {
         "terrain_type": "prairie",
-        "proximity_features": [
-          "riverside"
-        ],
+        "proximity_features": ["remote"],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": ["road"],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": ["road"],
+        "size": 1
+      },
+      {
+        "terrain_type": "savanna",
+        "proximity_features": ["road"],
+        "size": 1
+      },
+      {
+        "terrain_type": "savanna",
+        "proximity_features": ["road"],
+        "size": 1
+      },
+      {
+        "terrain_type": "savanna",
+        "proximity_features": ["remote"],
+        "size": 1
+      },
+      {
+        "terrain_type": "desert",
+        "proximity_features": ["road"],
         "size": 1
       },
       {
         "terrain_type": "marsh",
-        "proximity_features": [
-          "riverside"
-        ],
+        "proximity_features": ["riverside"],
         "size": 1
       },
       {
         "terrain_type": "marsh",
-        "proximity_features": [
-          "riverside"
-        ],
+        "proximity_features": ["riverside"],
         "size": 1
       },
       {
         "terrain_type": "marsh",
-        "proximity_features": [
-          "riverside"
-        ],
+        "proximity_features": ["riverside"],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": ["riverside"],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": ["riverside"],
         "size": 1
       }
     ]
@@ -52,37 +82,67 @@
     {
       "business_type": "solar_plant",
       "district_id": null,
-      "active_lines": [
-        "energy"
-      ]
+      "active_lines": ["energy"]
     },
     {
       "business_type": "solar_plant",
       "district_id": null,
-      "active_lines": [
-        "energy"
-      ]
+      "active_lines": ["energy"]
     },
     {
       "business_type": "solar_plant",
       "district_id": null,
-      "active_lines": [
-        "energy"
-      ]
+      "active_lines": ["energy"]
+    },
+    {
+      "business_type": "solar_plant",
+      "district_id": null,
+      "active_lines": ["energy"]
+    },
+    {
+      "business_type": "solar_plant",
+      "district_id": null,
+      "active_lines": ["energy"]
+    },
+    {
+      "business_type": "solar_plant",
+      "district_id": null,
+      "active_lines": ["energy"]
+    },
+    {
+      "business_type": "solar_plant",
+      "district_id": null,
+      "active_lines": ["energy"]
+    },
+    {
+      "business_type": "solar_plant",
+      "district_id": null,
+      "active_lines": ["energy"]
     },
     {
       "business_type": "water_facility",
       "district_id": null,
-      "active_lines": [
-        "water"
-      ]
+      "active_lines": ["water"]
     },
     {
       "business_type": "water_facility",
       "district_id": null,
-      "active_lines": [
-        "water"
-      ]
+      "active_lines": ["water"]
+    },
+    {
+      "business_type": "water_facility",
+      "district_id": null,
+      "active_lines": ["water"]
+    },
+    {
+      "business_type": "water_facility",
+      "district_id": null,
+      "active_lines": ["water"]
+    },
+    {
+      "business_type": "water_facility",
+      "district_id": null,
+      "active_lines": ["water"]
     }
   ],
   "buy_items": {
