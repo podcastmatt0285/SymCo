@@ -5517,6 +5517,11 @@ def admin_event_create(
         end       = _parse(ends_at)
         is_active = activate_now == "1"
         metric    = (task_metric.strip() or None) if task_metric else None
+        # index_challenge is monthly-only — enforce server-side
+        if event_type == "index_challenge" and duration_class != "monthly":
+            return RedirectResponse(
+                f"/admin/events?err={urllib.parse.quote('Index Challenge events must use monthly duration')}",
+                status_code=303)
         # Validate / normalise effect_data JSON
         ed_str = "{}"
         if effect_data and effect_data.strip():

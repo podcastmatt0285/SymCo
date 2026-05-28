@@ -162,8 +162,8 @@ def record_task_progress(player_id: int, metric: str, amount: float):
                             notif_type="tasks_events",
                             tag=f"task-complete-{ev.id}",
                         )
-                    except Exception:
-                        pass
+                    except Exception as _e:
+                        print(f"[Events] push notification failed for player {player_id}: {_e}")
                     try:
                         from push_ux import create_game_notification
                         create_game_notification(
@@ -173,8 +173,8 @@ def record_task_progress(player_id: int, metric: str, amount: float):
                             url="/events",
                             notif_type="tasks_events",
                         )
-                    except Exception:
-                        pass
+                    except Exception as _e:
+                        print(f"[Events] in-game banner failed for player {player_id}: {_e}")
                     try:
                         from stats_ux import log_transaction
                         log_transaction(
@@ -187,8 +187,8 @@ def record_task_progress(player_id: int, metric: str, amount: float):
                             item_type="trophy",
                             quantity=float(prog.trophies_awarded),
                         )
-                    except Exception:
-                        pass
+                    except Exception as _e:
+                        print(f"[Events] ledger entry failed for player {player_id}: {_e}")
 
         db.commit()
     except Exception as e:

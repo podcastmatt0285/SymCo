@@ -1264,6 +1264,8 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         "annuity_payout":       "💰",
         "annuity_surrender":    "🔓",
         "annuity_maturity":     "✅",
+        # Events / Trophies
+        "trophy_award": "🏆",
     }
     TYPE_BADGE_COLORS = {
         # Market
@@ -1306,6 +1308,8 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         "annuity_payout":       "#22c55e",
         "annuity_surrender":    "#f59e0b",
         "annuity_maturity":     "#10b981",
+        # Events / Trophies
+        "trophy_award": "#a78bfa",
     }
 
     # Maps filter-chip key → type-prefix tuples matching actual log_transaction() call sites.
@@ -1342,6 +1346,8 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         "inheritance":     ("inheritance",),
         # Annuities
         "annuities":       ("annuity_",),
+        # Events / Trophies
+        "trophies":        ("trophy_award",),
     }
     # Build a flat JSON map of type → category list for JS
     type_to_tabs: Dict[str, List[str]] = {}
@@ -4321,7 +4327,7 @@ async def wiki_banks(session_token: Optional[str] = Cookie(None)):
         "city_nav_etf":     ("🏙️ City NAV ETF",        "Tracks net asset value across all city economies"),
         "energy_etf":       ("⚡ Wadsworth Energy ETF", "Tracks the in-game energy commodity market"),
         "apple_seeds_etf":  ("🍎 Apple Seeds ETF",      "Tracks the apple seeds commodity market"),
-        "wbc50_index_fund": ("📈 WBC-50 Index Fund",    "Full-replication index fund tracking the Wadsworth Blue-Chip 50"),
+        "wbc50_index_fund": ("📈 WBC-50 Index Fund",    "Full-replication index fund tracking the Wadsworth Blue-Chip 50. The monthly Index Challenge event rewards players for crossing the Top 50 boundary — players outside must enter; players inside must exit."),
     }
     etf_html = ""
     for e in etf_entities:

@@ -351,7 +351,7 @@ def rebalance_portfolio():
                     sells_done += 1
                     print(f"[{BANK_NAME}] 📤 Exited {h.ticker}: sold {h.shares_held:,} shares, "
                           f"proceeds ${proceeds:,.2f}")
-                newly_exited_company_ids.append(h.company_id)
+                    newly_exited_company_ids.append(h.company_id)
                 h.in_index = False
 
             holdings_db.commit()
@@ -454,6 +454,10 @@ def _fire_index_challenge_events(eq_db, entered_ids: list, exited_ids: list):
             if not challenges:
                 return
             from banks.brokerage_firm import CompanyShares
+            all_cids = list(set(entered_ids) | set(exited_ids))
+            company_map = {r.id: r for r in eq_db.query(CompanyShares).filter(
+                CompanyShares.id.in_(all_cids)
+            ).all()} if all_cids else {}
             for ev in challenges:
                 try:
                     ed = _json.loads(ev.effect_data or "{}")
@@ -462,9 +466,7 @@ def _fire_index_challenge_events(eq_db, entered_ids: list, exited_ids: list):
                 members_at_start = set(ed.get("index_members_at_start", []))
 
                 for cid in entered_ids:
-                    row = eq_db.query(CompanyShares).filter(
-                        CompanyShares.id == cid
-                    ).first()
+                    row = company_map.get(cid)
                     if row and (row.founder_id or 0) > 0:
                         if row.founder_id not in members_at_start:
                             record_task_progress(
@@ -472,9 +474,7 @@ def _fire_index_challenge_events(eq_db, entered_ids: list, exited_ids: list):
                             )
 
                 for cid in exited_ids:
-                    row = eq_db.query(CompanyShares).filter(
-                        CompanyShares.id == cid
-                    ).first()
+                    row = company_map.get(cid)
                     if row and (row.founder_id or 0) > 0:
                         if row.founder_id in members_at_start:
                             record_task_progress(
