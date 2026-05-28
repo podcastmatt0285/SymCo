@@ -1,0 +1,119 @@
+{
+  "player_id": -2079,
+  "business_name": "Continental Textile House",
+  "description": "Fabric and textile liquidity provider growing cotton and producing leather, polyester, and silk from savanna and forest plots.",
+  "cash_caps": {
+    "hard_high": 12000000,
+    "soft_high": 5000000,
+    "soft_low": 1200000,
+    "hard_low": 400000
+  },
+  "seed": {
+    "starting_cash": 2500000,
+    "land_plots": [
+      {
+        "terrain_type": "prairie",
+        "proximity_features": ["road"],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": ["riverside"],
+        "size": 1
+      },
+      {
+        "terrain_type": "savanna",
+        "proximity_features": ["road"],
+        "size": 1
+      },
+      {
+        "terrain_type": "savanna",
+        "proximity_features": ["road"],
+        "size": 1
+      },
+      {
+        "terrain_type": "forest",
+        "proximity_features": ["road"],
+        "size": 1
+      }
+    ],
+    "districts": []
+  },
+  "businesses": [
+    {
+      "business_type": "cotton_fields",
+      "district_id": null,
+      "active_lines": ["cotton"]
+    },
+    {
+      "business_type": "cotton_fields",
+      "district_id": null,
+      "active_lines": ["cotton"]
+    },
+    {
+      "business_type": "textile_and_tannery",
+      "district_id": null,
+      "active_lines": ["leather", "polyester", "silk"]
+    }
+  ],
+  "buy_items": {
+    "animal_hide": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "dye": {
+      "target_inventory": 1000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "chemical_solvent": {
+      "target_inventory": 1000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "water": {
+      "target_inventory": 20000,
+      "reorder_at": 4000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 200000,
+      "reorder_at": 40000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    }
+  },
+  "sell_items": {
+    "cotton": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "leather": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "polyester": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "silk": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    }
+  }
+}

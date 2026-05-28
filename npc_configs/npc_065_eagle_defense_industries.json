@@ -1,0 +1,180 @@
+{
+  "player_id": -2065,
+  "business_name": "Eagle Defense Industries",
+  "description": "US small-arms and armored vehicle manufacturer. Produces M4 carbines, M249 SAWs, and M1A2 Abrams tanks for government contracts and allied nations.",
+  "cash_caps": {
+    "hard_high": 120000000,
+    "soft_high": 55000000,
+    "soft_low": 15000000,
+    "hard_low": 5000000
+  },
+  "seed": {
+    "starting_cash": 30000000,
+    "land_plots": [],
+    "districts": [
+      {
+        "district_type": "military",
+        "size": 6,
+        "plots_merged": 6
+      }
+    ]
+  },
+  "businesses": [
+    {
+      "business_type": "weapons_factory",
+      "district_seed_index": 0,
+      "active_lines": ["m4_carbine", "m249_saw", "machine_gun", "ammunition", "grenade", "missile"]
+    },
+    {
+      "business_type": "military_vehicle_plant",
+      "district_seed_index": 0,
+      "active_lines": ["m1a2_abrams", "humvee", "apc", "military_truck"]
+    }
+  ],
+  "buy_items": {
+    "rifle_barrel": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "rifle_receiver": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "polymer_compound": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "steel": {
+      "target_inventory": 20000,
+      "reorder_at": 4000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "tank_hull": {
+      "target_inventory": 20,
+      "reorder_at": 4,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "tank_turret": {
+      "target_inventory": 20,
+      "reorder_at": 4,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "tank_cannon": {
+      "target_inventory": 20,
+      "reorder_at": 4,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "diesel_engine": {
+      "target_inventory": 50,
+      "reorder_at": 10,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "composite_armor_panel": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "explosive_reactive_armor": {
+      "target_inventory": 200,
+      "reorder_at": 40,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "titanium_alloy": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "copper_wire": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "apc_hull": {
+      "target_inventory": 20,
+      "reorder_at": 4,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "rdx_explosive": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "grenade_body": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 1000000,
+      "reorder_at": 200000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    }
+  },
+  "sell_items": {
+    "m4_carbine": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "m249_saw": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 200,
+      "market": "regular"
+    },
+    "m1a2_abrams": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 10,
+      "market": "regular"
+    },
+    "humvee": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 50,
+      "market": "regular"
+    },
+    "machine_gun": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 100,
+      "market": "regular"
+    },
+    "ammunition": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 10000,
+      "market": "regular"
+    },
+    "grenade": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    }
+  },
+  "ipo": {
+    "ticker": "EGLD",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
+  }
+}

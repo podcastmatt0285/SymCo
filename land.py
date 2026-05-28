@@ -296,10 +296,10 @@ BUSINESS_COMPATIBILITY = {
     "event_catering_service":         {"allowed_terrain": ["district_convention_center"],    "allowed_proximity": ["urban", "road"]},
     "hospitality_supply_factory":     {"allowed_terrain": ["district_convention_center"],    "allowed_proximity": ["urban", "road"]},
     # ── Entertainment district ────────────────────────────────────────────────
-    "casino":                         {"allowed_terrain": ["district_entertainment_district"], "allowed_proximity": ["urban", "road", "coastal"]},
-    "nightclub":                      {"allowed_terrain": ["district_entertainment_district"], "allowed_proximity": ["urban", "road"]},
-    "theme_park":                     {"allowed_terrain": ["district_entertainment_district"], "allowed_proximity": ["urban", "road"]},
-    "hotel":                          {"allowed_terrain": ["district_entertainment_district"], "allowed_proximity": ["urban", "road", "coastal"]},
+    "casino":                         {"allowed_terrain": ["district_entertainment_district", "district_entertainment"], "allowed_proximity": ["urban", "road", "coastal"]},
+    "nightclub":                      {"allowed_terrain": ["district_entertainment_district", "district_entertainment"], "allowed_proximity": ["urban", "road"]},
+    "theme_park":                     {"allowed_terrain": ["district_entertainment_district", "district_entertainment"], "allowed_proximity": ["urban", "road"]},
+    "hotel":                          {"allowed_terrain": ["district_entertainment_district", "district_entertainment"], "allowed_proximity": ["urban", "road", "coastal"]},
     # ── Mega mall district ────────────────────────────────────────────────────
     "wholesale_warehouse":            {"allowed_terrain": ["district_mega_mall"],            "allowed_proximity": ["urban", "road"]},
     "furniture_megastore":            {"allowed_terrain": ["district_mega_mall"],            "allowed_proximity": ["urban", "road"]},
@@ -321,12 +321,12 @@ BUSINESS_COMPATIBILITY = {
     "container_terminal":             {"allowed_terrain": ["district_seaport"],              "allowed_proximity": ["coastal", "road"]},
     "port_fuel_depot":                {"allowed_terrain": ["district_seaport"],              "allowed_proximity": ["coastal", "road"]},
     "cold_storage_warehouse":         {"allowed_terrain": ["district_seaport"],              "allowed_proximity": ["coastal", "road"]},
-    "seaport_operations_hub":         {"allowed_terrain": ["district_seaport"],              "allowed_proximity": ["coastal", "road"]},
+    "seaport_operations_hub":         {"allowed_terrain": ["district_seaport", "district_shipyard"], "allowed_proximity": ["coastal", "road"]},
     # ── Tech park district ────────────────────────────────────────────────────
     "software_company":               {"allowed_terrain": ["district_tech_park"],            "allowed_proximity": ["urban", "road", "remote"]},
     "cybersecurity_firm":             {"allowed_terrain": ["district_tech_park"],            "allowed_proximity": ["urban", "road", "remote"]},
     "data_center":                    {"allowed_terrain": ["district_tech_park"],            "allowed_proximity": ["urban", "road", "remote"]},
-    "tech_startup_hub":               {"allowed_terrain": ["district_tech_park"],            "allowed_proximity": ["urban", "road"]},
+    "tech_startup_hub":               {"allowed_terrain": ["district_tech_park", "district_tech"], "allowed_proximity": ["urban", "road"]},
     # ── Gem & mineral system ──────────────────────────────────────────────────
     "gem_mine":                       {"allowed_terrain": ["mountain", "desert", "tundra", "jungle", "hills"],          "allowed_proximity": ["volcanic", "caves", "deposits", "remote"]},
     "alluvial_mine":                  {"allowed_terrain": ["marsh", "hills", "forest"],                                  "allowed_proximity": ["riverside", "lakeside"]},
@@ -424,7 +424,7 @@ BUSINESS_COMPATIBILITY = {
     "weapons_factory":                {"allowed_terrain": ["district_military", "district_industrial"],  "allowed_proximity": ["remote", "road"]},
     # ── Shipyard district ────────────────────────────────────────────────────
     "marine_parts_factory":           {"allowed_terrain": ["district_shipyard", "district_coastal"],     "allowed_proximity": ["coastal", "road"]},
-    "naval_shipyard":                 {"allowed_terrain": ["district_shipyard"],                         "allowed_proximity": ["coastal", "road"]},
+    "naval_shipyard":                 {"allowed_terrain": ["district_shipyard", "district_military"],           "allowed_proximity": ["coastal", "road"]},
     "shipyard":                       {"allowed_terrain": ["district_shipyard"],                         "allowed_proximity": ["coastal", "road"]},
     "submarine_cable_terminal":       {"allowed_terrain": ["district_seaport", "district_tech_park"],    "allowed_proximity": ["coastal", "road"]},
     # ── Entertainment district ────────────────────────────────────────────────

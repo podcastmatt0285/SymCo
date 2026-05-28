@@ -1,0 +1,124 @@
+{
+  "player_id": -2072,
+  "business_name": "Bloom & Petal Floriculture",
+  "description": "Commercial flower farm growing roses, tulips, lilies, chrysanthemums, carnations, lavender, and sunflowers across prairie and savanna plots.",
+  "cash_caps": {
+    "hard_high": 10000000,
+    "soft_high": 4000000,
+    "soft_low": 1000000,
+    "hard_low": 400000
+  },
+  "seed": {
+    "starting_cash": 2000000,
+    "land_plots": [
+      {
+        "terrain_type": "prairie",
+        "proximity_features": ["riverside"],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": ["road"],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": ["road"],
+        "size": 1
+      },
+      {
+        "terrain_type": "savanna",
+        "proximity_features": ["riverside"],
+        "size": 1
+      }
+    ],
+    "districts": []
+  },
+  "businesses": [
+    {
+      "business_type": "flower_farm",
+      "district_id": null,
+      "active_lines": ["rose", "lily", "tulip", "carnation", "sunflower", "chrysanthemum", "lavender"]
+    },
+    {
+      "business_type": "flower_farm",
+      "district_id": null,
+      "active_lines": ["rose", "tulip", "lily", "carnation", "lavender", "sunflower"]
+    }
+  ],
+  "buy_items": {
+    "water": {
+      "target_inventory": 50000,
+      "reorder_at": 10000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "fertilizer": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "compost": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "pollen": {
+      "target_inventory": 100000,
+      "reorder_at": 20000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 200000,
+      "reorder_at": 40000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    }
+  },
+  "sell_items": {
+    "rose": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "tulip": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "lily": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "chrysanthemum": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "carnation": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "lavender": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "sunflower": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    }
+  }
+}

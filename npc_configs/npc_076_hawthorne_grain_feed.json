@@ -1,0 +1,113 @@
+{
+  "player_id": -2076,
+  "business_name": "Hawthorne Grain & Feed",
+  "description": "Large-scale grain operation growing wheat, barley, and corn across prairie and savanna plots to provide sustained liquidity for agricultural commodity markets.",
+  "cash_caps": {
+    "hard_high": 15000000,
+    "soft_high": 6000000,
+    "soft_low": 1500000,
+    "hard_low": 500000
+  },
+  "seed": {
+    "starting_cash": 3000000,
+    "land_plots": [
+      {
+        "terrain_type": "prairie",
+        "proximity_features": ["riverside"],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": ["road"],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": ["road"],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": ["road"],
+        "size": 1
+      },
+      {
+        "terrain_type": "savanna",
+        "proximity_features": ["road"],
+        "size": 1
+      },
+      {
+        "terrain_type": "savanna",
+        "proximity_features": ["road"],
+        "size": 1
+      }
+    ],
+    "districts": []
+  },
+  "businesses": [
+    {
+      "business_type": "grain_farm",
+      "district_id": null,
+      "active_lines": ["wheat", "barley", "corn"]
+    },
+    {
+      "business_type": "grain_farm",
+      "district_id": null,
+      "active_lines": ["wheat", "corn", "barley"]
+    },
+    {
+      "business_type": "grain_farm",
+      "district_id": null,
+      "active_lines": ["wheat", "barley"]
+    }
+  ],
+  "buy_items": {
+    "fertilizer": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "water": {
+      "target_inventory": 30000,
+      "reorder_at": 6000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "compost": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 200000,
+      "reorder_at": 40000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    }
+  },
+  "sell_items": {
+    "wheat": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "corn": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "barley": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    }
+  }
+}

@@ -1,0 +1,119 @@
+{
+  "player_id": -2070,
+  "business_name": "Nexus Venture Hub",
+  "description": "Technology park services company providing consulting, licensing, accelerator seats, and ETF shares. Operates in a tech district offering coworking memberships and venture capital advisory.",
+  "cash_caps": {
+    "hard_high": 40000000,
+    "soft_high": 18000000,
+    "soft_low": 5000000,
+    "hard_low": 1500000
+  },
+  "seed": {
+    "starting_cash": 10000000,
+    "land_plots": [],
+    "districts": [
+      {
+        "district_type": "tech",
+        "size": 3,
+        "plots_merged": 3
+      }
+    ]
+  },
+  "businesses": [
+    {
+      "business_type": "tech_startup_hub",
+      "district_seed_index": 0,
+      "active_lines": ["tech_consulting_day", "technology_license", "startup_accelerator_seat", "venture_capital_advisory", "coworking_membership", "apple_seeds_etf_shares", "city_nav_etf_shares", "energy_etf_shares", "land_bank_shares"]
+    }
+  ],
+  "buy_items": {
+    "circuit_board": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "processor": {
+      "target_inventory": 300,
+      "reorder_at": 60,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "server": {
+      "target_inventory": 50,
+      "reorder_at": 10,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "desktop_computer": {
+      "target_inventory": 100,
+      "reorder_at": 20,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 500000,
+      "reorder_at": 100000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    }
+  },
+  "sell_items": {
+    "tech_consulting_day": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 200,
+      "market": "district"
+    },
+    "technology_license": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 100,
+      "market": "district"
+    },
+    "startup_accelerator_seat": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 50,
+      "market": "district"
+    },
+    "venture_capital_advisory": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 50,
+      "market": "district"
+    },
+    "coworking_membership": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 200,
+      "market": "district"
+    },
+    "apple_seeds_etf_shares": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "city_nav_etf_shares": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "energy_etf_shares": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "land_bank_shares": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    }
+  },
+  "ipo": {
+    "ticker": "NXVH",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
+  }
+}

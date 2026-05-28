@@ -1,0 +1,131 @@
+{
+  "player_id": -2069,
+  "business_name": "Grand Meridian Hospitality",
+  "description": "Luxury hotel and casino complex offering penthouse suites, VIP gaming packages, fine dining, and premium entertainment experiences.",
+  "cash_caps": {
+    "hard_high": 60000000,
+    "soft_high": 25000000,
+    "soft_low": 8000000,
+    "hard_low": 2000000
+  },
+  "seed": {
+    "starting_cash": 15000000,
+    "land_plots": [],
+    "districts": [
+      {
+        "district_type": "entertainment",
+        "size": 5,
+        "plots_merged": 5
+      }
+    ]
+  },
+  "businesses": [
+    {
+      "business_type": "hotel",
+      "district_seed_index": 0,
+      "active_lines": ["penthouse_night", "suite_night", "standard_room_night", "concierge_package", "vip_lounge_pass"]
+    },
+    {
+      "business_type": "casino",
+      "district_seed_index": 0,
+      "active_lines": ["vip_gaming_package", "casino_dining", "premium_show_ticket", "casino_floor_credit"]
+    }
+  ],
+  "buy_items": {
+    "champagne": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "wine": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "linen": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "laundry_detergent": {
+      "target_inventory": 1000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "cleaning_supplies": {
+      "target_inventory": 1000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "casino_chips": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 500000,
+      "reorder_at": 100000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    }
+  },
+  "sell_items": {
+    "penthouse_night": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 50,
+      "market": "district"
+    },
+    "suite_night": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 200,
+      "market": "district"
+    },
+    "standard_room_night": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 500,
+      "market": "district"
+    },
+    "concierge_package": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 100,
+      "market": "district"
+    },
+    "vip_lounge_pass": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 200,
+      "market": "district"
+    },
+    "vip_gaming_package": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 100,
+      "market": "district"
+    },
+    "casino_dining": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 300,
+      "market": "district"
+    },
+    "premium_show_ticket": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 200,
+      "market": "district"
+    }
+  },
+  "ipo": {
+    "ticker": "GRMH",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
+  }
+}

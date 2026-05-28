@@ -22,7 +22,8 @@
   "businesses": [
     {
       "business_type": "weapons_factory",
-      "district_seed_index": 0
+      "district_seed_index": 0,
+      "active_lines": ["m4_carbine", "m249_saw", "ak_47", "machine_gun", "ammunition", "grenade", "missile", "rifle_barrel", "rifle_receiver", "grenade_body", "missile_warhead", "ammunition_crate", "det_cord", "sniper_kit"]
     },
     {
       "business_type": "tactical_gear_factory",
@@ -30,7 +31,8 @@
     },
     {
       "business_type": "military_vehicle_plant",
-      "district_seed_index": 0
+      "district_seed_index": 0,
+      "active_lines": ["m1a2_abrams", "k2_black_panther", "humvee", "apc", "military_truck", "tank_hull", "tank_turret", "tank_cannon", "apc_hull", "infantry_fighting_vehicle"]
     },
     {
       "business_type": "military_support_facility",
@@ -364,9 +366,24 @@
     }
   },
   "sell_items": {
-    "rifle": {
+    "m4_carbine": {
       "min_inventory_to_keep": 0,
       "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "ak_47": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "m249_saw": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 200,
+      "market": "regular"
+    },
+    "machine_gun": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 100,
       "market": "regular"
     },
     "ammunition": {
@@ -424,7 +441,12 @@
       "max_order_quantity": 15,
       "market": "regular"
     },
-    "tank": {
+    "m1a2_abrams": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 10,
+      "market": "regular"
+    },
+    "k2_black_panther": {
       "min_inventory_to_keep": 0,
       "max_order_quantity": 10,
       "market": "regular"

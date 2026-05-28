@@ -1,0 +1,133 @@
+{
+  "player_id": -2075,
+  "business_name": "Stoneridge Mining & Minerals",
+  "description": "Raw mineral extraction and processing operation producing polymer compounds, rough diamonds, rubies, garnets, emeralds, and various industrial minerals from mountain and hillside mines.",
+  "cash_caps": {
+    "hard_high": 20000000,
+    "soft_high": 9000000,
+    "soft_low": 2500000,
+    "hard_low": 800000
+  },
+  "seed": {
+    "starting_cash": 5000000,
+    "land_plots": [
+      {
+        "terrain_type": "mountain",
+        "proximity_features": ["road"],
+        "size": 1
+      },
+      {
+        "terrain_type": "mountain",
+        "proximity_features": ["road"],
+        "size": 1
+      },
+      {
+        "terrain_type": "hills",
+        "proximity_features": ["road"],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": ["road"],
+        "size": 1
+      }
+    ],
+    "districts": []
+  },
+  "businesses": [
+    {
+      "business_type": "mineral_processing_plant",
+      "district_id": null,
+      "active_lines": ["rough_diamond", "rough_ruby", "rough_sapphire", "rough_emerald", "rough_aquamarine", "rough_garnet", "rough_tourmaline", "rough_topaz", "polishing_compound"]
+    },
+    {
+      "business_type": "oil_refinery",
+      "district_id": null,
+      "active_lines": ["polymer_compound", "diesel"]
+    }
+  ],
+  "buy_items": {
+    "crude_oil": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "drill_bit": {
+      "target_inventory": 200,
+      "reorder_at": 40,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "heavy_machinery": {
+      "target_inventory": 50,
+      "reorder_at": 10,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 300000,
+      "reorder_at": 60000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    }
+  },
+  "sell_items": {
+    "polymer_compound": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "rough_diamond": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 200,
+      "market": "regular"
+    },
+    "rough_ruby": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 200,
+      "market": "regular"
+    },
+    "rough_sapphire": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 200,
+      "market": "regular"
+    },
+    "rough_emerald": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 200,
+      "market": "regular"
+    },
+    "rough_garnet": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 300,
+      "market": "regular"
+    },
+    "rough_aquamarine": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 200,
+      "market": "regular"
+    },
+    "rough_topaz": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 300,
+      "market": "regular"
+    },
+    "rough_tourmaline": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 200,
+      "market": "regular"
+    },
+    "polishing_compound": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 500,
+      "market": "regular"
+    }
+  }
+}

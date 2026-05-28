@@ -1,0 +1,160 @@
+{
+  "player_id": -2074,
+  "business_name": "Gemstone & Lapidary Works",
+  "description": "Precision gem cutting workshop producing cut diamonds, rubies, emeralds, sapphires, aquamarines, amethysts, topazes, opals, and garnets for the jewelry market.",
+  "cash_caps": {
+    "hard_high": 30000000,
+    "soft_high": 12000000,
+    "soft_low": 3000000,
+    "hard_low": 1000000
+  },
+  "seed": {
+    "starting_cash": 6000000,
+    "land_plots": [
+      {
+        "terrain_type": "urban",
+        "proximity_features": ["urban"],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": ["road"],
+        "size": 1
+      }
+    ],
+    "districts": []
+  },
+  "businesses": [
+    {
+      "business_type": "lapidary",
+      "district_id": null,
+      "active_lines": ["cut_diamond", "cut_ruby", "cut_emerald", "cut_sapphire", "cut_aquamarine", "cut_amethyst", "cut_topaz", "cut_opal", "cut_garnet"]
+    }
+  ],
+  "buy_items": {
+    "rough_diamond": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "rough_ruby": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "rough_emerald": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "rough_sapphire": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "rough_aquamarine": {
+      "target_inventory": 300,
+      "reorder_at": 60,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "rough_amethyst": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "rough_topaz": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "rough_garnet": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "rough_tourmaline": {
+      "target_inventory": 300,
+      "reorder_at": 60,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "polishing_compound": {
+      "target_inventory": 1000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 200000,
+      "reorder_at": 40000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 1000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    }
+  },
+  "sell_items": {
+    "cut_diamond": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 100,
+      "market": "regular"
+    },
+    "cut_ruby": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 100,
+      "market": "regular"
+    },
+    "cut_emerald": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 100,
+      "market": "regular"
+    },
+    "cut_sapphire": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 100,
+      "market": "regular"
+    },
+    "cut_aquamarine": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 100,
+      "market": "regular"
+    },
+    "cut_amethyst": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 200,
+      "market": "regular"
+    },
+    "cut_topaz": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 200,
+      "market": "regular"
+    },
+    "cut_opal": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 100,
+      "market": "regular"
+    },
+    "cut_garnet": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 200,
+      "market": "regular"
+    }
+  },
+  "ipo": {
+    "ticker": "GMLW",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
+  }
+}

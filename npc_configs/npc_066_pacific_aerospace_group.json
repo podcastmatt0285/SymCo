@@ -1,0 +1,152 @@
+{
+  "player_id": -2066,
+  "business_name": "Pacific Aerospace Group",
+  "description": "Western military aviation manufacturer producing F-22 Raptors, F-35 Lightnings, F-16 Falcons, F-15 Eagles, AH-64 Apaches, and UH-60 Blackhawks for allied air forces.",
+  "cash_caps": {
+    "hard_high": 150000000,
+    "soft_high": 70000000,
+    "soft_low": 20000000,
+    "hard_low": 6000000
+  },
+  "seed": {
+    "starting_cash": 40000000,
+    "land_plots": [],
+    "districts": [
+      {
+        "district_type": "aerospace",
+        "size": 4,
+        "plots_merged": 4
+      }
+    ]
+  },
+  "businesses": [
+    {
+      "business_type": "military_aircraft_plant",
+      "district_seed_index": 0,
+      "active_lines": ["f22_raptor", "f35_lightning", "f16_falcon", "f15_eagle", "ah64_apache", "uh60_blackhawk", "jet_airframe", "helicopter_rotor"]
+    }
+  ],
+  "buy_items": {
+    "jet_airframe": {
+      "target_inventory": 20,
+      "reorder_at": 4,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "turbojet_engine": {
+      "target_inventory": 30,
+      "reorder_at": 6,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "turbofan_engine": {
+      "target_inventory": 30,
+      "reorder_at": 6,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "avionics_suite": {
+      "target_inventory": 20,
+      "reorder_at": 4,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "fire_control_system": {
+      "target_inventory": 20,
+      "reorder_at": 4,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "ejection_seat": {
+      "target_inventory": 30,
+      "reorder_at": 6,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "radar_system": {
+      "target_inventory": 20,
+      "reorder_at": 4,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "missile": {
+      "target_inventory": 200,
+      "reorder_at": 40,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "helicopter_rotor": {
+      "target_inventory": 30,
+      "reorder_at": 6,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "titanium_alloy": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "carbon_fiber": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "duralumin": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 1000000,
+      "reorder_at": 200000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    }
+  },
+  "sell_items": {
+    "f22_raptor": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5,
+      "market": "regular"
+    },
+    "f35_lightning": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5,
+      "market": "regular"
+    },
+    "f16_falcon": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 10,
+      "market": "regular"
+    },
+    "f15_eagle": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 10,
+      "market": "regular"
+    },
+    "ah64_apache": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 10,
+      "market": "regular"
+    },
+    "uh60_blackhawk": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 15,
+      "market": "regular"
+    }
+  },
+  "ipo": {
+    "ticker": "PACG",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
+  }
+}

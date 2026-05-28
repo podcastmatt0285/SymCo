@@ -22,7 +22,8 @@
   "businesses": [
     {
       "business_type": "naval_shipyard",
-      "district_seed_index": 0
+      "district_seed_index": 0,
+      "active_lines": ["arleigh_burke_destroyer", "type055_destroyer", "virginia_class_sub", "yasen_class_sub", "gorshkov_frigate"]
     },
     {
       "business_type": "military_support_facility",
@@ -170,7 +171,12 @@
     }
   },
   "sell_items": {
-    "submarine": {
+    "virginia_class_sub": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 3,
+      "market": "regular"
+    },
+    "yasen_class_sub": {
       "min_inventory_to_keep": 0,
       "max_order_quantity": 3,
       "market": "regular"
@@ -195,7 +201,17 @@
       "max_order_quantity": 200,
       "market": "regular"
     },
-    "naval_destroyer": {
+    "arleigh_burke_destroyer": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 3,
+      "market": "regular"
+    },
+    "type055_destroyer": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 3,
+      "market": "regular"
+    },
+    "gorshkov_frigate": {
       "min_inventory_to_keep": 0,
       "max_order_quantity": 3,
       "market": "regular"
