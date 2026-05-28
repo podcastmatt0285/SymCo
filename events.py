@@ -151,9 +151,9 @@ def record_task_progress(player_id: int, metric: str, amount: float):
 
                 # Notify the player of completion
                 if prog.trophies_awarded > 0:
+                    _word = "trophy" if prog.trophies_awarded == 1 else "trophies"
                     try:
                         from push_ux import send_push_notification
-                        _word = "trophy" if prog.trophies_awarded == 1 else "trophies"
                         send_push_notification(
                             player_id,
                             f"🏆 Task Complete: {ev.title}",
@@ -161,6 +161,31 @@ def record_task_progress(player_id: int, metric: str, amount: float):
                             url="/events",
                             notif_type="tasks_events",
                             tag=f"task-complete-{ev.id}",
+                        )
+                    except Exception:
+                        pass
+                    try:
+                        from push_ux import create_game_notification
+                        create_game_notification(
+                            player_id,
+                            f"🏆 {ev.title}",
+                            f"You earned {prog.trophies_awarded} {_word}!",
+                            url="/events",
+                            notif_type="tasks_events",
+                        )
+                    except Exception:
+                        pass
+                    try:
+                        from stats_ux import log_transaction
+                        log_transaction(
+                            player_id,
+                            transaction_type="trophy_award",
+                            category="tasks",
+                            amount=0.0,
+                            description=f"Task completed: {ev.title}",
+                            reference_id=f"event-{ev.id}",
+                            item_type="trophy",
+                            quantity=float(prog.trophies_awarded),
                         )
                     except Exception:
                         pass
@@ -615,6 +640,40 @@ def cancel_event_timers(event_id: int):
             t.cancel()
 
 
+def _snapshot_index_challenge_members(db, ev: "GameEvent"):
+    """Populate effect_data with the set of player_ids currently in the WBC-50 index.
+
+    Called when an index_challenge event goes live so we know who starts inside
+    vs outside the index, determining each player's personal challenge direction.
+    """
+    import json as _json
+    try:
+        from banks.wbc50_index_fund import get_wbc50_constituents
+        from banks.brokerage_firm import CompanyShares, get_db as firm_db
+        eq_db = firm_db()
+        try:
+            constituents = get_wbc50_constituents()
+            cids = [c.id for c in constituents]
+            if not cids:
+                return
+            rows = eq_db.query(CompanyShares).filter(
+                CompanyShares.id.in_(cids)
+            ).all()
+            member_pids = [r.founder_id for r in rows if (r.founder_id or 0) > 0]
+        finally:
+            eq_db.close()
+        existing = {}
+        try:
+            existing = _json.loads(ev.effect_data or "{}")
+        except Exception:
+            pass
+        existing["index_members_at_start"] = member_pids
+        ev.effect_data = _json.dumps(existing)
+        print(f"[Events] index_challenge snapshot: {len(member_pids)} players in WBC-50")
+    except Exception as e:
+        print(f"[Events] _snapshot_index_challenge_members error: {e}")
+
+
 def _on_event_live(event_id: int):
     """Timer callback: fires when a scheduled event's starts_at arrives."""
     with _timers_lock:
@@ -627,6 +686,9 @@ def _on_event_live(event_id: int):
         if ev and ev.is_active:
             title = f"🔴 {ev.title} is LIVE!"
             body  = ev.description or "The event is now active — join in!"
+            if ev.event_type == "index_challenge":
+                _snapshot_index_challenge_members(db, ev)
+                db.commit()
     except Exception as e:
         print(f"[Events] _on_event_live DB error: {e}")
     finally:

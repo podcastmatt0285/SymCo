@@ -337,6 +337,8 @@ def rebalance_portfolio():
                 IndexFundHolding.in_index == True,
                 IndexFundHolding.shares_held > 0,
             ).all()
+            pre_rebalance_member_ids  = {h.company_id for h in stale if h.in_index}
+            newly_exited_company_ids  = []
             for h in stale:
                 if h.company_id in constituent_ids:
                     continue
@@ -349,6 +351,7 @@ def rebalance_portfolio():
                     sells_done += 1
                     print(f"[{BANK_NAME}] 📤 Exited {h.ticker}: sold {h.shares_held:,} shares, "
                           f"proceeds ${proceeds:,.2f}")
+                newly_exited_company_ids.append(h.company_id)
                 h.in_index = False
 
             holdings_db.commit()
@@ -357,10 +360,14 @@ def rebalance_portfolio():
             # ── Step 2: check drift for each constituent ───────────────────
             sells_list = []
             buys_list  = []
+            newly_entered_company_ids = []
 
             for company in constituents:
+                was_member = company.id in pre_rebalance_member_ids
                 h = _get_or_create_holding(holdings_db, company.id, company.ticker_symbol)
                 holdings_db.flush()
+                if not was_member:
+                    newly_entered_company_ids.append(company.id)
 
                 current_pct = (h.shares_held / company.shares_outstanding
                                if company.shares_outstanding else 0.0)
@@ -411,11 +418,72 @@ def rebalance_portfolio():
                 print(f"[{BANK_NAME}] ⚖️  Rebalance complete — "
                       f"bought {buys_needed} positions (${total_bought:,.2f}), "
                       f"sold {sells_done} positions (${total_sold:,.2f})")
+
+            if newly_entered_company_ids or newly_exited_company_ids:
+                _fire_index_challenge_events(
+                    eq_db, newly_entered_company_ids, newly_exited_company_ids
+                )
         finally:
             eq_db.close()
             holdings_db.close()
     finally:
         bank_db.close()
+
+
+def _fire_index_challenge_events(eq_db, entered_ids: list, exited_ids: list):
+    """Award index_challenge task progress to qualifying players after a rebalance.
+
+    Players who were OUTSIDE the index at event start and just ENTERED are rewarded.
+    Players who were INSIDE the index at event start and just EXITED are rewarded.
+    """
+    if not entered_ids and not exited_ids:
+        return
+    import json as _json
+    from datetime import datetime
+    try:
+        from events import record_task_progress, SessionLocal as events_db, GameEvent
+        ev_db = events_db()
+        try:
+            now = datetime.utcnow()
+            challenges = ev_db.query(GameEvent).filter(
+                GameEvent.is_active == True,
+                GameEvent.event_type == "index_challenge",
+                GameEvent.starts_at <= now,
+                (GameEvent.ends_at == None) | (GameEvent.ends_at >= now),
+            ).all()
+            if not challenges:
+                return
+            from banks.brokerage_firm import CompanyShares
+            for ev in challenges:
+                try:
+                    ed = _json.loads(ev.effect_data or "{}")
+                except Exception:
+                    ed = {}
+                members_at_start = set(ed.get("index_members_at_start", []))
+
+                for cid in entered_ids:
+                    row = eq_db.query(CompanyShares).filter(
+                        CompanyShares.id == cid
+                    ).first()
+                    if row and (row.founder_id or 0) > 0:
+                        if row.founder_id not in members_at_start:
+                            record_task_progress(
+                                row.founder_id, "wbc50_index_challenge", 1.0
+                            )
+
+                for cid in exited_ids:
+                    row = eq_db.query(CompanyShares).filter(
+                        CompanyShares.id == cid
+                    ).first()
+                    if row and (row.founder_id or 0) > 0:
+                        if row.founder_id in members_at_start:
+                            record_task_progress(
+                                row.founder_id, "wbc50_index_challenge", 1.0
+                            )
+        finally:
+            ev_db.close()
+    except Exception as e:
+        print(f"[{BANK_NAME}] _fire_index_challenge_events error: {e}")
 
 
 # ==========================

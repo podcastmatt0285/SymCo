@@ -5000,9 +5000,19 @@ def admin_events(session_token: Optional[str] = Cookie(None),
         _cs_pool_txt = (f" · pool{_nbsp}{_ed['wsc_pool']:,}{_nbsp}WSC" if isinstance(_ed.get("wsc_pool"), (int, float)) else "")
         _cs_badge = (f'<span style="background:#fbbf2422;color:#fbbf24;border:1px solid #fbbf2455;border-radius:3px;padding:1px 6px;font-size:0.65rem;font-weight:700;">\U0001f4b8 CRYPTO SCAM{_cs_pool_txt}</span>' if _is_cs else "")
         _meta_parts = []
-        if ev.event_type == "task" and ev.task_metric:
+        if ev.event_type in ("task", "index_challenge") and ev.task_metric:
             tgt = f" / target {ev.task_target:,.0f}" if ev.task_target else ""
             _meta_parts.append(f'<span style="color:#a78bfa;">metric: {ev.task_metric}{tgt}</span>')
+        if ev.event_type == "index_challenge":
+            _snap = _ed.get("index_members_at_start")
+            if _snap is not None:
+                _meta_parts.append(
+                    f'<span style="color:#38bdf8;">📸 snapshot: {len(_snap)} players in WBC-50 at start</span>'
+                )
+            else:
+                _meta_parts.append(
+                    '<span style="color:#f87171;">⚠ no snapshot yet — fires when event goes live</span>'
+                )
         if _ed and not _is_cs:
             _ed_display = _ej.dumps(_ed, separators=(",", ":"))
             _meta_parts.append(
@@ -5108,6 +5118,7 @@ def admin_events(session_token: Optional[str] = Cookie(None),
             <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">Category</div>
             <select name="event_type" style="{_sel}" onchange="evTypeChange(this)">
               <option value="task" selected>Task (tracks player progress)</option>
+              <option value="index_challenge">Index Challenge (enter/exit Top 50)</option>
               <option value="market">Market (price effect)</option>
               <option value="production">Production (output effect)</option>
               <option value="gov">Government / policy</option>
@@ -5138,6 +5149,7 @@ def admin_events(session_token: Optional[str] = Cookie(None),
               <option value="meme_buy_usd">Spend $ buying meme tokens</option>
               <option value="executive_action">Fire or hire an executive</option>
               <option value="market_sales_tax_usd">Generate market sales tax (USD)</option>
+              <option value="wbc50_index_challenge">WBC-50 Index Challenge (enter/exit)</option>
               <option value="beta_group_verified">Join beta Google Group</option>
               <option value="twa_first_login">First app login (Pocket Empire)</option>
               <option value="daily_twa_login">Daily app login (Active Duty)</option>
@@ -5176,11 +5188,18 @@ def admin_events(session_token: Optional[str] = Cookie(None),
         <script>
         function evTypeChange(sel) {{
           var ef = document.querySelector('textarea[name="effect_data"]');
-          if (!ef) return;
+          var dur = document.querySelector('select[name="duration_class"]');
+          var metric = document.querySelector('select[name="task_metric"]');
           if (sel.value === 'crypto_scam') {{
-            if (!ef.value || ef.value.trim() === '' || ef.value.trim() === '{{"price_factor": 1.0}}') {{
+            if (ef && (!ef.value || ef.value.trim() === '' || ef.value.trim() === '{{"price_factor": 1.0}}')) {{
               ef.value = '{{"type":"crypto_scam","wsc_pool":10000}}';
             }}
+          }} else if (sel.value === 'index_challenge') {{
+            if (dur) {{ dur.value = 'monthly'; }}
+            if (metric) {{ metric.value = 'wbc50_index_challenge'; }}
+            if (ef) {{ ef.value = '{{}}'; }}
+            var tgt = document.querySelector('input[name="task_target"]');
+            if (tgt && !tgt.value) {{ tgt.value = '1'; }}
           }}
         }}
         </script>

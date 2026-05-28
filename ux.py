@@ -15516,7 +15516,7 @@ def events_page(request: Request,
     _finished = [e for e in _ev.get("finished", []) if e.get("title") not in _BETA_TITLES]
 
     # Fetch player task progress for all task-type events in one query
-    _task_event_ids = [e["id"] for e in _active + _upcoming + _finished if e.get("event_type") == "task"]
+    _task_event_ids = [e["id"] for e in _active + _upcoming + _finished if e.get("event_type") in ("task", "index_challenge")]
     try:
         _prog_map = get_player_task_progress_map(player.id, _task_event_ids)
     except Exception:
@@ -15527,6 +15527,7 @@ def events_page(request: Request,
         "bank":         "#fbbf24",
         "market":       "#34d399",
         "task":         "#a78bfa",
+        "index_challenge": "#38bdf8",
         "city":         "#38bdf8",
         "production":   "#fb923c",
         "crypto_scam":  "#fbbf24",
@@ -15580,7 +15581,7 @@ def events_page(request: Request,
         # meme_buy_usd shows a quick-buy panel instead (see below)
         progress_html = ""
         _metric = ev.get("task_metric", "") or ""
-        if etype == "task" and _metric != "meme_buy_usd":
+        if etype in ("task", "index_challenge") and _metric != "meme_buy_usd":
             ev_prog = _prog_map.get(ev.get("id"), {})
             done    = ev_prog.get("completed", False)
             target  = ev.get("task_target") or 0
@@ -15908,9 +15909,32 @@ def events_page(request: Request,
             }})();
             </script>"""
 
+        # Personalised challenge direction for index_challenge events
+        index_challenge_html = ""
+        if etype == "index_challenge":
+            try:
+                import json as _jj
+                _ic_effect = ev.get("effect_data") or {}
+                if isinstance(_ic_effect, str):
+                    _ic_effect = _jj.loads(_ic_effect)
+                _members_at_start = _ic_effect.get("index_members_at_start", [])
+                if _members_at_start:
+                    if player.id in _members_at_start:
+                        _cdir = "🎯 Your challenge: <b>Exit the Top 50</b>"
+                        _ccol = "#f87171"
+                    else:
+                        _cdir = "🎯 Your challenge: <b>Enter the Top 50</b>"
+                        _ccol = "#4ade80"
+                    index_challenge_html = (
+                        f'<div style="margin-top:8px;font-size:0.82rem;color:{_ccol};">'
+                        f'{_cdir}</div>'
+                    )
+            except Exception:
+                pass
+
         # Effect banner for non-task, non-crypto_scam events with effect_data
         effect_html = ""
-        if etype != "task" and not (_effect.get("type") == "crypto_scam") and _effect:
+        if etype not in ("task", "index_challenge") and not (_effect.get("type") == "crypto_scam") and _effect:
             import html as _html
             _eff_rows = []
             pf = _effect.get("price_factor")
@@ -15958,6 +15982,7 @@ def events_page(request: Request,
                     </div>
                     <div style="font-size:0.95rem;font-weight:700;color:#e2e8f0;margin-bottom:4px;">{title} {trophy_html}</div>
                     <div style="font-size:0.80rem;color:#64748b;line-height:1.5;">{desc}</div>
+                    {index_challenge_html}
                     {progress_html}
                     {meme_panel}
                     {effect_html}
