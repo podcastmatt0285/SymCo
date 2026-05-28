@@ -27979,5 +27979,143 @@
       }
     ],
     "startup_cost": 7500
+  },
+  "weapons_factory": {
+    "class": "production",
+    "name": "Weapons Factory",
+    "description": "Military arms plant producing rifles, machine guns, ammunition, grenades, and missiles.",
+    "allowed_terrain": ["district_military"],
+    "allowed_proximity": ["road", "remote", "urban"],
+    "base_wage_cost": 800.0,
+    "cycles_to_complete": 200,
+    "startup_cost": 500000,
+    "production_lines": [
+      {"inputs": [{"item": "rifle_barrel", "quantity": 2}, {"item": "rifle_receiver", "quantity": 2}, {"item": "polymer_compound", "quantity": 1}, {"item": "energy", "quantity": 500}, {"item": "paper", "quantity": 1}], "output_item": "rifle", "output_qty": 2},
+      {"inputs": [{"item": "steel", "quantity": 8}, {"item": "copper_wire", "quantity": 3}, {"item": "energy", "quantity": 1000}, {"item": "paper", "quantity": 1}], "output_item": "machine_gun", "output_qty": 1},
+      {"inputs": [{"item": "copper", "quantity": 10}, {"item": "rdx_explosive", "quantity": 2}, {"item": "energy", "quantity": 200}, {"item": "paper", "quantity": 1}], "output_item": "ammunition", "output_qty": 500},
+      {"inputs": [{"item": "grenade_body", "quantity": 5}, {"item": "rdx_explosive", "quantity": 2}, {"item": "energy", "quantity": 200}, {"item": "paper", "quantity": 1}], "output_item": "grenade", "output_qty": 5},
+      {"inputs": [{"item": "steel", "quantity": 20}, {"item": "rdx_explosive", "quantity": 5}, {"item": "copper_wire", "quantity": 3}, {"item": "energy", "quantity": 2000}, {"item": "paper", "quantity": 2}], "output_item": "missile", "output_qty": 1}
+    ]
+  },
+  "military_vehicle_plant": {
+    "class": "production",
+    "name": "Military Vehicle Plant",
+    "description": "Heavy armored vehicle plant producing tanks, APCs, and military trucks.",
+    "allowed_terrain": ["district_military"],
+    "allowed_proximity": ["road", "remote"],
+    "base_wage_cost": 1200.0,
+    "cycles_to_complete": 400,
+    "startup_cost": 800000,
+    "production_lines": [
+      {"inputs": [{"item": "tank_hull", "quantity": 1}, {"item": "tank_turret", "quantity": 1}, {"item": "tank_cannon", "quantity": 1}, {"item": "diesel_engine", "quantity": 1}, {"item": "steel", "quantity": 50}, {"item": "energy", "quantity": 5000}, {"item": "paper", "quantity": 5}], "output_item": "main_battle_tank", "output_qty": 1},
+      {"inputs": [{"item": "steel", "quantity": 30}, {"item": "diesel_engine", "quantity": 1}, {"item": "energy", "quantity": 2000}, {"item": "paper", "quantity": 2}], "output_item": "military_truck", "output_qty": 2},
+      {"inputs": [{"item": "apc_hull", "quantity": 1}, {"item": "diesel_engine", "quantity": 1}, {"item": "steel", "quantity": 20}, {"item": "energy", "quantity": 2000}, {"item": "paper", "quantity": 2}], "output_item": "armored_personnel_carrier", "output_qty": 1},
+      {"inputs": [{"item": "steel", "quantity": 80}, {"item": "energy", "quantity": 3000}, {"item": "paper", "quantity": 3}], "output_item": "tank_hull", "output_qty": 1},
+      {"inputs": [{"item": "steel", "quantity": 40}, {"item": "energy", "quantity": 2000}, {"item": "paper", "quantity": 2}], "output_item": "tank_turret", "output_qty": 1},
+      {"inputs": [{"item": "steel", "quantity": 20}, {"item": "energy", "quantity": 1000}, {"item": "paper", "quantity": 1}], "output_item": "tank_cannon", "output_qty": 1},
+      {"inputs": [{"item": "steel", "quantity": 30}, {"item": "energy", "quantity": 1500}, {"item": "paper", "quantity": 2}], "output_item": "apc_hull", "output_qty": 1}
+    ]
+  },
+  "military_aircraft_plant": {
+    "class": "production",
+    "name": "Military Aircraft Plant",
+    "description": "Defense aerospace plant producing fighter jets, attack helicopters, and airframe components.",
+    "allowed_terrain": ["district_aerospace", "district_military"],
+    "allowed_proximity": ["road", "remote"],
+    "base_wage_cost": 2000.0,
+    "cycles_to_complete": 600,
+    "startup_cost": 1500000,
+    "production_lines": [
+      {"inputs": [{"item": "jet_airframe", "quantity": 1}, {"item": "turbojet_engine", "quantity": 2}, {"item": "avionics_suite", "quantity": 1}, {"item": "titanium_alloy", "quantity": 50}, {"item": "energy", "quantity": 10000}, {"item": "paper", "quantity": 5}], "output_item": "fighter_jet", "output_qty": 1},
+      {"inputs": [{"item": "helicopter_rotor", "quantity": 1}, {"item": "turbofan_engine", "quantity": 1}, {"item": "avionics_suite", "quantity": 1}, {"item": "titanium_alloy", "quantity": 30}, {"item": "energy", "quantity": 6000}, {"item": "paper", "quantity": 3}], "output_item": "attack_helicopter", "output_qty": 1},
+      {"inputs": [{"item": "helicopter_rotor", "quantity": 1}, {"item": "turbofan_engine", "quantity": 1}, {"item": "titanium_alloy", "quantity": 20}, {"item": "energy", "quantity": 4000}, {"item": "paper", "quantity": 2}], "output_item": "military_helicopter", "output_qty": 1},
+      {"inputs": [{"item": "titanium_alloy", "quantity": 100}, {"item": "carbon_fiber", "quantity": 80}, {"item": "duralumin", "quantity": 60}, {"item": "energy", "quantity": 5000}, {"item": "paper", "quantity": 3}], "output_item": "jet_airframe", "output_qty": 1},
+      {"inputs": [{"item": "titanium_alloy", "quantity": 40}, {"item": "carbon_fiber", "quantity": 30}, {"item": "energy", "quantity": 2000}, {"item": "paper", "quantity": 2}], "output_item": "helicopter_rotor", "output_qty": 1}
+    ]
+  },
+  "naval_shipyard": {
+    "class": "production",
+    "name": "Naval Shipyard",
+    "description": "Heavy naval construction facility producing destroyers, submarines, and hull components.",
+    "allowed_terrain": ["district_military", "district_shipyard", "coastal"],
+    "allowed_proximity": ["coastal", "road"],
+    "base_wage_cost": 2500.0,
+    "cycles_to_complete": 800,
+    "startup_cost": 2000000,
+    "production_lines": [
+      {"inputs": [{"item": "destroyer_hull", "quantity": 1}, {"item": "turbofan_engine", "quantity": 2}, {"item": "naval_gun_system", "quantity": 1}, {"item": "radar_system", "quantity": 1}, {"item": "steel", "quantity": 200}, {"item": "energy", "quantity": 20000}, {"item": "paper", "quantity": 10}], "output_item": "naval_destroyer", "output_qty": 1},
+      {"inputs": [{"item": "submarine_hull", "quantity": 1}, {"item": "nuclear_reactor_core", "quantity": 1}, {"item": "sonar_system", "quantity": 1}, {"item": "torpedo", "quantity": 10}, {"item": "steel", "quantity": 150}, {"item": "energy", "quantity": 15000}, {"item": "paper", "quantity": 8}], "output_item": "submarine", "output_qty": 1},
+      {"inputs": [{"item": "steel", "quantity": 300}, {"item": "titanium_alloy", "quantity": 100}, {"item": "marine_piping", "quantity": 50}, {"item": "energy", "quantity": 10000}, {"item": "paper", "quantity": 5}], "output_item": "destroyer_hull", "output_qty": 1},
+      {"inputs": [{"item": "steel", "quantity": 200}, {"item": "titanium_alloy", "quantity": 80}, {"item": "marine_piping", "quantity": 30}, {"item": "energy", "quantity": 8000}, {"item": "paper", "quantity": 4}], "output_item": "submarine_hull", "output_qty": 1}
+    ]
+  },
+  "tactical_gear_factory": {
+    "class": "production",
+    "name": "Tactical Gear Factory",
+    "description": "Military apparel and personal protection factory producing body armor, tactical vests, and uniforms.",
+    "allowed_terrain": ["district_military", "district_industrial", "urban"],
+    "allowed_proximity": ["road", "urban"],
+    "base_wage_cost": 400.0,
+    "cycles_to_complete": 150,
+    "startup_cost": 200000,
+    "production_lines": [
+      {"inputs": [{"item": "composite_armor_panel", "quantity": 2}, {"item": "polyester", "quantity": 5}, {"item": "energy", "quantity": 300}, {"item": "paper", "quantity": 1}], "output_item": "body_armor", "output_qty": 1},
+      {"inputs": [{"item": "polyester", "quantity": 3}, {"item": "plastic", "quantity": 2}, {"item": "energy", "quantity": 200}, {"item": "paper", "quantity": 1}], "output_item": "tactical_vest", "output_qty": 2},
+      {"inputs": [{"item": "cotton", "quantity": 5}, {"item": "polyester", "quantity": 2}, {"item": "energy", "quantity": 100}, {"item": "paper", "quantity": 1}], "output_item": "military_uniform", "output_qty": 5}
+    ]
+  },
+  "advanced_materials_plant": {
+    "class": "production",
+    "name": "Advanced Materials Plant",
+    "description": "Specialty metals and composites facility producing titanium alloys, carbon fiber, duralumin, and armor panels.",
+    "allowed_terrain": ["district_industrial", "district_tech", "urban"],
+    "allowed_proximity": ["road", "urban"],
+    "base_wage_cost": 1000.0,
+    "cycles_to_complete": 300,
+    "startup_cost": 600000,
+    "production_lines": [
+      {"inputs": [{"item": "titanium", "quantity": 30}, {"item": "aluminum", "quantity": 10}, {"item": "energy", "quantity": 3000}, {"item": "paper", "quantity": 2}], "output_item": "titanium_alloy", "output_qty": 10},
+      {"inputs": [{"item": "polymer_compound", "quantity": 20}, {"item": "energy", "quantity": 2000}, {"item": "paper", "quantity": 2}], "output_item": "carbon_fiber", "output_qty": 8},
+      {"inputs": [{"item": "aluminum", "quantity": 20}, {"item": "copper", "quantity": 5}, {"item": "energy", "quantity": 1500}, {"item": "paper", "quantity": 1}], "output_item": "duralumin", "output_qty": 10},
+      {"inputs": [{"item": "titanium_alloy", "quantity": 5}, {"item": "carbon_fiber", "quantity": 5}, {"item": "polymer_compound", "quantity": 3}, {"item": "energy", "quantity": 1000}, {"item": "paper", "quantity": 1}], "output_item": "composite_armor_panel", "output_qty": 5}
+    ]
+  },
+  "defense_electronics_factory": {
+    "class": "production",
+    "name": "Defense Electronics Factory",
+    "description": "Specialized military electronics plant producing radar arrays, fire control systems, avionics, sonar, and propulsion systems.",
+    "allowed_terrain": ["district_military", "district_tech", "district_industrial"],
+    "allowed_proximity": ["road", "urban"],
+    "base_wage_cost": 1500.0,
+    "cycles_to_complete": 400,
+    "startup_cost": 800000,
+    "production_lines": [
+      {"inputs": [{"item": "processor", "quantity": 10}, {"item": "circuit_board", "quantity": 20}, {"item": "copper_wire", "quantity": 5}, {"item": "titanium_alloy", "quantity": 5}, {"item": "energy", "quantity": 3000}, {"item": "paper", "quantity": 2}], "output_item": "radar_system", "output_qty": 1},
+      {"inputs": [{"item": "processor", "quantity": 15}, {"item": "circuit_board", "quantity": 25}, {"item": "copper_wire", "quantity": 8}, {"item": "energy", "quantity": 4000}, {"item": "paper", "quantity": 2}], "output_item": "fire_control_system", "output_qty": 1},
+      {"inputs": [{"item": "processor", "quantity": 20}, {"item": "circuit_board", "quantity": 30}, {"item": "copper_wire", "quantity": 10}, {"item": "energy", "quantity": 5000}, {"item": "paper", "quantity": 3}], "output_item": "avionics_suite", "output_qty": 1},
+      {"inputs": [{"item": "processor", "quantity": 8}, {"item": "circuit_board", "quantity": 15}, {"item": "copper_wire", "quantity": 5}, {"item": "energy", "quantity": 2000}, {"item": "paper", "quantity": 1}], "output_item": "sonar_system", "output_qty": 1},
+      {"inputs": [{"item": "steel", "quantity": 20}, {"item": "rdx_explosive", "quantity": 5}, {"item": "copper_wire", "quantity": 3}, {"item": "energy", "quantity": 2000}, {"item": "paper", "quantity": 2}], "output_item": "torpedo", "output_qty": 2},
+      {"inputs": [{"item": "steel", "quantity": 30}, {"item": "copper_wire", "quantity": 5}, {"item": "energy", "quantity": 2500}, {"item": "paper", "quantity": 2}], "output_item": "naval_gun_system", "output_qty": 1},
+      {"inputs": [{"item": "titanium_alloy", "quantity": 30}, {"item": "carbon_fiber", "quantity": 20}, {"item": "copper_wire", "quantity": 5}, {"item": "energy", "quantity": 5000}, {"item": "paper", "quantity": 3}], "output_item": "turbofan_engine", "output_qty": 1},
+      {"inputs": [{"item": "titanium_alloy", "quantity": 20}, {"item": "carbon_fiber", "quantity": 15}, {"item": "copper_wire", "quantity": 3}, {"item": "energy", "quantity": 4000}, {"item": "paper", "quantity": 2}], "output_item": "turbojet_engine", "output_qty": 1},
+      {"inputs": [{"item": "titanium_alloy", "quantity": 5}, {"item": "polymer_compound", "quantity": 2}, {"item": "energy", "quantity": 500}, {"item": "paper", "quantity": 1}], "output_item": "ejection_seat", "output_qty": 1}
+    ]
+  },
+  "chemical_plant": {
+    "class": "production",
+    "name": "Chemical Plant",
+    "description": "Industrial chemical processing plant producing caustic soda, acid solutions, fertilizers, and solvents.",
+    "allowed_terrain": ["district_industrial", "prairie", "urban"],
+    "allowed_proximity": ["road", "urban", "riverside"],
+    "base_wage_cost": 600.0,
+    "cycles_to_complete": 150,
+    "startup_cost": 300000,
+    "production_lines": [
+      {"inputs": [{"item": "salt", "quantity": 20}, {"item": "energy", "quantity": 1000}, {"item": "water", "quantity": 50}, {"item": "paper", "quantity": 1}], "output_item": "caustic_soda", "output_qty": 10},
+      {"inputs": [{"item": "sulfur", "quantity": 10}, {"item": "water", "quantity": 30}, {"item": "energy", "quantity": 500}, {"item": "paper", "quantity": 1}], "output_item": "acid_solution", "output_qty": 15},
+      {"inputs": [{"item": "energy", "quantity": 200}, {"item": "water", "quantity": 20}, {"item": "paper", "quantity": 1}], "output_item": "fertilizer", "output_qty": 20},
+      {"inputs": [{"item": "energy", "quantity": 100}, {"item": "water", "quantity": 10}, {"item": "paper", "quantity": 1}], "output_item": "compost", "output_qty": 20},
+      {"inputs": [{"item": "energy", "quantity": 300}, {"item": "water", "quantity": 15}, {"item": "paper", "quantity": 1}], "output_item": "chemical_solvent", "output_qty": 10}
+    ]
   }
 }

@@ -47,7 +47,7 @@
     }
   ],
   "buy_items": {
-    "crude_oil": {
+    "oil": {
       "target_inventory": 5000,
       "reorder_at": 1000,
       "max_price_multiplier": 1.1,

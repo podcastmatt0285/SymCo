@@ -27,18 +27,6 @@
     }
   ],
   "buy_items": {
-    "destroyer_hull": {
-      "target_inventory": 10,
-      "reorder_at": 2,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "submarine_hull": {
-      "target_inventory": 6,
-      "reorder_at": 1,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
     "turbofan_engine": {
       "target_inventory": 20,
       "reorder_at": 4,

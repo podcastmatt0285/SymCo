@@ -103,12 +103,6 @@
       "max_price_multiplier": 1.05,
       "market": "regular"
     },
-    "destroyer_hull": {
-      "target_inventory": 5,
-      "reorder_at": 1,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
     "fire_control_system": {
       "target_inventory": 5,
       "reorder_at": 1,
@@ -149,12 +143,6 @@
       "target_inventory": 5,
       "reorder_at": 1,
       "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "submarine_hull": {
-      "target_inventory": 3,
-      "reorder_at": 1,
-      "max_price_multiplier": 1.1,
       "market": "regular"
     },
     "torpedo": {

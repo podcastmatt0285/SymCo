@@ -91,7 +91,7 @@
       "max_price_multiplier": 1.1,
       "market": "regular"
     },
-    "lamb": {
+    "lamb_meat": {
       "target_inventory": 2000,
       "reorder_at": 400,
       "max_price_multiplier": 1.1,
@@ -121,7 +121,7 @@
       "max_price_multiplier": 1.1,
       "market": "regular"
     },
-    "peanuts": {
+    "peanut": {
       "target_inventory": 2000,
       "reorder_at": 400,
       "max_price_multiplier": 1.05,

@@ -1,0 +1,32 @@
+{
+  "player_id": -2080,
+  "business_name": "Vanguard Advanced Materials",
+  "description": "Advanced metallurgy and composites producer. Supplies titanium alloys, carbon fiber, duralumin, and composite armor panels to the defense, aerospace, and medical industries.",
+  "cash_caps": {"hard_high": 60000000, "soft_high": 25000000, "soft_low": 7000000, "hard_low": 2000000},
+  "seed": {
+    "starting_cash": 15000000,
+    "land_plots": [],
+    "districts": [{"district_type": "industrial", "size": 4, "plots_merged": 4}]
+  },
+  "businesses": [
+    {"business_type": "advanced_materials_plant", "district_seed_index": 0, "active_lines": ["titanium_alloy", "carbon_fiber", "duralumin", "composite_armor_panel"]},
+    {"business_type": "advanced_materials_plant", "district_seed_index": 0, "active_lines": ["titanium_alloy", "carbon_fiber", "duralumin"]}
+  ],
+  "buy_items": {
+    "titanium": {"target_inventory": 5000, "reorder_at": 1000, "max_price_multiplier": 1.1, "market": "regular"},
+    "aluminum": {"target_inventory": 8000, "reorder_at": 1600, "max_price_multiplier": 1.05, "market": "regular"},
+    "copper": {"target_inventory": 3000, "reorder_at": 600, "max_price_multiplier": 1.1, "market": "regular"},
+    "polymer_compound": {"target_inventory": 5000, "reorder_at": 1000, "max_price_multiplier": 1.1, "market": "regular"},
+    "carbon_fiber": {"target_inventory": 2000, "reorder_at": 400, "max_price_multiplier": 1.1, "market": "regular"},
+    "titanium_alloy": {"target_inventory": 1000, "reorder_at": 200, "max_price_multiplier": 1.1, "market": "regular"},
+    "energy": {"target_inventory": 1000000, "reorder_at": 200000, "max_price_multiplier": 1.1, "market": "regular"},
+    "paper": {"target_inventory": 5000, "reorder_at": 1000, "max_price_multiplier": 1.05, "market": "regular"}
+  },
+  "sell_items": {
+    "titanium_alloy": {"min_inventory_to_keep": 100, "max_order_quantity": 1000, "market": "regular"},
+    "carbon_fiber": {"min_inventory_to_keep": 100, "max_order_quantity": 800, "market": "regular"},
+    "duralumin": {"min_inventory_to_keep": 100, "max_order_quantity": 800, "market": "regular"},
+    "composite_armor_panel": {"min_inventory_to_keep": 50, "max_order_quantity": 300, "market": "regular"}
+  },
+  "ipo": {"ticker": "VGAM", "total_shares": 1000000, "shares_to_offer": 600000}
+}

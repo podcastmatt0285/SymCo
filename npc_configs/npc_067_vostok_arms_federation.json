@@ -90,12 +90,6 @@
       "max_price_multiplier": 1.1,
       "market": "regular"
     },
-    "jet_airframe": {
-      "target_inventory": 20,
-      "reorder_at": 4,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
     "turbojet_engine": {
       "target_inventory": 30,
       "reorder_at": 6,
@@ -135,12 +129,6 @@
     "missile": {
       "target_inventory": 200,
       "reorder_at": 40,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "helicopter_rotor": {
-      "target_inventory": 30,
-      "reorder_at": 6,
       "max_price_multiplier": 1.1,
       "market": "regular"
     },
