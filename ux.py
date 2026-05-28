@@ -2025,11 +2025,15 @@ def home(request: Request, session_token: Optional[str] = Cookie(None)):
     try:
         from tutorial_ux import (
             should_show_tutorial_banner, get_tutorial_overlay_html,
+            get_tutorial_resume_banner_html,
         )
         tutorial_banner = ""
         tutorial_overlay = get_tutorial_overlay_html(player, "dashboard")
         if not tutorial_overlay:
-            if should_show_tutorial_banner(player):
+            resume_banner = get_tutorial_resume_banner_html(player)
+            if resume_banner:
+                tutorial_banner = resume_banner
+            elif should_show_tutorial_banner(player):
                 tutorial_banner = f"""
                 <div style="
                     background: linear-gradient(135deg, #0a1628, #0f172a);

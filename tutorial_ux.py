@@ -151,6 +151,59 @@ def should_show_tutorial_banner(player) -> bool:
     return not player_has_businesses(player.id) and player_has_only_starter_inventory(player.id)
 
 
+def get_tutorial_resume_banner_html(player) -> str:
+    """
+    Return a 'Resume Tutorial' banner for players mid-way through Tutorial 1.
+    Shown on the dashboard when step is 1-11 but the overlay doesn't match that page.
+    """
+    step = getattr(player, "tutorial_step", 0) or 0
+    if step <= 0 or step >= 12:
+        return ""
+
+    _STEP_LABEL = {
+        1:  ("Your Dashboard",              "/"),
+        2:  ("Build your first business",   "/land"),
+        3:  ("Check your inventory",        "/inventory"),
+        4:  ("Build a production chain",    "/land"),
+        5:  ("Review your full inventory",  "/inventory"),
+        6:  ("Explore production costs",    "/stats/production-costs"),
+        7:  ("Trade on the Market",         "/market"),
+        8:  ("View your business stats",    "/stats"),
+        9:  ("Claim your free land plot",   "/"),
+        10: ("Explore the Land Market",     "/land-market"),
+        11: ("Hire your First Lady exec",   "/"),
+    }
+    label, url = _STEP_LABEL.get(step, ("Continue the tutorial", "/"))
+    is_here = url == "/"
+
+    if is_here:
+        return ""  # overlay will render directly on this page
+
+    return f"""
+    <div style="
+        background: linear-gradient(135deg, #0a1628, #0f172a);
+        border: 2px solid #d4af37;
+        border-radius: 6px;
+        padding: 16px 20px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+    ">
+        <span style="background:#d4af37;color:#020617;padding:3px 10px;border-radius:10px;font-size:0.7rem;font-weight:bold;white-space:nowrap;">
+            TUTORIAL — STEP {step}/11
+        </span>
+        <span style="color:#94a3b8;font-size:0.9rem;flex:1;">
+            You're mid-tutorial. Next: <strong style="color:#e5e7eb;">{label}</strong>
+        </span>
+        <a href="{url}" style="background:#d4af37;color:#020617;padding:8px 20px;border-radius:4px;font-size:0.85rem;font-weight:bold;text-decoration:none;white-space:nowrap;">
+            Resume Tutorial →
+        </a>
+    </div>
+    """
+
+
 def player_has_business_type(player_id: int, business_type: str) -> bool:
     """Return True if the player owns a business of the given type."""
     try:
@@ -688,7 +741,6 @@ def get_tutorial_overlay_html(player, current_page: str) -> str:
                 </div>
             </label>"""
 
-        already_has_fl = _has_first_lady(player.id)
         title = "Bonus Step — Executive Hiring"
         _more_tutorials_html = """
         <div style="background:#0a1e3a;border:1px solid #38bdf8;border-radius:6px;
@@ -704,31 +756,7 @@ def get_tutorial_overlay_html(player, current_page: str) -> str:
             </p>
         </div>
         """
-        if already_has_fl:
-            content = f"""
-        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
-            You've replayed Tutorial 2 — welcome back!
-        </p>
-        <div style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.3);
-                    border-radius:6px;padding:12px 16px;margin-bottom:16px;">
-            <strong style="color:#4ade80;">&#10003; Reward already claimed</strong>
-            <p style="color:#94a3b8;font-size:0.85rem;margin:6px 0 0;">
-                Your First Lady executive is already on your team.
-                Replaying a tutorial doesn't grant a second reward.
-            </p>
-        </div>
-        {_more_tutorials_html}
-        <form action="/api/tutorial/claim-executive" method="post"
-              style="display:inline;">
-            <input type="hidden" name="first_lady" value="martha_washington">
-            <button type="submit" style="background:#d4af37;color:#020617;border:none;padding:10px 24px;
-                    border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
-                Finish Tutorial 2 →
-            </button>
-        </form>
-        """
-        else:
-            content = f"""
+        content = f"""
         <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
             Every great company needs great <strong style="color:#e5e7eb;">Executives</strong>.
             In Wadsworth, executives are living characters — they age, level up through school,
@@ -1104,50 +1132,47 @@ def claim_first_lady(
     if fl_data is None:
         return RedirectResponse(url="/?tutorial_error=invalid_first_lady", status_code=303)
 
-    if not _has_first_lady(player.id):
+    try:
+        db = ExecSessionLocal()
+
+        # Split name into first / last
+        name_parts = fl_data["name"].split(" ", 1)
+        first_name = name_parts[0]
+        last_name  = name_parts[1] if len(name_parts) > 1 else ""
+
+        exec_obj = Executive(
+            first_name       = first_name,
+            last_name        = last_name,
+            player_id        = player.id,
+            level            = 1,
+            job              = "first_lady",
+            wage             = 0.0,         # free forever
+            pay_cycle        = "hour",
+            current_age      = 18,
+            retirement_age   = 110,
+            max_age          = 120,
+            is_retired       = False,
+            is_dead          = False,
+            is_special       = False,
+            is_first_lady    = True,
+            max_level        = 18,
+            abilities        = fl_data["ability"],
+            bonuses          = "",
+            on_marketplace   = False,
+            marketplace_reason = "tutorial",
+            hired_at         = __import__("datetime").datetime.utcnow(),
+        )
+        db.add(exec_obj)
+        db.commit()
+        db.close()
+        print(f"[Tutorial] Created First Lady executive '{fl_data['name']}' for player {player.id}")
+    except Exception as e:
+        print(f"[Tutorial] Error creating First Lady executive: {e}")
         try:
-            db = ExecSessionLocal()
-
-            # Split name into first / last
-            name_parts = fl_data["name"].split(" ", 1)
-            first_name = name_parts[0]
-            last_name  = name_parts[1] if len(name_parts) > 1 else ""
-
-            exec_obj = Executive(
-                first_name       = first_name,
-                last_name        = last_name,
-                player_id        = player.id,
-                level            = 1,
-                job              = "first_lady",
-                wage             = 0.0,         # free forever
-                pay_cycle        = "hour",
-                current_age      = 18,
-                retirement_age   = 110,
-                max_age          = 120,
-                is_retired       = False,
-                is_dead          = False,
-                is_special       = False,
-                is_first_lady    = True,
-                max_level        = 18,
-                abilities        = fl_data["ability"],
-                bonuses          = "",
-                on_marketplace   = False,
-                marketplace_reason = "tutorial",
-                hired_at         = __import__("datetime").datetime.utcnow(),
-            )
-            db.add(exec_obj)
-            db.commit()
             db.close()
-            print(f"[Tutorial] Created First Lady executive '{fl_data['name']}' for player {player.id}")
-        except Exception as e:
-            print(f"[Tutorial] Error creating First Lady executive: {e}")
-            try:
-                db.close()
-            except Exception:
-                pass
-            return RedirectResponse(url="/?tutorial_error=exec_failed", status_code=303)
-    else:
-        print(f"[Tutorial] Player {player.id} already has a First Lady — skipping duplicate creation")
+        except Exception:
+            pass
+        return RedirectResponse(url="/?tutorial_error=exec_failed", status_code=303)
 
     set_tutorial_step(player.id, 12, is_completion=True)
     return RedirectResponse(url="/executives?tutorial_complete=1", status_code=303)
