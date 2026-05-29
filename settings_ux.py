@@ -2121,6 +2121,10 @@ def _notifications_tab(player) -> str:
         import logging
         logging.getLogger(__name__).exception("has_cco check failed for player %s: %s", getattr(player, 'id', '?'), e)
 
+    # Tutorial 1 graduates get free notification access (no CCO required)
+    if not has_cco and (getattr(player, 'tutorial_step', 0) or 0) >= 12:
+        has_cco = True
+
     # Display-currency formatting for rental prices
     from reserve_banks import get_player_display_currency, fmt_usd as _fmt
     _disp = get_player_display_currency(player.id)

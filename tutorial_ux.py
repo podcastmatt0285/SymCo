@@ -755,6 +755,18 @@ def get_tutorial_overlay_html(player, current_page: str) -> str:
                 </a>.
             </p>
         </div>
+        <div style="background:#0a1e0a;border:1px solid #22c55e;border-radius:6px;
+                    padding:12px 16px;margin-bottom:16px;">
+            <strong style="color:#22c55e;">🔔 Free notification access unlocked!</strong>
+            <p style="color:#94a3b8;font-size:0.85rem;margin:6px 0 0;line-height:1.6;">
+                Completing this tutorial unlocks full notification settings — no CCO required.
+                Head to
+                <a href="/settings?tab=notifications" style="color:#22c55e;font-weight:bold;">
+                    Settings → Notifications
+                </a>
+                to configure in-game alerts and push notifications for trades, messages, and events.
+            </p>
+        </div>
         """
         content = f"""
         <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
@@ -1175,6 +1187,27 @@ def claim_first_lady(
         return RedirectResponse(url="/?tutorial_error=exec_failed", status_code=303)
 
     set_tutorial_step(player.id, 12, is_completion=True)
+
+    # Welcome notification — introduces the notification system as part of tutorial completion
+    try:
+        from push_ux import create_game_notification, send_push_notification
+        create_game_notification(
+            player.id,
+            "🎓 Startup Company Complete!",
+            "Your First Lady executive is hired. Notification settings are now fully unlocked — configure alerts in Settings.",
+            url="/settings?tab=notifications",
+            notif_type="tasks_events",
+        )
+        send_push_notification(
+            player.id,
+            "🎓 Startup Company Complete!",
+            "Tutorial 1 done! Visit Settings → Notifications to customise your in-game and push alerts.",
+            url="/settings?tab=notifications",
+            notif_type="tasks_events",
+        )
+    except Exception as _e:
+        print(f"[Tutorial] completion notification failed for player {player.id}: {_e}")
+
     return RedirectResponse(url="/executives?tutorial_complete=1", status_code=303)
 
 
