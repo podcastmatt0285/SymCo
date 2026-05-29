@@ -8,7 +8,8 @@
     "starting_inventory": {
       "sulfuric_acid": 1000,
       "ammonia": 1000,
-      "phosphoric_acid": 1000
+      "phosphoric_acid": 1000,
+      "fertilizer_npk": 8000
     },
     "land_plots": [],
     "districts": [{"district_type": "industrial", "size": 3, "plots_merged": 3}]

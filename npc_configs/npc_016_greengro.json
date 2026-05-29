@@ -16,7 +16,8 @@
       "phosphoric_acid": 1000,
       "phosphate_rock": 2000,
       "potash_ore": 2000,
-      "natural_gas": 2000
+      "natural_gas": 2000,
+      "fertilizer_npk": 10000
     },
     "land_plots": [
       {"terrain_type": "mountain", "proximity_features": ["remote"], "size": 1},
