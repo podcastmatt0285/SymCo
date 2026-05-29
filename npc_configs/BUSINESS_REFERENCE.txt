@@ -1197,3 +1197,33 @@ wool_mill  |  Wool Scouring & Processing Mill  |  production
 yarn_mill  |  Yarn Spinning Mill  |  production
   startup=$7,500  wage=$50.0/cycle  cycles=120  terrain=['prairie', 'hills', 'savanna', 'forest']
   PROD: 40x yarn  from {'wool': 30, 'water': 20, 'energy': 25, 'paper': 1}
+
+fast_food_kitchen  |  Fast Food Kitchen  |  production
+  startup=$30,000  wage=$120.0/cycle  cycles=40  terrain=['district_food', 'district_food_court', 'urban']
+  PROD: 40x hot_dog  from {'sausage': 20, 'bread': 10, 'paper': 1}
+  PROD: 30x burger  from {'beef': 15, 'bread': 10, 'cheese': 5, 'lettuce': 5, 'paper': 1}
+  PROD: 50x fries  from {'potatoes': 20, 'oil': 5, 'salt': 3, 'energy': 20, 'paper': 1}
+  PROD: 50x chicken_nuggets  from {'chicken': 15, 'flour': 5, 'eggs': 5, 'energy': 20, 'paper': 1}
+  PROD: 30x pizza_slice  from {'flour': 30, 'tomato': 15, 'cheese': 10, 'energy': 25, 'paper': 1}
+
+international_cuisine_kitchen  |  International Cuisine Kitchen  |  production
+  startup=$35,000  wage=$130.0/cycle  cycles=45  terrain=['district_food', 'district_food_court', 'urban']
+  PROD: 30x sushi_roll  from {'salmon_fillet': 10, 'rice': 30, 'rice_paper': 10, 'energy': 15, 'paper': 1}
+  PROD: 25x ramen_bowl  from {'noodles': 20, 'pork': 10, 'energy': 15, 'paper': 1}
+  PROD: 25x pad_thai  from {'noodles': 20, 'shrimp_paste': 5, 'eggs': 10, 'energy': 15, 'paper': 1}
+  PROD: 20x gyro  from {'lamb_meat': 10, 'bread': 10, 'onions': 5, 'energy': 15, 'paper': 1}
+  PROD: 25x taco  from {'beef': 10, 'onions': 5, 'salsa': 5, 'flour': 10, 'energy': 15, 'paper': 1}
+  PROD: 20x burrito  from {'beef': 10, 'rice': 15, 'cheese': 5, 'flour': 10, 'energy': 15, 'paper': 1}
+  PROD: 30x fried_rice  from {'rice': 30, 'eggs': 10, 'onions': 5, 'energy': 15, 'paper': 1}
+
+beverage_production  |  Beverage Production  |  production
+  startup=$20,000  wage=$80.0/cycle  cycles=35  terrain=['district_food', 'district_food_court', 'urban']
+  PROD: 50x soda_cup  from {'soda': 30, 'paper': 1}
+  PROD: 30x milkshake  from {'milk': 20, 'ice_cream': 10, 'sugar': 5, 'paper': 1}
+  PROD: 30x smoothie  from {'apples': 20, 'sugar': 5, 'water': 20, 'energy': 10, 'paper': 1}
+
+food_packaging_factory  |  Food Packaging Factory  |  production
+  startup=$18,000  wage=$70.0/cycle  cycles=30  terrain=['district_food', 'district_food_court', 'district_industrial', 'urban']
+  PROD: 80x food_tray  from {'plastic': 20, 'energy': 15, 'paper': 1}
+  PROD: 60x takeout_container  from {'plastic': 15, 'energy': 10, 'paper': 1}
+  PROD: 100x disposable_utensils  from {'plastic': 5, 'paper': 2, 'energy': 5}

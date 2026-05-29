@@ -28117,5 +28117,75 @@
       {"inputs": [{"item": "energy", "quantity": 100}, {"item": "water", "quantity": 10}, {"item": "paper", "quantity": 1}], "output_item": "compost", "output_qty": 20},
       {"inputs": [{"item": "energy", "quantity": 300}, {"item": "water", "quantity": 15}, {"item": "paper", "quantity": 1}], "output_item": "chemical_solvent", "output_qty": 10}
     ]
+  },
+
+  "fast_food_kitchen": {
+    "class": "production",
+    "name": "Fast Food Kitchen",
+    "description": "High-volume fast food production. Turns raw ingredients into hot dogs, burgers, fries, chicken nuggets, and pizza slices for the commodity market.",
+    "allowed_terrain": ["district_food", "district_food_court", "urban"],
+    "allowed_proximity": ["urban", "road"],
+    "base_wage_cost": 120.0,
+    "cycles_to_complete": 40,
+    "startup_cost": 30000,
+    "production_lines": [
+      {"inputs": [{"item": "sausage", "quantity": 20}, {"item": "bread", "quantity": 10}, {"item": "paper", "quantity": 1}], "output_item": "hot_dog", "output_qty": 40},
+      {"inputs": [{"item": "beef", "quantity": 15}, {"item": "bread", "quantity": 10}, {"item": "cheese", "quantity": 5}, {"item": "lettuce", "quantity": 5}, {"item": "paper", "quantity": 1}], "output_item": "burger", "output_qty": 30},
+      {"inputs": [{"item": "potatoes", "quantity": 20}, {"item": "oil", "quantity": 5}, {"item": "salt", "quantity": 3}, {"item": "energy", "quantity": 20}, {"item": "paper", "quantity": 1}], "output_item": "fries", "output_qty": 50},
+      {"inputs": [{"item": "chicken", "quantity": 15}, {"item": "flour", "quantity": 5}, {"item": "eggs", "quantity": 5}, {"item": "energy", "quantity": 20}, {"item": "paper", "quantity": 1}], "output_item": "chicken_nuggets", "output_qty": 50},
+      {"inputs": [{"item": "flour", "quantity": 30}, {"item": "tomato", "quantity": 15}, {"item": "cheese", "quantity": 10}, {"item": "energy", "quantity": 25}, {"item": "paper", "quantity": 1}], "output_item": "pizza_slice", "output_qty": 30}
+    ]
+  },
+
+  "international_cuisine_kitchen": {
+    "class": "production",
+    "name": "International Cuisine Kitchen",
+    "description": "Produces international dishes for the commodity market: sushi rolls, ramen, pad thai, gyros, tacos, burritos, and fried rice.",
+    "allowed_terrain": ["district_food", "district_food_court", "urban"],
+    "allowed_proximity": ["urban", "road"],
+    "base_wage_cost": 130.0,
+    "cycles_to_complete": 45,
+    "startup_cost": 35000,
+    "production_lines": [
+      {"inputs": [{"item": "salmon_fillet", "quantity": 10}, {"item": "rice", "quantity": 30}, {"item": "rice_paper", "quantity": 10}, {"item": "energy", "quantity": 15}, {"item": "paper", "quantity": 1}], "output_item": "sushi_roll", "output_qty": 30},
+      {"inputs": [{"item": "noodles", "quantity": 20}, {"item": "pork", "quantity": 10}, {"item": "energy", "quantity": 15}, {"item": "paper", "quantity": 1}], "output_item": "ramen_bowl", "output_qty": 25},
+      {"inputs": [{"item": "noodles", "quantity": 20}, {"item": "shrimp_paste", "quantity": 5}, {"item": "eggs", "quantity": 10}, {"item": "energy", "quantity": 15}, {"item": "paper", "quantity": 1}], "output_item": "pad_thai", "output_qty": 25},
+      {"inputs": [{"item": "lamb_meat", "quantity": 10}, {"item": "bread", "quantity": 10}, {"item": "onions", "quantity": 5}, {"item": "energy", "quantity": 15}, {"item": "paper", "quantity": 1}], "output_item": "gyro", "output_qty": 20},
+      {"inputs": [{"item": "beef", "quantity": 10}, {"item": "onions", "quantity": 5}, {"item": "salsa", "quantity": 5}, {"item": "flour", "quantity": 10}, {"item": "energy", "quantity": 15}, {"item": "paper", "quantity": 1}], "output_item": "taco", "output_qty": 25},
+      {"inputs": [{"item": "beef", "quantity": 10}, {"item": "rice", "quantity": 15}, {"item": "cheese", "quantity": 5}, {"item": "flour", "quantity": 10}, {"item": "energy", "quantity": 15}, {"item": "paper", "quantity": 1}], "output_item": "burrito", "output_qty": 20},
+      {"inputs": [{"item": "rice", "quantity": 30}, {"item": "eggs", "quantity": 10}, {"item": "onions", "quantity": 5}, {"item": "energy", "quantity": 15}, {"item": "paper", "quantity": 1}], "output_item": "fried_rice", "output_qty": 30}
+    ]
+  },
+
+  "beverage_production": {
+    "class": "production",
+    "name": "Beverage Production",
+    "description": "Produces ready-to-serve beverages: soda cups, milkshakes, and smoothies.",
+    "allowed_terrain": ["district_food", "district_food_court", "urban"],
+    "allowed_proximity": ["urban", "road"],
+    "base_wage_cost": 80.0,
+    "cycles_to_complete": 35,
+    "startup_cost": 20000,
+    "production_lines": [
+      {"inputs": [{"item": "soda", "quantity": 30}, {"item": "paper", "quantity": 1}], "output_item": "soda_cup", "output_qty": 50},
+      {"inputs": [{"item": "milk", "quantity": 20}, {"item": "ice_cream", "quantity": 10}, {"item": "sugar", "quantity": 5}, {"item": "paper", "quantity": 1}], "output_item": "milkshake", "output_qty": 30},
+      {"inputs": [{"item": "apples", "quantity": 20}, {"item": "sugar", "quantity": 5}, {"item": "water", "quantity": 20}, {"item": "energy", "quantity": 10}, {"item": "paper", "quantity": 1}], "output_item": "smoothie", "output_qty": 30}
+    ]
+  },
+
+  "food_packaging_factory": {
+    "class": "production",
+    "name": "Food Packaging Factory",
+    "description": "Manufactures disposable food packaging: trays, takeout containers, and utensils.",
+    "allowed_terrain": ["district_food", "district_food_court", "district_industrial", "urban"],
+    "allowed_proximity": ["urban", "road"],
+    "base_wage_cost": 70.0,
+    "cycles_to_complete": 30,
+    "startup_cost": 18000,
+    "production_lines": [
+      {"inputs": [{"item": "plastic", "quantity": 20}, {"item": "energy", "quantity": 15}, {"item": "paper", "quantity": 1}], "output_item": "food_tray", "output_qty": 80},
+      {"inputs": [{"item": "plastic", "quantity": 15}, {"item": "energy", "quantity": 10}, {"item": "paper", "quantity": 1}], "output_item": "takeout_container", "output_qty": 60},
+      {"inputs": [{"item": "plastic", "quantity": 5}, {"item": "paper", "quantity": 2}, {"item": "energy", "quantity": 5}], "output_item": "disposable_utensils", "output_qty": 100}
+    ]
   }
 }

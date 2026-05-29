@@ -364,6 +364,36 @@
       "reorder_at": 200,
       "max_price_multiplier": 1.1,
       "market": "regular"
+    },
+    "eggs": {
+      "target_inventory": 1500,
+      "reorder_at": 300,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "lamb_meat": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "sugar": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "tomato": {
+      "target_inventory": 1000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "water": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
     }
   },
   "sell_items": {
