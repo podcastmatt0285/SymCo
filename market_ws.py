@@ -258,5 +258,26 @@ async def tick(current_tick: int, now: datetime):
         print(f"[MarketWS] tick error: {e}")
 
 
+async def push_market_snapshot_now() -> None:
+    """Push an immediate snapshot to all connected market clients (fire-and-forget)."""
+    global _last_snapshot, _connections
+    if not _connections:
+        return
+    try:
+        loop = asyncio.get_running_loop()
+        snap = await loop.run_in_executor(None, collect_snapshot)
+        _last_snapshot = snap
+        payload = json.dumps(snap)
+        dead = set()
+        for ws in list(_connections):
+            try:
+                await ws.send_text(payload)
+            except Exception:
+                dead.add(ws)
+        _connections -= dead
+    except Exception as e:
+        print(f"[MarketWS] push error: {e}")
+
+
 def initialize():
     pass

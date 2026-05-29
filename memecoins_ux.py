@@ -1790,6 +1790,9 @@ async def api_meme_order(
         price=price if order_mode == "limit" else None,
     )
     if order and order.status != "cancelled":
+        from market_ws import push_market_snapshot_now
+        import asyncio
+        asyncio.create_task(push_market_snapshot_now())
         return RedirectResponse(url=f"/memecoins/{sym}?tab=trade&msg={message.replace(' ', '+')}", status_code=303)
     else:
         return RedirectResponse(url=f"/memecoins/{sym}?tab=trade&error={message.replace(' ', '+')}", status_code=303)
@@ -1812,6 +1815,9 @@ async def api_cancel_order(
     success, message = cancel_order(player_id=player.id, order_id=order_id)
     sym = meme_symbol.upper()
     if success:
+        from market_ws import push_market_snapshot_now
+        import asyncio
+        asyncio.create_task(push_market_snapshot_now())
         return RedirectResponse(url=f"/memecoins/{sym}?tab=trade&msg={message.replace(' ', '+')}", status_code=303)
     else:
         return RedirectResponse(url=f"/memecoins/{sym}?tab=trade&error={message.replace(' ', '+')}", status_code=303)

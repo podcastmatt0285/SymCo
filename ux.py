@@ -14361,6 +14361,8 @@ async def quick_buy_execute(
         iname = item_type.replace("_", " ").title()
         from player_feed_ws import send_balance_now
         asyncio.create_task(send_balance_now(player.id))
+        from market_ws import push_market_snapshot_now
+        asyncio.create_task(push_market_snapshot_now())
         return JSONResponse({
             "ok":      True,
             "message": f"Order placed: {quantity:,.0f}× {iname} @ {fmt_usd(cap_usd, disp)} cap",
@@ -14513,6 +14515,8 @@ async def list_to_market(item_type: str = Form(...), quantity: float = Form(...)
     import market
     price_usd = price * disp["usd_per_unit"]
     market.create_order(player.id, market.OrderType.SELL, market.OrderMode.LIMIT, item_type, quantity, price_usd)
+    from market_ws import push_market_snapshot_now
+    asyncio.create_task(push_market_snapshot_now())
     return RedirectResponse(url="/inventory", status_code=303)
 
 @router.post("/api/market/order")
@@ -14547,6 +14551,8 @@ async def place_order(item_type: str = Form(...), order_type: str = Form(...), q
             bal = get_player_cash_balance(player.id)
             err = f"Order rejected: insufficient funds (balance {bal:,.2f}, cost ≈ {quantity * price_usd:,.2f})."
         return RedirectResponse(url=f"/market?item={item_type}&order_err={urllib.parse.quote(err)}", status_code=303)
+    from market_ws import push_market_snapshot_now
+    asyncio.create_task(push_market_snapshot_now())
     return RedirectResponse(url=f"/market?item={item_type}", status_code=303)
 
 @router.post("/api/market/cancel-order")
@@ -14558,6 +14564,8 @@ async def cancel_market_order(order_id: int = Form(...), item_type: str = Form(.
     disp = get_player_display_currency(player.id)
     import market
     market.cancel_order(order_id, player.id)
+    from market_ws import push_market_snapshot_now
+    asyncio.create_task(push_market_snapshot_now())
     return RedirectResponse(url=f"/market?item={item_type}", status_code=303)
 
 @router.post("/api/land-market/buy-auction")
@@ -14570,6 +14578,8 @@ async def buy_auction_endpoint(auction_id: int = Form(...), session_token: Optio
     
     from land_market import buy_auction_land
     if buy_auction_land(player.id, auction_id):
+        from market_ws import push_market_snapshot_now
+        asyncio.create_task(push_market_snapshot_now())
         return RedirectResponse(url="/land-market?success=auction_bought", status_code=303)
     return RedirectResponse(url="/land-market?error=purchase_failed", status_code=303)
 
@@ -14583,6 +14593,8 @@ async def buy_listing_endpoint(listing_id: int = Form(...), session_token: Optio
     
     from land_market import buy_listed_land
     if buy_listed_land(player.id, listing_id):
+        from market_ws import push_market_snapshot_now
+        asyncio.create_task(push_market_snapshot_now())
         return RedirectResponse(url="/land-market?tab=listings&success=listing_bought", status_code=303)
     return RedirectResponse(url="/land-market?tab=listings&error=purchase_failed", status_code=303)
 
@@ -14594,6 +14606,8 @@ async def cancel_listing_endpoint(listing_id: int = Form(...), session_token: Op
 
     from land_market import cancel_listing
     if cancel_listing(player.id, listing_id):
+        from market_ws import push_market_snapshot_now
+        asyncio.create_task(push_market_snapshot_now())
         return RedirectResponse(url="/land?success=listing_cancelled", status_code=303)
     return RedirectResponse(url="/land?error=cancel_failed", status_code=303)
 
@@ -14608,6 +14622,8 @@ async def list_land_endpoint(land_plot_id: int = Form(...), asking_price: float 
     from land_market import list_land_for_sale
     price_usd = asking_price * disp["usd_per_unit"]
     if list_land_for_sale(player.id, land_plot_id, price_usd):
+        from market_ws import push_market_snapshot_now
+        asyncio.create_task(push_market_snapshot_now())
         return RedirectResponse(url="/land?success=land_listed", status_code=303)
     return RedirectResponse(url="/land?error=listing_failed", status_code=303)
 
@@ -14631,6 +14647,8 @@ async def place_buy_order_endpoint(
         proximity=proximity if proximity else None,
     )
     if result is not False:  # None = auto-executed, LandBuyOrder = standing order
+        from market_ws import push_market_snapshot_now
+        asyncio.create_task(push_market_snapshot_now())
         return RedirectResponse(url="/land-market?tab=orders&success=buy_order_placed", status_code=303)
     return RedirectResponse(url="/land-market?tab=orders&error=buy_order_failed", status_code=303)
 
@@ -14644,6 +14662,8 @@ async def cancel_buy_order_endpoint(
     if isinstance(player, RedirectResponse): return player
     from land_market import cancel_land_buy_order
     if cancel_land_buy_order(player.id, order_id):
+        from market_ws import push_market_snapshot_now
+        asyncio.create_task(push_market_snapshot_now())
         return RedirectResponse(url="/land-market?tab=orders&success=buy_order_cancelled", status_code=303)
     return RedirectResponse(url="/land-market?tab=orders&error=cancel_failed", status_code=303)
 
@@ -14672,6 +14692,8 @@ async def brokerage_etf_order(
         quantity,
         price_usd,
     )
+    from market_ws import push_market_snapshot_now
+    asyncio.create_task(push_market_snapshot_now())
     fund_param = f"&fund={fund}" if fund else ""
     return RedirectResponse(url=f"/brokerage/trading?mode=etf{fund_param}", status_code=303)
 
@@ -14688,6 +14710,8 @@ async def brokerage_cancel_etf_order(
         return player
     import market
     market.cancel_order(order_id, player.id)
+    from market_ws import push_market_snapshot_now
+    asyncio.create_task(push_market_snapshot_now())
     fund_param = f"&fund={fund}" if fund else ""
     return RedirectResponse(url=f"/brokerage/trading?mode=etf{fund_param}", status_code=303)
 
@@ -15344,9 +15368,11 @@ async def brokerage_buy_shares(
         
         status = "success" if result else "error"
         msg = "buy_order_placed" if result else "buy_failed"
-        
+        if result:
+            from market_ws import push_market_snapshot_now
+            asyncio.create_task(push_market_snapshot_now())
         return RedirectResponse(url=f"/brokerage/trading?ticker={ticker}&{status}={msg}", status_code=303)
-        
+
     except Exception as e:
         print(f"[UX] Buy shares error: {e}")
         return RedirectResponse(url="/brokerage/trading?error=exception", status_code=303)
@@ -15387,9 +15413,11 @@ async def brokerage_sell_shares(
         
         status = "success" if result else "error"
         msg = "sell_order_placed" if result else "sell_failed"
-        
+        if result:
+            from market_ws import push_market_snapshot_now
+            asyncio.create_task(push_market_snapshot_now())
         return RedirectResponse(url=f"/brokerage/trading?ticker={ticker}&{status}={msg}", status_code=303)
-        
+
     except Exception as e:
         print(f"[UX] Sell shares error: {e}")
         return RedirectResponse(url="/brokerage/trading?error=exception", status_code=303)
@@ -15410,10 +15438,11 @@ async def brokerage_cancel_order(
         from banks.brokerage_order_book import cancel_order
         
         success = cancel_order(player.id, order_id)
-        
-        # Determine where to redirect (trading page or portfolio)
+        if success:
+            from market_ws import push_market_snapshot_now
+            asyncio.create_task(push_market_snapshot_now())
         return RedirectResponse(url=f"/brokerage/portfolio?success={'cancelled' if success else 'cancel_failed'}", status_code=303)
-        
+
     except Exception as e:
         print(f"[UX] Cancel order error: {e}")
         return RedirectResponse(url="/brokerage/portfolio?error=exception", status_code=303)
@@ -16329,6 +16358,8 @@ async def api_meme_qb_execute(
         return JSONResponse({"error": message})
     from player_feed_ws import send_balance_now
     asyncio.create_task(send_balance_now(player.id))
+    from market_ws import push_market_snapshot_now
+    asyncio.create_task(push_market_snapshot_now())
     return JSONResponse({"ok": True, "message": message,
                          "filled": order.quantity_filled,
                          "status": order.status})

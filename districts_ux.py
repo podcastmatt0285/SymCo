@@ -1218,6 +1218,9 @@ async def api_district_market_order(
         )
         
         if order:
+            from market_ws import push_market_snapshot_now
+            import asyncio
+            asyncio.create_task(push_market_snapshot_now())
             return RedirectResponse(url=f"/district-market?item={item_type}&success=order_placed", status_code=303)
         else:
             return RedirectResponse(url=f"/district-market?item={item_type}&error=order_failed", status_code=303)
@@ -1245,8 +1248,11 @@ async def api_district_market_cancel(
         import district_market as dm
         
         success = dm.cancel_order(order_id, player.id)
-        
+
         if success:
+            from market_ws import push_market_snapshot_now
+            import asyncio
+            asyncio.create_task(push_market_snapshot_now())
             return RedirectResponse(url=f"/district-market?item={item_type}&success=order_cancelled", status_code=303)
         else:
             return RedirectResponse(url=f"/district-market?item={item_type}&error=cancel_failed", status_code=303)
