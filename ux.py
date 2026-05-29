@@ -3652,6 +3652,17 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
             land_db.close()
             return shell("Businesses", "<h3>No businesses found.</h3><a href='/land' class='btn-blue'>Go to Land</a>", player.cash_balance, player.id)
 
+        # Batch-load LandPlots and RetailPrices to avoid N+1 queries in the loops below
+        _plot_ids = [b.land_plot_id for b in player_businesses if b.land_plot_id]
+        _plots_by_id = {
+            p.id: p
+            for p in (land_db.query(LandPlot).filter(LandPlot.id.in_(_plot_ids)).all() if _plot_ids else [])
+        }
+        _all_retail_prices = {
+            rp.item_type: rp
+            for rp in land_db.query(RetailPrice).filter(RetailPrice.player_id == player.id).all()
+        }
+
         # Build enriched data list
         biz_data = []
         for biz in player_businesses:
@@ -3667,7 +3678,7 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
             cycles_total = config.get("cycles_to_complete", 1)
             progress_pct = (biz.progress_ticks / cycles_total * 100) if cycles_total > 0 else 0
             dismantle_status = get_dismantling_status(biz.id)
-            plot = land_db.query(LandPlot).filter(LandPlot.id == biz.land_plot_id).first() if biz.land_plot_id else None
+            plot = _plots_by_id.get(biz.land_plot_id)
             biz_data.append({"biz": biz, "config": config, "name": biz_name, "cls": biz_class,
                               "cycles_total": cycles_total, "progress_pct": progress_pct,
                               "dismantle": dismantle_status, "plot": plot})
@@ -3850,7 +3861,7 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
             else:
                 retail_rows = ""
                 for item, stats in config.get("products", {}).items():
-                    pe        = land_db.query(RetailPrice).filter(RetailPrice.player_id == player.id, RetailPrice.item_type == item).first()
+                    pe        = _all_retail_prices.get(item)
                     cur_p     = fmt_usd(pe.price, disp) if pe else "Market"
                     ip        = item in paused_prod_keys
                     safe_item = item.replace("'", "\\'")
@@ -3860,14 +3871,15 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
                         dot = f'<span style="color:#22c55e;font-size:0.75rem;" title="In stock: {in_stock:,.0f}">● {in_stock:,.0f}</span>'
                     else:
                         dot = '<span style="color:#ef4444;font-size:0.75rem;" title="No stock — nothing to sell">● Out of stock</span>'
-                    r_safe   = item.replace("'", "").replace('"', "")
-                    r_pid    = f"qbp-r-{biz.id}-{r_safe}"
-                    r_defqty = max(100, 500 - in_stock)
+                    r_safe       = item.replace("'", "").replace('"', "")
+                    r_pid        = f"qbp-r-{biz.id}-{r_safe}"
+                    r_defqty     = max(100, 500 - in_stock)
+                    price_lbl_id = f"rprice-{biz.id}-{r_safe}"
                     retail_rows += f'''<div class="line-row{' paused' if ip else ''}" id="retail-{biz.id}-{item}" style="flex-wrap:wrap;gap:6px;">
                         <span style="font-size:0.82rem;flex:1;">{item.replace("_"," ").title()} <span style="color:#64748b;font-size:0.75rem;">e={stats.get("elasticity","?")}</span> {dot}</span>
                         <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
-                            <span style="color:#38bdf8;font-size:0.82rem;font-weight:bold;">{cur_p}</span>
-                            <form action="/api/retail/set-price?sort={sort}&biz_filter={biz_filter}" method="post" style="display:flex;gap:4px;align-items:center;">
+                            <span id="{price_lbl_id}" style="color:#38bdf8;font-size:0.82rem;font-weight:bold;">{cur_p}</span>
+                            <form data-price-lbl="{price_lbl_id}" onsubmit="return setRetailPrice(event,this,\'{item}\')" style="display:flex;gap:4px;align-items:center;">
                                 <input type="hidden" name="item_type" value="{item}">
                                 <input type="number" name="price" step="0.01" min="0.01" placeholder="{disp["code"]}" style="width:90px;padding:3px 5px;font-size:0.78rem;">
                                 <button type="submit" class="btn-sm btn-sm-blue">Set</button>
@@ -4103,6 +4115,35 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
         body.innerHTML = d.html || '';
       }})
       .catch(function(){{ body.innerHTML='<span style="color:#ef4444;font-size:0.8rem;">Error loading plan.</span>'; }});
+  }};
+  window.setRetailPrice = function(event, form, itemType) {{
+    event.preventDefault();
+    var priceInput = form.querySelector('input[name="price"]');
+    var btn = form.querySelector('button');
+    var price = parseFloat(priceInput.value);
+    if (!price || price <= 0) return false;
+    btn.disabled = true;
+    btn.textContent = '…';
+    fetch('/api/biz/set-price', {{
+      method: 'POST',
+      headers: {{'Content-Type': 'application/x-www-form-urlencoded'}},
+      body: new URLSearchParams({{item_type: itemType, price: price}})
+    }})
+    .then(function(r) {{ return r.json(); }})
+    .then(function(d) {{
+      if (d.ok) {{
+        var lbl = document.getElementById(form.dataset.priceLbl);
+        if (lbl) lbl.textContent = d.display_price;
+        priceInput.value = '';
+        btn.textContent = '✓';
+        setTimeout(function() {{ btn.textContent = 'Set'; btn.disabled = false; }}, 1200);
+      }} else {{
+        btn.textContent = '✗';
+        btn.disabled = false;
+      }}
+    }})
+    .catch(function() {{ btn.textContent = '✗'; btn.disabled = false; }});
+    return false;
   }};
 }})();
 </script>
