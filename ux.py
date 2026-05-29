@@ -4756,7 +4756,7 @@ def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all
                         f'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>'
                         f' List</button>'
                         f'<div class="inv-list-form" id="{form_id}">'
-                        f'<form action="/api/inventory/list" method="post" class="inv-list-inner">'
+                        f'<form action="/api/inventory/list" method="post" class="inv-list-inner" onsubmit="return invListSubmit(event,this)">'
                         f'<input type="hidden" name="item_type" value="{item}">'
                         f'<div class="inv-list-fields">'
                         f'<input type="number" name="quantity" placeholder="Qty" min="0" max="{qty:.0f}" class="inv-input" required>'
@@ -4968,14 +4968,41 @@ def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all
                 btn.dataset.expanded = "1";
             }
         }
+        function _doListFetch(form) {
+            var btn = form.querySelector('button[type="submit"]');
+            var itemType = form.querySelector('input[name="item_type"]').value;
+            var quantity = form.querySelector('input[name="quantity"]').value;
+            var price = form.querySelector('input[name="price"]').value;
+            if (!quantity || !price || parseFloat(quantity) <= 0 || parseFloat(price) <= 0) return;
+            if (btn) { btn.disabled = true; btn.textContent = '…'; }
+            fetch('/api/inventory/list', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest'},
+                body: new URLSearchParams({item_type: itemType, quantity: quantity, price: price})
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.ok) {
+                    if (btn) { btn.textContent = '✓'; setTimeout(function() { btn.textContent = 'List →'; btn.disabled = false; }, 1500); }
+                } else {
+                    if (btn) { btn.textContent = d.error || '✗'; btn.disabled = false; }
+                }
+            })
+            .catch(function() { if (btn) { btn.textContent = '✗'; btn.disabled = false; } });
+        }
+        function invListSubmit(event, form) {
+            event.preventDefault();
+            _doListFetch(form);
+            return false;
+        }
         function invQuickBid(formId, bidPrice, capQty) {
-            var form = document.getElementById(formId);
-            var inner = form.querySelector('form');
-            var qi = inner.querySelector('input[name="quantity"]');
-            var pi = inner.querySelector('input[name="price"]');
+            var wrapper = document.getElementById(formId);
+            var form = wrapper.querySelector('form');
+            var qi = form.querySelector('input[name="quantity"]');
+            var pi = form.querySelector('input[name="price"]');
             if (qi) qi.value = capQty;
             if (pi) pi.value = bidPrice.toFixed(4);
-            inner.submit();
+            _doListFetch(form);
         }
         function invToggleForm(id, btn) {
             var form = document.getElementById(id);
@@ -14917,19 +14944,24 @@ async def biz_progress(session_token: Optional[str] = Cookie(None)):
         db.close()
 
 @router.post("/api/inventory/list")
-async def list_to_market(item_type: str = Form(...), quantity: float = Form(...), price: float = Form(...), session_token: Optional[str] = Cookie(None)):
+async def list_to_market(request: Request, item_type: str = Form(...), quantity: float = Form(...), price: float = Form(...), session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
+    is_ajax = request.headers.get("x-requested-with") == "XMLHttpRequest"
     # ETF/fund shares trade exclusively on the ETF Trading Floor.
     if item_type.endswith("_shares"):
+        if is_ajax:
+            return JSONResponse({"ok": False, "error": "Use ETF Trading Floor for fund shares"})
         return RedirectResponse(url="/brokerage/trading?mode=etf", status_code=303)
-    from reserve_banks import get_player_display_currency, fmt_usd
+    from reserve_banks import get_player_display_currency
     disp = get_player_display_currency(player.id)
     import market
     price_usd = price * disp["usd_per_unit"]
     market.create_order(player.id, market.OrderType.SELL, market.OrderMode.LIMIT, item_type, quantity, price_usd)
     from market_ws import push_market_snapshot_now
     asyncio.create_task(push_market_snapshot_now())
+    if is_ajax:
+        return JSONResponse({"ok": True})
     return RedirectResponse(url="/inventory", status_code=303)
 
 @router.post("/api/market/order")
