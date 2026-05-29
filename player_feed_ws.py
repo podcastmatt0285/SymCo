@@ -66,7 +66,13 @@ async def player_feed_ws(websocket: WebSocket):
     await _send_state(player.id)
     try:
         while True:
-            await websocket.receive_text()  # keep-alive; client sends nothing
+            try:
+                await asyncio.wait_for(websocket.receive_text(), timeout=45.0)
+            except asyncio.TimeoutError:
+                try:
+                    await websocket.send_json({"type": "ping"})
+                except Exception:
+                    break
     except Exception:
         pass
     finally:
