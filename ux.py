@@ -4263,12 +4263,14 @@ def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all
         item_set = [r[0] for r in filtered_base]
 
         # Batch enrichment data (replaces N per-item get_market_price calls)
-        bid_ask = {}       # item_type -> (best_bid, best_ask)
-        price_chg = {}     # item_type -> % change vs 24h ago
-        vol_24h = {}       # item_type -> 24h trade volume (units)
-        player_listed = {} # item_type -> (qty_remaining, avg_price)
-        produces_map = {}  # item_type -> [business names that produce it]
-        consumes_map = {}  # item_type -> [business names that consume it]
+        bid_ask = {}        # item_type -> (best_bid, best_ask)
+        price_chg = {}      # item_type -> % change vs 24h ago
+        vol_24h = {}        # item_type -> 24h trade volume (units)
+        player_listed = {}  # item_type -> (qty_remaining, avg_price)
+        market_depth = {}   # item_type -> total sell-side units available
+        sparkline_data = {} # item_type -> [(date_str, avg_price), ...] last 7 days
+        produces_map = {}   # item_type -> [business names that produce it]
+        consumes_map = {}   # item_type -> [business names that consume it]
 
         if item_set:
             try:
@@ -4350,6 +4352,34 @@ def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all
                         _MktOrder.status.in_(['active', 'partially_filled']),
                     ).group_by(_MktOrder.item_type).all()
                     player_listed = {r.item_type: (int(r.qty_rem or 0), float(r.avg_px or 0)) for r in _sell_rows}
+
+                    # Batch 4: total sell-side market depth (all sellers, not just player)
+                    _dep_rows = _mdb.query(
+                        _MktOrder.item_type,
+                        _sqlfunc.sum(_MktOrder.quantity - _MktOrder.quantity_filled).label('depth')
+                    ).filter(
+                        _MktOrder.item_type.in_(item_set),
+                        _MktOrder.order_type == 'sell',
+                        _MktOrder.status.in_(['active', 'partially_filled'])
+                    ).group_by(_MktOrder.item_type).all()
+                    market_depth = {r.item_type: int(r.depth) for r in _dep_rows if r.depth is not None}
+
+                    # Batch 5: 7-day daily avg price per item (for sparkline)
+                    _7d_ago = _dt.utcnow() - _td(days=7)
+                    _spk_rows = _mdb.query(
+                        _Trade.item_type,
+                        _sqlfunc.date(_Trade.executed_at).label('trade_date'),
+                        _sqlfunc.avg(_Trade.price).label('avg_price')
+                    ).filter(
+                        _Trade.item_type.in_(item_set),
+                        _Trade.executed_at >= _7d_ago
+                    ).group_by(_Trade.item_type, _sqlfunc.date(_Trade.executed_at)).all()
+                    for _r in _spk_rows:
+                        sparkline_data.setdefault(_r.item_type, []).append(
+                            (str(_r.trade_date), float(_r.avg_price))
+                        )
+                    for _k in sparkline_data:
+                        sparkline_data[_k].sort(key=lambda x: x[0])
                 finally:
                     _mdb.close()
             except Exception:
@@ -4568,10 +4598,50 @@ def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all
                 else:
                     chg_badge = '<span class="inv-chg-flat">—</span>'
 
-                # Bid / ask / volume row
+                # Bid / ask / spread / depth / volume / sparkline row
                 _ba = bid_ask.get(item, (None, None))
                 _best_bid, _best_ask = _ba
                 _vol = vol_24h.get(item, 0)
+
+                # Bid-ask spread
+                if _best_bid and _best_ask and _best_ask > 0:
+                    _sp = (_best_ask - _best_bid) / _best_ask * 100
+                    _sc = '#22c55e' if _sp < 2 else ('#eab308' if _sp < 10 else '#f97316')
+                    spread_html = f'<span class="inv-spread" style="color:{_sc}">↔ {_sp:.1f}%</span>'
+                else:
+                    spread_html = ''
+
+                # Total sell-side depth
+                _dep = market_depth.get(item, 0)
+                if _dep >= 1000000: _ds = f'{_dep/1000000:.1f}M avail'
+                elif _dep >= 1000: _ds = f'{_dep/1000:.1f}K avail'
+                elif _dep > 0: _ds = f'{_dep} avail'
+                else: _ds = ''
+
+                # 7-day sparkline SVG
+                _spts = sparkline_data.get(item, [])
+                if len(_spts) >= 2:
+                    _spx = [p for _, p in _spts]
+                    _smn, _smx = min(_spx), max(_spx)
+                    _srng = max(_smx - _smn, 0.0001)
+                    _SW, _SH = 60, 18
+                    _spoly = ' '.join(
+                        f'{int(i / max(len(_spx)-1, 1) * _SW)},'
+                        f'{int((1 - (_p - _smn) / _srng) * (_SH - 2) + 1)}'
+                        for i, _p in enumerate(_spx)
+                    )
+                    _stc = '#22c55e' if _spx[-1] >= _spx[0] else '#ef4444'
+                    sparkline_html = (
+                        f'<svg class="inv-spark" width="{_SW}" height="{_SH}" '
+                        f'viewBox="0 0 {_SW} {_SH}">'
+                        f'<polyline points="{_spoly}" fill="none" stroke="{_stc}" '
+                        f'stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>'
+                        f'</svg>'
+                    )
+                else:
+                    sparkline_html = ''
+
+                # Assemble market row
                 if _best_bid or _best_ask:
                     _bid_str = fmt_usd(_best_bid, disp) if _best_bid else '—'
                     _ask_str = fmt_usd(_best_ask, disp) if _best_ask else '—'
@@ -4579,13 +4649,25 @@ def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all
                     if _vol >= 1000000: _vs = f'{_vol/1000000:.1f}M vol'
                     elif _vol >= 1000: _vs = f'{_vol/1000:.1f}K vol'
                     elif _vol > 0: _vs = f'{_vol} vol'
-                    _vp = f' <span class="inv-vol">{_vs}</span>' if _vs else ''
-                    mkt_row_html = f'<div class="inv-mkt-row"><span class="inv-bid">Bid {_bid_str}</span><span class="inv-mkt-sep">·</span><span class="inv-ask">Ask {_ask_str}</span>{_vp}</div>'
+                    _mp = [
+                        f'<span class="inv-bid">Bid {_bid_str}</span>',
+                        '<span class="inv-mkt-sep">·</span>',
+                        f'<span class="inv-ask">Ask {_ask_str}</span>',
+                    ]
+                    if _ds: _mp.append(f'<span class="inv-depth">({_ds})</span>')
+                    if spread_html: _mp.extend(['<span class="inv-mkt-sep">·</span>', spread_html])
+                    _mr = []
+                    if _vs: _mr.append(f'<span class="inv-vol">{_vs}</span>')
+                    if sparkline_html: _mr.append(sparkline_html)
+                    if _mr: _mp.append(f'<span class="inv-mkt-r">{"".join(_mr)}</span>')
+                    mkt_row_html = f'<div class="inv-mkt-row">{"".join(_mp)}</div>'
                 elif _vol > 0:
                     if _vol >= 1000000: _vs = f'{_vol/1000000:.1f}M vol'
                     elif _vol >= 1000: _vs = f'{_vol/1000:.1f}K vol'
                     else: _vs = f'{_vol} vol'
-                    mkt_row_html = f'<div class="inv-mkt-row"><span class="inv-vol">{_vs} 24h</span></div>'
+                    _mr2 = [f'<span class="inv-vol">{_vs} 24h</span>']
+                    if sparkline_html: _mr2.append(sparkline_html)
+                    mkt_row_html = f'<div class="inv-mkt-row">{"".join(_mr2)}</div>'
                 else:
                     mkt_row_html = ''
 
@@ -4621,11 +4703,12 @@ def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all
                 else:
                     desc_elem_html = f'<span class="inv-desc-text">{description}</span>'
 
-                # Action area: list form or ETF link
+                # Action area: list form, quick-bid, or ETF link
                 form_id = f"invform-{item}"
                 _ask_attr = f' data-ask="{_best_ask}"' if _best_ask else ''
                 if item.endswith("_shares"):
                     list_btn_html = '<a href="/brokerage/trading?mode=etf" class="btn-blue" style="font-size:0.75rem;">ETF Floor →</a>'
+                    quick_bid_html = ''
                 else:
                     list_btn_html = (
                         f'<button class="inv-list-toggle" onclick="invToggleForm(\'{form_id}\', this)" type="button">'
@@ -4640,6 +4723,16 @@ def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all
                         f'<button type="submit" class="btn-blue inv-submit-btn">List →</button>'
                         f'</div></form></div>'
                     )
+                    # Quick-sell at best bid (capped at 500 units to avoid accidents)
+                    if _best_bid:
+                        _cap = min(int(qty), 500)
+                        quick_bid_html = (
+                            f'<button class="inv-quick-bid" type="button" '
+                            f'onclick="invQuickBid(\'{form_id}\', {_best_bid:.4f}, {_cap})">'
+                            f'⚡ Bid</button>'
+                        )
+                    else:
+                        quick_bid_html = ''
 
                 cards_html += f'''
                 <div class="inv-card" data-name="{display_name.lower()} {item.lower()}" data-cat="{filter_cat}"{_ask_attr}>
@@ -4657,6 +4750,7 @@ def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all
                     <div class="inv-card-actions">
                         <a href="/market?search={item}" class="inv-mkt-link">📊 Market</a>
                         {list_btn_html}
+                        {quick_bid_html}
                     </div>
                 </div>'''
 
@@ -4768,12 +4862,16 @@ def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all
         .inv-chg-down { color:#ef4444; font-size:0.65rem; font-weight:700; padding:1px 4px; border-radius:3px; background:#ef444418; }
         .inv-chg-flat { color:#64748b; font-size:0.65rem; }
 
-        /* Bid / ask / volume row */
-        .inv-mkt-row  { display:flex; align-items:center; gap:6px; font-size:0.72rem; margin:4px 0; flex-wrap:wrap; }
+        /* Bid / ask / spread / depth / volume / sparkline row */
+        .inv-mkt-row  { display:flex; align-items:center; gap:5px; font-size:0.72rem; margin:4px 0; flex-wrap:wrap; }
         .inv-bid      { color:#22c55e; font-weight:600; }
         .inv-ask      { color:#f97316; font-weight:600; }
         .inv-mkt-sep  { color:#334155; }
-        .inv-vol      { color:#475569; margin-left:auto; }
+        .inv-depth    { color:#475569; font-size:0.67rem; }
+        .inv-spread   { font-size:0.67rem; font-weight:700; }
+        .inv-mkt-r    { margin-left:auto; display:flex; align-items:center; gap:5px; }
+        .inv-vol      { color:#475569; }
+        .inv-spark    { vertical-align:middle; flex-shrink:0; opacity:0.85; }
 
         /* Business context badges */
         .inv-biz-ctx  { display:flex; gap:4px; flex-wrap:wrap; margin:4px 0; }
@@ -4788,6 +4886,13 @@ def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all
         .inv-card-actions { display:flex; gap:6px; align-items:center; margin-top:6px; flex-wrap:wrap; }
         .inv-mkt-link { font-size:0.72rem; color:#94a3b8; text-decoration:none; padding:3px 8px; border:1px solid #1e293b; border-radius:4px; }
         .inv-mkt-link:hover { color:#38bdf8; border-color:#38bdf8; }
+        .inv-quick-bid {
+            font-size:0.72rem; color:#fbbf24; background:transparent;
+            border:1px solid #78350f; border-radius:4px; padding:3px 8px;
+            cursor:pointer; font-family:inherit; transition:all 0.15s;
+        }
+        .inv-quick-bid:hover { background:#78350f40; border-color:#f59e0b; color:#fde68a; }
+        .inv-quick-bid:disabled { opacity:0.45; cursor:default; }
 
         /* Description expand */
         .inv-desc-toggle { font-size:0.66rem; color:#38bdf8; background:none; border:none; cursor:pointer; padding:0; margin-left:3px; }
@@ -4821,6 +4926,15 @@ def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all
                 btn.textContent = "less";
                 btn.dataset.expanded = "1";
             }
+        }
+        function invQuickBid(formId, bidPrice, capQty) {
+            var form = document.getElementById(formId);
+            var inner = form.querySelector('form');
+            var qi = inner.querySelector('input[name="quantity"]');
+            var pi = inner.querySelector('input[name="price"]');
+            if (qi) qi.value = capQty;
+            if (pi) pi.value = bidPrice.toFixed(4);
+            inner.submit();
         }
         function invToggleForm(id, btn) {
             var form = document.getElementById(id);
