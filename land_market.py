@@ -131,7 +131,7 @@ PRICE_DROP_RATE = 0.15  # Price drops to 35% every hour
 ECONOMIC_THRESHOLD = 10000000  # $1M triggers 1 new plot
 LAND_BANK_ID = -1  # Special owner ID for land bank
 GOVERNMENT_ID = 0  # Government owner ID
-LAND_BANK_MAX_SLOTS = 100  # Maximum plots the land bank can hold
+LAND_BANK_MAX_SLOTS = 1000  # Maximum plots the land bank can hold
 
 # Base prices by terrain
 TERRAIN_BASE_PRICES = {
@@ -583,7 +583,20 @@ def add_to_land_bank(land_plot_id: int, auction_id: Optional[int] = None, last_p
         
         db.add(bank_entry)
         db.commit()
-        
+
+        # Transfer ownership from government to land bank
+        from land import get_db as _get_land_db
+        _ldb = _get_land_db()
+        try:
+            from land import LandPlot as _LandPlot
+            _plot = _ldb.query(_LandPlot).filter(_LandPlot.id == land_plot_id).first()
+            if _plot:
+                _plot.owner_id = LAND_BANK_ID
+                _plot.is_government_owned = False
+                _ldb.commit()
+        finally:
+            _ldb.close()
+
         print(f"[LandMarket] Plot {land_plot_id} added to land bank")
         return True
     finally:
@@ -714,7 +727,19 @@ def create_government_auction(from_land_bank: bool = False, bank_entry: Optional
         if not plot:
             print(f"[LandMarket] Cannot re-auction non-existent plot {bank_entry.land_plot_id}")
             return None
-        
+
+        # Restore government ownership for the auction
+        from land import get_db as _get_land_db, LandPlot as _LandPlot
+        _ldb = _get_land_db()
+        try:
+            _plot_row = _ldb.query(_LandPlot).filter(_LandPlot.id == plot.id).first()
+            if _plot_row:
+                _plot_row.owner_id = GOVERNMENT_ID
+                _plot_row.is_government_owned = True
+                _ldb.commit()
+        finally:
+            _ldb.close()
+
         # Reduce price based on retry attempts (more aggressive pricing)
         base_price = TERRAIN_BASE_PRICES.get(plot.terrain_type, 15000)
         price_reduction = 0.9 ** bank_entry.times_auctioned  # 10% reduction per failed attempt

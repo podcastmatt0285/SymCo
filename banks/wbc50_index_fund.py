@@ -49,10 +49,6 @@ TARGET_HOLDING     = 0.195   # 19.5 % midpoint
 TARGET_HOLDING_MIN = 0.18    # 18 % — buy trigger if below this
 TARGET_HOLDING_MAX = 0.21    # 21 % — sell trigger if above this
 
-# Brokerage-firm top-up limits
-BROKERAGE_TOPUP_PER_CYCLE    = 5_000_000.0    # Max $5 M added per rebalance cycle
-BROKERAGE_TOTAL_FUNDING_CAP  = 500_000_000.0  # Max $500 M total firm will ever fund
-
 # Operational cash buffer — keep this fraction of NAV liquid for redemptions
 CASH_RESERVE_RATIO = 0.02   # 2 %
 
@@ -70,7 +66,6 @@ last_rebalance_tick = 0
 last_valuation_tick = 0
 last_expense_tick   = 0
 ipo_share_price     = None
-total_firm_funding  = 0.0   # Running total funded by Brokerage Firm (excl. seed)
 
 # ==========================
 # DATABASE SETUP
@@ -210,34 +205,6 @@ def get_player_shareholding(player_id: int) -> dict:
         }
     except Exception:
         return {"shares_owned": 0, "current_value": 0.0, "ownership_percentage": 0.0}
-
-
-# ==========================
-# BROKERAGE FIRM FUNDING
-# ==========================
-
-def _request_brokerage_topup(amount: float, reason: str) -> float:
-    """
-    Ask the Brokerage Firm to top up the fund's cash reserves.
-    Returns the amount actually transferred (may be less than requested).
-    """
-    global total_firm_funding
-    import banks
-    from banks.brokerage_firm import firm_deduct_cash
-
-    remaining_cap = BROKERAGE_TOTAL_FUNDING_CAP - total_firm_funding
-    capped = min(amount, BROKERAGE_TOPUP_PER_CYCLE, remaining_cap)
-    if capped <= 0:
-        return 0.0
-
-    success = firm_deduct_cash(capped, "index_fund_topup", reason)
-    if not success:
-        return 0.0
-
-    banks.add_bank_revenue(BANK_ID, capped, f"Brokerage Firm top-up: {reason}")
-    total_firm_funding += capped
-    print(f"[{BANK_NAME}] 💵 Brokerage top-up: ${capped:,.2f} (total funded: ${total_firm_funding:,.2f})")
-    return capped
 
 
 # ==========================
@@ -389,22 +356,7 @@ def rebalance_portfolio():
             holdings_db.commit()
             bank_db.commit()
 
-            # ── Step 3: top up cash from brokerage firm if needed ──────────
-            total_buy_cost = sum(c.current_price * qty for c, _, qty in buys_list)
-            cash_shortfall = total_buy_cost - fund_entity.cash_reserves * 0.98
-            if cash_shortfall > 0:
-                funded = _request_brokerage_topup(
-                    cash_shortfall,
-                    f"rebalance buy: {len(buys_list)} constituents"
-                )
-                if funded > 0:
-                    fund_entity.cash_reserves += funded   # already added by add_bank_revenue
-                    # Avoid double-counting: subtract since add_bank_revenue already committed
-                    fund_entity.cash_reserves -= funded
-                    # Note: the topup is committed in its own session; we just refresh here
-                    bank_db.refresh(fund_entity)
-
-            # ── Step 4: execute buys ───────────────────────────────────────
+            # ── Step 3: execute buys ───────────────────────────────────────
             for company, h, qty in buys_list:
                 cost         = _fund_buy_shares(h, company, qty, bank_db, fund_entity)
                 total_bought += cost
