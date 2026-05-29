@@ -123,6 +123,18 @@
       "max_price_multiplier": 1.15,
       "market": "regular"
     },
+    "pollen": {
+      "target_inventory": 4000,
+      "reorder_at": 800,
+      "max_price_multiplier": 1.2,
+      "market": "regular"
+    },
+    "fertilizer_npk": {
+      "target_inventory": 4000,
+      "reorder_at": 800,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
     "sugar": {
       "target_inventory": 3000,
       "reorder_at": 600,
