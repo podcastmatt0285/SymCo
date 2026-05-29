@@ -394,6 +394,12 @@
       "reorder_at": 1000,
       "max_price_multiplier": 1.05,
       "market": "regular"
+    },
+    "carrots": {
+      "target_inventory": 800,
+      "reorder_at": 160,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
     }
   },
   "sell_items": {
