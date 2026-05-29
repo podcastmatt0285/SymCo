@@ -4764,8 +4764,8 @@ def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all
                         f'<button type="submit" class="btn-blue inv-submit-btn">List →</button>'
                         f'</div></form></div>'
                     )
-                    # Quick-sell at best bid (capped at 500 units to avoid accidents)
-                    if _best_bid:
+                    # Quick-sell at best bid (capped at 500 units); ignore sub-penny placeholder bids
+                    if _best_bid and _best_bid > 0.001:
                         _cap = min(int(qty), 500)
                         quick_bid_html = (
                             f'<button class="inv-quick-bid" type="button" '
