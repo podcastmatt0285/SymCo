@@ -106,7 +106,7 @@ public class WadsworthWidget extends AppWidgetProvider {
                 conn.setReadTimeout(10000);
                 conn.setRequestProperty("Accept", "application/json");
                 conn.setRequestProperty("User-Agent",
-                        "Mozilla/5.0 (Linux; Android 10) Wadsworth/1.0");
+                        "Mozilla/5.0 (Linux; Android " + Build.VERSION.RELEASE + ") Wadsworth/1.0");
                 // Disable keep-alive — prevents stale pooled sockets after device sleep
                 conn.setRequestProperty("Connection", "close");
 
@@ -148,7 +148,8 @@ public class WadsworthWidget extends AppWidgetProvider {
                         views.setTextViewText(id(ctx, notifIds[i]), "");
                     }
                 }
-                views.setTextViewText(id(ctx, "widget_tickers"), "");
+                views.setTextViewText(id(ctx, "widget_tickers"),
+                        data.optString("tickers", ""));
                 mgr.updateAppWidget(widgetId, views);
 
             } catch (Exception e) {

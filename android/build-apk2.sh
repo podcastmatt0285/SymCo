@@ -180,6 +180,8 @@ export PATH="${_SDK_PATH}/cmdline-tools/latest/bin:${_SDK_PATH}/platform-tools:$
 printf "%s\n" "${VERSION_NAME}" | NO_UPDATE_NOTIFIER=1 JAVA_HOME="${_JDK_PATH}" bubblewrap update
 sed -i "s/versionCode [0-9]*/versionCode ${VERSION_CODE}/" app/build.gradle
 sed -i "s/versionName \"[^\"]*\"/versionName \"${VERSION_NAME}\"/" app/build.gradle
+# jcenter was shut down for new uploads in 2021 and is deprecated; use mavenCentral instead.
+sed -i "s/jcenter()/mavenCentral()/g" build.gradle
 echo "  Android project generated: versionCode=${VERSION_CODE}, versionName=${VERSION_NAME}"
 
 # AGP 8+ deprecates package= in the manifest; namespace must be in build.gradle instead.

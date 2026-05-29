@@ -150,7 +150,7 @@ public class P2PWidget extends AppWidgetProvider {
                 // Disable keep-alive to prevent stale pooled sockets after device sleep
                 conn.setRequestProperty("Connection", "close");
                 conn.setRequestProperty("User-Agent",
-                        "Mozilla/5.0 (Linux; Android 10) Wadsworth/1.0");
+                        "Mozilla/5.0 (Linux; Android " + Build.VERSION.RELEASE + ") Wadsworth/1.0");
 
                 int httpCode = conn.getResponseCode();
                 if (httpCode != 200) {
