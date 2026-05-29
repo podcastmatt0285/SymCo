@@ -1,29 +1,100 @@
 {
   "player_id": -2083,
   "business_name": "Global Agrochemicals",
-  "description": "Industrial chemical and agricultural input producer supplying caustic soda, acid solutions, fertilizers, compost, and chemical solvents.",
+  "description": "Industrial chemical and agricultural input producer. Sources phosphate, potash, and sulfur from the market to synthesize the full NPK fertilizer chain. Secondary supplier of sulfuric acid, caustic soda, and ammonia.",
   "cash_caps": {"hard_high": 30000000, "soft_high": 12000000, "soft_low": 3000000, "hard_low": 1000000},
   "seed": {
     "starting_cash": 8000000,
+    "starting_inventory": {
+      "sulfuric_acid": 1000,
+      "ammonia": 1000,
+      "phosphoric_acid": 1000
+    },
     "land_plots": [],
     "districts": [{"district_type": "industrial", "size": 3, "plots_merged": 3}]
   },
   "businesses": [
-    {"business_type": "chemical_plant", "district_seed_index": 0, "active_lines": ["caustic_soda", "acid_solution", "fertilizer", "compost", "chemical_solvent"]},
-    {"business_type": "chemical_plant", "district_seed_index": 0, "active_lines": ["fertilizer", "compost", "caustic_soda", "acid_solution"]}
+    {
+      "business_type": "chemical_plant",
+      "district_seed_index": 0,
+      "active_lines": ["sulfuric_acid", "ammonia", "phosphoric_acid", "fertilizer_npk"]
+    },
+    {
+      "business_type": "chemical_plant",
+      "district_seed_index": 0,
+      "active_lines": ["sulfuric_acid", "ammonia", "phosphoric_acid", "fertilizer_npk", "caustic_soda"]
+    }
   ],
   "buy_items": {
-    "salt": {"target_inventory": 5000, "reorder_at": 1000, "max_price_multiplier": 1.05, "market": "regular"},
-    "sulfur": {"target_inventory": 3000, "reorder_at": 600, "max_price_multiplier": 1.1, "market": "regular"},
-    "energy": {"target_inventory": 500000, "reorder_at": 100000, "max_price_multiplier": 1.1, "market": "regular"},
-    "water": {"target_inventory": 50000, "reorder_at": 10000, "max_price_multiplier": 1.05, "market": "regular"},
-    "paper": {"target_inventory": 3000, "reorder_at": 600, "max_price_multiplier": 1.05, "market": "regular"}
+    "sulfur": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "natural_gas": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "phosphate_rock": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "potash_ore": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "salt": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "water": {
+      "target_inventory": 50000,
+      "reorder_at": 10000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 500000,
+      "reorder_at": 100000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    }
   },
   "sell_items": {
-    "caustic_soda": {"min_inventory_to_keep": 100, "max_order_quantity": 500, "market": "regular"},
-    "acid_solution": {"min_inventory_to_keep": 100, "max_order_quantity": 500, "market": "regular"},
-    "fertilizer": {"min_inventory_to_keep": 200, "max_order_quantity": 1000, "market": "regular"},
-    "compost": {"min_inventory_to_keep": 200, "max_order_quantity": 1000, "market": "regular"},
-    "chemical_solvent": {"min_inventory_to_keep": 100, "max_order_quantity": 500, "market": "regular"}
+    "fertilizer_npk": {
+      "min_inventory_to_keep": 2000,
+      "max_order_quantity": 8000,
+      "market": "regular"
+    },
+    "sulfuric_acid": {
+      "min_inventory_to_keep": 3000,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "ammonia": {
+      "min_inventory_to_keep": 2000,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "caustic_soda": {
+      "min_inventory_to_keep": 200,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    }
   }
 }
