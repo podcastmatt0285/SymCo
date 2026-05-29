@@ -757,14 +757,14 @@ def get_tutorial_overlay_html(player, current_page: str) -> str:
         </div>
         <div style="background:#0a1e0a;border:1px solid #22c55e;border-radius:6px;
                     padding:12px 16px;margin-bottom:16px;">
-            <strong style="color:#22c55e;">🔔 Free notification access unlocked!</strong>
+            <strong style="color:#22c55e;">🔔 30 days of free notifications unlocked!</strong>
             <p style="color:#94a3b8;font-size:0.85rem;margin:6px 0 0;line-height:1.6;">
-                Completing this tutorial unlocks full notification settings — no CCO required.
+                Completing this tutorial grants 1 month of free notification settings — no CCO required.
                 Head to
                 <a href="/settings?tab=notifications" style="color:#22c55e;font-weight:bold;">
                     Settings → Notifications
                 </a>
-                to configure in-game alerts and push notifications for trades, messages, and events.
+                to configure in-game and push alerts for trades, messages, and events.
             </p>
         </div>
         """
@@ -1188,20 +1188,39 @@ def claim_first_lady(
 
     set_tutorial_step(player.id, 12, is_completion=True)
 
-    # Welcome notification — introduces the notification system as part of tutorial completion
+    # Grant 30-day free notification access (sets cco_rental_expires, checked by player_has_cco())
+    try:
+        from auth import get_db as _auth_db, Player as _Player
+        from datetime import datetime, timedelta
+        _adb = _auth_db()
+        _p = _adb.query(_Player).filter_by(id=player.id).first()
+        if _p:
+            existing = getattr(_p, "cco_rental_expires", None)
+            # Only set if player doesn't already have a longer rental
+            new_expiry = datetime.utcnow() + timedelta(days=30)
+            if not existing or existing < new_expiry:
+                _p.cco_rental_expires = new_expiry
+                _adb.commit()
+        _adb.close()
+    except Exception as _e:
+        print(f"[Tutorial] notification rental grant failed for player {player.id}: {_e}")
+        try: _adb.close()
+        except Exception: pass
+
+    # Welcome notification — player's first real notification, pointing to settings
     try:
         from push_ux import create_game_notification, send_push_notification
         create_game_notification(
             player.id,
             "🎓 Startup Company Complete!",
-            "Your First Lady executive is hired. Notification settings are now fully unlocked — configure alerts in Settings.",
+            "Your First Lady executive is hired. You have 30 days of free notification settings — configure your alerts in Settings.",
             url="/settings?tab=notifications",
             notif_type="tasks_events",
         )
         send_push_notification(
             player.id,
             "🎓 Startup Company Complete!",
-            "Tutorial 1 done! Visit Settings → Notifications to customise your in-game and push alerts.",
+            "Tutorial 1 done! You have 1 month of free notification settings. Visit Settings → Notifications to customise.",
             url="/settings?tab=notifications",
             notif_type="tasks_events",
         )
