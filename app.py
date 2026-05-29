@@ -132,12 +132,15 @@ def _ensure_venv():
     if not os.path.exists(venv_py):
         print("[Bootstrap] Creating virtual environment...")
         subprocess.run([sys.executable, "-m", "venv", venv_dir], check=True)
-        print("[Bootstrap] Installing dependencies...")
-        subprocess.run(
-            [venv_py, "-m", "pip", "install", "-r",
-             os.path.join(_HERE, "requirements.txt"), "--quiet"],
-            check=True,
-        )
+    # Always sync dependencies — fast no-op if already satisfied, catches the
+    # case where the venv exists but pip install never ran (e.g. first clone on
+    # a machine where the venv dir was restored from a backup without packages).
+    print("[Bootstrap] Installing/verifying dependencies...")
+    subprocess.run(
+        [venv_py, "-m", "pip", "install", "-r",
+         os.path.join(_HERE, "requirements.txt"), "--quiet"],
+        check=True,
+    )
     print("[Bootstrap] Restarting inside venv...")
     os.execv(venv_py, [venv_py] + sys.argv)  # replaces current process; nothing below runs
 
