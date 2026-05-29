@@ -84,6 +84,11 @@ async def tick(current_tick: int, now):
         asyncio.create_task(_send_state(pid))
 
 
+async def send_balance_now(player_id: int) -> None:
+    """Push an immediate balance update to a connected player without waiting for the next tick."""
+    asyncio.create_task(_send_state(player_id))
+
+
 async def _send_state(player_id: int):
     try:
         loop = asyncio.get_running_loop()

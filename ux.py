@@ -14349,6 +14349,8 @@ async def quick_buy_execute(
     try:
         create_order(player.id, OrderType.BUY, OrderMode.LIMIT, item_type, quantity, cap_usd)
         iname = item_type.replace("_", " ").title()
+        from player_feed_ws import send_balance_now
+        asyncio.create_task(send_balance_now(player.id))
         return JSONResponse({
             "ok":      True,
             "message": f"Order placed: {quantity:,.0f}× {iname} @ {fmt_usd(cap_usd, disp)} cap",
@@ -16315,6 +16317,8 @@ async def api_meme_qb_execute(
         return JSONResponse({"error": message})
     if order.status == "cancelled":
         return JSONResponse({"error": message})
+    from player_feed_ws import send_balance_now
+    asyncio.create_task(send_balance_now(player.id))
     return JSONResponse({"ok": True, "message": message,
                          "filled": order.quantity_filled,
                          "status": order.status})
@@ -16442,6 +16446,8 @@ async def api_crypto_scam_buy(
             except Exception:
                 pass
         return JSONResponse({"error": msg})
+    from player_feed_ws import send_balance_now
+    asyncio.create_task(send_balance_now(player.id))
     return JSONResponse({"ok": True, "message": msg, **info})
 
 
