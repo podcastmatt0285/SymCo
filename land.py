@@ -681,6 +681,7 @@ def transfer_land(plot_id: int, new_owner_id: int) -> bool:
         return False
     
     plot.owner_id = new_owner_id
+    plot.is_government_owned = False
     db.commit()
     db.close()
     
