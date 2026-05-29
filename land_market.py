@@ -320,7 +320,10 @@ def buy_listed_land(buyer_id: int, listing_id: int) -> bool:
             listing.is_active = False
             db.commit()
             return False
-       
+
+        # Remove from land bank if it was queued there (handles legacy or edge-case data)
+        remove_from_land_bank(listing.land_plot_id)
+
         # Get plot details for logging
         from land import get_land_plot
         plot = get_land_plot(listing.land_plot_id)
@@ -564,6 +567,19 @@ def add_to_land_bank(land_plot_id: int, auction_id: Optional[int] = None, last_p
             existing.last_auction_price = last_price
             existing.added_at = datetime.utcnow()
             db.commit()
+            # Re-auction restored ownership to GOVERNMENT_ID; set it back to LAND_BANK_ID
+            _re_ldb = None
+            try:
+                from land import get_db as _get_land_db2, LandPlot as _LandPlot2
+                _re_ldb = _get_land_db2()
+                _re_plot = _re_ldb.query(_LandPlot2).filter(_LandPlot2.id == land_plot_id).first()
+                if _re_plot and _re_plot.owner_id == GOVERNMENT_ID:
+                    _re_plot.owner_id = LAND_BANK_ID
+                    _re_plot.is_government_owned = False
+                    _re_ldb.commit()
+            finally:
+                if _re_ldb:
+                    _re_ldb.close()
             print(f"[LandMarket] Plot {land_plot_id} returned to land bank (attempt #{existing.times_auctioned})")
             return True
 
