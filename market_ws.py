@@ -20,6 +20,7 @@ router = APIRouter()
 _connections: Set[WebSocket] = set()
 _last_snapshot: dict = {}
 _BROADCAST_EVERY = 6   # ticks (~30 s at 5 s/tick)
+_snapshot_lock = asyncio.Lock()  # serialises concurrent snapshot writes
 
 
 # ── WebSocket endpoint ────────────────────────────────────────────────────────
@@ -236,8 +237,24 @@ def collect_snapshot() -> dict:
 
 # ── Game-tick integration ─────────────────────────────────────────────────────
 
-async def tick(current_tick: int, now: datetime):
+async def _broadcast(snap: dict) -> None:
+    """Serialize _last_snapshot write and fan-out to all connections. Shared by tick() and push."""
     global _last_snapshot, _connections
+    async with _snapshot_lock:
+        _last_snapshot = snap
+        payload = json.dumps(snap)
+    dead = set()
+    for ws in list(_connections):
+        try:
+            await ws.send_text(payload)
+        except Exception as e:
+            print(f"[MarketWS] send failed, dropping connection: {e}")
+            dead.add(ws)
+    if dead:
+        _connections -= dead
+
+
+async def tick(current_tick: int, now: datetime):
     if current_tick % _BROADCAST_EVERY != 0:
         return
     if not _connections:
@@ -245,36 +262,19 @@ async def tick(current_tick: int, now: datetime):
     try:
         loop = asyncio.get_running_loop()
         snap = await loop.run_in_executor(None, collect_snapshot)
-        _last_snapshot = snap
-        payload = json.dumps(snap)
-        dead = set()
-        for ws in list(_connections):
-            try:
-                await ws.send_text(payload)
-            except Exception:
-                dead.add(ws)
-        _connections -= dead
+        await _broadcast(snap)
     except Exception as e:
         print(f"[MarketWS] tick error: {e}")
 
 
 async def push_market_snapshot_now() -> None:
     """Push an immediate snapshot to all connected market clients (fire-and-forget)."""
-    global _last_snapshot, _connections
     if not _connections:
         return
     try:
         loop = asyncio.get_running_loop()
         snap = await loop.run_in_executor(None, collect_snapshot)
-        _last_snapshot = snap
-        payload = json.dumps(snap)
-        dead = set()
-        for ws in list(_connections):
-            try:
-                await ws.send_text(payload)
-            except Exception:
-                dead.add(ws)
-        _connections -= dead
+        await _broadcast(snap)
     except Exception as e:
         print(f"[MarketWS] push error: {e}")
 

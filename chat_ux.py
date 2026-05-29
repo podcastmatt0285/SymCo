@@ -5,6 +5,7 @@ per-user ban word filtering, and temporary profile avatars.
 """
 
 import json
+import asyncio
 import base64
 from typing import Optional
 from datetime import datetime
@@ -1674,7 +1675,8 @@ async def chat_websocket(websocket: WebSocket):
         await websocket.close(code=4001, reason="Not authenticated")
         return
 
-    player = validate_session_ws(session_token)
+    loop = asyncio.get_running_loop()
+    player = await loop.run_in_executor(None, validate_session_ws, session_token)
     if not player:
         await websocket.close(code=4001, reason="Not authenticated")
         return
@@ -1682,7 +1684,7 @@ async def chat_websocket(websocket: WebSocket):
     # Check for active ban/timeout
     try:
         from admins import get_active_ban
-        active_ban = get_active_ban(player.id)
+        active_ban = await loop.run_in_executor(None, get_active_ban, player.id)
         if active_ban:
             reason = "banned" if active_ban["type"] == "ban" else "timed out"
             await websocket.close(code=4003, reason=f"Account {reason}")

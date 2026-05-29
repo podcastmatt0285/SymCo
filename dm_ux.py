@@ -8,6 +8,7 @@ P2P direct messaging UI that mirrors the Chatrooms layout.
 """
 
 import json
+import asyncio
 import base64
 from typing import Optional
 from datetime import datetime
@@ -2409,7 +2410,8 @@ async def dm_websocket(websocket: WebSocket):
         await websocket.close(code=4001, reason="Not authenticated")
         return
 
-    player = validate_session_ws(session_token)
+    loop = asyncio.get_running_loop()
+    player = await loop.run_in_executor(None, validate_session_ws, session_token)
     if not player:
         await websocket.close(code=4001, reason="Not authenticated")
         return

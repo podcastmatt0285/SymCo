@@ -675,7 +675,10 @@ class DMConnectionManager:
     async def broadcast_to_participants(self, participant_ids: list, message: dict):
         for pid in participant_ids:
             if pid in self.connections:
-                await self.send_to_user(pid, message)
+                try:
+                    await self.send_to_user(pid, message)
+                except Exception:
+                    pass
 
 
 dm_manager = DMConnectionManager()
