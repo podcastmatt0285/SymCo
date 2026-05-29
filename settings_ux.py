@@ -2102,7 +2102,7 @@ def _tutorials_tab(player) -> str:
 
 # ── Notifications tab ─────────────────────────────────────────────────────────
 
-def _notifications_tab(player) -> str:
+def _notifications_tab(player, from_tutorial: bool = False) -> str:
     # Notification features require either a CCO exec with p2p_notification OR an active FCC licence
     has_cco = False
     rental_expires = None   # datetime (UTC) if rental is active
@@ -2486,8 +2486,49 @@ document.querySelectorAll('input[type=checkbox]').forEach(function(cb) {
 })();
 </script>"""
 
+    # Tutorial welcome banner — shown when arriving from Tutorial 1 completion
+    from datetime import datetime as _dt
+    _rental_expires_raw = getattr(player, "cco_rental_expires", None)
+    _trial_days_left = 0
+    if _rental_expires_raw and _rental_expires_raw > _dt.utcnow():
+        _trial_days_left = max(1, (_rental_expires_raw - _dt.utcnow()).days + 1)
+
+    tutorial_banner = ""
+    if from_tutorial and _trial_days_left:
+        tutorial_banner = f"""
+<div style="background:linear-gradient(135deg,#052e16 0%,#0a3d1f 100%);
+            border:1px solid #22c55e;border-radius:8px;padding:20px 24px;margin-bottom:24px;">
+  <div style="font-size:1.1rem;font-weight:bold;color:#22c55e;margin-bottom:10px;">
+    🎓 Tutorial Complete — Your 30-Day Notification Trial is Active!
+  </div>
+  <p style="color:#86efac;font-size:0.88rem;line-height:1.7;margin:0 0 14px 0;">
+    As a reward for completing <strong>Startup Company</strong>, you have
+    <strong>{_trial_days_left} days</strong> of free notification access.
+    Configure everything below — no CCO executive needed yet.
+  </p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+    <div style="background:#0a1a0f;border:1px solid #166534;border-radius:6px;padding:12px;">
+      <div style="color:#4ade80;font-weight:bold;font-size:0.85rem;margin-bottom:6px;">🔔 In-Game Notifications</div>
+      <p style="color:#94a3b8;font-size:0.8rem;line-height:1.6;margin:0;">
+        Appear as a banner inside the app while you're playing. Stored in your notification bell — always free, never missed.
+      </p>
+    </div>
+    <div style="background:#0a1a0f;border:1px solid #166534;border-radius:6px;padding:12px;">
+      <div style="color:#4ade80;font-weight:bold;font-size:0.85rem;margin-bottom:6px;">📲 Push Notifications</div>
+      <p style="color:#94a3b8;font-size:0.8rem;line-height:1.6;margin:0;">
+        Delivered to your device even when the app is closed — like a text message. Requires browser permission below.
+      </p>
+    </div>
+  </div>
+  <p style="color:#64748b;font-size:0.78rem;margin:0;">
+    After your trial expires, a <strong>CCO executive</strong> or <strong>FCC licence</strong>
+    (available in Settings → Notifications) is required to keep configuring these preferences.
+  </p>
+</div>"""
+
     return (
-        cco_banner
+        tutorial_banner
+        + cco_banner
         + form_start
         + _section("Push Notifications", push_body)
         + _section("In-App Sounds", sounds_body)
@@ -2816,6 +2857,7 @@ def _account_tab(player) -> str:
 def settings_page(
     session_token: Optional[str] = Cookie(None),
     tab: str = Query("audio"),
+    from_tutorial: int = Query(0),
 ):
     player = _require_auth(session_token)
     if isinstance(player, RedirectResponse):
@@ -2831,7 +2873,7 @@ def settings_page(
     elif tab == "tutorials":
         content = _tutorials_tab(player)
     elif tab == "notifications":
-        content = _notifications_tab(player)
+        content = _notifications_tab(player, from_tutorial=bool(from_tutorial))
     elif tab == "widgets":
         content = _widgets_tab(player)
     elif tab == "account":

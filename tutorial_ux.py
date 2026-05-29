@@ -757,14 +757,11 @@ def get_tutorial_overlay_html(player, current_page: str) -> str:
         </div>
         <div style="background:#0a1e0a;border:1px solid #22c55e;border-radius:6px;
                     padding:12px 16px;margin-bottom:16px;">
-            <strong style="color:#22c55e;">🔔 30 days of free notifications unlocked!</strong>
+            <strong style="color:#22c55e;">🔔 Bonus reward: 30 days of free notifications!</strong>
             <p style="color:#94a3b8;font-size:0.85rem;margin:6px 0 0;line-height:1.6;">
-                Completing this tutorial grants 1 month of free notification settings — no CCO required.
-                Head to
-                <a href="/settings?tab=notifications" style="color:#22c55e;font-weight:bold;">
-                    Settings → Notifications
-                </a>
-                to configure in-game and push alerts for trades, messages, and events.
+                After hiring your First Lady, you'll be taken to
+                <strong style="color:#22c55e;">Settings → Notifications</strong>
+                where you'll learn how in-game and push alerts work — and your 30-day free trial activates instantly.
             </p>
         </div>
         """
@@ -1207,27 +1204,7 @@ def claim_first_lady(
         try: _adb.close()
         except Exception: pass
 
-    # Welcome notification — player's first real notification, pointing to settings
-    try:
-        from push_ux import create_game_notification, send_push_notification
-        create_game_notification(
-            player.id,
-            "🎓 Startup Company Complete!",
-            "Your First Lady executive is hired. You have 30 days of free notification settings — configure your alerts in Settings.",
-            url="/settings?tab=notifications",
-            notif_type="tasks_events",
-        )
-        send_push_notification(
-            player.id,
-            "🎓 Startup Company Complete!",
-            "Tutorial 1 done! You have 1 month of free notification settings. Visit Settings → Notifications to customise.",
-            url="/settings?tab=notifications",
-            notif_type="tasks_events",
-        )
-    except Exception as _e:
-        print(f"[Tutorial] completion notification failed for player {player.id}: {_e}")
-
-    return RedirectResponse(url="/executives?tutorial_complete=1", status_code=303)
+    return RedirectResponse(url="/settings?tab=notifications&from_tutorial=1", status_code=303)
 
 
 # ============================================================
