@@ -12081,6 +12081,8 @@ async def api_open_immediate_annuity(
             is_qualified=bool(is_qualified and is_qualified not in ("0", "false", "")),
             current_tick=current_tick,
         )
+        from player_feed_ws import send_balance_now
+        asyncio.create_task(send_balance_now(player.id))
         return JSONResponse(result)
     except Exception as e:
         return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
@@ -12108,6 +12110,8 @@ async def api_open_deferred_annuity(
             is_qualified=bool(is_qualified and is_qualified not in ("0", "false", "")),
             current_tick=current_tick,
         )
+        from player_feed_ws import send_balance_now
+        asyncio.create_task(send_balance_now(player.id))
         return JSONResponse(result)
     except Exception as e:
         return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
@@ -12132,6 +12136,8 @@ async def api_contribute_annuity(
             amount=amount,
             current_tick=current_tick,
         )
+        from player_feed_ws import send_balance_now
+        asyncio.create_task(send_balance_now(player.id))
         return JSONResponse(result)
     except Exception as e:
         return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
@@ -12158,6 +12164,8 @@ async def api_annuitize(
             payment_frequency=payment_frequency,
             current_tick=current_tick,
         )
+        from player_feed_ws import send_balance_now
+        asyncio.create_task(send_balance_now(player.id))
         return JSONResponse(result)
     except Exception as e:
         return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
@@ -12180,6 +12188,8 @@ async def api_surrender_annuity(
             contract_id=contract_id,
             current_tick=current_tick,
         )
+        from player_feed_ws import send_balance_now
+        asyncio.create_task(send_balance_now(player.id))
         return JSONResponse(result)
     except Exception as e:
         return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
