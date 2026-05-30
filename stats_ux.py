@@ -1206,6 +1206,49 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
 
     db.close()
 
+    # ── Wealth rank ───────────────────────────────────────────────────────────
+    wealth_rank = 0
+    try:
+        _sdb = get_db()
+        _ps = _sdb.query(PlayerStats).filter(PlayerStats.player_id == player.id).first()
+        wealth_rank = _ps.wealth_rank if _ps else 0
+        _sdb.close()
+    except Exception:
+        pass
+
+    # ── Active executives + bonus effects ─────────────────────────────────────
+    active_execs = []
+    exec_wages_monthly = 0.0
+    exec_bonus = {}
+    try:
+        from executive import get_active_executives, get_player_job_bonus, Executive
+        _edb = get_db()
+        active_execs = get_active_executives(_edb, player.id)
+        exec_wages_monthly = sum(e.wage for e in active_execs)
+        for eff in ('business', 'wages', 'taxes', 'crypto', 'land', 'counties', 'p2p'):
+            v = get_player_job_bonus(_edb, player.id, eff)
+            if v > 0:
+                exec_bonus[eff] = round(v * 100, 1)
+        _edb.close()
+    except Exception:
+        pass
+
+    # ── Tax voucher balance ───────────────────────────────────────────────────
+    tax_voucher_bal = 0.0
+    try:
+        from corporate_actions import get_tax_voucher_balance
+        tax_voucher_bal = get_tax_voucher_balance(player.id)
+    except Exception:
+        pass
+
+    # ── Recent in-game notifications ──────────────────────────────────────────
+    recent_notifs = []
+    try:
+        from push_ux import get_game_notifications
+        recent_notifs = get_game_notifications(player.id)[:12]
+    except Exception:
+        pass
+
     # ── Relative time helper ──────────────────────────────────────────────────
     def _rel_time(ts) -> str:
         if not ts:
@@ -1411,6 +1454,39 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
     tx_count = len(txs)
     biggest_tx = max(txs, key=lambda t: abs(t.amount), default=None)
 
+    # ── 7-day comparison ──────────────────────────────────────────────────────
+    cutoff_7d = datetime.utcnow() - timedelta(days=7)
+    income_7d  = sum(tx.amount for tx in txs if tx.amount > 0 and tx.timestamp and tx.timestamp >= cutoff_7d)
+    expense_7d = sum(abs(tx.amount) for tx in txs if tx.amount < 0 and tx.timestamp and tx.timestamp >= cutoff_7d)
+    net_7d = income_7d - expense_7d
+
+    # ── Tax burden breakdown (all tax-type outflows) ──────────────────────────
+    TAX_TYPES = ('tax', 'district_tax', 'forex_fee', 'city_application_fee',
+                 'estate_sale', 'land_buy')
+    tax_by_type: Dict[str, float] = {}
+    for tx in txs:
+        tt = tx.transaction_type or ''
+        is_tax = (tt in TAX_TYPES or tt.startswith('tax') or tt == 'district_tax'
+                  or 'tax' in tt.split('_'))
+        if is_tax and tx.amount < 0:
+            tax_by_type[tt] = tax_by_type.get(tt, 0.0) + abs(tx.amount)
+    total_taxes_paid = sum(tax_by_type.values())
+
+    # ── Income source breakdown for donut (30d) ───────────────────────────────
+    src_income: Dict[str, float] = {}
+    for tx in txs:
+        if tx.amount <= 0 or (tx.timestamp and tx.timestamp < cutoff_30d):
+            continue
+        tt = tx.transaction_type or 'other'
+        for tab, prefixes in TAB_FILTERS.items():
+            if any(tt.startswith(p) or p in tt for p in prefixes):
+                src_income[tab] = src_income.get(tab, 0.0) + tx.amount
+                break
+        else:
+            src_income['other'] = src_income.get('other', 0.0) + tx.amount
+    # top 6 sources for donut
+    top_src = sorted(src_income.items(), key=lambda x: x[1], reverse=True)[:6]
+
     # ── SVG Cash Flow Chart ───────────────────────────────────────────────────
     CW, CH, INNER = 600, 110, 80
     max_daily_val = max(
@@ -1466,15 +1542,29 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         f'{svg_labels}'
         f'</svg>'
     )
+    SRC_COLORS = {
+        "market": "#3b82f6", "retail": "#8b5cf6", "shares": "#6366f1",
+        "dividend": "#22c55e", "bonds": "#0891b2", "bond_income": "#10b981",
+        "crypto": "#f59e0b", "wsc": "#0ea5e9", "land": "#84cc16",
+        "district": "#f59e0b", "city": "#38bdf8", "treasury": "#10b981",
+        "p2p": "#ec4899", "annuities": "#a78bfa", "trophies": "#a78bfa",
+        "resources": "#64748b", "cash": "#22d3ee", "other": "#334155",
+    }
+    src_labels  = [s for s, _ in top_src]
+    src_amounts = [round(v, 2) for _, v in top_src]
+    src_colors  = [SRC_COLORS.get(s, "#475569") for s in src_labels]
     chart_json = json.dumps({
-        "labels":   [cd["date"].strftime("%-m/%-d") for cd in chart_days],
-        "income":   [round(cd["inc"], 2) for cd in chart_days],
-        "expense":  [round(cd["exp"], 2) for cd in chart_days],
-        "net_cum":  [round(v, 2) for v in cum_pts],
-        "tx_count": [
+        "labels":      [cd["date"].strftime("%-m/%-d") for cd in chart_days],
+        "income":      [round(cd["inc"], 2) for cd in chart_days],
+        "expense":     [round(cd["exp"], 2) for cd in chart_days],
+        "net_cum":     [round(v, 2) for v in cum_pts],
+        "tx_count":    [
             sum(1 for tx in txs if tx.timestamp and tx.timestamp.date() == cd["date"])
             for cd in chart_days
         ],
+        "src_labels":  src_labels,
+        "src_amounts": src_amounts,
+        "src_colors":  src_colors,
     })
 
     # ── Net Worth donut SVG ───────────────────────────────────────────────────
@@ -1669,6 +1759,9 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         # — Corporate & Legal —
         ("corporate",       "Corporate",       count_by_tab.get("corporate", 0)),
         ("inheritance",     "Inheritance",     count_by_tab.get("inheritance", 0)),
+        # — Events —
+        ("annuities",       "Annuities",       count_by_tab.get("annuities", 0)),
+        ("trophies",        "Trophies",        count_by_tab.get("trophies", 0)),
     ]
     def _chip(k, label, cnt):
         active_cls = " txchip-active" if k == "all" else ""
@@ -1702,6 +1795,91 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         f'{fmt_usd(abs(biggest_tx.amount), disp)} · {(biggest_tx.description or biggest_tx.transaction_type or "")[:40]}'
         if biggest_tx else "—"
     )
+
+    # ── Pre-build accordion panels to avoid backslash-in-f-string issues ─────
+    # Tax burden
+    _tax_rows = "".join(
+        f'<div class="comparison-row">'
+        f'<span style="color:#94a3b8;font-size:0.8rem;">{k.replace("_"," ").title()}</span>'
+        f'<span style="color:#f97316;font-family:monospace;font-size:0.8rem;">{fmt_usd(v,disp)}</span>'
+        f'</div>'
+        for k, v in sorted(tax_by_type.items(), key=lambda x: -x[1])
+    )
+    _tvoucher_note = (
+        f'<div style="margin-top:10px;font-size:0.72rem;color:#475569;">'
+        f'Tax vouchers available: <span style="color:#fbbf24;">{fmt_usd(tax_voucher_bal,disp)}</span>'
+        f' · <a href="/corporate-actions" style="color:#38bdf8;text-decoration:none;">redeem</a>'
+        f' · <a href="/wiki?search=tax+voucher" class="wiki-link">\U0001f4d6 what is a tax voucher?</a></div>'
+    )
+    _tax_acc_html = (
+        f'<details class="panel-acc">'
+        f'<summary><span>\U0001f3db️ Tax Burden — {fmt_usd(total_taxes_paid,disp)} (30d)</span>'
+        f'<span style="color:#64748b;font-size:0.75rem;">▼  '
+        f'<a href="/wiki?search=taxes" style="color:#38bdf8;text-decoration:none;font-size:0.7rem;">\U0001f4d6 WikiWads</a></span></summary>'
+        f'<div class="inner">{_tax_rows}{_tvoucher_note}</div></details>'
+    ) if (total_taxes_paid > 0 or tax_voucher_bal > 0) else ""
+
+    # Executive panel
+    _exec_pills = "".join(
+        f'<span class="exec-pill" style="border-color:#334155;color:#c4b5fd;">'
+        f'\U0001f464 {e.name or "Executive"}'
+        f'<span style="color:#475569;margin-left:4px;">{(e.job_title or "").replace("_"," ").title()}</span>'
+        f'<span style="color:#a855f7;margin-left:6px;">{fmt_usd(e.wage,disp)}/mo</span></span>'
+        for e in active_execs
+    )
+    _exec_bonuses = (
+        '<div style="font-size:0.75rem;color:#64748b;margin-bottom:8px;font-weight:600;">Active bonus effects:</div>'
+        + "".join(
+            f'<div class="comparison-row">'
+            f'<span style="color:#94a3b8;font-size:0.78rem;">{eff.title()} bonus</span>'
+            f'<span style="color:#a855f7;font-family:monospace;font-size:0.78rem;">+{pct}%</span></div>'
+            for eff, pct in exec_bonus.items()
+        )
+    ) if exec_bonus else (
+        '<div style="font-size:0.78rem;color:#475569;">No active bonus effects detected. '
+        '<a href="/executives" style="color:#38bdf8;text-decoration:none;">Hire executives</a> to unlock perks.</div>'
+    )
+    _exec_acc_html = (
+        f'<details class="panel-acc">'
+        f'<summary><span>\U0001f454 Executives — {len(active_execs)} hired'
+        f' · {fmt_usd(exec_wages_monthly,disp)}/mo wages</span>'
+        f'<span style="color:#64748b;font-size:0.75rem;">▼  '
+        f'<a href="/executives" style="color:#a855f7;text-decoration:none;font-size:0.7rem;">manage</a></span></summary>'
+        f'<div class="inner">'
+        f'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">{_exec_pills}</div>'
+        f'{_exec_bonuses}'
+        f'<div style="margin-top:10px;font-size:0.72rem;color:#475569;">'
+        f'<a href="/wiki?search=executives" class="wiki-link">\U0001f4d6 How do executives work?</a></div>'
+        f'</div></details>'
+    )
+
+    # Notification panel
+    _notif_rows = "".join(
+        (lambda title, msg: (
+            f'<div class="notif-row">'
+            f'<div style="width:32px;height:32px;border-radius:8px;background:#1e293b;display:flex;'
+            f'align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">\U0001f514</div>'
+            f'<div style="flex:1;min-width:0;">'
+            f'<div style="font-size:0.83rem;color:#e2e8f0;font-weight:500;">{title}</div>'
+            f'<div style="font-size:0.75rem;color:#64748b;margin-top:2px;overflow:hidden;'
+            f'text-overflow:ellipsis;white-space:nowrap;">{msg}</div></div></div>'
+        ))(
+            n.get("title","") if isinstance(n, dict) else getattr(n,"title",""),
+            n.get("message","") if isinstance(n, dict) else getattr(n,"message",""),
+        )
+        for n in recent_notifs[:8]
+    )
+    _notif_acc_html = (
+        f'<details class="panel-acc">'
+        f'<summary><span>\U0001f514 Recent Notifications</span>'
+        f'<span style="color:#64748b;font-size:0.75rem;">{len(recent_notifs)} recent ▼</span></summary>'
+        f'<div class="inner">{_notif_rows}'
+        f'<div style="margin-top:8px;font-size:0.72rem;color:#475569;">'
+        f'In-game banners · '
+        f'<a href="/settings?tab=notifications" style="color:#38bdf8;text-decoration:none;">notification settings</a>'
+        f' · <a href="/settings?tab=widgets" style="color:#38bdf8;text-decoration:none;">Android widgets</a></div>'
+        f'</div></details>'
+    ) if recent_notifs else ""
 
     body = f"""
 <style>
@@ -1769,30 +1947,62 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
   border-bottom: 1px solid #1e293b;
 }}
 .avg-tbl tbody tr:hover td {{ background: rgba(15,23,42,0.4); }}
+.panel-acc {{
+  background: linear-gradient(135deg,#0f172a,#1e293b);
+  border: 1px solid #334155; border-radius: 8px; margin-bottom: 14px;
+}}
+.panel-acc summary {{
+  cursor: pointer; padding: 13px 18px; font-size: 0.85rem; font-weight: 700;
+  color: #e2e8f0; list-style: none; display: flex; align-items: center;
+  justify-content: space-between; outline: none; gap: 8px;
+}}
+.panel-acc summary::-webkit-details-marker {{ display: none; }}
+.panel-acc .inner {{ padding: 2px 18px 14px; }}
+.exec-pill {{
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 12px; font-size: 0.72rem; font-weight: 600;
+  background: #1e293b; border: 1px solid #334155; color: #94a3b8;
+  white-space: nowrap; margin: 2px;
+}}
+.notif-row {{
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 0; border-bottom: 1px solid #0f1a2e;
+}}
+.notif-row:last-child {{ border-bottom: none; }}
+.wiki-link {{ color: #38bdf8; font-size: 0.7rem; text-decoration: none; margin-left: 4px; }}
+.wiki-link:hover {{ text-decoration: underline; }}
+.comparison-row {{
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 0; border-bottom: 1px solid #0f1a2e; font-size: 0.8rem;
+}}
+.comparison-row:last-child {{ border-bottom: none; }}
 @media (max-width: 640px) {{
   .fin-kpi-val {{ font-size: 1.1rem; }}
   .kpi-grid {{ grid-template-columns: repeat(2, 1fr) !important; }}
   .kpi-grid > *:last-child:nth-child(odd) {{ grid-column: span 2; }}
   .two-col {{ grid-template-columns: 1fr !important; }}
+  .three-col {{ grid-template-columns: 1fr !important; }}
   .chart-height {{ height: 200px !important; }}
 }}
 </style>
 
-<div style="margin-bottom:16px;display:flex;align-items:baseline;gap:12px;">
+<div style="margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
   <h1 style="margin:0;font-size:1.4rem;color:#f1f5f9;font-weight:800;">Financial Statement</h1>
   <span style="font-size:0.78rem;color:#475569;">{player.business_name}</span>
+  {f'<span style="margin-left:auto;font-size:0.72rem;padding:3px 10px;border-radius:12px;background:#1e293b;color:#94a3b8;border:1px solid #334155;">Rank #{wealth_rank}</span>' if wealth_rank else ''}
+  <a href="/wiki?search=financial+statement" style="font-size:0.72rem;color:#38bdf8;text-decoration:none;padding:3px 9px;border-radius:12px;border:1px solid #1e3a5f;">📖 WikiWads</a>
 </div>
 
-<div class="kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px;margin-bottom:20px;">
+<div class="kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:12px;margin-bottom:20px;">
   <div class="fin-kpi" style="--kpi-glow:#22d3ee;">
     <div class="fin-kpi-label">Net Worth</div>
     <div class="fin-kpi-val" style="color:#22d3ee;">{fmt_usd(stats['total_net_worth'],disp)}</div>
-    <div class="fin-kpi-sub">All assets</div>
+    <div class="fin-kpi-sub">All assets combined</div>
   </div>
   <div class="fin-kpi" style="--kpi-glow:#38bdf8;">
-    <div class="fin-kpi-label">Cash Balance</div>
+    <div class="fin-kpi-label">Cash &amp; Currencies</div>
     <div class="fin-kpi-val" style="color:#38bdf8;">{fmt_usd(stats['cash_balance'],disp)}</div>
-    <div class="fin-kpi-sub">Available funds</div>
+    <div class="fin-kpi-sub">{len(currency_rows)} currency{' holdings' if len(currency_rows) != 1 else ''}</div>
   </div>
   <div class="fin-kpi" style="--kpi-glow:#22c55e;">
     <div class="fin-kpi-label">30-Day Income</div>
@@ -1805,10 +2015,21 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
     <div class="fin-kpi-sub">Costs &amp; purchases</div>
   </div>
   <div class="fin-kpi" style="--kpi-glow:{net_color};">
-    <div class="fin-kpi-label">Net Flow</div>
+    <div class="fin-kpi-label">30-Day Net Flow</div>
     <div class="fin-kpi-val" style="color:{net_color};">{net_sign}{fmt_usd(net,disp)}</div>
     <div class="fin-kpi-sub">Peak: {fmt_usd(max_daily_val,disp)}/day</div>
   </div>
+  <div class="fin-kpi" style="--kpi-glow:#f97316;">
+    <div class="fin-kpi-label">Taxes Paid (30d)</div>
+    <div class="fin-kpi-val" style="color:#f97316;">{fmt_usd(total_taxes_paid,disp)}</div>
+    <div class="fin-kpi-sub">{len(tax_by_type)} tax type{'s' if len(tax_by_type)!=1 else ''} · <a href="/wiki?search=taxes" style="color:#f97316;text-decoration:none;font-size:0.7rem;">what's this?</a></div>
+  </div>
+  <div class="fin-kpi" style="--kpi-glow:#a855f7;">
+    <div class="fin-kpi-label">Exec Wages / mo</div>
+    <div class="fin-kpi-val" style="color:#a855f7;">{fmt_usd(exec_wages_monthly,disp)}</div>
+    <div class="fin-kpi-sub">{len(active_execs)} exec{'s' if len(active_execs)!=1 else ''} active · <a href="/executives" style="color:#a855f7;text-decoration:none;font-size:0.7rem;">manage</a></div>
+  </div>
+  {'<div class="fin-kpi" style="--kpi-glow:#fbbf24;"><div class="fin-kpi-label">Tax Vouchers</div><div class="fin-kpi-val" style="color:#fbbf24;">' + fmt_usd(tax_voucher_bal,disp) + '</div><div class="fin-kpi-sub">Offsettable against taxes · <a href="/corporate-actions" style="color:#fbbf24;text-decoration:none;font-size:0.7rem;">manage</a></div></div>' if tax_voucher_bal > 0 else ''}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
@@ -1828,10 +2049,12 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
       <button class="chart-toggle-btn active" onclick="setChartMode('cashflow',this)">Cash Flow</button>
       <button class="chart-toggle-btn" onclick="setChartMode('net',this)">Net Position</button>
       <button class="chart-toggle-btn" onclick="setChartMode('activity',this)">Activity</button>
+      <button class="chart-toggle-btn" onclick="setChartMode('sources',this)">Income Sources</button>
     </div>
   </div>
   <div class="chart-height" style="position:relative;height:260px;">
     <canvas id="masterChart"></canvas>
+    <canvas id="srcChart" style="display:none;position:absolute;inset:0;width:100%;height:100%;"></canvas>
   </div>
   <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:0.72rem;color:#475569;">
     <span>Last 30 days · {tx_count} transactions</span>
@@ -1839,9 +2062,32 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
   </div>
 </div>
 
+<!-- 7d vs 30d Comparison strip -->
+<div class="three-col" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;">
+  <div class="chart-card" style="margin-bottom:0;padding:16px 18px;">
+    <div style="font-size:0.72rem;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">7-Day Snapshot</div>
+    <div class="comparison-row"><span style="color:#94a3b8;">Income</span><span style="color:#22c55e;font-family:monospace;font-weight:700;">+{fmt_usd(income_7d,disp)}</span></div>
+    <div class="comparison-row"><span style="color:#94a3b8;">Expenses</span><span style="color:#ef4444;font-family:monospace;font-weight:700;">-{fmt_usd(expense_7d,disp)}</span></div>
+    <div class="comparison-row"><span style="color:#94a3b8;">Net</span><span style="color:{'#22c55e' if net_7d>=0 else '#ef4444'};font-family:monospace;font-weight:700;">{'+'if net_7d>=0 else ''}{fmt_usd(net_7d,disp)}</span></div>
+  </div>
+  <div class="chart-card" style="margin-bottom:0;padding:16px 18px;">
+    <div style="font-size:0.72rem;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">Assets by Type</div>
+    {''.join(f'<div class="comparison-row"><span style="color:#94a3b8;">{lbl}</span><span style="color:{col};font-family:monospace;font-size:0.78rem;">{fmt_usd(val,disp)}</span></div>' for lbl,val,col in nw_parts if val>0)}
+  </div>
+  <div class="chart-card" style="margin-bottom:0;padding:16px 18px;">
+    <div style="font-size:0.72rem;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Biggest Transaction</div>
+    <div style="font-size:0.88rem;font-weight:700;font-family:monospace;color:{'#22c55e' if biggest_tx and biggest_tx.amount>0 else '#ef4444'};">{fmt_usd(abs(biggest_tx.amount),disp) if biggest_tx else '—'}</div>
+    <div style="font-size:0.72rem;color:#64748b;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{((biggest_tx.description or biggest_tx.transaction_type or '')[:48]) if biggest_tx else ''}</div>
+    <div style="font-size:0.68rem;color:#334155;margin-top:6px;">{_rel_time(biggest_tx.timestamp) if biggest_tx else ''}</div>
+  </div>
+</div>
+
 <div class="two-col" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
   <div class="card" style="cursor:default;">
-    <div style="font-size:0.85rem;font-weight:700;color:#e2e8f0;margin-bottom:12px;">Income &amp; Expense by Category</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="font-size:0.85rem;font-weight:700;color:#e2e8f0;">Income &amp; Expense by Category</div>
+      <a href="/wiki?search=income+categories" class="wiki-link">📖 explain</a>
+    </div>
     {cat_html}
   </div>
   <div class="card" style="cursor:default;">
@@ -1851,20 +2097,20 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
       <div style="flex:1;min-width:0;padding-top:4px;">{donut_legend}</div>
     </div>
     {currency_rows_html}
+    {f'<div style="margin-top:10px;padding-top:8px;border-top:1px solid #1e293b;font-size:0.72rem;color:#64748b;">Multi-currency portfolio · <a href="/reserve-banks/forex" style="color:#38bdf8;text-decoration:none;">Forex rates</a> · <a href="/wiki?search=multi+currency" class="wiki-link">📖 learn</a></div>' if len(currency_rows) > 1 else ''}
   </div>
 </div>
 
-{"" if not averages else f'''
-<details style="margin-bottom:16px;">
-  <summary style="cursor:pointer;background:linear-gradient(135deg,#0f172a,#1e293b);
-    border:1px solid #334155;border-radius:8px;padding:14px 20px;
-    font-size:0.85rem;font-weight:700;color:#e2e8f0;list-style:none;
-    display:flex;align-items:center;justify-content:space-between;outline:none;">
-    <span>Purchase Cost Averages</span>
-    <span style="color:#64748b;font-size:0.75rem;font-weight:400;">{len(averages)} items &#9658;</span>
-  </summary>
-  <div style="background:linear-gradient(135deg,#0f172a,#1e293b);border:1px solid #334155;
-    border-top:none;border-radius:0 0 8px 8px;padding:0 0 4px;overflow-x:auto;">
+<!-- ── Tax Burden accordion ─────────────────────────────────────────────── -->
+{_tax_acc_html}
+
+<!-- ── Executive Performance accordion ───────────────────────────────────── -->
+{_exec_acc_html}
+
+<!-- ── Purchase Cost Averages accordion ───────────────────────────────────── -->
+{"" if not averages else f'''<details class="panel-acc">
+  <summary><span>📊 Purchase Cost Averages</span><span style="color:#64748b;font-size:0.75rem;">{len(averages)} items ▼</span></summary>
+  <div class="inner" style="overflow-x:auto;padding-top:0;">
     <table class="avg-tbl">
       <thead>
         <tr>
@@ -1880,11 +2126,14 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
   </div>
 </details>'''}
 
+<!-- ── Recent In-Game Notifications ──────────────────────────────────────── -->
+{_notif_acc_html}
+
 <div class="card" style="cursor:default;">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:10px;">
     <div>
       <div style="font-size:0.85rem;font-weight:700;color:#e2e8f0;">Transaction Ledger</div>
-      <div style="font-size:0.72rem;color:#475569;margin-top:2px;">Last {tx_count} transactions</div>
+      <div style="font-size:0.72rem;color:#475569;margin-top:2px;">Last {tx_count} transactions · <a href="/wiki?search=transaction+ledger" class="wiki-link">📖 what is logged here?</a></div>
     </div>
     <input type="text" id="tx-search" placeholder="Search…" oninput="txSearch(this.value)"
       style="padding:6px 12px;background:#0f172a;border:1px solid #1e293b;color:#f1f5f9;
@@ -1914,8 +2163,35 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
 (function() {{
   var d = _CHART_DATA;
   var ctx = document.getElementById('masterChart');
+  var srcCtx = document.getElementById('srcChart');
   if (!ctx || typeof Chart === 'undefined') return;
   var _origIncome = d.income.slice();
+  var srcChart = null;
+  if (srcCtx && d.src_labels && d.src_labels.length) {{
+    srcChart = new Chart(srcCtx.getContext('2d'), {{
+      type: 'doughnut',
+      data: {{
+        labels: d.src_labels,
+        datasets: [{{ data: d.src_amounts, backgroundColor: d.src_colors, borderWidth: 1, borderColor: '#060c1a' }}]
+      }},
+      options: {{
+        responsive: true, maintainAspectRatio: false,
+        plugins: {{
+          legend: {{ position: 'right', labels: {{ color: '#94a3b8', font: {{ size: 11 }}, boxWidth: 12 }} }},
+          tooltip: {{
+            backgroundColor: '#0f172a', borderColor: '#334155', borderWidth: 1,
+            callbacks: {{
+              label: function(c) {{
+                var total = d.src_amounts.reduce(function(a,b){{return a+b;}}, 0);
+                var pct = total > 0 ? (c.raw / total * 100).toFixed(1) : 0;
+                return c.label + ': $' + c.raw.toLocaleString('en-US',{{minimumFractionDigits:2,maximumFractionDigits:2}}) + ' (' + pct + '%)';
+              }}
+            }}
+          }}
+        }}
+      }}
+    }});
+  }}
   var chart = new Chart(ctx.getContext('2d'), {{
     type: 'bar',
     data: {{
@@ -1997,6 +2273,15 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
   window.setChartMode = function(mode, btn) {{
     document.querySelectorAll('.chart-toggle-btn').forEach(function(b) {{ b.classList.remove('active'); }});
     btn.classList.add('active');
+    var masterCanvas = document.getElementById('masterChart');
+    var srcCanvas = document.getElementById('srcChart');
+    if (mode === 'sources') {{
+      if (masterCanvas) masterCanvas.style.display = 'none';
+      if (srcCanvas) srcCanvas.style.display = '';
+      return;
+    }}
+    if (masterCanvas) masterCanvas.style.display = '';
+    if (srcCanvas) srcCanvas.style.display = 'none';
     if (mode === 'cashflow') {{
       chart.data.datasets[0].data = _origIncome;
       chart.data.datasets[0].label = 'Income';
