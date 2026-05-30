@@ -942,4 +942,4 @@ if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
     reload = os.environ.get("ENV", "production") == "development"
-    uvicorn.run("app:app", host="0.0.0.0", port=port, reload=reload)
+    uvicorn.run("app:app", host="::", port=port, reload=reload)
