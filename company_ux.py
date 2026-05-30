@@ -363,7 +363,6 @@ def _page(title, subtitle, back_href, back_label, active_nav, body_html):
 SITEMAP_ENTRIES = [
     # ── Core ──────────────────────────────────────────────────────────────────
     ("/",                            "Dashboard",              "Your wealth, holdings, and live game alerts at a glance"),
-    ("/stats/leaderboard",           "Leaderboard",            "See who owns the most wealth, land, and shares across the server"),
     ("/chat",                        "Global Chat",            "Live community chat — tag items, businesses, and players with # @ $ %"),
     ("/world-map",                   "World Map",              "Explore the entire game map: cities, counties, districts, and land parcels"),
     ("/events",                      "Events & Tasks",         "Active server-wide events, daily tasks, and the Founding Tester beta program"),
@@ -382,7 +381,7 @@ SITEMAP_ENTRIES = [
     ("/districts/create",            "Create District",        "Found a new district on your land — set type, name, and membership rules"),
     ("/district-market",             "District Market",        "Order book for district-specific goods and specialty commodities"),
     # ── Markets & Finance ─────────────────────────────────────────────────────
-    ("/market",                      "Commodity Market",       "Continuous double-auction order book for all raw and finished goods — place limit or market orders"),
+    ("/market",                      "Commodity Market",       "Continuous double-auction order book for all raw and finished goods"),
     ("/brokerage/trading",           "Brokerage (WPE)",        "Wadsworth Public Exchange — trade company shares, ETFs, and IPOs"),
     ("/brokerage/companies",         "All Companies",          "Browse every IPO-listed company — share price, market cap, and ownership"),
     ("/brokerage/ipo",               "IPO",                    "Launch your company on the exchange — set share price, float, and prospectus"),
@@ -391,6 +390,12 @@ SITEMAP_ENTRIES = [
     ("/brokerage/credit",            "Credit",                 "Credit ratings, debt instruments, and margin facility management"),
     ("/brokerage/governance",        "Exchange Governance",    "Vote on WPE rule proposals and exchange policy changes"),
     ("/banks",                       "Banks & Loans",          "City Bank collateral loans, reserve banks, ETF funds, and the brokerage firm"),
+    ("/banks/land-bank",             "Land Bank",              "Wadsworth Land Bank fund — holdings, NAV, and share redemption"),
+    ("/banks/apple-seeds-etf",       "Apple Seeds ETF",        "The Apple Seeds commodity ETF — holdings, price, and buy/sell"),
+    ("/banks/energy-etf",            "Energy ETF",             "The Energy ETF — fuel and utility commodity basket"),
+    ("/banks/city-nav-etf",          "City Nav ETF",           "City Navigation ETF — diversified city-asset basket"),
+    ("/banks/wbc50-index-fund",      "WBC-50 Index Fund",      "The Wadsworth Blue Chip 50 index fund — top-50 company basket"),
+    ("/banks/brokerage-firm",        "Brokerage Firm",         "The Wadsworth brokerage firm — fees, rules, and membership"),
     ("/reserve-banks/bonds",         "Sovereign Bonds",        "Buy and manage sovereign bonds issued by reserve banks"),
     ("/reserve-banks/forex",         "Forex",                  "Live foreign exchange rates and inter-bank currency settlement"),
     ("/wallet",                      "Wallet",                 "Your WSC stable coin balance, yield farming positions, and faucet claims"),
@@ -408,16 +413,21 @@ SITEMAP_ENTRIES = [
     ("/cities",                      "Cities",                 "Join or found a city, vote in elections, manage currency policy, and raise proposals"),
     ("/city/my",                     "My City",                "Your city's dashboard — treasury, projects, elections, and member list"),
     ("/counties",                    "Counties",               "County governance, blockchain token parameters, and mining node controls"),
-    ("/wcpr/list",                   "Press Room",             "Wadsworth City Press Room — official city and county announcements and breaking news"),
+    ("/county/petition/new",         "New County Petition",    "Submit a petition to create a new county or change county rules"),
+    ("/county/petition/join",        "Join County Petition",   "Sign an existing county petition to show support"),
+    ("/wcpr/list",                   "Press Room",             "Wadsworth City Press Room — official city and county announcements"),
     # ── Social & Contracts ────────────────────────────────────────────────────
     ("/p2p",                         "P2P Contracts",          "Peer-to-peer binding trade contracts — escrow commodities, cash, land, or shares"),
     ("/p2p/dashboard",               "P2P Dashboard",          "Overview of all your active, pending, and completed P2P contracts"),
+    ("/p2p/contracts",               "All P2P Contracts",      "Browse all open P2P contract listings across the server"),
     ("/p2p/dms",                     "Direct Messages",        "Private encrypted messages between players — negotiations, deals, and coordination"),
     ("/contacts",                    "Contacts",               "Full player directory — search by name, city, or company"),
-    # ── Account & Legacy ──────────────────────────────────────────────────────
+    # ── Account & Estate ──────────────────────────────────────────────────────
     ("/estate",                      "Estate & Will",          "Draft a will to distribute your assets on death — cash, land, shares, and crypto"),
     ("/estate/heirs",                "Heirs",                  "Manage your designated heirs and their inheritance allocations"),
+    ("/estate/delete-account",       "Delete Account",         "Permanently close your account and liquidate all holdings"),
     ("/settings",                    "Settings",               "Account preferences, push notification controls, display currency, and security"),
+    ("/settings?tab=audio",          "Media Center",           "MAPH (CH 46) tutorial videos and MATT (CH 28) community trading videos"),
     # ── Stats & Wiki ──────────────────────────────────────────────────────────
     ("/stats",                       "Stats Hub",              "Economy-wide analytics, personal performance, and production cost breakdowns"),
     ("/stats/leaderboard",           "Leaderboard",            "Ranked player standings by net worth, land, and share holdings"),
@@ -443,8 +453,6 @@ SITEMAP_ENTRIES = [
     ("/company/careers",             "Careers",                "Join the Wadsworth team — freelance and paid positions"),
     ("/company/press-kit",           "Press Kit",              "Brand assets, logos, icons, and official game description for media use"),
     ("/privacy-policy",              "Privacy Policy",         "How your data is collected, stored, and used"),
-    # ── Media ─────────────────────────────────────────────────────────────────
-    ("/settings?tab=audio",          "Media Center",           "MAPH (CH 46) tutorial videos and MATT (CH 28) community trading videos — two in-game broadcast channels"),
 ]
 
 
