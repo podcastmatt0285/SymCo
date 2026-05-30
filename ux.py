@@ -3449,6 +3449,7 @@ def government_dashboard(
                 Federal treasury, holdings, and fiscal operations &mdash; as of {_page_ts}.
             </p>
         </div>
+        <a href="/" style="color:#64748b;font-size:0.8rem;text-decoration:none;">← Dashboard</a>
         <a href="/government" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;
             background:#0f172a;border:1px solid #334155;border-radius:6px;color:#94a3b8;
             font-size:0.8rem;text-decoration:none;white-space:nowrap;"
