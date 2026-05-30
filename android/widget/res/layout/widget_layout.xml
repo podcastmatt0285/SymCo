@@ -145,6 +145,19 @@
         android:maxLines="1"
         android:ellipsize="end" />
 
+    <!-- Active item crisis banner (hidden when empty) -->
+    <TextView
+        android:id="@+id/widget_crisis"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#ef4444"
+        android:textSize="8sp"
+        android:fontFamily="monospace"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:paddingTop="2dp" />
+
     <!-- invisible placeholder keeps IDs valid -->
     <TextView
         android:id="@+id/widget_tickers"

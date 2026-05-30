@@ -87,6 +87,7 @@ public class WadsworthWidget extends AppWidgetProvider {
         for (int i = 1; i <= 10; i++)
             views.setTextViewText(id(ctx, "widget_notif" + i), "");
         views.setTextViewText(id(ctx, "widget_tickers"), "");
+        views.setTextViewText(id(ctx, "widget_crisis"), "");
         mgr.updateAppWidget(widgetId, views);
 
         final String deviceHash = getDeviceHash(ctx);
@@ -150,6 +151,26 @@ public class WadsworthWidget extends AppWidgetProvider {
                 }
                 views.setTextViewText(id(ctx, "widget_tickers"),
                         data.optString("tickers", ""));
+
+                // Active item crises (⚠ red banner)
+                JSONArray crises = data.optJSONArray("active_crises");
+                if (crises != null && crises.length() > 0) {
+                    StringBuilder crisisBuf = new StringBuilder();
+                    for (int i = 0; i < crises.length(); i++) {
+                        JSONObject c = crises.getJSONObject(i);
+                        String title2 = c.optString("title", "Crisis");
+                        int drop = c.optInt("drop_pct", 0);
+                        String ends = c.optString("ends_in", "");
+                        if (crisisBuf.length() > 0) crisisBuf.append("  ");
+                        crisisBuf.append("⚠ ").append(title2)
+                                 .append(" −").append(drop).append("%");
+                        if (!ends.isEmpty()) crisisBuf.append(" (").append(ends).append(")");
+                    }
+                    views.setTextViewText(id(ctx, "widget_crisis"), crisisBuf.toString());
+                } else {
+                    views.setTextViewText(id(ctx, "widget_crisis"), "");
+                }
+
                 mgr.updateAppWidget(widgetId, views);
 
             } catch (Exception e) {
@@ -170,5 +191,6 @@ public class WadsworthWidget extends AppWidgetProvider {
         for (int i = 1; i <= 10; i++)
             views.setTextViewText(id(ctx, "widget_notif" + i), "");
         views.setTextViewText(id(ctx, "widget_tickers"), "");
+        views.setTextViewText(id(ctx, "widget_crisis"), "");
     }
 }

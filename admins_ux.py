@@ -4791,6 +4791,8 @@ def admin_events(session_token: Optional[str] = Cookie(None),
     _type_color = {
         "gov": "#94a3b8", "bank": "#fbbf24", "market": "#34d399",
         "task": "#a78bfa", "city": "#38bdf8", "production": "#fb923c",
+        "item_crisis": "#ef4444", "index_challenge": "#38bdf8",
+        "crypto_scam": "#fbbf24",
     }
 
     event_cards = ""
@@ -5013,7 +5015,23 @@ def admin_events(session_token: Optional[str] = Cookie(None),
                 _meta_parts.append(
                     '<span style="color:#f87171;">⚠ no snapshot yet — fires when event goes live</span>'
                 )
-        if _ed and not _is_cs:
+        _is_crisis = ev.event_type == "item_crisis"
+        if _is_crisis:
+            _ci = _ed.get("item_type", "?")
+            _cpf = _ed.get("production_factor", 1.0)
+            _cdrop = round((1.0 - _cpf) * 100) if _cpf < 1.0 else 0
+            _ci_name = _ci.replace("_", " ").title()
+            try:
+                import json as _ij2
+                with open("item_types.json") as _f2:
+                    _ci_name = _ij2.load(_f2).get(_ci, {}).get("name", _ci_name)
+            except Exception:
+                pass
+            _meta_parts.append(
+                f'<span style="color:#ef4444;font-weight:700;">⚠️ {_ci_name} · '
+                f'production ▼{_cdrop}% (×{_cpf:.2f})</span>'
+            )
+        elif _ed and not _is_cs:
             _ed_display = _ej.dumps(_ed, separators=(",", ":"))
             _meta_parts.append(
                 f'<span style="color:#f59e0b;font-family:monospace;font-size:0.72rem;">'

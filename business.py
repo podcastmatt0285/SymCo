@@ -344,6 +344,16 @@ def process_business_tick(db):
         except Exception:
             pass
 
+        # Executive production bonus — applied once per business cycle
+        _exec_prod_mult = 1.0
+        try:
+            from executive import get_player_job_bonus as _exec_gjb2
+            _ep = _exec_gjb2(db, biz.owner_id, "production")
+            if _ep > 0:
+                _exec_prod_mult = 1.0 + _ep
+        except Exception:
+            pass
+
         if wage_cost > 0:
             wage_cost *= _city_wage_mult
             from reserve_banks import can_afford_usd
@@ -446,7 +456,10 @@ def process_business_tick(db):
                         pass
                 # Apply city project output multiplier + global event bonus + per-item crisis reduction
                 _item_crisis_f = _crisis_factors.get(line.get("output_item", ""), 1.0)
-                effective_output_qty = max(1, round(line["output_qty"] * _city_output_mult * _ev_prod_factor * _item_crisis_f))
+                effective_output_qty = max(1, round(
+                    line["output_qty"] * _city_output_mult * _ev_prod_factor
+                    * _item_crisis_f * _exec_prod_mult
+                ))
                 add_item(player.id, line["output_item"], effective_output_qty)
                 # Update WMA cost basis for the newly produced output
                 try:
@@ -457,13 +470,17 @@ def process_business_tick(db):
                                    effective_output_qty, _cb["unit_cost"])
                 except Exception as _wma_e:
                     print(f"[Business] WMA update error: {_wma_e}")
-                # Log resource production
+                # Log resource production — tag crisis in description when active
+                _prod_log_desc = f"Produced {effective_output_qty} {line['output_item']}"
+                if _item_crisis_f < 1.0:
+                    _crisis_drop_pct = round((1.0 - _item_crisis_f) * 100)
+                    _prod_log_desc += f" ⚠ crisis −{_crisis_drop_pct}%"
                 log_transaction(
                     biz.owner_id,
                     "resource_gain",
                     "resource",
                     effective_output_qty,
-                    f"Produced {effective_output_qty} {line['output_item']}",
+                    _prod_log_desc,
                     str(biz.id)
                 )
                 lines_successfully_produced += 1

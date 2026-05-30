@@ -526,6 +526,24 @@ def get_active_production_factor() -> float:
     return factor
 
 
+_item_name_cache: dict = {}
+
+def _get_item_display_name(item_type: str) -> str:
+    """Return human-readable item name from item_types.json, cached in memory."""
+    if item_type in _item_name_cache:
+        return _item_name_cache[item_type]
+    name = item_type.replace("_", " ").title()
+    try:
+        import json as _j2, os as _os
+        _path = _os.path.join(_os.path.dirname(__file__), "item_types.json")
+        with open(_path) as _f:
+            name = _j2.load(_f).get(item_type, {}).get("name", name)
+    except Exception:
+        pass
+    _item_name_cache[item_type] = name
+    return name
+
+
 def get_active_item_crisis_factors() -> dict:
     """Return {item_type: production_factor} for all active item_crisis events.
 
@@ -752,9 +770,10 @@ def _on_event_live(event_id: int):
                     pf = ed.get("production_factor", 1.0)
                     drop_pct = round((1.0 - pf) * 100)
                     if item_type and drop_pct > 0:
+                        item_name = _get_item_display_name(item_type)
                         body = (
-                            f"Cartel violence has disrupted {item_type.replace('_', ' ').title()} "
-                            f"supply chains. Production output reduced by {drop_pct}%. "
+                            f"Cartel violence has disrupted {item_name} supply chains. "
+                            f"Production output reduced by {drop_pct}%. "
                             f"Prices may rise — check your businesses."
                         )
                 except Exception:
@@ -786,8 +805,9 @@ def _on_event_ended(event_id: int):
                     ed = _json.loads(ev.effect_data or "{}")
                     item_type = ed.get("item_type", "")
                     if item_type:
+                        item_name = _get_item_display_name(item_type)
                         body = (
-                            f"The {item_type.replace('_', ' ').title()} Crisis has resolved. "
+                            f"The {item_name} Crisis has resolved. "
                             f"Production output returns to normal levels."
                         )
                 except Exception:
