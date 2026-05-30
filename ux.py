@@ -3691,63 +3691,99 @@ def notifications_page(session_token: Optional[str] = Cookie(None)):
         return player
 
     from push_ux import get_all_game_notifications, mark_game_notifications_seen
-    from reserve_banks import get_player_display_currency, fmt_usd
-    disp = get_player_display_currency(player.id)
+    from datetime import datetime as _dt, timezone as _tz
+    import html as _html
 
     notifs = get_all_game_notifications(player.id)
     unread_count = sum(1 for n in notifs if not n["is_seen"])
     mark_game_notifications_seen(player.id)
 
     _type_meta = {
-        "trades":       ("#f59e0b", "MARKET"),
-        "corporate":    ("#38bdf8", "CORPORATE"),
-        "execs":        ("#a78bfa", "EXECUTIVES"),
-        "general":      ("#64748b", "NOTICE"),
-        "govt":         ("#22c55e", "GOVERNMENT"),
-        "business":     ("#fb923c", "BUSINESS"),
-        "land":         ("#84cc16", "LAND"),
-        "contract":     ("#f472b6", "CONTRACT"),
-        "dm":           ("#60a5fa", "MESSAGE"),
-        "tasks_events": ("#a78bfa", "EVENTS"),
+        "trades":       ("#f59e0b", "MARKET",      "📊"),
+        "corporate":    ("#38bdf8", "CORPORATE",   "🏢"),
+        "execs":        ("#a78bfa", "EXECUTIVES",  "👔"),
+        "general":      ("#64748b", "NOTICE",      "📌"),
+        "govt":         ("#22c55e", "GOVERNMENT",  "🏛️"),
+        "business":     ("#fb923c", "BUSINESS",    "🏭"),
+        "land":         ("#84cc16", "LAND",        "🗺️"),
+        "contract":     ("#f472b6", "CONTRACT",    "📄"),
+        "dm":           ("#60a5fa", "MESSAGE",     "💬"),
+        "tasks_events": ("#a78bfa", "EVENTS",      "🏆"),
     }
+
+    def _rel_time(dt):
+        if not dt:
+            return ""
+        try:
+            now = _dt.utcnow()
+            diff = int((now - dt).total_seconds())
+            if diff < 60:
+                return "just now"
+            if diff < 3600:
+                m = diff // 60
+                return f"{m}m ago"
+            if diff < 86400:
+                h = diff // 3600
+                return f"{h}h ago"
+            if diff < 604800:
+                d = diff // 86400
+                return f"{d}d ago"
+            return dt.strftime("%b %d")
+        except Exception:
+            return ""
 
     if notifs:
         rows_html = ""
         for n in notifs:
-            _color, _label = _type_meta.get(n["notif_type"], ("#64748b", "NOTICE"))
-            _view = (f'<a href="{n["url"]}" style="color:#38bdf8;font-size:0.78rem;">View →</a>'
+            _meta = _type_meta.get(n["notif_type"], ("#64748b", "NOTICE", "📌"))
+            _color, _label, _icon = _meta
+            _safe_url = _html.escape(n["url"] or "", quote=True)
+            _view = (f'<a href="{_safe_url}" style="color:#38bdf8;font-size:0.78rem;">View →</a>'
                      if n["url"] and n["url"] != "/" else "")
-            _ts = n["created_at"].strftime("%b %d, %Y %H:%M") if n.get("created_at") else ""
-            _glow = (f'box-shadow:0 0 0 1px {_color}33;'
-                     if not n["is_seen"] else "")
+            _abs_ts = n["created_at"].strftime("%b %d, %Y %H:%M UTC") if n.get("created_at") else ""
+            _rel_ts = _rel_time(n.get("created_at"))
+            _ts_html = (f'<span title="{_abs_ts}" style="color:#475569;font-size:0.72rem;'
+                        f'margin-left:auto;white-space:nowrap;cursor:default;">{_rel_ts}</span>'
+                        if _rel_ts else "")
+            _glow = f'box-shadow:0 0 0 1px {_color}33;' if not n["is_seen"] else ""
+            _unread_attr = ' data-unread="1"' if not n["is_seen"] else ""
+            _safe_title = _html.escape(n["title"])
+            _safe_body = _html.escape(n["body"])
             rows_html += f"""
             <div style="display:flex;align-items:flex-start;gap:12px;background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:14px 16px;margin-bottom:8px;{_glow}">
-                <input type="checkbox" name="id" value="{n['id']}" class="notif-cb"
+                <input type="checkbox" name="id" value="{n['id']}" class="notif-cb"{_unread_attr}
+                    onchange="updateClearBtn()"
                     style="margin-top:3px;accent-color:{_color};width:16px;height:16px;cursor:pointer;flex-shrink:0;">
                 <div style="flex:1;min-width:0;">
                     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
-                        <span style="background:{_color};color:#020617;padding:1px 8px;border-radius:8px;font-size:0.67rem;font-weight:bold;white-space:nowrap;">{_label}</span>
-                        <span style="color:#e2e8f0;font-size:0.88rem;font-weight:600;">{n['title']}</span>
-                        <span style="color:#475569;font-size:0.72rem;margin-left:auto;white-space:nowrap;">{_ts}</span>
+                        <span style="background:{_color};color:#020617;padding:1px 8px;border-radius:8px;font-size:0.67rem;font-weight:bold;white-space:nowrap;">{_icon} {_label}</span>
+                        <span style="color:#e2e8f0;font-size:0.88rem;font-weight:600;">{_safe_title}</span>
+                        {_ts_html}
                     </div>
-                    <p style="color:#94a3b8;margin:0 0 6px 0;font-size:0.85rem;line-height:1.45;">{n['body']}</p>
+                    <p style="color:#94a3b8;margin:0 0 6px 0;font-size:0.85rem;line-height:1.45;">{_safe_body}</p>
                     {('<div>' + _view + '</div>') if _view else ""}
                 </div>
             </div>"""
 
         n_total = len(notifs)
+        _count_detail = f"{n_total} total"
+        if unread_count > 0:
+            _count_detail = f"{unread_count} new · {n_total} total"
+        _confirm_msg = f"Clear all {n_total} notification" + ("s" if n_total != 1 else "") + "?"
         notif_body = f"""
         <form method="post" action="/api/notifications/clear" id="notifForm">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-                <span style="color:#64748b;font-size:0.8rem;">{n_total} notification{'s' if n_total != 1 else ''}</span>
+                <span style="color:#64748b;font-size:0.8rem;">{_count_detail}</span>
                 <button type="button" onclick="selectAll(true)"
                     style="background:#1e293b;color:#94a3b8;border:1px solid #334155;padding:5px 12px;border-radius:4px;font-size:0.78rem;cursor:pointer;">Select All</button>
                 <button type="button" onclick="selectAll(false)"
                     style="background:#1e293b;color:#94a3b8;border:1px solid #334155;padding:5px 12px;border-radius:4px;font-size:0.78rem;cursor:pointer;">Deselect All</button>
-                <button type="submit" name="action" value="selected"
-                    style="background:#1e293b;color:#e2e8f0;border:1px solid #334155;padding:5px 14px;border-radius:4px;font-size:0.78rem;cursor:pointer;font-weight:500;">Clear Selected</button>
+                <button type="button" onclick="selectUnread()"
+                    style="background:#1e293b;color:#94a3b8;border:1px solid #334155;padding:5px 12px;border-radius:4px;font-size:0.78rem;cursor:pointer;">Select New</button>
+                <button type="submit" name="action" value="selected" id="clearSelBtn" disabled
+                    style="background:#1e293b;color:#e2e8f0;border:1px solid #334155;padding:5px 14px;border-radius:4px;font-size:0.78rem;cursor:pointer;font-weight:500;opacity:0.5;">Clear Selected</button>
                 <button type="submit" name="action" value="all"
-                    onclick="return confirm('Clear all {n_total} notification{'s' if n_total != 1 else ''}?');"
+                    onclick="return confirm('{_confirm_msg}');"
                     style="background:#7f1d1d;color:#fca5a5;border:1px solid #991b1b;padding:5px 14px;border-radius:4px;font-size:0.78rem;cursor:pointer;font-weight:500;">Clear All</button>
             </div>
             {rows_html}
@@ -3755,6 +3791,20 @@ def notifications_page(session_token: Optional[str] = Cookie(None)):
         <script>
         function selectAll(on) {{
             document.querySelectorAll('.notif-cb').forEach(function(cb) {{ cb.checked = on; }});
+            updateClearBtn();
+        }}
+        function selectUnread() {{
+            document.querySelectorAll('.notif-cb').forEach(function(cb) {{
+                cb.checked = cb.dataset.unread === '1';
+            }});
+            updateClearBtn();
+        }}
+        function updateClearBtn() {{
+            var any = document.querySelectorAll('.notif-cb:checked').length > 0;
+            var btn = document.getElementById('clearSelBtn');
+            btn.disabled = !any;
+            btn.style.opacity = any ? '1' : '0.5';
+            btn.style.cursor = any ? 'pointer' : 'default';
         }}
         </script>"""
     else:
