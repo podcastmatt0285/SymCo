@@ -1496,15 +1496,14 @@ def check_idle_players(current_tick: int):
 def buy_gov_estate_listing(listing_id: int, qty: float, buyer_id: int):
     """Purchase qty units from a government estate listing.
 
-    Debits buyer cash, credits government cash, transfers inventory,
-    reduces listing quantity (marks sold when fully cleared).
+    Debits buyer cash (honouring their legal tender via spend_player_funds),
+    credits government USD, transfers inventory, reduces listing quantity.
     Returns (success: bool, message: str).
     """
-    from auth import get_db as _adb, Player
     from inventory import get_db as _idb, InventoryItem
-    db   = get_db()
-    adb  = _adb()
-    idb  = _idb()
+    from reserve_banks import spend_player_funds, credit_usd
+    db  = get_db()
+    idb = _idb()
     try:
         listing = (db.query(GovernmentEstateListing)
                      .filter(GovernmentEstateListing.id == listing_id,
@@ -1515,22 +1514,15 @@ def buy_gov_estate_listing(listing_id: int, qty: float, buyer_id: int):
         if qty <= 0 or qty > listing.quantity + 1e-9:
             return False, f"Invalid quantity (max {listing.quantity:.2f})"
         qty = min(qty, listing.quantity)
-        cost = round(listing.listed_price * qty, 2)
+        cost = round(listing.listed_price * qty, 4)
 
-        buyer = adb.query(Player).filter(Player.id == buyer_id).with_for_update().first()
-        if not buyer:
-            return False, "Player not found"
-        if buyer.cash_balance < cost:
-            return False, f"Insufficient funds — need ${cost:,.2f}"
+        # Debit buyer using their legal tender (handles USD / foreign currency / fallback)
+        ok, err = spend_player_funds(buyer_id, cost)
+        if not ok:
+            return False, err
 
-        # NOTE: cash_balance is a @property backed by reserve_banks.set_usd_balance(),
-        # which opens its own session and auto-commits immediately. These two lines
-        # debit/credit cash right now — they are NOT deferred to adb.commit().
-        # adb.commit() below only releases the with_for_update() row locks.
-        buyer.cash_balance -= cost
-        gov = adb.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).with_for_update().first()
-        if gov:
-            gov.cash_balance += cost
+        # Credit government treasury in USD
+        credit_usd(GOVERNMENT_PLAYER_ID, cost)
 
         # Transfer inventory from government (player 0) to buyer
         gov_item = (idb.query(InventoryItem)
@@ -1539,8 +1531,7 @@ def buy_gov_estate_listing(listing_id: int, qty: float, buyer_id: int):
                       .with_for_update().first())
         if gov_item:
             gov_item.quantity = max(0.0, gov_item.quantity - qty)
-        else:
-            print(f"[Estate] gov has no inventory row for {listing.item_type!r} (listing #{listing_id})")
+
         buyer_item = (idb.query(InventoryItem)
                         .filter(InventoryItem.player_id == buyer_id,
                                 InventoryItem.item_type == listing.item_type)
@@ -1558,13 +1549,11 @@ def buy_gov_estate_listing(listing_id: int, qty: float, buyer_id: int):
             listing.sold = True
         db.commit()
 
-        adb.commit()  # releases the with_for_update() locks on buyer and gov rows
-
         try:
             from govt_ledger import log_gov_event
             log_gov_event("estate_sale", "in", cost, "USD",
                           f"Player #{buyer_id}",
-                          f"{qty:.2f}× {listing.item_type} @ ${listing.listed_price:,.2f}")
+                          f"{qty:.2f}× {listing.item_type} @ ${listing.listed_price:,.4f}")
         except Exception:
             pass
 
@@ -1572,14 +1561,11 @@ def buy_gov_estate_listing(listing_id: int, qty: float, buyer_id: int):
     except Exception as e:
         try: db.rollback()
         except Exception: pass
-        try: adb.rollback()
-        except Exception: pass
         try: idb.rollback()
         except Exception: pass
         return False, str(e)[:120]
     finally:
         db.close()
-        adb.close()
         idb.close()
 
 
