@@ -42,12 +42,24 @@ class PlayerNotification(_Base):
     url        = Column(String, default="/")
     notif_type = Column(String, default="general")
     is_seen    = Column(Boolean, default=False, index=True)
+    cleared    = Column(Boolean, default=False, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 try:
     _Base.metadata.create_all(bind=engine)
 except Exception as _e:
     print(f"[Push] Could not create player_notifications table: {_e}")
+
+try:
+    from sqlalchemy import text as _sqlt
+    with engine.connect() as _mc:
+        _mc.execute(_sqlt(
+            "ALTER TABLE player_notifications "
+            "ADD COLUMN IF NOT EXISTS cleared BOOLEAN NOT NULL DEFAULT FALSE"
+        ))
+        _mc.commit()
+except Exception:
+    pass
 
 _KEYS_FILE = os.path.join(os.path.dirname(__file__), ".vapid_keys.json")
 _VAPID_KEYS: Optional[dict] = None
@@ -153,19 +165,24 @@ def create_game_notification(
 
 
 def get_game_notifications(player_id: int) -> list:
-    """Return all unseen in-game notifications for a player, newest first."""
+    """Return unseen, non-cleared in-game notifications (legacy — used by old callers)."""
     try:
         db = SessionLocal()
         try:
             rows = (
                 db.query(PlayerNotification)
-                .filter_by(player_id=player_id, is_seen=False)
+                .filter(
+                    PlayerNotification.player_id == player_id,
+                    PlayerNotification.is_seen == False,
+                    PlayerNotification.cleared == False,
+                )
                 .order_by(PlayerNotification.id.desc())
                 .limit(20)
                 .all()
             )
             return [{"id": r.id, "title": r.title, "body": r.body,
                      "url": r.url, "notif_type": r.notif_type,
+                     "is_seen": r.is_seen,
                      "created_at": r.created_at}
                     for r in rows]
         finally:
@@ -175,13 +192,77 @@ def get_game_notifications(player_id: int) -> list:
         return []
 
 
-def mark_game_notifications_seen(player_id: int) -> None:
-    """Mark all unseen in-game notifications as seen for a player."""
+def get_all_game_notifications(player_id: int) -> list:
+    """Return all non-cleared in-game notifications for a player, newest first."""
     try:
         db = SessionLocal()
         try:
-            db.query(PlayerNotification).filter_by(
-                player_id=player_id, is_seen=False
+            rows = (
+                db.query(PlayerNotification)
+                .filter(
+                    PlayerNotification.player_id == player_id,
+                    PlayerNotification.cleared == False,
+                )
+                .order_by(PlayerNotification.id.desc())
+                .all()
+            )
+            return [{"id": r.id, "title": r.title, "body": r.body,
+                     "url": r.url, "notif_type": r.notif_type,
+                     "is_seen": r.is_seen,
+                     "created_at": r.created_at}
+                    for r in rows]
+        finally:
+            db.close()
+    except Exception as e:
+        print(f"[Push] get_all_game_notifications error: {e}")
+        return []
+
+
+def get_unread_game_notification_count(player_id: int) -> int:
+    """Return count of unseen, non-cleared in-game notifications."""
+    try:
+        db = SessionLocal()
+        try:
+            return db.query(PlayerNotification).filter(
+                PlayerNotification.player_id == player_id,
+                PlayerNotification.is_seen == False,
+                PlayerNotification.cleared == False,
+            ).count()
+        finally:
+            db.close()
+    except Exception as e:
+        print(f"[Push] get_unread_game_notification_count error: {e}")
+        return 0
+
+
+def clear_game_notifications(player_id: int, ids=None) -> None:
+    """Mark selected (or all) non-cleared notifications as cleared for a player."""
+    try:
+        db = SessionLocal()
+        try:
+            q = db.query(PlayerNotification).filter(
+                PlayerNotification.player_id == player_id,
+                PlayerNotification.cleared == False,
+            )
+            if ids is not None:
+                q = q.filter(PlayerNotification.id.in_(ids))
+            q.update({"cleared": True}, synchronize_session=False)
+            db.commit()
+        finally:
+            db.close()
+    except Exception as e:
+        print(f"[Push] clear_game_notifications error: {e}")
+
+
+def mark_game_notifications_seen(player_id: int) -> None:
+    """Mark all unseen, non-cleared in-game notifications as seen for a player."""
+    try:
+        db = SessionLocal()
+        try:
+            db.query(PlayerNotification).filter(
+                PlayerNotification.player_id == player_id,
+                PlayerNotification.is_seen == False,
+                PlayerNotification.cleared == False,
             ).update({"is_seen": True})
             db.commit()
         finally:

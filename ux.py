@@ -12,7 +12,7 @@ Provides:
 - Lien dashboard
 """
 
-from typing import Optional
+from typing import List, Optional
 from fastapi import APIRouter, Cookie, Form, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, StreamingResponse
 from datetime import timedelta
@@ -642,6 +642,29 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
         except Exception:
             pass
 
+    # Unread in-game notification badge (📒 icon in header)
+    _notif_count_html = '<a href="/notifications" style="text-decoration:none;font-size:1.05rem;" title="Notifications">📒</a>'
+    if player_id:
+        try:
+            from push_ux import get_unread_game_notification_count as _gunc
+            _nc = _gunc(player_id)
+            _nb_inner = (
+                f'<span style="position:absolute;top:-4px;right:-6px;'
+                f'background:#ef4444;color:#fff;border-radius:50%;'
+                f'min-width:15px;height:15px;padding:0 2px;'
+                f'font-size:0.58rem;font-weight:bold;'
+                f'display:flex;align-items:center;justify-content:center;">'
+                f'{_nc if _nc < 100 else "99+"}</span>'
+            ) if _nc > 0 else ""
+            _nt = f"{_nc} unread notification{'s' if _nc != 1 else ''}" if _nc else "Notifications"
+            _notif_count_html = (
+                f'<a href="/notifications" style="position:relative;display:inline-flex;'
+                f'align-items:center;text-decoration:none;font-size:1.05rem;line-height:1;" '
+                f'title="{_nt}">📒{_nb_inner}</a>'
+            )
+        except Exception:
+            pass
+
     # Resolve display balance using player's legal tender so the header always
     # shows the currency the player actually works in (not hardcoded USD).
     disp_sym      = "$"
@@ -991,6 +1014,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 {lien_html}
                 {_level_html}
                 <span class="balance" id="player-balance">{disp_sym}{disp_balance:,.2f}{disp_usd_note}</span>
+                {_notif_count_html}
                 <a href="/api/logout" style="color: #ef4444; font-size: 0.85rem;">Logout</a>
             </div>
         </div>
@@ -2320,48 +2344,11 @@ def home(request: Request, session_token: Optional[str] = Cookie(None)):
     except Exception:
         crypto_inherit_banners = ""
 
-    # General in-game notification banners (trade pending, market opportunity, etc.)
-    game_notif_banners = ""
-    try:
-        from push_ux import get_game_notifications, mark_game_notifications_seen
-        game_notifs = get_game_notifications(player.id)
-        gn_parts = []
-        _type_meta = {
-            "trades":    ("#f59e0b", "MARKET"),
-            "corporate": ("#38bdf8", "CORPORATE"),
-            "execs":     ("#a78bfa", "EXECUTIVES"),
-            "general":   ("#64748b", "NOTICE"),
-            "govt":      ("#22c55e", "GOVERNMENT"),
-            "business":  ("#fb923c", "BUSINESS"),
-            "land":      ("#84cc16", "LAND"),
-            "contract":  ("#f472b6", "CONTRACT"),
-            "dm":        ("#60a5fa", "MESSAGE"),
-        }
-        for gn in game_notifs:
-            _color, _label = _type_meta.get(gn["notif_type"], ("#64748b", "NOTICE"))
-            _view = f'<a href="{gn["url"]}" style="color:#38bdf8;font-size:0.82rem;margin-right:12px;">View →</a>' if gn["url"] and gn["url"] != "/" else ""
-            gn_parts.append(f"""
-            <div style="background:linear-gradient(135deg,#0a1628,#0f172a);border:2px solid {_color};border-radius:6px;padding:14px 18px;margin-bottom:10px;">
-                <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap;">
-                    <span style="background:{_color};color:#020617;padding:2px 10px;border-radius:10px;font-size:0.7rem;font-weight:bold;">{_label}</span>
-                    <span style="color:#94a3b8;font-size:0.85rem;font-weight:600;">{gn["title"]}</span>
-                </div>
-                <p style="color:#cbd5e1;margin:0;font-size:0.88rem;">{gn["body"]}</p>
-                <div style="margin-top:8px;">{_view}<a href="/settings" style="color:#475569;font-size:0.78rem;">Notification settings →</a></div>
-            </div>""")
-        if gn_parts:
-            mark_game_notifications_seen(player.id)
-        game_notif_banners = "".join(gn_parts)
-    except Exception:
-        game_notif_banners = ""
-
     dashboard_top = _npc_banner + _reseed_banner + (tutorial_overlay or tutorial_banner)
     if acq_banners:
         dashboard_top = dashboard_top + acq_banners
     if crypto_inherit_banners:
         dashboard_top = dashboard_top + crypto_inherit_banners
-    if game_notif_banners:
-        dashboard_top = dashboard_top + game_notif_banners
 
     # Admin / Mod card — only shown to players with elevated access
     staff_card = ""
@@ -3695,6 +3682,122 @@ def beta_dismiss_notification(
     except Exception:
         pass
     return _RR("/", status_code=303)
+
+
+@router.get("/notifications", response_class=HTMLResponse)
+def notifications_page(session_token: Optional[str] = Cookie(None)):
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+
+    from push_ux import get_all_game_notifications, mark_game_notifications_seen
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
+
+    notifs = get_all_game_notifications(player.id)
+    unread_count = sum(1 for n in notifs if not n["is_seen"])
+    mark_game_notifications_seen(player.id)
+
+    _type_meta = {
+        "trades":       ("#f59e0b", "MARKET"),
+        "corporate":    ("#38bdf8", "CORPORATE"),
+        "execs":        ("#a78bfa", "EXECUTIVES"),
+        "general":      ("#64748b", "NOTICE"),
+        "govt":         ("#22c55e", "GOVERNMENT"),
+        "business":     ("#fb923c", "BUSINESS"),
+        "land":         ("#84cc16", "LAND"),
+        "contract":     ("#f472b6", "CONTRACT"),
+        "dm":           ("#60a5fa", "MESSAGE"),
+        "tasks_events": ("#a78bfa", "EVENTS"),
+    }
+
+    if notifs:
+        rows_html = ""
+        for n in notifs:
+            _color, _label = _type_meta.get(n["notif_type"], ("#64748b", "NOTICE"))
+            _view = (f'<a href="{n["url"]}" style="color:#38bdf8;font-size:0.78rem;">View →</a>'
+                     if n["url"] and n["url"] != "/" else "")
+            _ts = n["created_at"].strftime("%b %d, %Y %H:%M") if n.get("created_at") else ""
+            _glow = (f'box-shadow:0 0 0 1px {_color}33;'
+                     if not n["is_seen"] else "")
+            rows_html += f"""
+            <div style="display:flex;align-items:flex-start;gap:12px;background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:14px 16px;margin-bottom:8px;{_glow}">
+                <input type="checkbox" name="id" value="{n['id']}" class="notif-cb"
+                    style="margin-top:3px;accent-color:{_color};width:16px;height:16px;cursor:pointer;flex-shrink:0;">
+                <div style="flex:1;min-width:0;">
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+                        <span style="background:{_color};color:#020617;padding:1px 8px;border-radius:8px;font-size:0.67rem;font-weight:bold;white-space:nowrap;">{_label}</span>
+                        <span style="color:#e2e8f0;font-size:0.88rem;font-weight:600;">{n['title']}</span>
+                        <span style="color:#475569;font-size:0.72rem;margin-left:auto;white-space:nowrap;">{_ts}</span>
+                    </div>
+                    <p style="color:#94a3b8;margin:0 0 6px 0;font-size:0.85rem;line-height:1.45;">{n['body']}</p>
+                    {('<div>' + _view + '</div>') if _view else ""}
+                </div>
+            </div>"""
+
+        n_total = len(notifs)
+        notif_body = f"""
+        <form method="post" action="/api/notifications/clear" id="notifForm">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+                <span style="color:#64748b;font-size:0.8rem;">{n_total} notification{'s' if n_total != 1 else ''}</span>
+                <button type="button" onclick="selectAll(true)"
+                    style="background:#1e293b;color:#94a3b8;border:1px solid #334155;padding:5px 12px;border-radius:4px;font-size:0.78rem;cursor:pointer;">Select All</button>
+                <button type="button" onclick="selectAll(false)"
+                    style="background:#1e293b;color:#94a3b8;border:1px solid #334155;padding:5px 12px;border-radius:4px;font-size:0.78rem;cursor:pointer;">Deselect All</button>
+                <button type="submit" name="action" value="selected"
+                    style="background:#1e293b;color:#e2e8f0;border:1px solid #334155;padding:5px 14px;border-radius:4px;font-size:0.78rem;cursor:pointer;font-weight:500;">Clear Selected</button>
+                <button type="submit" name="action" value="all"
+                    onclick="return confirm('Clear all {n_total} notification{'s' if n_total != 1 else ''}?');"
+                    style="background:#7f1d1d;color:#fca5a5;border:1px solid #991b1b;padding:5px 14px;border-radius:4px;font-size:0.78rem;cursor:pointer;font-weight:500;">Clear All</button>
+            </div>
+            {rows_html}
+        </form>
+        <script>
+        function selectAll(on) {{
+            document.querySelectorAll('.notif-cb').forEach(function(cb) {{ cb.checked = on; }});
+        }}
+        </script>"""
+    else:
+        notif_body = """
+        <div style="text-align:center;padding:60px 20px;color:#475569;">
+            <div style="font-size:2.5rem;margin-bottom:12px;">✅</div>
+            <div style="font-size:1rem;font-weight:600;color:#64748b;">You're all caught up!</div>
+            <div style="font-size:0.85rem;margin-top:6px;">No notifications to display.</div>
+        </div>"""
+
+    _new_badge = (
+        f'<span style="background:#ef4444;color:#fff;border-radius:10px;'
+        f'padding:2px 8px;font-size:0.72rem;font-weight:bold;">{unread_count} new</span>'
+    ) if unread_count > 0 else ""
+
+    body = f"""
+    <div style="max-width:820px;margin:0 auto;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
+            <h2 style="margin:0;font-size:1.3rem;color:#e2e8f0;">📒 Notifications</h2>
+            {_new_badge}
+            <a href="/" style="color:#64748b;font-size:0.8rem;margin-left:auto;text-decoration:none;">← Dashboard</a>
+        </div>
+        {notif_body}
+    </div>"""
+
+    return HTMLResponse(shell("Notifications", body, player.cash_balance, player.id))
+
+
+@router.post("/api/notifications/clear")
+def api_notifications_clear(
+    id: List[int] = Form(default=[]),
+    action: str = Form(default="selected"),
+    session_token: Optional[str] = Cookie(None),
+):
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+    from push_ux import clear_game_notifications
+    if action == "all":
+        clear_game_notifications(player.id, ids=None)
+    elif id:
+        clear_game_notifications(player.id, ids=id)
+    return RedirectResponse("/notifications", status_code=303)
 
 
 @router.get("/businesses", response_class=HTMLResponse)
