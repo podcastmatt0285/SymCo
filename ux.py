@@ -644,26 +644,23 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
         except Exception:
             pass
 
-    # Unread in-game notification badge (📒 icon in header)
-    _notif_count_html = '<a href="/notifications" style="text-decoration:none;font-size:1.05rem;" title="Notifications">📒</a>'
+    # Unread in-game notification link (sits with Logout in the header-right)
+    _notif_count_html = '<a href="/notifications" style="color:#475569;font-size:0.82rem;text-decoration:none;" title="Notifications">📒</a>'
     if player_id:
         try:
             from push_ux import get_unread_game_notification_count as _gunc
             _nc = _gunc(player_id)
-            _nb_inner = (
-                f'<span style="position:absolute;top:-4px;right:-6px;'
-                f'background:#ef4444;color:#fff;border-radius:50%;'
-                f'min-width:15px;height:15px;padding:0 2px;'
-                f'font-size:0.58rem;font-weight:bold;'
-                f'display:flex;align-items:center;justify-content:center;">'
-                f'{_nc if _nc < 100 else "99+"}</span>'
-            ) if _nc > 0 else ""
-            _nt = f"{_nc} unread notification{'s' if _nc != 1 else ''}" if _nc else "Notifications"
-            _notif_count_html = (
-                f'<a href="/notifications" style="position:relative;display:inline-flex;'
-                f'align-items:center;text-decoration:none;font-size:1.05rem;line-height:1;" '
-                f'title="{_nt}">📒{_nb_inner}</a>'
-            )
+            if _nc > 0:
+                _nc_str = str(_nc) if _nc < 100 else "99+"
+                _nt = f"{_nc} unread notification{'s' if _nc != 1 else ''}"
+                _notif_count_html = (
+                    f'<a href="/notifications" style="color:#94a3b8;font-size:0.82rem;'
+                    f'text-decoration:none;" title="{_nt}">'
+                    f'📒<span style="color:#ef4444;font-size:0.68rem;'
+                    f'font-weight:700;margin-left:2px;">{_nc_str}</span></a>'
+                )
+            else:
+                _notif_count_html = '<a href="/notifications" style="color:#475569;font-size:0.82rem;text-decoration:none;" title="Notifications">📒</a>'
         except Exception:
             pass
 
