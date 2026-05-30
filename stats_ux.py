@@ -1164,10 +1164,14 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
     try:
         return await _stats_personal_impl(session_token)
     except Exception as _e:
-        import traceback
-        print(f"[stats_personal] ERROR: {_e}")
-        traceback.print_exc()
-        raise
+        import traceback as _tb
+        _trace = _tb.format_exc()
+        print(f"[stats_personal] ERROR: {_e}\n{_trace}")
+        return HTMLResponse(
+            f"<pre style='color:red;background:#111;padding:20px;'>"
+            f"stats_personal error:\n{_trace}</pre>",
+            status_code=500
+        )
 
 
 async def _stats_personal_impl(session_token: Optional[str] = None):
@@ -1180,7 +1184,11 @@ async def _stats_personal_impl(session_token: Optional[str] = None):
 
     from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
-    stats = calculate_player_stats(player.id)
+    stats = calculate_player_stats(player.id) or {
+        "cash_balance": 0.0, "land_value": 0.0, "inventory_value": 0.0,
+        "business_value": 0.0, "share_value": 0.0, "district_value": 0.0,
+        "total_net_worth": 0.0, "lands_owned": 0, "businesses_owned": 0, "districts_owned": 0,
+    }
 
     # Fetch last 500 transactions
     txs = db.query(TransactionLog).filter(
