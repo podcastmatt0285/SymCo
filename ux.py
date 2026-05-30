@@ -411,6 +411,8 @@ def _nav_loader_html() -> str:
             "Calibrating Brass Resonance...",
             "Updating Ledger Entries...",
             "Deploying Asset Containers...",
+            "Scanning Crisis Intelligence Feeds...",
+            "Cross-referencing Supply Chain Alerts...",
             "Finalizing Handshake..."
           ];
           var overlay = document.getElementById('nav-loader');
@@ -14094,6 +14096,37 @@ def api_widget_data(request: Request, session_token: Optional[str] = Cookie(None
     except Exception:
         result["restoration"] = {"active": False}
 
+    # Active item crises
+    try:
+        from events import get_active_item_crisis_summary as _gics
+        _crises = _gics()
+        if _crises:
+            def _rel(dt):
+                if not dt:
+                    return ""
+                from datetime import datetime as _dtt
+                diff = int((dt - _dtt.utcnow()).total_seconds())
+                if diff <= 0:
+                    return "ended"
+                if diff < 3600:
+                    return f"{diff//60}m"
+                if diff < 86400:
+                    return f"{diff//3600}h"
+                return f"{diff//86400}d"
+            result["active_crises"] = [
+                {
+                    "item_type": c["item_type"],
+                    "title": c["title"],
+                    "drop_pct": c["drop_pct"],
+                    "ends_in": _rel(c["ends_at"]),
+                }
+                for c in _crises
+            ]
+        else:
+            result["active_crises"] = []
+    except Exception:
+        result["active_crises"] = []
+
     return JSONResponse(result)
 
 
@@ -16337,6 +16370,7 @@ def events_page(request: Request,
         "city":         "#38bdf8",
         "production":   "#fb923c",
         "crypto_scam":  "#fbbf24",
+        "item_crisis":  "#ef4444",
     }
     _DUR_COLOR = {
         "daily":   "#f59e0b",
@@ -16743,32 +16777,114 @@ def events_page(request: Request,
         if etype not in ("task", "index_challenge") and not (_effect.get("type") == "crypto_scam") and _effect:
             import html as _html
             _eff_rows = []
-            pf = _effect.get("price_factor")
-            if isinstance(pf, (int, float)) and pf != 1.0:
-                _dir = "▲" if pf > 1.0 else "▼"
-                _pct = abs(pf - 1.0) * 100
-                _col = "#f87171" if pf > 1.0 else "#4ade80"
-                _eff_rows.append(f'<span style="color:{_col};">{_dir} Market prices {_pct:.0f}% {"higher" if pf > 1.0 else "lower"}</span>')
-            prod_f = _effect.get("production_factor")
-            if isinstance(prod_f, (int, float)) and prod_f != 1.0:
-                _dir = "▲" if prod_f > 1.0 else "▼"
-                _pct = abs(prod_f - 1.0) * 100
-                _col = "#4ade80" if prod_f > 1.0 else "#f87171"
-                _eff_rows.append(f'<span style="color:{_col};">{_dir} Production output {_pct:.0f}% {"higher" if prod_f > 1.0 else "lower"}</span>')
-            # Generic key-value fallback for other effect keys (HTML-escaped)
-            _known = {"price_factor", "production_factor", "type"}
-            for _k, _v in _effect.items():
-                if _k not in _known:
+
+            if etype == "item_crisis":
+                # Rich item crisis display
+                _crisis_item = _effect.get("item_type", "")
+                _crisis_pf = _effect.get("production_factor", 1.0)
+                _crisis_drop = round((1.0 - _crisis_pf) * 100) if _crisis_pf < 1.0 else 0
+                _iname = _crisis_item.replace("_", " ").title()
+                if _crisis_item:
+                    try:
+                        import json as _json
+                        with open("item_types.json") as _f:
+                            _idata = _json.load(_f).get(_crisis_item, {})
+                        _iname = _idata.get("name", _iname)
+                    except Exception:
+                        pass
+                _eff_rows.append(
+                    f'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'
+                    f'<span style="font-size:1.4rem;">⚠️</span>'
+                    f'<div>'
+                    f'<div style="color:#fca5a5;font-weight:700;font-size:0.88rem;">'
+                    f'{_html.escape(_iname)} production disrupted</div>'
+                    f'<div style="color:#ef4444;font-size:0.80rem;">▼ Output reduced by {_crisis_drop}%'
+                    f' — all producers affected globally</div>'
+                    f'</div></div>'
+                )
+                # Check if player has businesses producing this item
+                try:
+                    from business import BUSINESS_TYPES, get_district_business_types, Business as _Biz
+                    from land import get_db as _get_land_db
+                    _all_btypes = {**BUSINESS_TYPES, **get_district_business_types()}
+                    # Find which business types produce the crisis item
+                    _producing_types = {
+                        _btype
+                        for _btype, _bcfg in _all_btypes.items()
+                        for _pline in _bcfg.get("production_lines", [])
+                        if _pline.get("output_item") == _crisis_item
+                    }
+                    _crisis_bnames = []
+                    if _producing_types:
+                        _ldb = _get_land_db()
+                        try:
+                            _player_biztypes = _ldb.query(
+                                _Biz.business_type,
+                                _Biz.id
+                            ).filter(
+                                _Biz.owner_id == player.id,
+                                _Biz.is_active == True,
+                                _Biz.business_type.in_(_producing_types),
+                            ).all()
+                        finally:
+                            _ldb.close()
+                        _btype_counts: dict = {}
+                        for _bt, _ in _player_biztypes:
+                            _btype_counts[_bt] = _btype_counts.get(_bt, 0) + 1
+                        for _bt, _cnt in _btype_counts.items():
+                            _bname = _all_btypes.get(_bt, {}).get("name", _bt)
+                            _crisis_bnames.append(_bname + (f" ×{_cnt}" if _cnt > 1 else ""))
+                except Exception:
+                    _crisis_bnames = []
+                if _crisis_bnames:
+                    _bn_list = ", ".join(_crisis_bnames)
                     _eff_rows.append(
-                        f'<span style="color:#94a3b8;">'
-                        f'{_html.escape(str(_k))}: {_html.escape(str(_v))}</span>'
+                        f'<div style="margin-top:6px;padding:6px 10px;background:#2d0a0a;'
+                        f'border-left:3px solid #ef4444;border-radius:3px;font-size:0.78rem;">'
+                        f'<span style="color:#fca5a5;">⚡ Your businesses affected: </span>'
+                        f'<span style="color:#fcd34d;">{_html.escape(_bn_list)}</span></div>'
                     )
+                else:
+                    _eff_rows.append(
+                        f'<div style="margin-top:6px;font-size:0.75rem;color:#64748b;">'
+                        f'✓ None of your active businesses produce {_html.escape(_iname)}</div>'
+                    )
+                _eff_rows.append(
+                    f'<div style="margin-top:6px;font-size:0.72rem;color:#475569;">'
+                    f'📊 <a href="/market?search={_html.escape(_crisis_item)}" '
+                    f'style="color:#60a5fa;">View {_html.escape(_iname)} on market →</a></div>'
+                )
+            else:
+                pf = _effect.get("price_factor")
+                if isinstance(pf, (int, float)) and pf != 1.0:
+                    _dir = "▲" if pf > 1.0 else "▼"
+                    _pct = abs(pf - 1.0) * 100
+                    _col = "#f87171" if pf > 1.0 else "#4ade80"
+                    _eff_rows.append(f'<span style="color:{_col};">{_dir} Market prices {_pct:.0f}% {"higher" if pf > 1.0 else "lower"}</span>')
+                prod_f = _effect.get("production_factor")
+                if isinstance(prod_f, (int, float)) and prod_f != 1.0:
+                    _dir = "▲" if prod_f > 1.0 else "▼"
+                    _pct = abs(prod_f - 1.0) * 100
+                    _col = "#4ade80" if prod_f > 1.0 else "#f87171"
+                    _eff_rows.append(f'<span style="color:{_col};">{_dir} Production output {_pct:.0f}% {"higher" if prod_f > 1.0 else "lower"}</span>')
+                # Generic key-value fallback for other effect keys (HTML-escaped)
+                _known = {"price_factor", "production_factor", "type"}
+                for _k, _v in _effect.items():
+                    if _k not in _known:
+                        _eff_rows.append(
+                            f'<span style="color:#94a3b8;">'
+                            f'{_html.escape(str(_k))}: {_html.escape(str(_v))}</span>'
+                        )
+
             if _eff_rows:
+                _border_col = "#7f1d1d" if etype == "item_crisis" else "#1e3a5f"
+                _bg_col = "#0d0505" if etype == "item_crisis" else "#050d1a"
+                _hdr = "🚨 Crisis Impact" if etype == "item_crisis" else "Active Effect"
                 effect_html = (
-                    '<div style="margin-top:10px;padding:10px 12px;background:#050d1a;'
-                    'border:1px solid #1e3a5f;border-radius:6px;">'
-                    '<div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;'
-                    'letter-spacing:.07em;margin-bottom:6px;">Active Effect</div>'
+                    f'<div style="margin-top:10px;padding:10px 12px;background:{_bg_col};'
+                    f'border:1px solid {_border_col};border-radius:6px;">'
+                    f'<div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;'
+                    f'letter-spacing:.07em;margin-bottom:8px;">{_hdr}</div>'
                     + "".join(
                         f'<div style="font-size:0.80rem;font-weight:600;margin-bottom:3px;">{r}</div>'
                         for r in _eff_rows

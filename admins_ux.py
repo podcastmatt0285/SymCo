@@ -5119,6 +5119,7 @@ def admin_events(session_token: Optional[str] = Cookie(None),
             <select name="event_type" style="{_sel}" onchange="evTypeChange(this)">
               <option value="task" selected>Task (tracks player progress)</option>
               <option value="index_challenge">Index Challenge (enter/exit Top 50)</option>
+              <option value="item_crisis">⚠️ Item Crisis (cartel / supply shock)</option>
               <option value="market">Market (price effect)</option>
               <option value="production">Production (output effect)</option>
               <option value="gov">Government / policy</option>
@@ -5162,11 +5163,81 @@ def admin_events(session_token: Optional[str] = Cookie(None),
                    placeholder="e.g. 2500 for $2,500 · 1 for one action" style="{_inp}">
           </div>
         </div>
+        <!-- Item Crisis helper fields (hidden unless item_crisis selected) -->
+        <div id="crisis_fields" style="display:none;background:#0a0f1e;border:1px solid #7f1d1d;
+             border-radius:6px;padding:12px;margin-bottom:10px;">
+          <div style="font-size:0.72rem;color:#fca5a5;font-weight:700;margin-bottom:10px;">
+            ⚠️ Item Crisis Configuration
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div>
+              <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">Affected Commodity</div>
+              <select id="crisis_item_type" style="{_sel}" onchange="crisisUpdate()">
+                <optgroup label="— Crops —">
+                  <option value="coffee_beans">Coffee Beans</option>
+                  <option value="sugar">Sugar</option>
+                  <option value="wheat">Wheat</option>
+                  <option value="corn">Corn</option>
+                  <option value="rice">Rice</option>
+                  <option value="barley">Barley</option>
+                  <option value="cinnamon">Cinnamon</option>
+                  <option value="cotton">Cotton</option>
+                  <option value="spices">Spices</option>
+                </optgroup>
+                <optgroup label="— Metals —">
+                  <option value="copper">Copper</option>
+                  <option value="gold">Gold</option>
+                  <option value="silver">Silver</option>
+                  <option value="aluminum">Aluminum</option>
+                  <option value="iron">Iron</option>
+                  <option value="lithium">Lithium</option>
+                  <option value="cobalt">Cobalt</option>
+                  <option value="nickel">Nickel</option>
+                  <option value="tin">Tin</option>
+                  <option value="zinc">Zinc</option>
+                  <option value="manganese">Manganese</option>
+                  <option value="platinum">Platinum</option>
+                  <option value="chromite">Chromite</option>
+                </optgroup>
+                <optgroup label="— Ore —">
+                  <option value="bauxite">Bauxite</option>
+                  <option value="chromite">Chromite</option>
+                  <option value="cobalt_ore">Cobalt Ore</option>
+                </optgroup>
+                <optgroup label="— Energy —">
+                  <option value="oil">Crude Oil</option>
+                  <option value="natural_gas">Natural Gas</option>
+                  <option value="coal">Coal</option>
+                </optgroup>
+                <optgroup label="— Seafood —">
+                  <option value="cod">Cod</option>
+                  <option value="salmon">Atlantic Salmon</option>
+                </optgroup>
+                <optgroup label="— Other —">
+                  <option value="timber">Timber</option>
+                  <option value="rubber">Synthetic Rubber</option>
+                </optgroup>
+              </select>
+            </div>
+            <div>
+              <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">Production Drop % (0–99)</div>
+              <input type="number" id="crisis_drop_pct" min="1" max="99" value="40"
+                     style="{_inp}" oninput="crisisUpdate()">
+              <div style="font-size:0.65rem;color:#475569;margin-top:3px;">
+                e.g. 40 = 40% drop → output ×0.60 · 70 = 70% drop → output ×0.30
+              </div>
+            </div>
+          </div>
+          <div style="font-size:0.68rem;color:#64748b;margin-top:8px;">
+            Title is auto-filled. Effect data JSON is auto-generated below — edit manually if needed.
+          </div>
+        </div>
         <div style="margin-bottom:10px;">
           <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">
             Effect data JSON (non-task events) — e.g.
             <code style="color:#f59e0b;">{{"price_factor":1.25}}</code> for a 25% price boost,
             <code style="color:#f59e0b;">{{"production_factor":1.5}}</code> for 50% more output,
+            <code style="color:#f59e0b;">{{"item_type":"coffee_beans","production_factor":0.6}}</code> for a crisis,
             <code style="color:#f59e0b;">{{"type":"crypto_scam","wsc_pool":10000}}</code> for WSC event
           </div>
           <textarea name="effect_data" placeholder='{{"price_factor": 1.0}}' rows="2"
@@ -5186,10 +5257,40 @@ def admin_events(session_token: Optional[str] = Cookie(None),
           </span>
         </div>
         <script>
+        var _CRISIS_NAMES = {{
+          'coffee_beans':'Coffee Beans','sugar':'Sugar','wheat':'Wheat','corn':'Corn',
+          'rice':'Rice','barley':'Barley','cinnamon':'Cinnamon','cotton':'Cotton','spices':'Spices',
+          'copper':'Copper','gold':'Gold','silver':'Silver','aluminum':'Aluminum','iron':'Iron',
+          'lithium':'Lithium','cobalt':'Cobalt','nickel':'Nickel','tin':'Tin','zinc':'Zinc',
+          'manganese':'Manganese','platinum':'Platinum','chromite':'Chromite','bauxite':'Bauxite',
+          'cobalt_ore':'Cobalt Ore','oil':'Crude Oil','natural_gas':'Natural Gas','coal':'Coal',
+          'cod':'Cod','salmon':'Atlantic Salmon','timber':'Timber','rubber':'Synthetic Rubber'
+        }};
+        function crisisUpdate() {{
+          var ef = document.querySelector('textarea[name="effect_data"]');
+          var titleEl = document.querySelector('input[name="title"]');
+          var itemSel = document.getElementById('crisis_item_type');
+          var dropPct = document.getElementById('crisis_drop_pct');
+          if (!itemSel || !dropPct || !ef) return;
+          var item = itemSel.value;
+          var pct = Math.min(99, Math.max(1, parseInt(dropPct.value) || 40));
+          var factor = parseFloat(((100 - pct) / 100).toFixed(4));
+          ef.value = JSON.stringify({{"item_type": item, "production_factor": factor}});
+          var name = _CRISIS_NAMES[item] || item.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+          if (titleEl && (!titleEl.value || titleEl.dataset.crisisAuto === '1')) {{
+            titleEl.value = name + ' Crisis!';
+            titleEl.dataset.crisisAuto = '1';
+          }}
+        }}
         function evTypeChange(sel) {{
           var ef = document.querySelector('textarea[name="effect_data"]');
           var dur = document.querySelector('select[name="duration_class"]');
           var metric = document.querySelector('select[name="task_metric"]');
+          var crisisDiv = document.getElementById('crisis_fields');
+          var titleEl = document.querySelector('input[name="title"]');
+          // Hide crisis panel by default
+          if (crisisDiv) crisisDiv.style.display = 'none';
+          if (titleEl) titleEl.dataset.crisisAuto = '0';
           if (sel.value === 'crypto_scam') {{
             if (ef && (!ef.value || ef.value.trim() === '' || ef.value.trim() === '{{"price_factor": 1.0}}')) {{
               ef.value = '{{"type":"crypto_scam","wsc_pool":10000}}';
@@ -5200,6 +5301,9 @@ def admin_events(session_token: Optional[str] = Cookie(None),
             if (ef) {{ ef.value = '{{}}'; }}
             var tgt = document.querySelector('input[name="task_target"]');
             if (tgt && !tgt.value) {{ tgt.value = '1'; }}
+          }} else if (sel.value === 'item_crisis') {{
+            if (crisisDiv) crisisDiv.style.display = 'block';
+            crisisUpdate();
           }}
         }}
         </script>
@@ -5556,14 +5660,31 @@ def admin_event_create(
         finally:
             edb.close()
         if is_active:
+            from events import invalidate_effects_cache as _inv_cache
+            _inv_cache()
             if start > now:
                 schedule_event_notifications(ev)
                 broadcast_event_push(ev.id, f"📅 Upcoming: {ev.title}",
                                      ev.description or "A new event is coming — stay tuned!",
                                      tag=f"event-{ev.id}-scheduled")
             else:
+                _live_body = ev.description or "The event is now active — join in!"
+                if event_type == "item_crisis":
+                    try:
+                        _ed2 = _json.loads(ed_str)
+                        _ci = _ed2.get("item_type", "")
+                        _cpf = _ed2.get("production_factor", 1.0)
+                        _cdrop = round((1.0 - _cpf) * 100)
+                        if _ci and _cdrop > 0:
+                            _live_body = (
+                                f"Cartel violence has disrupted {_ci.replace('_',' ').title()} "
+                                f"supply chains. Production output reduced by {_cdrop}%. "
+                                f"Prices may rise — check your businesses."
+                            )
+                    except Exception:
+                        pass
                 broadcast_event_push(ev.id, f"🔴 {ev.title} is LIVE!",
-                                     ev.description or "The event is now active — join in!",
+                                     _live_body,
                                      tag=f"event-{ev.id}-live")
                 schedule_event_notifications(ev)
         return RedirectResponse(f"/admin/events?msg={urllib.parse.quote(msg)}", status_code=303)

@@ -526,6 +526,61 @@ def get_active_production_factor() -> float:
     return factor
 
 
+def get_active_item_crisis_factors() -> dict:
+    """Return {item_type: production_factor} for all active item_crisis events.
+
+    Multiple simultaneous crises on the same item have their factors multiplied.
+    e.g. effect_data = {"item_type": "coffee_beans", "production_factor": 0.5}
+    means coffee output is halved globally.
+    """
+    factors: dict = {}
+    for eff in get_active_effects():
+        if eff.get("event_type") != "item_crisis":
+            continue
+        ed = eff.get("effect_data", {})
+        item = ed.get("item_type")
+        pf = ed.get("production_factor")
+        if item and isinstance(pf, (int, float)) and 0 < pf <= 2.0:
+            factors[item] = factors.get(item, 1.0) * pf
+    return factors
+
+
+def get_active_item_crisis_summary() -> list:
+    """Return list of active crisis dicts for display: [{item_type, item_name, drop_pct, title, ends_at}]."""
+    import json as _json
+    crises = []
+    try:
+        db = SessionLocal()
+        try:
+            now = datetime.utcnow()
+            rows = db.query(GameEvent).filter(
+                GameEvent.event_type == "item_crisis",
+                GameEvent.is_active == True,
+                GameEvent.starts_at <= now,
+            ).filter(
+                (GameEvent.ends_at == None) | (GameEvent.ends_at > now)
+            ).all()
+            for ev in rows:
+                try:
+                    ed = _json.loads(ev.effect_data or "{}")
+                except Exception:
+                    ed = {}
+                item_type = ed.get("item_type", "")
+                pf = ed.get("production_factor", 1.0)
+                drop_pct = round((1.0 - pf) * 100, 1) if pf < 1.0 else 0
+                crises.append({
+                    "item_type": item_type,
+                    "drop_pct": drop_pct,
+                    "title": ev.title,
+                    "ends_at": ev.ends_at,
+                })
+        finally:
+            db.close()
+    except Exception as e:
+        print(f"[Events] get_active_item_crisis_summary error: {e}")
+    return crises
+
+
 def get_player_task_progress_map(player_id: int, event_ids: list) -> dict:
     """Return {event_id: {"progress": float, "completed": bool}} for the given event IDs."""
     if not player_id or not event_ids:
@@ -676,6 +731,7 @@ def _snapshot_index_challenge_members(db, ev: "GameEvent"):
 
 def _on_event_live(event_id: int):
     """Timer callback: fires when a scheduled event's starts_at arrives."""
+    import json as _json
     with _timers_lock:
         _pending_timers.pop(event_id, None)
     title = None
@@ -689,6 +745,21 @@ def _on_event_live(event_id: int):
             if ev.event_type == "index_challenge":
                 _snapshot_index_challenge_members(db, ev)
                 db.commit()
+            elif ev.event_type == "item_crisis":
+                try:
+                    ed = _json.loads(ev.effect_data or "{}")
+                    item_type = ed.get("item_type", "")
+                    pf = ed.get("production_factor", 1.0)
+                    drop_pct = round((1.0 - pf) * 100)
+                    if item_type and drop_pct > 0:
+                        body = (
+                            f"Cartel violence has disrupted {item_type.replace('_', ' ').title()} "
+                            f"supply chains. Production output reduced by {drop_pct}%. "
+                            f"Prices may rise — check your businesses."
+                        )
+                except Exception:
+                    pass
+                invalidate_effects_cache()
     except Exception as e:
         print(f"[Events] _on_event_live DB error: {e}")
     finally:
@@ -699,6 +770,7 @@ def _on_event_live(event_id: int):
 
 def _on_event_ended(event_id: int):
     """Timer callback: fires when an event's ends_at arrives."""
+    import json as _json
     with _timers_lock:
         _pending_timers.pop(event_id, None)
     title = None
@@ -709,6 +781,18 @@ def _on_event_ended(event_id: int):
         if ev:
             title = f"🏁 {ev.title} has ended"
             body  = "The event is over — check /events for details."
+            if ev.event_type == "item_crisis":
+                try:
+                    ed = _json.loads(ev.effect_data or "{}")
+                    item_type = ed.get("item_type", "")
+                    if item_type:
+                        body = (
+                            f"The {item_type.replace('_', ' ').title()} Crisis has resolved. "
+                            f"Production output returns to normal levels."
+                        )
+                except Exception:
+                    pass
+                invalidate_effects_cache()
     except Exception as e:
         print(f"[Events] _on_event_ended DB error: {e}")
     finally:

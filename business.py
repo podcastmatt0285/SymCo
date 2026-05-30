@@ -262,6 +262,11 @@ def process_business_tick(db):
         _ev_prod_factor = _get_prod_factor()
     except Exception:
         _ev_prod_factor = 1.0
+    try:
+        from events import get_active_item_crisis_factors as _get_crisis_factors
+        _crisis_factors = _get_crisis_factors()
+    except Exception:
+        _crisis_factors = {}
     
     active_biz = db.query(Business).filter(Business.is_active == True).all()
     for biz in active_biz:
@@ -439,8 +444,9 @@ def process_business_tick(db):
                         consume_wma(player.id, req["item"], req["quantity"])
                     except Exception:
                         pass
-                # Apply city project output multiplier + active event production bonus
-                effective_output_qty = max(1, round(line["output_qty"] * _city_output_mult * _ev_prod_factor))
+                # Apply city project output multiplier + global event bonus + per-item crisis reduction
+                _item_crisis_f = _crisis_factors.get(line.get("output_item", ""), 1.0)
+                effective_output_qty = max(1, round(line["output_qty"] * _city_output_mult * _ev_prod_factor * _item_crisis_f))
                 add_item(player.id, line["output_item"], effective_output_qty)
                 # Update WMA cost basis for the newly produced output
                 try:
