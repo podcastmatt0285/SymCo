@@ -3340,7 +3340,7 @@ def government_dashboard(
             f'<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px;">'
             f'<p style="color:#475569;font-size:0.75rem;margin:0;flex:1;">'
             f'Assets seized from deleted or inactive player accounts, liquidated at 85% of market value. '
-            f'Proceeds go to the federal treasury.</p>'
+            f'The 18% tax goes to the federal treasury; the pre-tax subtotal is distributed equally among the deceased player\'s living heirs (if any).</p>'
             f'<span style="background:#7c1d1d;color:#fca5a5;border:1px solid #b91c1c;border-radius:4px;'
             f'padding:3px 10px;font-size:0.72rem;font-weight:700;white-space:nowrap;">'
             f'⚠ {int(_ESTATE_TAX_RATE*100)}% Federal Estate Sales Tax applies</span>'
