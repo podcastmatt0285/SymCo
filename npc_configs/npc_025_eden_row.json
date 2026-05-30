@@ -11,6 +11,16 @@
   "seed": {
     "starting_cash": 8000000,
     "starting_inventory": {
+      "grapes": 2000,
+      "apples": 2000,
+      "oranges": 1500,
+      "potatoes": 3000,
+      "lettuce": 1500,
+      "carrots": 3000,
+      "sugar": 4000,
+      "blackstrap_molasses": 1500,
+      "caramel": 1000,
+      "cane": 3000,
       "grape_seeds": 100,
       "apple_seeds": 500,
       "orange_seeds": 300

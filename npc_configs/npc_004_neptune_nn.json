@@ -58,7 +58,26 @@
         "proximity_features": [],
         "size": 1
       }
-    ]
+    ],
+    "starting_inventory": {
+      "chocolate": 2000,
+      "candy_bar": 1500,
+      "lollipop": 2000,
+      "gummy_bears": 2000,
+      "hard_candy": 2000,
+      "taffy": 1500,
+      "fudge": 800,
+      "truffles": 500,
+      "toffee": 1200,
+      "licorice": 1200,
+      "marshmallow": 1500,
+      "peppermint": 1000,
+      "caramel": 2000,
+      "honey": 500,
+      "sugar": 3000,
+      "cane": 5000,
+      "water": 4000
+    }
   },
   "businesses": [
     {

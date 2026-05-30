@@ -11,45 +11,163 @@
   "seed": {
     "starting_cash": 7500000,
     "starting_inventory": {
+      "shrimp": 1500,
+      "salmon": 500,
+      "salmon_fillet": 2000,
+      "fish_meal": 2000,
+      "fish_oil": 800,
       "shrimp_trawler": 2,
       "aquaculture_raft": 3,
       "bio_fuel": 1000,
-      "fish_meal": 2000,
       "sardines": 5000,
-      "shrimp": 1500,
-      "salmon": 500,
       "salt": 500
     },
     "land_plots": [
-      { "terrain_type": "coastal", "proximity_features": ["coastal"],          "size": 1 },
-      { "terrain_type": "coastal", "proximity_features": ["coastal"],          "size": 1 },
-      { "terrain_type": "coastal", "proximity_features": ["coastal", "urban"], "size": 1 },
-      { "terrain_type": "coastal", "proximity_features": ["coastal", "urban"], "size": 1 }
+      {
+        "terrain_type": "coastal",
+        "proximity_features": [
+          "coastal"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "coastal",
+        "proximity_features": [
+          "coastal"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "coastal",
+        "proximity_features": [
+          "coastal",
+          "urban"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "coastal",
+        "proximity_features": [
+          "coastal",
+          "urban"
+        ],
+        "size": 1
+      }
     ]
   },
   "businesses": [
-    { "business_type": "shrimp_fleet",              "district_id": null, "active_lines": ["shrimp"] },
-    { "business_type": "aquaculture_farm",          "district_id": null, "active_lines": ["salmon"] },
-    { "business_type": "fish_processing_plant",     "district_id": null, "active_lines": ["salmon_fillet", "fish_meal", "fish_oil"] },
-    { "business_type": "seafood_condiment_factory", "district_id": null, "active_lines": ["shrimp_paste"] }
+    {
+      "business_type": "shrimp_fleet",
+      "district_id": null,
+      "active_lines": [
+        "shrimp"
+      ]
+    },
+    {
+      "business_type": "aquaculture_farm",
+      "district_id": null,
+      "active_lines": [
+        "salmon"
+      ]
+    },
+    {
+      "business_type": "fish_processing_plant",
+      "district_id": null,
+      "active_lines": [
+        "salmon_fillet",
+        "fish_meal",
+        "fish_oil"
+      ]
+    },
+    {
+      "business_type": "seafood_condiment_factory",
+      "district_id": null,
+      "active_lines": [
+        "shrimp_paste"
+      ]
+    }
   ],
   "buy_items": {
-    "bio_fuel":         { "target_inventory": 2500, "reorder_at": 500, "max_price_multiplier": 1.10, "market": "regular" },
-    "sardines":         { "target_inventory": 8000, "reorder_at": 1500,"max_price_multiplier": 1.10, "market": "regular" },
-    "shrimp_trawler":   { "target_inventory": 5,    "reorder_at": 1,   "max_price_multiplier": 1.15, "market": "regular" },
-    "aquaculture_raft": { "target_inventory": 5,    "reorder_at": 1,   "max_price_multiplier": 1.15, "market": "regular" },
-    "salt":             { "target_inventory": 1500, "reorder_at": 300, "max_price_multiplier": 1.05, "market": "regular" },
-    "water":            { "target_inventory": 5000, "reorder_at": 1000,"max_price_multiplier": 1.05, "market": "regular" },
-    "energy":           { "target_inventory": 5000, "reorder_at": 1000,"max_price_multiplier": 1.10, "market": "regular" },
-    "paper":            { "target_inventory": 300,  "reorder_at": 60,  "max_price_multiplier": 1.10, "market": "regular" }
+    "bio_fuel": {
+      "target_inventory": 2500,
+      "reorder_at": 500,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "sardines": {
+      "target_inventory": 8000,
+      "reorder_at": 1500,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "shrimp_trawler": {
+      "target_inventory": 5,
+      "reorder_at": 1,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "aquaculture_raft": {
+      "target_inventory": 5,
+      "reorder_at": 1,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "salt": {
+      "target_inventory": 1500,
+      "reorder_at": 300,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "water": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 300,
+      "reorder_at": 60,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    }
   },
   "sell_items": {
-    "shrimp":        { "min_inventory_to_keep": 1000, "max_order_quantity": 3000, "market": "regular" },
-    "salmon":        { "min_inventory_to_keep": 500,  "max_order_quantity": 2000, "market": "regular" },
-    "salmon_fillet": { "min_inventory_to_keep": 500,  "max_order_quantity": 1500, "market": "regular" },
-    "shrimp_paste":  { "min_inventory_to_keep": 300,  "max_order_quantity": 1000, "market": "regular" },
-    "fish_meal":     { "min_inventory_to_keep": 2000, "max_order_quantity": 3000, "market": "regular" },
-    "fish_oil":      { "min_inventory_to_keep": 200,  "max_order_quantity": 800,  "market": "regular" }
+    "shrimp": {
+      "min_inventory_to_keep": 1000,
+      "max_order_quantity": 3000,
+      "market": "regular"
+    },
+    "salmon": {
+      "min_inventory_to_keep": 500,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "salmon_fillet": {
+      "min_inventory_to_keep": 500,
+      "max_order_quantity": 1500,
+      "market": "regular"
+    },
+    "shrimp_paste": {
+      "min_inventory_to_keep": 300,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "fish_meal": {
+      "min_inventory_to_keep": 2000,
+      "max_order_quantity": 3000,
+      "market": "regular"
+    },
+    "fish_oil": {
+      "min_inventory_to_keep": 200,
+      "max_order_quantity": 800,
+      "market": "regular"
+    }
   },
   "ipo": {
     "ticker": "CCFC",

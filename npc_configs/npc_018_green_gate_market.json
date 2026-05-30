@@ -46,7 +46,20 @@
         ],
         "size": 1
       }
-    ]
+    ],
+    "starting_inventory": {
+      "eggs": 2000,
+      "milk": 3000,
+      "butter": 2000,
+      "cream": 1500,
+      "yogurt": 1000,
+      "honey": 800,
+      "jam": 600,
+      "peanut_butter": 500,
+      "apples": 1500,
+      "cherries": 800,
+      "grapes": 1000
+    }
   },
   "businesses": [
     {

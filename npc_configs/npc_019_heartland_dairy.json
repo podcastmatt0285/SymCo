@@ -55,6 +55,18 @@
       }
     ],
     "starting_inventory": {
+      "eggs": 3000,
+      "milk": 4000,
+      "cream": 2000,
+      "butter": 2500,
+      "yogurt": 1500,
+      "condensed_milk": 800,
+      "beef": 1000,
+      "pork": 1000,
+      "lamb_meat": 600,
+      "sausage": 800,
+      "bacon": 600,
+      "grass": 2000,
       "water": 50000,
       "energy": 20000
     }
@@ -297,61 +309,281 @@
       "max_order_quantity": 100,
       "market": "regular"
     },
-    "silk_worm": { "min_inventory_to_keep": 2000, "max_order_quantity": 3000, "market": "regular" },
-    "horse": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "chicken": { "min_inventory_to_keep": 0, "max_order_quantity": 200, "market": "regular" },
-    "merino": { "min_inventory_to_keep": 10, "max_order_quantity": 50, "market": "regular" },
-    "corriedale": { "min_inventory_to_keep": 10, "max_order_quantity": 50, "market": "regular" },
-    "suffolk_sheep": { "min_inventory_to_keep": 10, "max_order_quantity": 50, "market": "regular" },
-    "australian_white_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 30, "market": "regular" },
-    "south_african_meat_merino": { "min_inventory_to_keep": 5, "max_order_quantity": 30, "market": "regular" },
-    "poll_dorset": { "min_inventory_to_keep": 5, "max_order_quantity": 30, "market": "regular" },
-    "charollais_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 30, "market": "regular" },
-    "oxford_down_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 30, "market": "regular" },
-    "columbia_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 30, "market": "regular" },
-    "ile_de_france_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 30, "market": "regular" },
-    "berrichon_du_cher": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "bluefaced_leicester": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "border_leicester_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "welsh_mountain_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "cheviot_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "badger_face_welsh_mountain": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "black_welsh_mountain_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "shetland_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "romney_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "lincoln_longwool": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "soay_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "north_country_cheviot": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "dorset_horn_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "american_tunis": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "shropshire_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "gulf_coast_native_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "rambouillet_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "barbados_black_belly": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "st_croix_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "icelandic_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "finnsheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "romanov_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "leicester_longwool": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "clun_forest_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "lacaune_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "lincoln_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "polypay_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "polwarth_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "rideau_arcott": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "karakul_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "damara_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "cameroon_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "jacob_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "fries_melkschaap": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "royal_white_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "southdown_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "cotswold_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "angora_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "alpaca": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "mohair_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "cashmere_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" },
-    "targhee_sheep": { "min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular" }
+    "silk_worm": {
+      "min_inventory_to_keep": 2000,
+      "max_order_quantity": 3000,
+      "market": "regular"
+    },
+    "horse": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "chicken": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 200,
+      "market": "regular"
+    },
+    "merino": {
+      "min_inventory_to_keep": 10,
+      "max_order_quantity": 50,
+      "market": "regular"
+    },
+    "corriedale": {
+      "min_inventory_to_keep": 10,
+      "max_order_quantity": 50,
+      "market": "regular"
+    },
+    "suffolk_sheep": {
+      "min_inventory_to_keep": 10,
+      "max_order_quantity": 50,
+      "market": "regular"
+    },
+    "australian_white_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 30,
+      "market": "regular"
+    },
+    "south_african_meat_merino": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 30,
+      "market": "regular"
+    },
+    "poll_dorset": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 30,
+      "market": "regular"
+    },
+    "charollais_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 30,
+      "market": "regular"
+    },
+    "oxford_down_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 30,
+      "market": "regular"
+    },
+    "columbia_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 30,
+      "market": "regular"
+    },
+    "ile_de_france_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 30,
+      "market": "regular"
+    },
+    "berrichon_du_cher": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "bluefaced_leicester": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "border_leicester_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "welsh_mountain_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "cheviot_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "badger_face_welsh_mountain": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "black_welsh_mountain_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "shetland_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "romney_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "lincoln_longwool": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "soay_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "north_country_cheviot": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "dorset_horn_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "american_tunis": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "shropshire_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "gulf_coast_native_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "rambouillet_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "barbados_black_belly": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "st_croix_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "icelandic_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "finnsheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "romanov_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "leicester_longwool": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "clun_forest_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "lacaune_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "lincoln_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "polypay_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "polwarth_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "rideau_arcott": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "karakul_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "damara_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "cameroon_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "jacob_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "fries_melkschaap": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "royal_white_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "southdown_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "cotswold_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "angora_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "alpaca": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "mohair_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "cashmere_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "targhee_sheep": {
+      "min_inventory_to_keep": 5,
+      "max_order_quantity": 20,
+      "market": "regular"
+    }
   },
   "ipo": {
     "ticker": "HLDR",

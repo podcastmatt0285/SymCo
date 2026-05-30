@@ -81,7 +81,21 @@
         ],
         "size": 1
       }
-    ]
+    ],
+    "starting_inventory": {
+      "wheat_seeds": 2000,
+      "barley_seeds": 2000,
+      "corn_seeds": 2000,
+      "cocoa_beans": 1000,
+      "cocoa_seeds": 500,
+      "coffee_beans": 800,
+      "tea_leaves": 800,
+      "rose": 500,
+      "lily": 400,
+      "tulip": 400,
+      "lavender": 400,
+      "sunflower": 400
+    }
   },
   "businesses": [
     {

@@ -11,6 +11,10 @@
   "seed": {
     "starting_cash": 6000000,
     "starting_inventory": {
+      "honey": 2000,
+      "sugar": 3000,
+      "pollen": 1000,
+      "beeswax": 500,
       "bees": 500,
       "queen_bee": 50
     },

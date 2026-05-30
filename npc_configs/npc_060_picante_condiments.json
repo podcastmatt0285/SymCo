@@ -11,6 +11,10 @@
   "seed": {
     "starting_cash": 5000000,
     "starting_inventory": {
+      "ketchup": 2000,
+      "pizza_sauce": 3000,
+      "salsa": 1500,
+      "tomato_sauce": 2000,
       "tomato": 3000,
       "onions": 1000,
       "vinegar": 500,
@@ -18,26 +22,93 @@
       "jar": 1000
     },
     "land_plots": [
-      { "terrain_type": "urban", "proximity_features": ["urban", "road"], "size": 1 }
+      {
+        "terrain_type": "urban",
+        "proximity_features": [
+          "urban",
+          "road"
+        ],
+        "size": 1
+      }
     ]
   },
   "businesses": [
-    { "business_type": "tomato_cannery", "district_id": null, "active_lines": ["ketchup", "pizza_sauce", "salsa", "tomato_sauce"] }
+    {
+      "business_type": "tomato_cannery",
+      "district_id": null,
+      "active_lines": [
+        "ketchup",
+        "pizza_sauce",
+        "salsa",
+        "tomato_sauce"
+      ]
+    }
   ],
   "buy_items": {
-    "tomato":  { "target_inventory": 6000, "reorder_at": 1200, "max_price_multiplier": 1.10, "market": "regular" },
-    "onions":  { "target_inventory": 2000, "reorder_at": 400,  "max_price_multiplier": 1.10, "market": "regular" },
-    "vinegar": { "target_inventory": 1000, "reorder_at": 200,  "max_price_multiplier": 1.15, "market": "regular" },
-    "sugar":   { "target_inventory": 1500, "reorder_at": 300,  "max_price_multiplier": 1.10, "market": "regular" },
-    "jar":     { "target_inventory": 3000, "reorder_at": 600,  "max_price_multiplier": 1.10, "market": "regular" },
-    "energy":  { "target_inventory": 3000, "reorder_at": 600,  "max_price_multiplier": 1.10, "market": "regular" },
-    "paper":   { "target_inventory": 500,  "reorder_at": 100,  "max_price_multiplier": 1.10, "market": "regular" }
+    "tomato": {
+      "target_inventory": 6000,
+      "reorder_at": 1200,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "onions": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "vinegar": {
+      "target_inventory": 1000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "sugar": {
+      "target_inventory": 1500,
+      "reorder_at": 300,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "jar": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    }
   },
   "sell_items": {
-    "ketchup":      { "min_inventory_to_keep": 500, "max_order_quantity": 1500, "market": "regular" },
-    "pizza_sauce":  { "min_inventory_to_keep": 500, "max_order_quantity": 1500, "market": "regular" },
-    "salsa":        { "min_inventory_to_keep": 500, "max_order_quantity": 1500, "market": "regular" },
-    "tomato_sauce": { "min_inventory_to_keep": 300, "max_order_quantity": 1000, "market": "regular" }
+    "ketchup": {
+      "min_inventory_to_keep": 500,
+      "max_order_quantity": 1500,
+      "market": "regular"
+    },
+    "pizza_sauce": {
+      "min_inventory_to_keep": 500,
+      "max_order_quantity": 1500,
+      "market": "regular"
+    },
+    "salsa": {
+      "min_inventory_to_keep": 500,
+      "max_order_quantity": 1500,
+      "market": "regular"
+    },
+    "tomato_sauce": {
+      "min_inventory_to_keep": 300,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    }
   },
   "ipo": {
     "ticker": "PICO",

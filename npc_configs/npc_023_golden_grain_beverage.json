@@ -46,7 +46,18 @@
         ],
         "size": 1
       }
-    ]
+    ],
+    "starting_inventory": {
+      "hops": 1000,
+      "malt": 1500,
+      "beer": 2000,
+      "lager": 1500,
+      "whiskey": 600,
+      "vodka": 600,
+      "rum": 500,
+      "mint": 2000,
+      "juniper_berries": 500
+    }
   },
   "businesses": [
     {

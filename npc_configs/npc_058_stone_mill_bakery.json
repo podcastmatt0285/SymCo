@@ -11,42 +11,155 @@
   "seed": {
     "starting_cash": 7000000,
     "starting_inventory": {
-      "wheat_seeds": 500,
-      "corn_seeds": 500,
-      "barley_seeds": 200,
       "wheat": 3000,
       "corn": 2000,
       "flour": 1000,
+      "bread": 2000,
+      "baguette": 1500,
+      "noodles": 1000,
+      "wheat_seeds": 500,
+      "corn_seeds": 500,
+      "barley_seeds": 200,
       "yeast": 300
     },
     "land_plots": [
-      { "terrain_type": "prairie", "proximity_features": ["riverside", "remote"], "size": 1 },
-      { "terrain_type": "prairie", "proximity_features": ["riverside", "road"],   "size": 1 },
-      { "terrain_type": "urban",   "proximity_features": ["urban", "road"],       "size": 1 }
+      {
+        "terrain_type": "prairie",
+        "proximity_features": [
+          "riverside",
+          "remote"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": [
+          "riverside",
+          "road"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "urban",
+        "proximity_features": [
+          "urban",
+          "road"
+        ],
+        "size": 1
+      }
     ]
   },
   "businesses": [
-    { "business_type": "grain_farm",        "district_id": null, "active_lines": ["wheat", "corn", "wheat_seeds", "corn_seeds"] },
-    { "business_type": "flour_mill",        "district_id": null, "active_lines": ["flour", "yeast"] },
-    { "business_type": "industrial_bakery", "district_id": null, "active_lines": ["dough", "bread", "baguette", "noodles"] }
+    {
+      "business_type": "grain_farm",
+      "district_id": null,
+      "active_lines": [
+        "wheat",
+        "corn",
+        "wheat_seeds",
+        "corn_seeds"
+      ]
+    },
+    {
+      "business_type": "flour_mill",
+      "district_id": null,
+      "active_lines": [
+        "flour",
+        "yeast"
+      ]
+    },
+    {
+      "business_type": "industrial_bakery",
+      "district_id": null,
+      "active_lines": [
+        "dough",
+        "bread",
+        "baguette",
+        "noodles"
+      ]
+    }
   ],
   "buy_items": {
-    "water":          { "target_inventory": 5000,   "reorder_at": 1000, "max_price_multiplier": 1.05, "market": "regular" },
-    "energy":         { "target_inventory": 8000,   "reorder_at": 1500, "max_price_multiplier": 1.10, "market": "regular" },
-    "paper":          { "target_inventory": 800,    "reorder_at": 150,  "max_price_multiplier": 1.10, "market": "regular" },
-    "pollen":         { "target_inventory": 200000, "reorder_at": 50000,"max_price_multiplier": 1.10, "market": "regular" },
-    "fertilizer_npk": { "target_inventory": 3000,   "reorder_at": 600,  "max_price_multiplier": 1.10, "market": "regular" },
-    "salt":           { "target_inventory": 500,    "reorder_at": 100,  "max_price_multiplier": 1.05, "market": "regular" },
-    "sugar":          { "target_inventory": 500,    "reorder_at": 100,  "max_price_multiplier": 1.10, "market": "regular" },
-    "eggs":           { "target_inventory": 2000,   "reorder_at": 400,  "max_price_multiplier": 1.10, "market": "regular" }
+    "water": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 8000,
+      "reorder_at": 1500,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 800,
+      "reorder_at": 150,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "pollen": {
+      "target_inventory": 200000,
+      "reorder_at": 50000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "fertilizer_npk": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "salt": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "sugar": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "eggs": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    }
   },
   "sell_items": {
-    "wheat":    { "min_inventory_to_keep": 2000, "max_order_quantity": 5000, "market": "regular" },
-    "corn":     { "min_inventory_to_keep": 2000, "max_order_quantity": 5000, "market": "regular" },
-    "flour":    { "min_inventory_to_keep": 1500, "max_order_quantity": 4000, "market": "regular" },
-    "bread":    { "min_inventory_to_keep": 1000, "max_order_quantity": 3000, "market": "regular" },
-    "baguette": { "min_inventory_to_keep": 300,  "max_order_quantity": 1500, "market": "regular" },
-    "noodles":  { "min_inventory_to_keep": 500,  "max_order_quantity": 2000, "market": "regular" }
+    "wheat": {
+      "min_inventory_to_keep": 2000,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "corn": {
+      "min_inventory_to_keep": 2000,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "flour": {
+      "min_inventory_to_keep": 1500,
+      "max_order_quantity": 4000,
+      "market": "regular"
+    },
+    "bread": {
+      "min_inventory_to_keep": 1000,
+      "max_order_quantity": 3000,
+      "market": "regular"
+    },
+    "baguette": {
+      "min_inventory_to_keep": 300,
+      "max_order_quantity": 1500,
+      "market": "regular"
+    },
+    "noodles": {
+      "min_inventory_to_keep": 500,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    }
   },
   "ipo": {
     "ticker": "STMB",

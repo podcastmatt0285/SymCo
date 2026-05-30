@@ -39,7 +39,13 @@
         ],
         "size": 1
       }
-    ]
+    ],
+    "starting_inventory": {
+      "potato_sack": 2000,
+      "carrot_sack": 2000,
+      "rice": 3000,
+      "rice_seeds": 800
+    }
   },
   "businesses": [
     {

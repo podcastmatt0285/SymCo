@@ -46,7 +46,25 @@
         ],
         "size": 1
       }
-    ]
+    ],
+    "starting_inventory": {
+      "pasta": 1500,
+      "spaghetti": 1500,
+      "noodles": 1200,
+      "rice_sack": 1000,
+      "peanut_butter": 800,
+      "ketchup": 1000,
+      "tomato_sauce": 800,
+      "jam": 600,
+      "salsa": 600,
+      "vinegar": 500,
+      "yogurt": 800,
+      "carrots": 2000,
+      "potatoes": 2000,
+      "lettuce": 1000,
+      "apples": 1500,
+      "oranges": 1200
+    }
   },
   "businesses": [
     {

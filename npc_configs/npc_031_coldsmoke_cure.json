@@ -32,7 +32,16 @@
         ],
         "size": 1
       }
-    ]
+    ],
+    "starting_inventory": {
+      "gelatin": 2000,
+      "smoked_salmon": 600,
+      "smoked_mackerel": 600,
+      "pickled_herring": 500,
+      "salt_cod": 400,
+      "isinglass": 300,
+      "pill_bottle": 800
+    }
   },
   "businesses": [
     {

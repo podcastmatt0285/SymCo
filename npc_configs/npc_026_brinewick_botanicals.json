@@ -53,7 +53,14 @@
         ],
         "size": 1
       }
-    ]
+    ],
+    "starting_inventory": {
+      "hops": 800,
+      "juniper_berries": 600,
+      "mint": 2500,
+      "salt": 3000,
+      "sand": 2000
+    }
   },
   "businesses": [
     {

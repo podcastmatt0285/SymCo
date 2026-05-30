@@ -53,7 +53,21 @@
         ],
         "size": 1
       }
-    ]
+    ],
+    "starting_inventory": {
+      "cod": 1500,
+      "haddock": 1000,
+      "sardines": 1200,
+      "anchovies": 1000,
+      "mackerel": 1000,
+      "herring": 1000,
+      "yellowfin_tuna": 600,
+      "lobster": 400,
+      "fish_fillet": 2000,
+      "fish_meal": 3000,
+      "fish_oil": 800,
+      "omega_3_capsule": 500
+    }
   },
   "businesses": [
     {

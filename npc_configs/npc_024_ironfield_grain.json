@@ -11,9 +11,15 @@
   "seed": {
     "starting_cash": 6000000,
     "starting_inventory": {
+      "wheat": 5000,
+      "barley": 3000,
+      "corn": 4000,
+      "flour": 5000,
+      "corn_syrup": 3000,
+      "yeast": 2000,
       "wheat_seeds": 500,
-      "barley_seeds": 500,
-      "corn_seeds": 500
+      "corn_seeds": 500,
+      "barley_seeds": 500
     },
     "land_plots": [
       {
