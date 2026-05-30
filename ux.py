@@ -14332,29 +14332,72 @@ def api_widget_p2p_contacts(device_id: Optional[str] = None,
                     _bdb.close()
                 _bnames = [BUSINESS_TYPES.get(b.business_type, {}).get("name",
                            b.business_type.replace("_", " ").title()) for b in _bizs]
-                if len(_bnames) > 3:
-                    biz_list = ", ".join(_bnames[:3]) + f" +{len(_bnames)-3}"
-                else:
-                    biz_list = ", ".join(_bnames)
+                biz_list = "\n".join(_bnames) if _bnames else "None"
             except Exception:
                 pass
 
             # ── Land ──
             land_count = ""
+            land_detail = ""
             try:
                 from land import LandPlot
                 from database import SessionLocal as _SL3
                 _ldb = _SL3()
                 try:
-                    _lc = _ldb.query(LandPlot).filter(LandPlot.owner_id == other_id).count()
-                    land_count = f"{_lc} plot{'s' if _lc != 1 else ''}"
+                    _plots = _ldb.query(LandPlot).filter(LandPlot.owner_id == other_id).all()
+                    land_count = f"{len(_plots)} plot{'s' if len(_plots) != 1 else ''}"
+                    _lparts = [
+                        f"#{p.id} {p.terrain_type.replace('_',' ').title()}"
+                        + (" ●" if p.occupied_by_business_id else "")
+                        for p in _plots
+                    ]
+                    land_detail = "\n".join(_lparts) if _lparts else "No plots owned"
                 finally:
                     _ldb.close()
             except Exception:
                 pass
 
+            # ── Inventory ──
+            inventory = ""
+            try:
+                from inventory import get_player_inventory as _gpi
+                _inv = _gpi(other_id)
+                if _inv:
+                    _iparts = [
+                        f"{k.replace('_',' ').title()}: {v:,.2f}"
+                        for k, v in sorted(_inv.items(), key=lambda x: -x[1])
+                        if v and v > 0
+                    ]
+                    inventory = "\n".join(_iparts) if _iparts else "Empty"
+                else:
+                    inventory = "Empty"
+            except Exception:
+                pass
+
+            # ── Land Listings ──
+            land_listings = ""
+            try:
+                from land_market import LandListing as _LL
+                from database import SessionLocal as _SL5
+                _lldb = _SL5()
+                try:
+                    _listings = _lldb.query(_LL).filter(
+                        _LL.seller_id == other_id,
+                        _LL.is_active == True,
+                    ).all()
+                    _llparts = [
+                        f"Plot #{l.land_plot_id}: {fmt_usd(l.asking_price, _disp, precision=0)}"
+                        for l in _listings
+                    ]
+                    land_listings = "\n".join(_llparts) if _llparts else "None active"
+                finally:
+                    _lldb.close()
+            except Exception:
+                pass
+
             # ── Executives ──
             exec_summary = ""
+            exec_detail = ""
             try:
                 from executive import get_active_executives, get_db as _get_edb
                 _edb = _get_edb()
@@ -14368,6 +14411,13 @@ def api_widget_p2p_contacts(device_id: Optional[str] = None,
                         exec_summary = ", ".join(_enames[:2]) + f" +{len(_enames)-2}"
                     else:
                         exec_summary = ", ".join(_enames)
+                    _elines = [
+                        f"{e.first_name} {e.last_name} — {(e.job or '').replace('_', ' ').title()}"
+                        for e in _execs
+                    ]
+                    exec_detail = "\n".join(_elines)
+                else:
+                    exec_detail = "None"
             except Exception:
                 pass
 
@@ -14397,14 +14447,14 @@ def api_widget_p2p_contacts(device_id: Optional[str] = None,
                         ShareholderPosition.shares_owned > 0,
                     ).all()
                     _sparts = []
-                    for _pos in _positions[:3]:
+                    for _pos in _positions:
                         _co2 = _fdb.query(CompanyShares).filter(
                             CompanyShares.id == _pos.company_id).first()
                         _tk = _co2.ticker_symbol if _co2 else f"#{_pos.company_id}"
-                        _sparts.append(f"{_tk} ×{_pos.shares_owned:,.0f}")
-                    if len(_positions) > 3:
-                        _sparts.append(f"+{len(_positions)-3}")
-                    stock_detail = ", ".join(_sparts)
+                        _avg = (f" avg {_abbr(_pos.average_cost_basis)}/sh"
+                                if _pos.average_cost_basis else "")
+                        _sparts.append(f"{_tk} ×{_pos.shares_owned:,.0f}{_avg}")
+                    stock_detail = "\n".join(_sparts) if _sparts else "No positions"
                 finally:
                     _fdb.close()
             except Exception:
@@ -14421,12 +14471,15 @@ def api_widget_p2p_contacts(device_id: Optional[str] = None,
                         ReserveBankBond.holder_player_id == other_id,
                         ReserveBankBond.status == "active",
                     ).all()
-                    if _bonds:
-                        _bparts = [f"{_abbr(b.face_value)} @{b.yield_rate*100:.1f}%"
-                                   for b in _bonds[:2]]
-                        if len(_bonds) > 2:
-                            _bparts.append(f"+{len(_bonds)-2}")
-                        bond_detail = ", ".join(_bparts)
+                    _bparts = []
+                    for b in _bonds:
+                        _mat = (b.matures_at.strftime("%b %d %Y")
+                                if b.matures_at else "—")
+                        _bparts.append(
+                            f"{_abbr(b.face_value)} @{b.yield_rate*100:.1f}%"
+                            f" · matures {_mat}"
+                        )
+                    bond_detail = "\n".join(_bparts) if _bparts else "No active bonds"
                 finally:
                     _bnd_db.close()
             except Exception:
@@ -14457,22 +14510,41 @@ def api_widget_p2p_contacts(device_id: Optional[str] = None,
 
             # ── Market Orders ──
             commodity_orders = district_orders = 0
+            commodity_order_detail = ""
+            district_order_detail = ""
             try:
                 from market import MarketOrder
                 from database import SessionLocal as _SL4
                 _mdb = _SL4()
                 try:
-                    commodity_orders = _mdb.query(MarketOrder).filter(
+                    _com_orders = _mdb.query(MarketOrder).filter(
                         MarketOrder.player_id == other_id,
                         MarketOrder.status.in_(["active", "partially_filled"]),
-                    ).count()
+                    ).all()
+                    commodity_orders = len(_com_orders)
+                    _coparts = []
+                    for o in _com_orders:
+                        _side = "BUY" if o.order_type == "buy" else "SELL"
+                        _qty_rem = o.quantity - (o.quantity_filled or 0)
+                        _coparts.append(
+                            f"{_side} {o.item_type.replace('_',' ').title()}"
+                            f" ×{_qty_rem:,.2f} @{fmt_usd(o.price, _disp, precision=4)}"
+                        )
+                    commodity_order_detail = "\n".join(_coparts) if _coparts else "None active"
                 finally:
                     _mdb.close()
             except Exception:
                 pass
             try:
                 from district_market import get_player_orders as _gpo
-                district_orders = len(_gpo(other_id))
+                _dist_orders = _gpo(other_id)
+                district_orders = len(_dist_orders)
+                _doparts = [
+                    f"{o.order_type.upper()} {o.item_type.replace('_',' ').title()}"
+                    f" ×{o.quantity:,.2f} @{fmt_usd(o.price or 0, _disp, precision=4)}"
+                    for o in _dist_orders
+                ]
+                district_order_detail = "\n".join(_doparts) if _doparts else "None active"
             except Exception:
                 pass
 
@@ -14501,47 +14573,62 @@ def api_widget_p2p_contacts(device_id: Optional[str] = None,
 
             # ── Bankruptcy ──
             bankruptcy_active = False
+            bankruptcy_detail = ""
             try:
                 from corporate_actions import BankruptcyRecord, get_db as _get_cadb
                 _cadb = _get_cadb()
                 try:
-                    bankruptcy_active = _cadb.query(BankruptcyRecord).filter(
-                        BankruptcyRecord.player_id == other_id,
-                        BankruptcyRecord.is_active == True,
-                    ).count() > 0
+                    _brecords = _cadb.query(BankruptcyRecord).filter(
+                        BankruptcyRecord.player_id == other_id
+                    ).order_by(BankruptcyRecord.filed_at.desc()).all()
+                    bankruptcy_active = any(r.is_active for r in _brecords)
+                    _brparts = []
+                    for r in _brecords:
+                        _bstatus = "\U0001f534 ACTIVE" if r.is_active else "✅ Discharged"
+                        _bdate = r.filed_at.strftime("%b %d %Y") if r.filed_at else "—"
+                        _brparts.append(f"{_bstatus} · filed {_bdate}")
+                    bankruptcy_detail = "\n".join(_brparts) if _brparts else "Clean record"
                 finally:
                     _cadb.close()
             except Exception:
                 pass
 
             cards.append({
-                "id":                other_id,
-                "name":              name,
-                "level_label":       level_label,
-                "founding_tester":   founding_tester,
-                "net_worth":         net_worth,
-                "wealth_rank":       wealth_rank,
-                "land_value":        land_value,
-                "biz_value":         biz_value,
-                "inv_value":         inv_value,
-                "share_value":       share_value,
-                "cash_usd":          cash_usd,
-                "cash_other":        cash_other,
-                "debt":              debt,
-                "biz_list":          biz_list,
-                "land_count":        land_count,
-                "exec_summary":      exec_summary,
-                "city":              city,
-                "county":            county,
-                "stock_detail":      stock_detail,
-                "bond_detail":       bond_detail,
-                "div_received":      div_received,
-                "div_paid":          div_paid,
-                "commodity_orders":  commodity_orders,
-                "district_orders":   district_orders,
-                "p2p_offers":        p2p_offers,
-                "contacts_count":    contacts_count,
-                "bankruptcy_active": bankruptcy_active,
+                "id":                       other_id,
+                "name":                     name,
+                "player_id_str":            f"#{other_id}",
+                "level_label":              level_label,
+                "founding_tester":          founding_tester,
+                "net_worth":                net_worth,
+                "wealth_rank":              wealth_rank,
+                "land_value":               land_value,
+                "biz_value":                biz_value,
+                "inv_value":                inv_value,
+                "share_value":              share_value,
+                "cash_usd":                 cash_usd,
+                "cash_other":               cash_other,
+                "debt":                     debt,
+                "biz_list":                 biz_list,
+                "land_count":               land_count,
+                "land_detail":              land_detail,
+                "inventory":                inventory,
+                "land_listings":            land_listings,
+                "exec_summary":             exec_summary,
+                "exec_detail":              exec_detail,
+                "city":                     city,
+                "county":                   county,
+                "stock_detail":             stock_detail,
+                "bond_detail":              bond_detail,
+                "div_received":             div_received,
+                "div_paid":                 div_paid,
+                "commodity_orders":         commodity_orders,
+                "commodity_order_detail":   commodity_order_detail,
+                "district_orders":          district_orders,
+                "district_order_detail":    district_order_detail,
+                "p2p_offers":               p2p_offers,
+                "contacts_count":           contacts_count,
+                "bankruptcy_active":        bankruptcy_active,
+                "bankruptcy_detail":        bankruptcy_detail,
             })
         except Exception:
             continue

@@ -7,11 +7,11 @@
     android:padding="12dp"
     android:background="@drawable/widget_background">
 
-    <!-- Header: title + nav -->
+    <!-- ─── Header: title + pagination ─── -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="6dp">
+        android:layout_marginBottom="4dp">
 
         <TextView
             android:layout_width="wrap_content"
@@ -21,6 +21,7 @@
             android:text="CONTACTS"
             android:textColor="#38bdf8"
             android:textSize="9sp"
+            android:letterSpacing="0.1"
             android:textStyle="bold" />
 
         <LinearLayout
@@ -43,7 +44,7 @@
                 android:id="@+id/widget_p2p_page"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="— / —"
+                android:text="&#8212; / &#8212;"
                 android:textColor="#64748b"
                 android:textSize="9sp" />
 
@@ -57,26 +58,32 @@
                 android:paddingStart="6dp" />
 
         </LinearLayout>
-
     </RelativeLayout>
 
-    <!-- Avatar + name + level -->
+    <!-- Header divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#1e293b"
+        android:layout_marginBottom="8dp" />
+
+    <!-- ─── Identity: avatar + name + level ─── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginBottom="6dp">
+        android:layout_marginBottom="4dp">
 
         <TextView
             android:id="@+id/widget_p2p_avatar"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:gravity="center"
             android:textColor="#38bdf8"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:background="@drawable/widget_background"
+            android:background="@drawable/widget_avatar_bg"
             android:layout_marginEnd="10dp"
             android:text="?" />
 
@@ -90,12 +97,20 @@
                 android:id="@+id/widget_p2p_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="—"
+                android:text="&#8212;"
                 android:textColor="#e2e8f0"
                 android:textSize="12sp"
                 android:textStyle="bold"
                 android:maxLines="1"
                 android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/widget_p2p_pid"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textColor="#475569"
+                android:textSize="7sp" />
 
             <TextView
                 android:id="@+id/widget_p2p_level"
@@ -106,41 +121,75 @@
                 android:textSize="8sp" />
 
         </LinearLayout>
-
     </LinearLayout>
 
-    <!-- Founding Tester badge (hidden when empty) -->
+    <!-- Founding Tester badge -->
     <TextView
         android:id="@+id/widget_p2p_founding"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text=""
         android:textColor="#fbbf24"
         android:textSize="8sp"
         android:layout_marginBottom="2dp" />
 
-    <!-- Net worth + wealth rank -->
+    <!-- Identity divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#1e293b"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="8dp" />
+
+    <!-- ─── 📊 NET WORTH ─── -->
+    <TextView
+        android:id="@+id/widget_p2p_sec_networth"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="📊 NET WORTH"
+        android:textColor="#475569"
+        android:textSize="7sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.07"
+        android:layout_marginBottom="3dp" />
+
     <TextView
         android:id="@+id/widget_p2p_networth"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
         android:textColor="#22c55e"
-        android:textSize="9sp"
+        android:textSize="10sp"
         android:textStyle="bold"
         android:layout_marginBottom="2dp" />
 
-    <!-- Worth breakdown: land / biz / inv / stocks -->
     <TextView
         android:id="@+id/widget_p2p_worth_detail"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
-        android:textColor="#64748b"
-        android:textSize="8sp"
-        android:layout_marginBottom="2dp" />
+        android:textColor="#475569"
+        android:textSize="8sp" />
 
-    <!-- USD cash -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#1e293b"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="8dp" />
+
+    <!-- ─── 💰 CASH BALANCES ─── -->
+    <TextView
+        android:id="@+id/widget_p2p_sec_cash"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="💰 CASH BALANCES"
+        android:textColor="#475569"
+        android:textSize="7sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.07"
+        android:layout_marginBottom="3dp" />
+
     <TextView
         android:id="@+id/widget_p2p_cash"
         android:layout_width="match_parent"
@@ -150,100 +199,370 @@
         android:textSize="8sp"
         android:layout_marginBottom="2dp" />
 
-    <!-- Other currency balances (hidden when empty) -->
     <TextView
         android:id="@+id/widget_p2p_cash_other"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
-        android:textColor="#94a3b8"
-        android:textSize="8sp"
-        android:layout_marginBottom="2dp" />
+        android:textColor="#64748b"
+        android:textSize="8sp" />
 
-    <!-- Debt (hidden when clean) -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#1e293b"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="8dp" />
+
+    <!-- ─── 💳 DEBT ─── -->
+    <TextView
+        android:id="@+id/widget_p2p_sec_debt"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="💳 DEBT"
+        android:textColor="#475569"
+        android:textSize="7sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.07"
+        android:layout_marginBottom="3dp" />
+
     <TextView
         android:id="@+id/widget_p2p_debt"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
-        android:textColor="#ef4444"
-        android:textSize="8sp"
-        android:layout_marginBottom="2dp" />
+        android:textSize="8sp" />
 
-    <!-- Business types + land plots -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#1e293b"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="8dp" />
+
+    <!-- ─── 📦 INVENTORY ─── -->
+    <TextView
+        android:id="@+id/widget_p2p_sec_inv"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="📦 INVENTORY"
+        android:textColor="#475569"
+        android:textSize="7sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.07"
+        android:layout_marginBottom="3dp" />
+
+    <TextView
+        android:id="@+id/widget_p2p_inv"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#e5e7eb"
+        android:textSize="8sp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#1e293b"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="8dp" />
+
+    <!-- ─── 🏭 BUSINESSES ─── -->
+    <TextView
+        android:id="@+id/widget_p2p_sec_biz"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🏭 BUSINESSES"
+        android:textColor="#475569"
+        android:textSize="7sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.07"
+        android:layout_marginBottom="3dp" />
+
     <TextView
         android:id="@+id/widget_p2p_biz"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
         android:textColor="#a78bfa"
-        android:textSize="8sp"
-        android:maxLines="1"
-        android:ellipsize="end"
-        android:layout_marginBottom="2dp" />
+        android:textSize="8sp" />
 
-    <!-- Executives (hidden when none) -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#1e293b"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="8dp" />
+
+    <!-- ─── 🌍 LAND HOLDINGS ─── -->
     <TextView
-        android:id="@+id/widget_p2p_execs"
+        android:id="@+id/widget_p2p_sec_land"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🌍 LAND HOLDINGS"
+        android:textColor="#475569"
+        android:textSize="7sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.07"
+        android:layout_marginBottom="3dp" />
+
+    <TextView
+        android:id="@+id/widget_p2p_land"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
         android:textColor="#94a3b8"
-        android:textSize="8sp"
-        android:maxLines="1"
-        android:ellipsize="end"
-        android:layout_marginBottom="2dp" />
+        android:textSize="8sp" />
 
-    <!-- City + County -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#1e293b"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="8dp" />
+
+    <!-- ─── 🏙️ LOCATION ─── -->
+    <TextView
+        android:id="@+id/widget_p2p_sec_location"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🏙️ LOCATION"
+        android:textColor="#475569"
+        android:textSize="7sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.07"
+        android:layout_marginBottom="3dp" />
+
     <TextView
         android:id="@+id/widget_p2p_city"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
-        android:textColor="#94a3b8"
-        android:textSize="8sp"
-        android:layout_marginBottom="2dp" />
+        android:textColor="#38bdf8"
+        android:textSize="8sp" />
 
-    <!-- Stock tickers + bond holdings -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#1e293b"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="8dp" />
+
+    <!-- ─── 👔 EXECUTIVES ─── -->
+    <TextView
+        android:id="@+id/widget_p2p_sec_execs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="👔 EXECUTIVES"
+        android:textColor="#475569"
+        android:textSize="7sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.07"
+        android:layout_marginBottom="3dp" />
+
+    <TextView
+        android:id="@+id/widget_p2p_execs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#fbbf24"
+        android:textSize="8sp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#1e293b"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="8dp" />
+
+    <!-- ─── 📈 STOCK HOLDINGS ─── -->
+    <TextView
+        android:id="@+id/widget_p2p_sec_stocks"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="📈 STOCK HOLDINGS"
+        android:textColor="#475569"
+        android:textSize="7sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.07"
+        android:layout_marginBottom="3dp" />
+
     <TextView
         android:id="@+id/widget_p2p_stocks"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
-        android:textColor="#94a3b8"
-        android:textSize="8sp"
-        android:maxLines="1"
-        android:ellipsize="end"
-        android:layout_marginBottom="2dp" />
+        android:textColor="#38bdf8"
+        android:textSize="8sp" />
 
-    <!-- Dividends received / paid -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#1e293b"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="8dp" />
+
+    <!-- ─── 🏦 BOND HOLDINGS ─── -->
+    <TextView
+        android:id="@+id/widget_p2p_sec_bonds"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🏦 BOND HOLDINGS"
+        android:textColor="#475569"
+        android:textSize="7sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.07"
+        android:layout_marginBottom="3dp" />
+
+    <TextView
+        android:id="@+id/widget_p2p_bonds"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#f59e0b"
+        android:textSize="8sp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#1e293b"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="8dp" />
+
+    <!-- ─── 💸 DIVIDENDS ─── -->
+    <TextView
+        android:id="@+id/widget_p2p_sec_divs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="💸 DIVIDENDS"
+        android:textColor="#475569"
+        android:textSize="7sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.07"
+        android:layout_marginBottom="3dp" />
+
     <TextView
         android:id="@+id/widget_p2p_divs"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
         android:textColor="#94a3b8"
-        android:textSize="8sp"
-        android:layout_marginBottom="2dp" />
+        android:textSize="8sp" />
 
-    <!-- Market orders + P2P offers + contacts -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#1e293b"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="8dp" />
+
+    <!-- ─── 🏷️ LAND LISTINGS ─── -->
+    <TextView
+        android:id="@+id/widget_p2p_sec_land_listings"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🏷️ LAND LISTINGS"
+        android:textColor="#475569"
+        android:textSize="7sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.07"
+        android:layout_marginBottom="3dp" />
+
+    <TextView
+        android:id="@+id/widget_p2p_land_listings"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#22c55e"
+        android:textSize="8sp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#1e293b"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="8dp" />
+
+    <!-- ─── 📋 MARKET ORDERS ─── -->
+    <TextView
+        android:id="@+id/widget_p2p_sec_orders"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="📋 MARKET ORDERS"
+        android:textColor="#475569"
+        android:textSize="7sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.07"
+        android:layout_marginBottom="3dp" />
+
+    <TextView
+        android:id="@+id/widget_p2p_orders_com"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#94a3b8"
+        android:textSize="8sp"
+        android:layout_marginBottom="4dp" />
+
+    <TextView
+        android:id="@+id/widget_p2p_orders_dist"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#818cf8"
+        android:textSize="8sp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#1e293b"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="8dp" />
+
+    <!-- ─── 📄 P2P & NETWORK ─── -->
+    <TextView
+        android:id="@+id/widget_p2p_sec_network"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="📄 P2P &amp; NETWORK"
+        android:textColor="#475569"
+        android:textSize="7sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.07"
+        android:layout_marginBottom="3dp" />
+
     <TextView
         android:id="@+id/widget_p2p_orders"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
         android:textColor="#94a3b8"
-        android:textSize="8sp"
-        android:layout_marginBottom="2dp" />
+        android:textSize="8sp" />
 
-    <!-- Bankruptcy alert (hidden when clean) -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#1e293b"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="8dp" />
+
+    <!-- ─── ⚖️ BANKRUPTCY ─── -->
+    <TextView
+        android:id="@+id/widget_p2p_sec_bankrupt"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="⚖️ BANKRUPTCY"
+        android:textColor="#475569"
+        android:textSize="7sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.07"
+        android:layout_marginBottom="3dp" />
+
     <TextView
         android:id="@+id/widget_p2p_bankrupt"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
-        android:textColor="#ef4444"
-        android:textSize="8sp"
-        android:textStyle="bold" />
+        android:textSize="8sp" />
 
 </LinearLayout>
