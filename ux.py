@@ -3474,7 +3474,7 @@ def government_dashboard(
     {_sec("Outstanding Loans to City Banks", "#f87171", loan_html)}
     {_sec("Government-Owned Land", "#22c55e", land_html)}
     {_sec("Active Land Auctions", "#f5d76e", auction_html)}
-    <div id="estate-section">{_sec("Estate Liquidation", "#fbbf24", estate_html)}</div>
+    <div id="estate-section">{_sec("Estate Liquidation", "#fbbf24", flash_html + estate_html)}</div>
     {_sec("Revenue &amp; Fiscal Mechanics", "#94a3b8", fiscal_html)}
     {_sec("Government Activity Log", "#38bdf8", ledger_html)}
 
