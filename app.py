@@ -308,7 +308,7 @@ def _start_tunnel():
             if shutil.which("dpkg"):
                 _pkg = "/tmp/cloudflared.deb"
                 if subprocess.run(["curl", "-fsSL", _base + ".deb", "-o", _pkg]).returncode == 0:
-                    subprocess.run(["dpkg", "-i", _pkg])
+                    subprocess.run(["sudo", "dpkg", "-i", _pkg])
             elif shutil.which("rpm"):
                 _pkg = "/tmp/cloudflared.rpm"
                 if subprocess.run(["curl", "-fsSL", _base + ".rpm", "-o", _pkg]).returncode == 0:
