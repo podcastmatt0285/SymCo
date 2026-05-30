@@ -527,6 +527,74 @@ def _nav_loader_html() -> str:
 # HTML SHELL
 # ==========================
 
+# Ticker cache: keyed by currency code, expires after 30 seconds.
+# Replaces the N×get_market_price() loop that ran on every page.
+import time as _time
+_ticker_cache: dict = {}   # currency_code -> {"html": str, "ts": float}
+
+def _build_ticker_html(disp: dict) -> str:
+    """Build ticker using two batch DB queries instead of one per item."""
+    try:
+        from market import Trade, MarketOrder, OrderStatus, OrderType, get_db as _mkt_db_fn
+        from sqlalchemy import func as _sqlfunc, text as _text
+        import inventory as _inv_mod
+        from reserve_banks import fmt_usd as _fmt_usd
+
+        all_items = sorted(_inv_mod.ITEM_RECIPES.keys()) if _inv_mod.ITEM_RECIPES else []
+        if not all_items:
+            return "MARKET OPENING..."
+
+        db = _mkt_db_fn()
+        try:
+            # Batch 1: last trade price per item (single query via DISTINCT ON)
+            rows = db.execute(_text(
+                "SELECT DISTINCT ON (item_type) item_type, price "
+                "FROM trades ORDER BY item_type, executed_at DESC"
+            )).fetchall()
+            price_map = {r[0]: float(r[1]) for r in rows if r[1] is not None}
+
+            # Batch 2: best bid/ask for items with no trade history
+            no_trade = [it for it in all_items if it not in price_map]
+            if no_trade:
+                ask_rows = db.query(
+                    MarketOrder.item_type,
+                    _sqlfunc.min(MarketOrder.price).label("ask")
+                ).filter(
+                    MarketOrder.item_type.in_(no_trade),
+                    MarketOrder.order_type == OrderType.SELL,
+                    MarketOrder.status == OrderStatus.ACTIVE
+                ).group_by(MarketOrder.item_type).all()
+                bid_rows = db.query(
+                    MarketOrder.item_type,
+                    _sqlfunc.max(MarketOrder.price).label("bid")
+                ).filter(
+                    MarketOrder.item_type.in_(no_trade),
+                    MarketOrder.order_type == OrderType.BUY,
+                    MarketOrder.status == OrderStatus.ACTIVE
+                ).group_by(MarketOrder.item_type).all()
+                ask_map = {r.item_type: float(r.ask) for r in ask_rows if r.ask}
+                bid_map = {r.item_type: float(r.bid) for r in bid_rows if r.bid}
+                for it in no_trade:
+                    a, b = ask_map.get(it), bid_map.get(it)
+                    if a and b:
+                        price_map[it] = (a + b) / 2
+                    elif a:
+                        price_map[it] = a
+                    elif b:
+                        price_map[it] = b
+        finally:
+            db.close()
+
+        parts = []
+        for item in all_items:
+            p = price_map.get(item)
+            label = item.replace("_", " ").upper()
+            parts.append(f"{label}: {_fmt_usd(p, disp)}" if p else f"{label}: N/A")
+        return " | ".join(parts) if parts else "MARKET OPENING..."
+    except Exception:
+        return "MARKET FEED OFFLINE"
+
+
 def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) -> str:
     lien_info = get_player_lien_info(player_id) if player_id else {"has_lien": False, "total_owed": 0.0, "status": "ok"}
 
@@ -613,23 +681,14 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
         </a>
         '''
     
-    ticker_html = ""
-    try:
-        import market as market_mod
-        import inventory as inv_mod
-        
-        all_items = list(inv_mod.ITEM_RECIPES.keys()) if inv_mod.ITEM_RECIPES else list(market_mod.STARTER_INVENTORY.keys())
-        
-        ticker_items = []
-        for item in sorted(all_items):
-            price = market_mod.get_market_price(item)
-            if price:
-                ticker_items.append(f"{item.replace('_', ' ').upper()}: {fmt_usd(price, disp)}")
-            else:
-                ticker_items.append(f"{item.replace('_', ' ').upper()}: N/A")
-        ticker_html = " | ".join(ticker_items) if ticker_items else "MARKET OPENING..."
-    except:
-        ticker_html = "MARKET FEED OFFLINE"
+    # Ticker: use 30-second cached batch result (avoids 1,000+ queries per page)
+    _cur_code = disp.get("code", "USD") if isinstance(disp, dict) else "USD"
+    _tc = _ticker_cache.get(_cur_code, {})
+    if _tc and (_time.time() - _tc["ts"]) < 30:
+        ticker_html = _tc["html"]
+    else:
+        ticker_html = _build_ticker_html(disp)
+        _ticker_cache[_cur_code] = {"html": ticker_html, "ts": _time.time()}
 
 
     return f"""
