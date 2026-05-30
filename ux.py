@@ -431,21 +431,23 @@ def _nav_loader_html() -> str:
             }).join('');
           }
 
+          var _lastMsgThreshold = 0;
           function startLoader() {
             if (timer) clearInterval(timer);
-            prog = 0; msgList = ["Initializing Secure Terminal..."];
+            prog = 0; _lastMsgThreshold = 0; msgList = ["Initializing Secure Terminal..."];
             overlay.style.display = 'flex';
             renderMsgs();
             timer = setInterval(function() {
-              prog += 5;
-              if (prog >= 100) prog = 0;
-              if (Math.floor(prog/15) > Math.floor((prog-5)/15)) {
+              prog += (94 - prog) * 0.06;
+              var threshold = Math.floor(prog / 15);
+              if (threshold > _lastMsgThreshold) {
+                _lastMsgThreshold = threshold;
                 var next = STEPS[Math.floor(Math.random()*STEPS.length)];
                 msgList = [next].concat(msgList).slice(0,4);
                 renderMsgs();
               }
               bar.style.width = prog + '%';
-              pct.textContent = prog + '% SECURED';
+              pct.textContent = Math.round(prog) + '% SECURED';
             }, 150);
           }
 
@@ -3640,7 +3642,7 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
     from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
     try:
-        from business import Business, BUSINESS_TYPES, get_dismantling_status, DISMANTLING_TICKS, RetailPrice
+        from business import Business, BUSINESS_TYPES, get_dismantling_status, DISMANTLING_TICKS, RetailPrice, BusinessSale
         from land import LandPlot, get_db as get_land_db
         import json as _json
         import inventory as _inv_mod
@@ -3652,7 +3654,7 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
             land_db.close()
             return shell("Businesses", "<h3>No businesses found.</h3><a href='/land' class='btn-blue'>Go to Land</a>", player.cash_balance, player.id)
 
-        # Batch-load LandPlots and RetailPrices to avoid N+1 queries in the loops below
+        # Batch-load LandPlots, RetailPrices, and BusinessSales to avoid N+1 queries
         _plot_ids = [b.land_plot_id for b in player_businesses if b.land_plot_id]
         _plots_by_id = {
             p.id: p
@@ -3662,6 +3664,18 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
             rp.item_type: rp
             for rp in land_db.query(RetailPrice).filter(RetailPrice.player_id == player.id).all()
         }
+        _biz_ids = [b.id for b in player_businesses]
+        _sales_by_biz = {}
+        for sale in (land_db.query(BusinessSale).filter(BusinessSale.business_id.in_(_biz_ids)).all() if _biz_ids else []):
+            progress_pct_s = ((sale.ticks_total - sale.ticks_remaining) / sale.ticks_total) * 100 if sale.ticks_total else 0
+            _sales_by_biz[sale.business_id] = {
+                "ticks_remaining": sale.ticks_remaining,
+                "ticks_total": sale.ticks_total,
+                "progress_pct": progress_pct_s,
+                "total_refund": sale.total_refund,
+                "refund_per_tick": sale.refund_per_tick,
+                "paid_so_far": sale.refund_per_tick * (sale.ticks_total - sale.ticks_remaining)
+            }
 
         # Build enriched data list
         biz_data = []
@@ -3677,7 +3691,7 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
             biz_class = config.get("class", "production")
             cycles_total = config.get("cycles_to_complete", 1)
             progress_pct = (biz.progress_ticks / cycles_total * 100) if cycles_total > 0 else 0
-            dismantle_status = get_dismantling_status(biz.id)
+            dismantle_status = _sales_by_biz.get(biz.id)
             plot = _plots_by_id.get(biz.land_plot_id)
             biz_data.append({"biz": biz, "config": config, "name": biz_name, "cls": biz_class,
                               "cycles_total": cycles_total, "progress_pct": progress_pct,
