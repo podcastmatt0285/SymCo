@@ -99,7 +99,7 @@ class ProductionCostCalculator:
             # Skip comment entries
             if not isinstance(biz_data, dict):
                 continue
-            if biz_data.get('class') != 'production':
+            if biz_data.get('class') not in ('production', 'retail'):
                 continue
             
             wage = biz_data.get('base_wage_cost', 0)
