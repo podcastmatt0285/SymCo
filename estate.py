@@ -1524,23 +1524,11 @@ def buy_gov_estate_listing(listing_id: int, qty: float, buyer_id: int):
         if not ok:
             return False, err
 
-        # Determine living heirs for the deceased player who owned this estate
-        deceased_id = listing.deceased_player_id
-        raw_heirs = (db.query(HeirDesignation)
-                       .filter(HeirDesignation.player_id == deceased_id)
-                       .order_by(HeirDesignation.priority.asc()).all())
-        dead_ids = {r[0] for r in db.query(DeceasedPlayer.player_id).all()}
-        living_heirs = [h for h in raw_heirs if h.heir_player_id not in dead_ids]
-
-        if living_heirs:
-            # Tax portion → government; subtotal → heirs split equally
-            credit_usd(GOVERNMENT_PLAYER_ID, tax)
-            per_heir = round(subtotal / len(living_heirs), 4)
-            for h in living_heirs:
-                credit_usd(h.heir_player_id, per_heir)
-        else:
-            # No living heirs — government keeps everything
-            credit_usd(GOVERNMENT_PLAYER_ID, cost)
+        # Sale proceeds go to government treasury.
+        # Heirs were already credited at death time via liquidate_estate() — the government
+        # holds their inheritance as escrow and pays it out via InheritanceInstallment records.
+        # This sale recoups the escrow the government fronted.
+        credit_usd(GOVERNMENT_PLAYER_ID, cost)
 
         # Transfer inventory from government (player 0) to buyer
         gov_item = (idb.query(InventoryItem)
@@ -1569,24 +1557,15 @@ def buy_gov_estate_listing(listing_id: int, qty: float, buyer_id: int):
 
         try:
             from govt_ledger import log_gov_event
-            gov_recv = tax if living_heirs else cost
-            log_gov_event("estate_sale", "in", gov_recv, "USD",
+            log_gov_event("estate_sale", "in", cost, "USD",
                           f"Player #{buyer_id}",
-                          f"{qty:.2f}× {listing.item_type} @ ${listing.listed_price:,.4f} + {int(ESTATE_SALES_TAX*100)}% tax"
-                          + (f"; subtotal split among {len(living_heirs)} heir(s)" if living_heirs else ""))
+                          f"{qty:.2f}× {listing.item_type} @ ${listing.listed_price:,.4f} + {int(ESTATE_SALES_TAX*100)}% tax")
         except Exception:
             pass
 
         item_label = listing.item_type.replace('_', ' ').title()
-        if living_heirs:
-            per_heir = round(subtotal / len(living_heirs), 4)
-            return True, (f"Purchased {qty:.2f}× {item_label} — "
-                          f"subtotal ${subtotal:,.2f} + ${tax:,.2f} tax = ${cost:,.2f} total "
-                          f"(${tax:,.2f} to government; ${subtotal:,.2f} split among {len(living_heirs)} heir(s))")
-        else:
-            return True, (f"Purchased {qty:.2f}× {item_label} — "
-                          f"subtotal ${subtotal:,.2f} + ${tax:,.2f} tax = ${cost:,.2f} total "
-                          f"(no living heirs — full amount to government)")
+        return True, (f"Purchased {qty:.2f}× {item_label} — "
+                      f"subtotal ${subtotal:,.2f} + ${tax:,.2f} tax = ${cost:,.2f} total")
     except Exception as e:
         try: db.rollback()
         except Exception: pass
