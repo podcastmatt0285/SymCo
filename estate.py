@@ -40,6 +40,7 @@ INSTALLMENT_INTERVAL = 17280  # 1 day in ticks (86400 seconds / 5 seconds per ti
 GOVERNMENT_PLAYER_ID = 0
 GOV_LOAN_INTEREST_RATE = 0.0  # Government fronts the money interest-free
 LIQUIDATION_DISCOUNT = 0.85  # Assets listed at 85% of market value for faster sale
+ESTATE_SALES_TAX     = 0.18  # 18% federal sales tax on estate liquidation purchases
 
 # ==========================
 # DATABASE MODELS
@@ -1514,14 +1515,16 @@ def buy_gov_estate_listing(listing_id: int, qty: float, buyer_id: int):
         if qty <= 0 or qty > listing.quantity + 1e-9:
             return False, f"Invalid quantity (max {listing.quantity:.2f})"
         qty = min(qty, listing.quantity)
-        cost = round(listing.listed_price * qty, 4)
+        subtotal = round(listing.listed_price * qty, 4)
+        tax      = round(subtotal * ESTATE_SALES_TAX, 4)
+        cost     = round(subtotal + tax, 4)
 
         # Debit buyer using their legal tender (handles USD / foreign currency / fallback)
         ok, err = spend_player_funds(buyer_id, cost)
         if not ok:
             return False, err
 
-        # Credit government treasury in USD
+        # Credit government treasury in USD (full amount incl. tax)
         credit_usd(GOVERNMENT_PLAYER_ID, cost)
 
         # Transfer inventory from government (player 0) to buyer
@@ -1553,11 +1556,12 @@ def buy_gov_estate_listing(listing_id: int, qty: float, buyer_id: int):
             from govt_ledger import log_gov_event
             log_gov_event("estate_sale", "in", cost, "USD",
                           f"Player #{buyer_id}",
-                          f"{qty:.2f}× {listing.item_type} @ ${listing.listed_price:,.4f}")
+                          f"{qty:.2f}× {listing.item_type} @ ${listing.listed_price:,.4f} + {int(ESTATE_SALES_TAX*100)}% tax")
         except Exception:
             pass
 
-        return True, f"Purchased {qty:.2f}× {listing.item_type.replace('_',' ').title()} for ${cost:,.2f}"
+        return True, (f"Purchased {qty:.2f}× {listing.item_type.replace('_',' ').title()} — "
+                      f"subtotal ${subtotal:,.2f} + ${tax:,.2f} tax = ${cost:,.2f} total")
     except Exception as e:
         try: db.rollback()
         except Exception: pass

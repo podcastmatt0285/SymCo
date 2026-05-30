@@ -3313,13 +3313,15 @@ def government_dashboard(
         crypto_html = '<p style="color:#475569;font-size:0.85rem;">No crypto holdings. Government can acquire county tokens, WSC, and meme coins through market participation.</p>'
 
     # ── Estate listings ───────────────────────────────────────────────────────
+    _ESTATE_TAX_RATE = 0.18
     if gov_estate:
         rows = "".join(
             f"<tr style='border-bottom:1px solid #0f1a2e;'>"
             + _td(lst["item_type"].replace("_"," ").title(), "#e2e8f0")
             + _td(f'{lst["quantity"]:,.2f}', "#94a3b8", right=True)
             + _td(_usd(lst["price"]), "#fbbf24", right=True)
-            + _td(_usd(lst["total_val"]), "#fbbf24", right=True)
+            + _td(_usd(lst["total_val"]), "#64748b", right=True)
+            + _td(_usd(lst["total_val"] * (1 + _ESTATE_TAX_RATE)), "#f87171", right=True)
             + _td(f'Player #{lst["deceased_id"]}', "#475569")
             + _td(lst["listed_at"].strftime("%Y-%m-%d") if lst["listed_at"] else "—", "#475569")
             + f'<td style="padding:6px 10px;">'
@@ -3335,11 +3337,16 @@ def government_dashboard(
             for lst in gov_estate
         )
         estate_html = (
-            f'<p style="color:#475569;font-size:0.75rem;margin:0 0 12px 0;">'
-            f'Assets seized from deleted or inactive player accounts being liquidated by the government. '
-            f'Purchase items at the listed price — proceeds go to the federal treasury.</p>'
+            f'<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px;">'
+            f'<p style="color:#475569;font-size:0.75rem;margin:0;flex:1;">'
+            f'Assets seized from deleted or inactive player accounts, liquidated at 85% of market value. '
+            f'Proceeds go to the federal treasury.</p>'
+            f'<span style="background:#7c1d1d;color:#fca5a5;border:1px solid #b91c1c;border-radius:4px;'
+            f'padding:3px 10px;font-size:0.72rem;font-weight:700;white-space:nowrap;">'
+            f'⚠ {int(_ESTATE_TAX_RATE*100)}% Federal Estate Sales Tax applies</span>'
+            f'</div>'
             + f"<div style='overflow-x:auto;'><table {ts}><thead><tr>"
-            + "".join(_th(h) for h in ["Item","Quantity","Unit Price","Total Value","Estate Of","Listed",""])
+            + "".join(_th(h) for h in ["Item","Quantity","Unit Price","Subtotal","Total (incl. 18% tax)","Estate Of","Listed",""])
             + "</tr></thead><tbody>" + rows + "</tbody></table></div>"
         )
     else:
