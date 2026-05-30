@@ -1161,6 +1161,16 @@ async def stats_economy(session_token: Optional[str] = Cookie(None)):
 @router.get("/stats/personal", response_class=HTMLResponse)
 async def stats_personal(session_token: Optional[str] = Cookie(None)):
     """Personal business economy dashboard."""
+    try:
+        return await _stats_personal_impl(session_token)
+    except Exception as _e:
+        import traceback
+        print(f"[stats_personal] ERROR: {_e}")
+        traceback.print_exc()
+        raise
+
+
+async def _stats_personal_impl(session_token: Optional[str] = None):
     from auth import get_player_from_session
     db = get_db()
     player = get_player_from_session(db, session_token)
