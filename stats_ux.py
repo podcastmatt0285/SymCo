@@ -1161,20 +1161,6 @@ async def stats_economy(session_token: Optional[str] = Cookie(None)):
 @router.get("/stats/personal", response_class=HTMLResponse)
 async def stats_personal(session_token: Optional[str] = Cookie(None)):
     """Personal business economy dashboard."""
-    try:
-        return await _stats_personal_impl(session_token)
-    except Exception as _e:
-        import traceback as _tb
-        _trace = _tb.format_exc()
-        print(f"[stats_personal] ERROR: {_e}\n{_trace}")
-        return HTMLResponse(
-            f"<pre style='color:red;background:#111;padding:20px;'>"
-            f"stats_personal error:\n{_trace}</pre>",
-            status_code=500
-        )
-
-
-async def _stats_personal_impl(session_token: Optional[str] = None):
     from auth import get_player_from_session
     db = get_db()
     player = get_player_from_session(db, session_token)
@@ -1840,8 +1826,8 @@ async def _stats_personal_impl(session_token: Optional[str] = None):
     # Executive panel
     _exec_pills = "".join(
         f'<span class="exec-pill" style="border-color:#334155;color:#c4b5fd;">'
-        f'\U0001f464 {e.name or "Executive"}'
-        f'<span style="color:#475569;margin-left:4px;">{(e.job_title or "").replace("_"," ").title()}</span>'
+        f'\U0001f464 {e.first_name} {e.last_name}'
+        f'<span style="color:#475569;margin-left:4px;">{(e.job or "").replace("_"," ").title()}</span>'
         f'<span style="color:#a855f7;margin-left:6px;">{fmt_usd(e.wage,disp)}/mo</span></span>'
         for e in active_execs
     )
