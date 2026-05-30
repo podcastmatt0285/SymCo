@@ -942,4 +942,7 @@ if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
     reload = os.environ.get("ENV", "production") == "development"
-    uvicorn.run("app:app", host="::", port=port, reload=reload)
+    # Bind to all IPv4 interfaces. Cloudflare tunnel connects via 127.0.0.1
+    # (IPv4). On systems with IPV6_V6ONLY=1 (e.g. Google Cloud), binding to
+    # "::" only accepts IPv6, breaking the tunnel. 0.0.0.0 works everywhere.
+    uvicorn.run("app:app", host="0.0.0.0", port=port, reload=reload)
