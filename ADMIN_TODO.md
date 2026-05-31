@@ -129,9 +129,9 @@ Items are grouped by category and ranked by value/complexity at the bottom.
 - [ ] **Free city + mayoralship** — subscribers get a city founded for free and
       the mayor position (normally a paid/earned governance role).
 - [ ] **Post banner ads** in P2P chatrooms + scrolling tickers.
+- [ ] **Access to a Trophies Store** — subscriber-only store to spend trophies.
 
 ## ⚠️ Still missing
-Target is **15 features; 13 recovered → 2 still missing.**
-Add them here as they come back:
-- [ ] _…_
+Target is **15 features; 14 recovered → 1 still missing.**
+Add it here when it comes back:
 - [ ] _…_
