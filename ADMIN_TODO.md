@@ -92,12 +92,13 @@ Items are grouped by category and ranked by value/complexity at the bottom.
 
 # 💰 Monetization — Subscription Plan ("Wadsworth Pro")
 
-> **Recovery note (2026-05-31):** The original brainstorm (~17 features, all one
-> basic tier) was lost — it was hand-edited into this file after the manure item
-> but never committed (old `backup.sh` only staged the SQL dumps; a server
-> restore wiped the uncommitted edit). The items below were recovered from
-> session summaries + user recognition. **The list is INCOMPLETE — more features
-> existed; add them as remembered.**
+> **Recovery note (2026-05-31):** The original brainstorm was lost — it was
+> hand-edited into this file after the manure item but never committed (old
+> `backup.sh` only staged the SQL dumps; a server restore wiped the uncommitted
+> edit). The items below were recovered from session summaries + user
+> recognition. Target is now **15 features** (the original ~17 included two
+> market-action buttons that have since been dropped). **List still incomplete —
+> add features as remembered.**
 
 ## Delivery / implementation
 - **Android app users only.** Purchase flows through Google Play billing via the
@@ -130,14 +131,7 @@ Items are grouped by category and ranked by value/complexity at the bottom.
       the mayor position (normally a paid/earned governance role).
 
 ## ⚠️ Still missing
-User recalls the full list had **more features (~17 total; ~13 recovered)**.
+Target is **15 features; 13 recovered → 2 still missing.**
 Add them here as they come back:
 - [ ] _…_
 - [ ] _…_
-
-## 🗑️ Deprecation candidates — review & remove
-The original brainstorm also included **extra buttons/features we likely no
-longer need.** (Reviewing the list to prune these is *why* the to-do was wanted.)
-Identify and strike these once the full list is reassembled:
-- [ ] _(brainstormed button — likely drop; identify)_
-- [ ] _(brainstormed button — likely drop; identify)_
