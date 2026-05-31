@@ -122,7 +122,6 @@ Items are grouped by category and ranked by value/complexity at the bottom.
 ## Recovered features — confirmed by user recognition (2026-05-31)
 - [ ] **Subscriber badge** on the leaderboard / P2P contact card.
 - [ ] **Extra P2P contact capacity** above the standard 46-contact cap.
-- [ ] **Custom profile** — name color / business-card theme.
 - [ ] **Permanent profile picture** shown in the P2P contact card.
 - [ ] **Higher trophy multiplier** on events.
 - [ ] **Access to unique reserve currencies** — subscriber-only currencies via
@@ -131,7 +130,7 @@ Items are grouped by category and ranked by value/complexity at the bottom.
       the mayor position (normally a paid/earned governance role).
 
 ## ⚠️ Still missing
-Target is **15 features; 13 recovered → 2 still missing.**
+Target is **15 features; 12 recovered → 3 still missing.**
 Add them here as they come back:
 - [ ] _…_
 - [ ] _…_
