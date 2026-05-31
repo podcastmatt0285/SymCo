@@ -8,12 +8,23 @@ gov/bank/market/task/city/production event types.
 
 from datetime import datetime
 from sqlalchemy import (
-    Column, Integer, Float, String, Boolean, DateTime, Text, ForeignKey
+    Column, Integer, Float, String, Boolean, DateTime, Text, ForeignKey,
+    UniqueConstraint,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from database import engine, SessionLocal
 
 Base = declarative_base()
+
+
+# ── Land Grant constants ──────────────────────────────────────────────────────
+GRANT_ENTRY_COST_TROPHIES = 425
+GRANT_TIERS = [
+    {"name": "platinum", "plots": 20, "winners": 1},
+    {"name": "gold",     "plots": 15, "winners": 3},
+    {"name": "silver",   "plots": 13, "winners": 7},
+    {"name": "bronze",   "plots": 10, "winners": 15},
+]
 
 
 # ── Level thresholds ──────────────────────────────────────────────────────────
@@ -78,6 +89,20 @@ class PlayerTaskProgress(Base):
     progress        = Column(Float, default=0.0)
     completed_at    = Column(DateTime, nullable=True)
     trophies_awarded = Column(Integer, default=0)
+
+
+class LandGrantEntry(Base):
+    __tablename__ = "land_grant_entries"
+    id                 = Column(Integer, primary_key=True)
+    event_id           = Column(Integer, nullable=False, index=True)
+    player_id          = Column(Integer, nullable=False, index=True)
+    entered_at         = Column(DateTime, default=datetime.utcnow)
+    net_worth_at_entry = Column(Float, nullable=False)
+    preferred_terrain  = Column(String, nullable=True)
+    tier_awarded       = Column(String, nullable=True)
+    plots_awarded      = Column(Integer, default=0)
+    awarded_at         = Column(DateTime, nullable=True)
+    __table_args__ = (UniqueConstraint("event_id", "player_id", name="uq_grant_entry"),)
 
 
 class PlayerRank(Base):
@@ -747,6 +772,351 @@ def _snapshot_index_challenge_members(db, ev: "GameEvent"):
         print(f"[Events] _snapshot_index_challenge_members error: {e}")
 
 
+# ── Federal Development Grant ─────────────────────────────────────────────────
+
+def enter_land_grant_event(player_id: int, event_id: int) -> dict:
+    """Validate entry, deduct trophies, snapshot net worth, create entry row."""
+    db = SessionLocal()
+    try:
+        now = datetime.utcnow()
+        ev = db.query(GameEvent).filter(GameEvent.id == event_id).first()
+        if not ev:
+            return {"ok": False, "message": "Event not found."}
+        if ev.event_type != "land_grant":
+            return {"ok": False, "message": "Not a land grant event."}
+        if not ev.is_active or ev.starts_at > now or (ev.ends_at and ev.ends_at < now):
+            return {"ok": False, "message": "Event is not currently active."}
+
+        existing = db.query(LandGrantEntry).filter(
+            LandGrantEntry.event_id == event_id,
+            LandGrantEntry.player_id == player_id,
+        ).first()
+        if existing:
+            return {"ok": False, "message": "You have already entered this event."}
+
+        rank = db.query(PlayerRank).filter(PlayerRank.player_id == player_id).first()
+        trophies = rank.trophies if rank else 0
+        if trophies < GRANT_ENTRY_COST_TROPHIES:
+            return {"ok": False, "message": f"Not enough trophies. Need {GRANT_ENTRY_COST_TROPHIES}, have {trophies}."}
+
+        try:
+            from stats_ux import calculate_player_stats
+            stats = calculate_player_stats(player_id)
+            nw = float(stats["total_net_worth"]) if stats else 0.0
+        except Exception as _e:
+            print(f"[LandGrant] stats error for player {player_id}: {_e}")
+            nw = 0.0
+
+        preferred_terrain = None
+        try:
+            from land import LandPlot, SessionLocal as _LandDB
+            from sqlalchemy import func as _func
+            ldb = _LandDB()
+            try:
+                row = (
+                    ldb.query(LandPlot.terrain_type, _func.count(LandPlot.id).label("cnt"))
+                    .filter(LandPlot.owner_id == player_id)
+                    .group_by(LandPlot.terrain_type)
+                    .order_by(_func.count(LandPlot.id).desc())
+                    .first()
+                )
+                if row:
+                    preferred_terrain = row.terrain_type
+            finally:
+                ldb.close()
+        except Exception as _e:
+            print(f"[LandGrant] terrain lookup error: {_e}")
+
+        rank.trophies -= GRANT_ENTRY_COST_TROPHIES
+        level = 1
+        for i, threshold in enumerate(LEVEL_THRESHOLDS):
+            if rank.trophies >= threshold:
+                level = i + 2
+            else:
+                break
+        rank.level = level
+        rank.updated_at = now
+
+        entry = LandGrantEntry(
+            event_id=event_id,
+            player_id=player_id,
+            net_worth_at_entry=nw,
+            preferred_terrain=preferred_terrain,
+        )
+        db.add(entry)
+        db.commit()
+
+        try:
+            from stats_ux import log_transaction
+            log_transaction(
+                player_id, "trophy_spend", "events", 0.0,
+                description="Federal Development Grant entry — 425 trophies",
+                reference_id=f"grant-{event_id}",
+                item_type="trophy", quantity=-425.0,
+            )
+        except Exception as _e:
+            print(f"[LandGrant] log_transaction error: {_e}")
+
+        try:
+            from push_ux import create_game_notification
+            create_game_notification(
+                player_id,
+                "Federal Development Grant",
+                "You have entered! Compete on net worth growth to win government land plots.",
+                url=f"/events/land-grant/{event_id}",
+                notif_type="tasks_events",
+            )
+        except Exception as _e:
+            print(f"[LandGrant] in-game notification error: {_e}")
+
+        return {"ok": True, "message": "Entry successful! Good luck."}
+    except Exception as e:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        print(f"[LandGrant] enter_land_grant_event error: {e}")
+        return {"ok": False, "message": "An error occurred. Please try again."}
+    finally:
+        db.close()
+
+
+def resolve_land_grant_event(event_id: int) -> dict:
+    """Score entries, assign tiers, transfer plots, notify all entrants."""
+    db = SessionLocal()
+    try:
+        now = datetime.utcnow()
+        entries = db.query(LandGrantEntry).filter(
+            LandGrantEntry.event_id == event_id,
+        ).all()
+        if not entries:
+            return {"ok": True, "message": "No entries to resolve."}
+
+        pending = [e for e in entries if not e.tier_awarded]
+        if not pending:
+            return {"ok": True, "message": "Already resolved."}
+
+        try:
+            from stats_ux import calculate_player_stats
+        except Exception as _e:
+            return {"ok": False, "message": f"Cannot import stats: {_e}"}
+
+        scored = []
+        for entry in pending:
+            try:
+                stats = calculate_player_stats(entry.player_id)
+                current_nw = float(stats["total_net_worth"]) if stats else 0.0
+            except Exception:
+                current_nw = entry.net_worth_at_entry
+            base = entry.net_worth_at_entry
+            growth_pct = (current_nw - base) / base * 100.0 if base and base > 0 else 0.0
+            scored.append((entry, growth_pct))
+
+        scored.sort(key=lambda x: x[1], reverse=True)
+
+        winners = []
+        rank_pos = 0
+        for tier in GRANT_TIERS:
+            for _ in range(tier["winners"]):
+                if rank_pos >= len(scored):
+                    break
+                winners.append((scored[rank_pos][0], tier["name"], tier["plots"]))
+                rank_pos += 1
+
+        winner_pids = {e.player_id for e, _, _ in winners}
+        for entry, _ in scored:
+            if entry.player_id not in winner_pids:
+                entry.tier_awarded = "none"
+                entry.plots_awarded = 0
+                entry.awarded_at = now
+
+        try:
+            from land import LandPlot, SessionLocal as _LandDB
+            ldb = _LandDB()
+            try:
+                gov_plots = ldb.query(LandPlot).filter(
+                    LandPlot.is_government_owned == True
+                ).all()
+            finally:
+                ldb.close()
+        except Exception as _e:
+            print(f"[LandGrant] land import error: {_e}")
+            gov_plots = []
+
+        from collections import defaultdict as _dd
+        gov_by_terrain: dict = _dd(list)
+        for p in gov_plots:
+            gov_by_terrain[p.terrain_type].append(p)
+
+        total_plots = 0
+        n_winners = 0
+
+        for entry, tier_name, plot_count in winners:
+            entry.tier_awarded = tier_name
+            entry.awarded_at = now
+
+            if not gov_plots:
+                print(f"[LandGrant] WARNING: no government plots available — skipping player {entry.player_id}")
+                entry.plots_awarded = 0
+                continue
+
+            terrain = entry.preferred_terrain
+            available = list(gov_by_terrain.get(terrain, [])) if terrain else []
+            if len(available) < plot_count:
+                fallback = [p for tlist in gov_by_terrain.values() for p in tlist]
+                available = fallback if len(fallback) >= plot_count else fallback
+                plot_count = min(plot_count, len(available))
+
+            awarded = available[:plot_count]
+            entry.plots_awarded = len(awarded)
+
+            try:
+                from land import LandPlot as _LP, SessionLocal as _LandDB2
+                ldb2 = _LandDB2()
+                try:
+                    for plot in awarded:
+                        p = ldb2.query(_LP).filter(_LP.id == plot.id).first()
+                        if p:
+                            p.owner_id = entry.player_id
+                            p.is_government_owned = False
+                            t = p.terrain_type
+                            if t in gov_by_terrain and plot in gov_by_terrain[t]:
+                                gov_by_terrain[t].remove(plot)
+                    ldb2.commit()
+                except Exception as _e2:
+                    ldb2.rollback()
+                    print(f"[LandGrant] plot transfer error for player {entry.player_id}: {_e2}")
+                    entry.plots_awarded = 0
+                finally:
+                    ldb2.close()
+            except Exception as _e:
+                print(f"[LandGrant] land import error during transfer: {_e}")
+                entry.plots_awarded = 0
+
+            if entry.plots_awarded > 0:
+                total_plots += entry.plots_awarded
+                n_winners += 1
+                try:
+                    from stats_ux import log_transaction
+                    log_transaction(
+                        entry.player_id, "land_grant_award", "events", 0.0,
+                        description=f"Federal Development Grant — {tier_name} tier: {entry.plots_awarded} plots",
+                        reference_id=f"grant-{event_id}",
+                        item_type="land", quantity=float(entry.plots_awarded),
+                    )
+                except Exception as _e:
+                    print(f"[LandGrant] log_transaction award error: {_e}")
+
+        db.commit()
+
+        if total_plots > 0:
+            try:
+                from govt_ledger import log_gov_event
+                log_gov_event(
+                    "land_grant_disbursement", "out", float(total_plots),
+                    "USD", "Federal Development Grant",
+                    f"{total_plots} plots to {n_winners} winners",
+                )
+            except Exception as _e:
+                print(f"[LandGrant] log_gov_event error: {_e}")
+
+        for entry, growth_pct in scored:
+            tier = entry.tier_awarded
+            if tier and tier != "none":
+                p_title = "Federal Development Grant — Winner!"
+                p_body = f"You placed {tier} tier and won {entry.plots_awarded} plot(s)!"
+            else:
+                p_title = "Federal Development Grant — Results"
+                p_body = "The event has ended. Check the leaderboard to see the results."
+            try:
+                from push_ux import send_push_notification, create_game_notification
+                send_push_notification(
+                    entry.player_id, p_title, p_body,
+                    url=f"/events/land-grant/{event_id}",
+                    notif_type="tasks_events",
+                    tag=f"grant-result-{event_id}-{entry.player_id}",
+                )
+                create_game_notification(
+                    entry.player_id, p_title, p_body,
+                    url=f"/events/land-grant/{event_id}",
+                    notif_type="tasks_events",
+                )
+            except Exception as _e:
+                print(f"[LandGrant] notification error for player {entry.player_id}: {_e}")
+
+        return {"ok": True, "message": f"Resolved: {n_winners} winner(s), {total_plots} plots awarded."}
+    except Exception as e:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        print(f"[LandGrant] resolve error: {e}")
+        return {"ok": False, "message": str(e)}
+    finally:
+        db.close()
+
+
+def get_land_grant_leaderboard(event_id: int) -> list:
+    """Return sorted list of entries with current growth % for live display."""
+    db = SessionLocal()
+    try:
+        entries = db.query(LandGrantEntry).filter(
+            LandGrantEntry.event_id == event_id,
+        ).all()
+        if not entries:
+            return []
+
+        try:
+            from stats_ux import calculate_player_stats
+            from auth import Player, get_db as _auth_db
+            adb = _auth_db()
+            try:
+                pnames = {
+                    p.id: (p.business_name or getattr(p, 'username', None) or f"Player {p.id}")
+                    for p in adb.query(Player).filter(
+                        Player.id.in_([e.player_id for e in entries])
+                    ).all()
+                }
+            finally:
+                adb.close()
+        except Exception:
+            pnames = {}
+            calculate_player_stats = None
+
+        rows = []
+        for entry in entries:
+            try:
+                if calculate_player_stats:
+                    stats = calculate_player_stats(entry.player_id)
+                    current_nw = float(stats["total_net_worth"]) if stats else 0.0
+                else:
+                    current_nw = entry.net_worth_at_entry
+            except Exception:
+                current_nw = entry.net_worth_at_entry
+            base = entry.net_worth_at_entry
+            growth_pct = (current_nw - base) / base * 100.0 if base and base > 0 else 0.0
+            rows.append({
+                "player_id":          entry.player_id,
+                "player_name":        pnames.get(entry.player_id, f"Player {entry.player_id}"),
+                "net_worth_at_entry": entry.net_worth_at_entry,
+                "current_net_worth":  current_nw,
+                "growth_pct":         round(growth_pct, 4),
+                "tier_awarded":       entry.tier_awarded,
+                "plots_awarded":      entry.plots_awarded,
+                "entered_at":         entry.entered_at.isoformat() if entry.entered_at else None,
+            })
+
+        rows.sort(key=lambda r: r["growth_pct"], reverse=True)
+        for i, row in enumerate(rows):
+            row["rank"] = i + 1
+        return rows
+    except Exception as e:
+        print(f"[LandGrant] leaderboard error: {e}")
+        return []
+    finally:
+        db.close()
+
+
 def _on_event_live(event_id: int):
     """Timer callback: fires when a scheduled event's starts_at arrives."""
     import json as _json
@@ -760,7 +1130,13 @@ def _on_event_live(event_id: int):
         if ev and ev.is_active:
             title = f"🔴 {ev.title} is LIVE!"
             body  = ev.description or "The event is now active — join in!"
-            if ev.event_type == "index_challenge":
+            if ev.event_type == "land_grant":
+                body = (
+                    "The Federal Development Grant is now open for entry! "
+                    f"Spend {GRANT_ENTRY_COST_TROPHIES} trophies to compete on net worth growth "
+                    "and win government land plots."
+                )
+            elif ev.event_type == "index_challenge":
                 _snapshot_index_challenge_members(db, ev)
                 db.commit()
             elif ev.event_type == "item_crisis":
@@ -800,7 +1176,14 @@ def _on_event_ended(event_id: int):
         if ev:
             title = f"🏁 {ev.title} has ended"
             body  = "The event is over — check /events for details."
-            if ev.event_type == "item_crisis":
+            if ev.event_type == "land_grant":
+                try:
+                    result = resolve_land_grant_event(event_id)
+                    print(f"[Events] land_grant auto-resolve: {result}")
+                except Exception as _rge:
+                    print(f"[Events] land_grant auto-resolve error: {_rge}")
+                body = "The Federal Development Grant has ended. Winners have been notified and plots awarded!"
+            elif ev.event_type == "item_crisis":
                 try:
                     ed = _json.loads(ev.effect_data or "{}")
                     item_type = ed.get("item_type", "")

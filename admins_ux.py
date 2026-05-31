@@ -4798,6 +4798,7 @@ def admin_events(session_token: Optional[str] = Cookie(None),
         "task": "#a78bfa", "city": "#38bdf8", "production": "#fb923c",
         "item_crisis": "#ef4444", "index_challenge": "#38bdf8",
         "crypto_scam": "#fbbf24",
+        "land_grant":  "#4ade80",
     }
 
     event_cards = ""
@@ -4867,6 +4868,16 @@ def admin_events(session_token: Optional[str] = Cookie(None),
         # Delete button
         ctrl += _btn("🗑 Delete", "delete", "#450a0a",
                      f"Permanently delete '{ev.title}' and all its task progress?")
+
+        # Resolve Now for land_grant events
+        if ev.event_type == "land_grant":
+            ctrl += (
+                f'<form method="post" action="/api/admin/events/land-grant/resolve/{ev.id}" style="display:inline;">'
+                f'<button type="submit" onclick="return confirm(\'Resolve Federal Development Grant now?\')"'
+                f' style="background:#065f46;color:#6ee7b7;border:1px solid #065f4688;'
+                f'border-radius:4px;padding:5px 11px;font-size:0.74rem;font-weight:600;cursor:pointer;">'
+                f'🌍 Resolve Now</button></form> '
+            )
 
         # Beta request queue under Founding Operative
         extra = ""
@@ -5020,6 +5031,27 @@ def admin_events(session_token: Optional[str] = Cookie(None),
                 _meta_parts.append(
                     '<span style="color:#f87171;">⚠ no snapshot yet — fires when event goes live</span>'
                 )
+        if ev.event_type == "land_grant":
+            try:
+                from events import LandGrantEntry, SessionLocal as _LGES
+                _lgdb = _LGES()
+                try:
+                    _lg_entrants = _lgdb.query(LandGrantEntry).filter(
+                        LandGrantEntry.event_id == ev.id
+                    ).count()
+                    _lg_resolved = _lgdb.query(LandGrantEntry).filter(
+                        LandGrantEntry.event_id == ev.id,
+                        LandGrantEntry.tier_awarded != None,
+                    ).count()
+                finally:
+                    _lgdb.close()
+            except Exception:
+                _lg_entrants = 0
+                _lg_resolved = 0
+            _meta_parts.append(
+                f'<span style="color:#4ade80;">🌍 {_lg_entrants} entrant(s) &nbsp;&middot;&nbsp; '
+                f'{_lg_resolved} resolved</span>'
+            )
         _is_crisis = ev.event_type == "item_crisis"
         if _is_crisis:
             _ci = _ed.get("item_type", "?")
@@ -5233,6 +5265,56 @@ def admin_events(session_token: Optional[str] = Cookie(None),
         </div>
     </div>
     {crisis_quick_form}
+    <div class="card" style="margin-bottom:18px;border:2px solid #065f46;background:#020b08;">
+      <div style="font-size:0.9rem;color:#6ee7b7;font-weight:800;margin-bottom:4px;">🌍 Create Federal Development Grant</div>
+      <p style="font-size:0.74rem;color:#4d7c6a;margin:0 0 12px;line-height:1.45;">
+        Monthly contest — players spend 425 trophies to enter, compete on net worth growth %,
+        and win government-owned land plots. Duration is always monthly. Plots awarded automatically on event end.
+      </p>
+      <form method="post" action="/admin/events/create">
+        <input type="hidden" name="event_type" value="land_grant">
+        <input type="hidden" name="duration_class" value="monthly">
+        <input type="hidden" name="task_metric" value="">
+        <input type="hidden" name="task_target" value="0">
+        <input type="hidden" name="trophy_reward" value="0">
+        <input type="hidden" name="effect_data" value="{{}}">
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:10px;">
+          <div>
+            <div style="font-size:0.68rem;color:#4d7c6a;margin-bottom:3px;">Event Title</div>
+            <input type="text" name="title" value="Federal Development Grant"
+                   style="{_inp}" placeholder="Event title">
+          </div>
+          <div>
+            <div style="font-size:0.68rem;color:#4d7c6a;margin-bottom:3px;">Activate immediately</div>
+            <label style="display:flex;align-items:center;gap:6px;color:#6ee7b7;font-size:0.78rem;cursor:pointer;margin-top:8px;">
+              <input type="checkbox" name="activate_now" value="1" style="width:auto;margin:0;" checked>
+              Active on creation
+            </label>
+          </div>
+        </div>
+        <div style="margin-bottom:10px;">
+          <div style="font-size:0.68rem;color:#4d7c6a;margin-bottom:3px;">Description (optional)</div>
+          <textarea name="description" rows="2"
+                    style="{_inp};resize:vertical;"
+                    placeholder="Leave blank for auto-description">A monthly government land-plot contest. Spend 425 trophies to enter, grow your net worth the most, and win land plots from the government reserve.</textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+          <div>
+            <div style="font-size:0.68rem;color:#4d7c6a;margin-bottom:3px;">Start date/time (UTC)</div>
+            <input type="datetime-local" name="starts_at" style="{_inp}">
+          </div>
+          <div>
+            <div style="font-size:0.68rem;color:#4d7c6a;margin-bottom:3px;">End date/time (UTC)</div>
+            <input type="datetime-local" name="ends_at" style="{_inp}">
+          </div>
+        </div>
+        <button type="submit"
+                style="background:#065f46;color:#6ee7b7;border:1px solid #065f46;border-radius:4px;
+                       padding:7px 18px;font-size:0.8rem;font-weight:700;cursor:pointer;">
+          🌍 Create Federal Development Grant
+        </button>
+      </form>
+    </div>
     {event_cards}"""
 
     return HTMLResponse(admin_shell("Events", body, admin.business_name, "/admin/events"))
@@ -5549,8 +5631,8 @@ def admin_event_create(
                                    f"disrupted {_nm} supply chains, cutting production by {_cdr}% for {_span_lbl}.")
                 except Exception:
                     pass
-        # index_challenge is monthly-only — enforce server-side
-        if event_type == "index_challenge" and duration_class != "monthly":
+        # index_challenge and land_grant are monthly-only — enforce server-side
+        if event_type in ("index_challenge", "land_grant") and duration_class != "monthly":
             return RedirectResponse(
                 f"/admin/events?err={urllib.parse.quote('Index Challenge events must use monthly duration')}",
                 status_code=303)
@@ -5724,5 +5806,26 @@ def admin_reset_active_duty(session_token: Optional[str] = Cookie(None),
         finally:
             db.close()
         return RedirectResponse(f"/admin/events?msg={urllib.parse.quote(msg)}", status_code=303)
+    except Exception as e:
+        return RedirectResponse(f"/admin/events?err={urllib.parse.quote(str(e)[:120])}", status_code=303)
+
+
+@router.post("/api/admin/events/land-grant/resolve/{event_id}")
+def admin_land_grant_resolve(
+    event_id: int,
+    session_token: Optional[str] = Cookie(None),
+):
+    admin = require_admin(session_token)
+    if isinstance(admin, RedirectResponse):
+        return admin
+    try:
+        from events import resolve_land_grant_event
+        result = resolve_land_grant_event(event_id)
+        if result.get("ok"):
+            msg = result.get("message", "Resolved.")
+            return RedirectResponse(f"/admin/events?msg={urllib.parse.quote(msg)}", status_code=303)
+        else:
+            err = result.get("message", "Resolution failed.")
+            return RedirectResponse(f"/admin/events?err={urllib.parse.quote(err[:120])}", status_code=303)
     except Exception as e:
         return RedirectResponse(f"/admin/events?err={urllib.parse.quote(str(e)[:120])}", status_code=303)

@@ -16408,6 +16408,7 @@ def events_page(request: Request,
         "production":   "#fb923c",
         "crypto_scam":  "#fbbf24",
         "item_crisis":  "#ef4444",
+        "land_grant":   "#4ade80",
     }
     _DUR_COLOR = {
         "daily":   "#f59e0b",
@@ -16620,6 +16621,92 @@ def events_page(request: Request,
                 mmFetch();
             }})();
             </script>"""
+
+        # Land Grant entry panel
+        land_grant_panel = ""
+        if etype == "land_grant":
+            _lg_ev_id = ev.get("id")
+            try:
+                from events import LandGrantEntry, SessionLocal as _LGES, GRANT_TIERS as _GT, GRANT_ENTRY_COST_TROPHIES as _LGCOST
+                _lgdb = _LGES()
+                try:
+                    _lg_already = _lgdb.query(LandGrantEntry).filter(
+                        LandGrantEntry.event_id == _lg_ev_id,
+                        LandGrantEntry.player_id == player.id,
+                    ).first() is not None
+                    _lg_count = _lgdb.query(LandGrantEntry).filter(
+                        LandGrantEntry.event_id == _lg_ev_id,
+                    ).count()
+                finally:
+                    _lgdb.close()
+            except Exception:
+                _lg_already = False
+                _lg_count = 0
+                _LGCOST = 425
+                _GT = []
+            try:
+                from events import get_player_level as _gpl
+                _lg_trophies = _gpl(player.id)["trophies"]
+            except Exception:
+                _lg_trophies = 0
+            _tier_summary = " &nbsp;·&nbsp; ".join(
+                f'<span style="color:#e2e8f0;font-weight:700;">{t["plots"]} plots</span>'
+                f'<span style="color:#64748b;"> ({t["name"]}, top {t["winners"]})</span>'
+                for t in (_GT or [])
+            )
+            _lg_btn = ""
+            if status_label == "active" and not _lg_already and _lg_trophies >= _LGCOST:
+                _lg_btn = f"""
+                <button id="lg-btn-{_lg_ev_id}" onclick="lgEnter({_lg_ev_id})"
+                        style="background:#16a34a;border:none;border-radius:4px;color:#fff;
+                               font-size:0.78rem;font-weight:700;padding:7px 16px;cursor:pointer;">
+                    Enter &mdash; {_LGCOST} trophies
+                </button>
+                <div id="lg-st-{_lg_ev_id}" style="font-size:0.75rem;margin-top:5px;min-height:18px;"></div>
+                <script>
+                window.lgEnter=window.lgEnter||function(id){{
+                    var btn=document.getElementById('lg-btn-'+id);
+                    var st=document.getElementById('lg-st-'+id);
+                    btn.disabled=true; btn.textContent='Entering…';
+                    var fd=new FormData(); fd.append('event_id',id);
+                    fetch('/api/events/land-grant/enter',{{method:'POST',body:fd}})
+                        .then(function(r){{return r.json();}})
+                        .then(function(d){{
+                            if(d.ok){{
+                                st.innerHTML='<span style="color:#4ade80;">✓ '+d.message+'</span>';
+                                btn.textContent='✓ Entered';
+                                setTimeout(function(){{location.reload();}},1200);
+                            }}else{{
+                                st.innerHTML='<span style="color:#f87171;">'+d.message+'</span>';
+                                btn.disabled=false; btn.textContent='Enter &mdash; {_LGCOST} trophies';
+                            }}
+                        }}).catch(function(){{
+                            st.innerHTML='<span style="color:#f87171;">Request failed.</span>';
+                            btn.disabled=false; btn.textContent='Enter &mdash; {_LGCOST} trophies';
+                        }});
+                }};
+                </script>"""
+            elif _lg_already:
+                _lg_btn = '<span style="color:#4ade80;font-size:0.8rem;">✓ Entered</span>'
+            elif status_label == "active" and _lg_trophies < _LGCOST:
+                _lg_btn = f'<span style="color:#f87171;font-size:0.78rem;">Need {_LGCOST} trophies (have {_lg_trophies})</span>'
+
+            land_grant_panel = f"""
+            <div style="margin-top:12px;background:#050d1a;border:1px solid #16a34a44;border-radius:6px;padding:12px 14px;">
+                <div style="font-size:0.68rem;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;">
+                    Prize Tiers &nbsp;&middot;&nbsp; {_lg_count} entrant(s)
+                </div>
+                <div style="font-size:0.78rem;margin-bottom:10px;line-height:1.6;">
+                    {_tier_summary}
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                    {_lg_btn}
+                    <a href="/events/land-grant/{_lg_ev_id}"
+                       style="color:#60a5fa;font-size:0.78rem;font-weight:600;">
+                        View Leaderboard &rarr;
+                    </a>
+                </div>
+            </div>"""
 
         # Crypto Scam buy panel (active events only)
         cs_panel = ""
@@ -16946,6 +17033,7 @@ def events_page(request: Request,
                     {meme_panel}
                     {effect_html}
                     {cs_panel}
+                    {land_grant_panel}
                 </div>
                 <div style="color:{status_color};font-size:0.75rem;white-space:nowrap;padding-top:2px;">{time_str}</div>
             </div>
@@ -17408,6 +17496,249 @@ async def api_crypto_scam_buy(
     from player_feed_ws import send_balance_now
     asyncio.create_task(send_balance_now(player.id))
     return JSONResponse({"ok": True, "message": msg, **info})
+
+
+# ── Federal Development Grant endpoints ───────────────────────────────────────
+
+@router.post("/api/events/land-grant/enter", response_class=JSONResponse)
+def land_grant_enter(
+    session_token: Optional[str] = Cookie(None),
+    event_id: int = Form(...),
+):
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return JSONResponse({"ok": False, "message": "Not logged in."}, status_code=401)
+    try:
+        from events import enter_land_grant_event
+        result = enter_land_grant_event(player.id, event_id)
+        return JSONResponse(result)
+    except Exception as e:
+        return JSONResponse({"ok": False, "message": str(e)})
+
+
+@router.get("/events/land-grant/{event_id}", response_class=HTMLResponse)
+def land_grant_leaderboard_page(
+    event_id: int,
+    session_token: Optional[str] = Cookie(None),
+):
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+
+    try:
+        from events import GameEvent, LandGrantEntry, GRANT_TIERS, GRANT_ENTRY_COST_TROPHIES, SessionLocal as _ES
+        edb = _ES()
+        try:
+            ev = edb.query(GameEvent).filter(GameEvent.id == event_id).first()
+            if not ev:
+                return HTMLResponse("<h2>Event not found.</h2>", status_code=404)
+            already_entered = edb.query(LandGrantEntry).filter(
+                LandGrantEntry.event_id == event_id,
+                LandGrantEntry.player_id == player.id,
+            ).first() is not None
+            entrant_count = edb.query(LandGrantEntry).filter(
+                LandGrantEntry.event_id == event_id,
+            ).count()
+        finally:
+            edb.close()
+    except Exception as e:
+        return HTMLResponse(f"<h2>Error: {e}</h2>", status_code=500)
+
+    now = datetime.utcnow()
+    is_active = (
+        ev.is_active
+        and ev.starts_at <= now
+        and (ev.ends_at is None or ev.ends_at >= now)
+    )
+    is_ended = bool(ev.ends_at and ev.ends_at < now)
+
+    time_str = ""
+    if ev.ends_at:
+        delta = ev.ends_at - now
+        if delta.total_seconds() > 0:
+            h, rem = divmod(int(delta.total_seconds()), 3600)
+            m = rem // 60
+            time_str = f"Ends in {h}h {m}m"
+        else:
+            time_str = "Event ended"
+
+    try:
+        from events import get_land_grant_leaderboard
+        lb = get_land_grant_leaderboard(event_id)
+    except Exception:
+        lb = []
+
+    try:
+        from events import get_player_level
+        lvl = get_player_level(player.id)
+        player_trophies = lvl["trophies"]
+    except Exception:
+        player_trophies = 0
+
+    can_enter = is_active and not already_entered and player_trophies >= GRANT_ENTRY_COST_TROPHIES
+
+    tiers_rows = ""
+    for tier in GRANT_TIERS:
+        tiers_rows += (
+            f"<tr>"
+            f"<td style='color:#e2e8f0;text-transform:capitalize;padding:4px 8px;'>{tier['name']}</td>"
+            f"<td style='color:#fbbf24;text-align:center;padding:4px 8px;'>{tier['plots']}</td>"
+            f"<td style='color:#38bdf8;text-align:center;padding:4px 8px;'>{tier['winners']}</td>"
+            f"</tr>"
+        )
+
+    _TIER_COLORS = {
+        "platinum": "#e5e4e2",
+        "gold":     "#fbbf24",
+        "silver":   "#94a3b8",
+        "bronze":   "#b45309",
+        "none":     "#475569",
+    }
+
+    lb_rows = ""
+    for row in lb:
+        rank = row["rank"]
+        tier = row.get("tier_awarded") or ""
+        tier_color = _TIER_COLORS.get(tier, "#94a3b8")
+        tier_badge = ""
+        if tier and tier != "none":
+            tier_badge = (
+                f'<span style="background:{tier_color}22;color:{tier_color};border:1px solid {tier_color}55;'
+                f'border-radius:3px;padding:1px 6px;font-size:0.65rem;font-weight:700;'
+                f'text-transform:uppercase;margin-left:4px;">{tier}</span>'
+            )
+        growth = row["growth_pct"]
+        growth_col = "#4ade80" if growth >= 0 else "#f87171"
+        is_me = "background:#0a1628;" if row["player_id"] == player.id else ""
+        lb_rows += (
+            f"<tr style='{is_me}'>"
+            f"<td style='color:#64748b;text-align:center;padding:6px 8px;'>{rank}</td>"
+            f"<td style='color:#e2e8f0;padding:6px 8px;'>{row['player_name']}{tier_badge}</td>"
+            f"<td style='color:#94a3b8;text-align:right;padding:6px 8px;'>${row['net_worth_at_entry']:,.0f}</td>"
+            f"<td style='color:#e2e8f0;text-align:right;padding:6px 8px;'>${row['current_net_worth']:,.0f}</td>"
+            f"<td style='color:{growth_col};text-align:right;font-weight:700;padding:6px 8px;'>{growth:+.2f}%</td>"
+            f"</tr>"
+        )
+
+    if not lb_rows:
+        lb_rows = "<tr><td colspan='5' style='color:#475569;text-align:center;padding:24px;'>No entrants yet.</td></tr>"
+
+    if is_ended:
+        entry_btn_html = '<div style="color:#64748b;font-size:0.85rem;">Event has ended.</div>'
+    elif already_entered:
+        entry_btn_html = '<div style="color:#4ade80;font-size:0.85rem;">&#10003; You are entered.</div>'
+    elif not is_active:
+        entry_btn_html = '<div style="color:#64748b;font-size:0.85rem;">Event is not active.</div>'
+    elif player_trophies < GRANT_ENTRY_COST_TROPHIES:
+        entry_btn_html = (
+            f'<div style="color:#f87171;font-size:0.85rem;">'
+            f'Insufficient trophies &mdash; need {GRANT_ENTRY_COST_TROPHIES}, you have {player_trophies}.'
+            f'</div>'
+        )
+    else:
+        entry_btn_html = f"""
+        <button id="enter-btn" onclick="enterGrant()"
+                style="background:#16a34a;border:none;border-radius:6px;color:#fff;
+                       font-size:0.9rem;font-weight:700;padding:10px 24px;cursor:pointer;">
+            Enter &mdash; {GRANT_ENTRY_COST_TROPHIES} trophies
+        </button>
+        <div id="enter-status" style="font-size:0.8rem;margin-top:8px;min-height:20px;"></div>
+        <script>
+        function enterGrant() {{
+            var btn = document.getElementById('enter-btn');
+            var st  = document.getElementById('enter-status');
+            btn.disabled = true;
+            btn.textContent = 'Entering…';
+            var fd = new FormData();
+            fd.append('event_id', '{event_id}');
+            fetch('/api/events/land-grant/enter', {{method:'POST', body:fd}})
+                .then(function(r){{ return r.json(); }})
+                .then(function(d){{
+                    if (d.ok) {{
+                        st.innerHTML = '<span style="color:#4ade80;">✓ ' + d.message + '</span>';
+                        btn.textContent = '✓ Entered';
+                        setTimeout(function(){{ location.reload(); }}, 1200);
+                    }} else {{
+                        st.innerHTML = '<span style="color:#f87171;">✗ ' + d.message + '</span>';
+                        btn.disabled = false;
+                        btn.textContent = 'Enter — {GRANT_ENTRY_COST_TROPHIES} trophies';
+                    }}
+                }})
+                .catch(function(){{
+                    st.innerHTML = '<span style="color:#f87171;">Request failed.</span>';
+                    btn.disabled = false;
+                    btn.textContent = 'Enter — {GRANT_ENTRY_COST_TROPHIES} trophies';
+                }});
+        }}
+        </script>"""
+
+    nav = _nav_html(player, active_page="events")
+    body_html = f"""
+    {nav}
+    <div style="max-width:900px;margin:0 auto;padding:20px 16px;">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px;">
+            <a href="/events" style="color:#60a5fa;font-size:0.82rem;">&larr; Events</a>
+            <span style="color:#475569;">&middot;</span>
+            <span style="background:#4ade8022;color:#4ade80;border:1px solid #4ade8044;
+                         border-radius:3px;padding:1px 7px;font-size:0.65rem;font-weight:700;
+                         text-transform:uppercase;">land_grant</span>
+            <span style="background:#6366f122;color:#6366f1;border:1px solid #6366f144;
+                         border-radius:3px;padding:1px 7px;font-size:0.65rem;font-weight:700;
+                         text-transform:uppercase;">monthly</span>
+        </div>
+        <h2 style="margin:0 0 4px;color:#e2e8f0;">{ev.title}</h2>
+        <div style="color:#64748b;font-size:0.82rem;margin-bottom:20px;">
+            {time_str} &nbsp;&middot;&nbsp; {entrant_count} entrant(s)
+            &nbsp;&middot;&nbsp; Your trophies: <span style="color:#fbbf24;">{player_trophies:,} &#9733;</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+            <div style="background:#0a0f1e;border:1px solid #1e293b;border-radius:8px;padding:16px;">
+                <div style="font-size:0.68rem;color:#64748b;text-transform:uppercase;
+                            letter-spacing:.08em;margin-bottom:12px;">Prize Tiers</div>
+                <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+                    <tr style="color:#475569;font-size:0.68rem;text-transform:uppercase;letter-spacing:.05em;">
+                        <th style="text-align:left;padding-bottom:6px;padding-left:8px;">Tier</th>
+                        <th style="text-align:center;padding-bottom:6px;">Plots</th>
+                        <th style="text-align:center;padding-bottom:6px;">Winners</th>
+                    </tr>
+                    {tiers_rows}
+                </table>
+            </div>
+            <div style="background:#0a0f1e;border:1px solid #1e293b;border-radius:8px;padding:16px;">
+                <div style="font-size:0.68rem;color:#64748b;text-transform:uppercase;
+                            letter-spacing:.08em;margin-bottom:12px;">How It Works</div>
+                <div style="font-size:0.78rem;color:#94a3b8;line-height:1.6;">
+                    Spend <span style="color:#fbbf24;font-weight:700;">{GRANT_ENTRY_COST_TROPHIES} trophies</span>
+                    to enter. Your net worth is snapshotted at entry.<br><br>
+                    At month end, players are ranked by net worth
+                    <span style="color:#4ade80;font-weight:700;">growth %</span>
+                    since entry. Top performers win government-owned land plots
+                    matched to their preferred terrain type.
+                </div>
+                <div style="margin-top:16px;">
+                    {entry_btn_html}
+                </div>
+            </div>
+        </div>
+
+        <div style="background:#0a0f1e;border:1px solid #1e293b;border-radius:8px;padding:16px;">
+            <div style="font-size:0.68rem;color:#64748b;text-transform:uppercase;
+                        letter-spacing:.08em;margin-bottom:12px;">Live Rankings</div>
+            <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+                <tr style="color:#475569;font-size:0.68rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #1e293b;">
+                    <th style="text-align:center;padding-bottom:8px;">#</th>
+                    <th style="text-align:left;padding-bottom:8px;padding-left:8px;">Player</th>
+                    <th style="text-align:right;padding-bottom:8px;">NW at Entry</th>
+                    <th style="text-align:right;padding-bottom:8px;">Current NW</th>
+                    <th style="text-align:right;padding-bottom:8px;">Growth</th>
+                </tr>
+                {lb_rows}
+            </table>
+        </div>
+    </div>"""
+
+    return HTMLResponse(_page_shell(body_html, title=f"{ev.title} — Leaderboard"))
 
 
 # ==========================
