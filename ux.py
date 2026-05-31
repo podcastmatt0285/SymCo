@@ -17555,6 +17555,57 @@ def land_grant_enter(
         return JSONResponse({"ok": False, "message": str(e)})
 
 
+@router.get("/events/land-grant", response_class=HTMLResponse)
+def land_grant_index(session_token: Optional[str] = Cookie(None)):
+    """Redirect to the active land_grant event, or the most recent one."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+    try:
+        from events import GameEvent, SessionLocal as _ES
+        edb = _ES()
+        try:
+            now = datetime.utcnow()
+            ev = (
+                edb.query(GameEvent)
+                .filter(
+                    GameEvent.event_type == "land_grant",
+                    GameEvent.is_active == True,
+                    GameEvent.starts_at <= now,
+                    (GameEvent.ends_at == None) | (GameEvent.ends_at >= now),
+                )
+                .order_by(GameEvent.starts_at.desc())
+                .first()
+            )
+            if not ev:
+                ev = (
+                    edb.query(GameEvent)
+                    .filter(GameEvent.event_type == "land_grant")
+                    .order_by(GameEvent.starts_at.desc())
+                    .first()
+                )
+        finally:
+            edb.close()
+    except Exception:
+        ev = None
+
+    if ev:
+        return RedirectResponse(f"/events/land-grant/{ev.id}", status_code=302)
+
+    nav = _nav_html(player, active_page="events")
+    body_html = f"""
+    {nav}
+    <div style="max-width:700px;margin:60px auto;padding:20px 16px;text-align:center;">
+        <div style="font-size:2.5rem;margin-bottom:16px;">🌍</div>
+        <h2 style="color:#e2e8f0;margin-bottom:8px;">Federal Development Grant</h2>
+        <p style="color:#64748b;font-size:0.9rem;margin-bottom:24px;">
+            No active grant event right now. Check <a href="/events" style="color:#60a5fa;">/events</a>
+            for upcoming contests.
+        </p>
+    </div>"""
+    return HTMLResponse(_page_shell(body_html, title="Federal Development Grant"))
+
+
 @router.get("/events/land-grant/{event_id}", response_class=HTMLResponse)
 def land_grant_leaderboard_page(
     event_id: int,
