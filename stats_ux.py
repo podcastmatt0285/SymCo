@@ -2429,14 +2429,20 @@ async def stats_leaderboard(
         sort = "total_net_worth"
     
     sort_column = getattr(PlayerStats, sort)
-    top = db.query(PlayerStats).order_by(desc(sort_column)).limit(50).all()
-    
+    # Join Player so we can (a) exclude NPCs / orphaned stat rows and
+    # (b) avoid an N+1 lookup per leaderboard row. is_npc.isnot(True)
+    # keeps real players whose legacy is_npc value is NULL.
+    top = (
+        db.query(PlayerStats, Player)
+        .join(Player, Player.id == PlayerStats.player_id)
+        .filter(Player.is_npc.isnot(True), PlayerStats.player_id > 0)
+        .order_by(desc(sort_column))
+        .limit(50)
+        .all()
+    )
+
     rows_html = ""
-    for rank, s in enumerate(top, 1):
-        p = db.query(Player).filter(Player.id == s.player_id).first()
-        if not p:
-            continue
-        
+    for rank, (s, p) in enumerate(top, 1):
         badge = ""
         if rank == 1:
             badge = '<span class="badge badge-gold">1st</span>'
@@ -2456,7 +2462,7 @@ async def stats_leaderboard(
             <td>{fmt_usd(s.land_value, disp, precision=0)}</td>
             <td>{fmt_usd(s.inventory_value, disp, precision=0)}</td>
             <td>{fmt_usd(s.share_value, disp, precision=0)}</td>
-            <td>{s.businesses_owned}</td>
+            <td>{fmt_usd(s.business_value, disp, precision=0)}<span style="color:#64748b;font-size:0.78rem;"> · {s.businesses_owned}</span></td>
         </tr>
         """
     
@@ -2489,7 +2495,7 @@ async def stats_leaderboard(
                     {sort_link('land_value', 'Land')}
                     {sort_link('inventory_value', 'Inventory')}
                     {sort_link('share_value', 'Shares')}
-                    <th>Biz</th>
+                    {sort_link('business_value', 'Businesses')}
                 </tr>
             </thead>
             <tbody>
