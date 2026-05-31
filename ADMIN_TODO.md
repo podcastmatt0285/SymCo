@@ -130,8 +130,9 @@ Items are grouped by category and ranked by value/complexity at the bottom.
       the mayor position (normally a paid/earned governance role).
 - [ ] **Post banner ads** in P2P chatrooms + scrolling tickers.
 - [ ] **Access to a Trophies Store** — subscriber-only store to spend trophies.
+- [ ] **Private server** — subscriber can run a private instance for them + friends.
 
-## ⚠️ Still missing
-Target is **15 features; 14 recovered → 1 still missing.**
-Add it here when it comes back:
-- [ ] _…_
+## ✅ Status
+**All 15 features recovered (2026-05-31).** Open question remaining:
+- City perk **"option B"** — exact form still unknown (RECOVER).
+- **Price point** — not yet decided.
