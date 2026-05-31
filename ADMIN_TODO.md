@@ -107,7 +107,7 @@ Items are grouped by category and ranked by value/complexity at the bottom.
 - **Single basic tier** (no tiered pricing).
 - Server verifies the Google Play `purchaseToken` against the Play Developer API
   before flipping a `subscriber` flag on the player account.
-- Price point: **TBD** (not recovered).
+- Price point: **cheapest tier available on Google Play** (basic tier only — no tiered pricing).
 
 ## Recovered features — confirmed from session summaries
 - [ ] **Forex trading floor** — subscriber-only currency-exchange dashboard.
@@ -116,7 +116,9 @@ Items are grouped by category and ranked by value/complexity at the bottom.
 - [ ] **Mint District coins** — usable for **forex / gifting / display only**, NOT
       spendable in the game economy.
 - [ ] **Cosmetic skins.**
-- [ ] **City perk — "option B"** (a revised option B; exact form lost — RECOVER).
+- [ ] **City perk — "option B"** — subscriber chooses one of two paths: **(a)** get a
+      free city founded for them and become its mayor, OR **(b)** pick ~3 perks from a
+      ~25-item perk list to apply to their existing city (city upgrade route).
 - [ ] **P2P unchanged for non-subscribers** (no nerf to free players' P2P).
 
 ## Recovered features — confirmed by user recognition (2026-05-31)
@@ -126,13 +128,13 @@ Items are grouped by category and ranked by value/complexity at the bottom.
 - [ ] **Higher trophy multiplier** on events.
 - [ ] **Access to unique reserve currencies** — subscriber-only currencies via
       the State Reserve Banks.
-- [ ] **Free city + mayoralship** — subscribers get a city founded for free and
-      the mayor position (normally a paid/earned governance role).
+- [ ] **Free city + mayoralship** — city perk option A: subscribers get a city founded
+      for free and become its mayor (normally a paid/earned governance role).
 - [ ] **Post banner ads** in P2P chatrooms + scrolling tickers.
 - [ ] **Access to a Trophies Store** — subscriber-only store to spend trophies.
 - [ ] **Private server** — subscriber can run a private instance for them + friends.
 
 ## ✅ Status
-**All 15 features recovered (2026-05-31).** Open question remaining:
-- City perk **"option B"** — exact form still unknown (RECOVER).
-- **Price point** — not yet decided.
+**All 15 features recovered and fully clarified (2026-05-31).**
+- City perk option B: choose free city+mayor OR pick ~3 perks from ~25-item list for existing city. ✅
+- Price point: cheapest available tier on Google Play. ✅
