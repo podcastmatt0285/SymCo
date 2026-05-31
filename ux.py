@@ -17592,9 +17592,7 @@ def land_grant_index(session_token: Optional[str] = Cookie(None)):
     if ev:
         return RedirectResponse(f"/events/land-grant/{ev.id}", status_code=302)
 
-    nav = _nav_html(player, active_page="events")
     body_html = f"""
-    {nav}
     <div style="max-width:700px;margin:60px auto;padding:20px 16px;text-align:center;">
         <div style="font-size:2.5rem;margin-bottom:16px;">🌍</div>
         <h2 style="color:#e2e8f0;margin-bottom:8px;">Federal Development Grant</h2>
@@ -17603,7 +17601,7 @@ def land_grant_index(session_token: Optional[str] = Cookie(None)):
             for upcoming contests.
         </p>
     </div>"""
-    return HTMLResponse(_page_shell(body_html, title="Federal Development Grant"))
+    return HTMLResponse(shell("Federal Development Grant", body_html, player.cash_balance, player.id))
 
 
 @router.get("/events/land-grant/{event_id}", response_class=HTMLResponse)
@@ -17763,9 +17761,7 @@ def land_grant_leaderboard_page(
         }}
         </script>"""
 
-    nav = _nav_html(player, active_page="events")
     body_html = f"""
-    {nav}
     <div style="max-width:900px;margin:0 auto;padding:20px 16px;">
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px;">
             <a href="/events" style="color:#60a5fa;font-size:0.82rem;">&larr; Events</a>
@@ -17830,7 +17826,7 @@ def land_grant_leaderboard_page(
         </div>
     </div>"""
 
-    return HTMLResponse(_page_shell(body_html, title=f"{ev.title} — Leaderboard"))
+    return HTMLResponse(shell(f"{ev.title} — Leaderboard", body_html, player.cash_balance, player.id))
 
 
 # ==========================
