@@ -128,9 +128,10 @@ Items are grouped by category and ranked by value/complexity at the bottom.
       the State Reserve Banks.
 - [ ] **Free city + mayoralship** — subscribers get a city founded for free and
       the mayor position (normally a paid/earned governance role).
+- [ ] **Post banner ads** in P2P chatrooms + scrolling tickers.
 
 ## ⚠️ Still missing
-Target is **15 features; 12 recovered → 3 still missing.**
+Target is **15 features; 13 recovered → 2 still missing.**
 Add them here as they come back:
 - [ ] _…_
 - [ ] _…_
