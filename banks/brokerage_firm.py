@@ -1224,7 +1224,7 @@ def calculate_player_total_net_worth(player_id: int) -> dict:
                 ).all()
                 
                 for item in items:
-                    market_price = market_mod.get_market_price(item.item_type) or 1.0
+                    market_price = market_mod.get_market_price(item.item_type) or 0.0
                     item_value = item.quantity * market_price
                     breakdown["inventory_value"] += item_value
                     breakdown["details"]["inventory_items"].append({
@@ -1249,7 +1249,9 @@ def calculate_player_total_net_worth(player_id: int) -> dict:
                 ).all()
                 
                 for plot in plots:
-                    plot_value = plot.monthly_tax * 150
+                    # 10-year capitalisation (monthly_tax × 120) — matches the
+                    # leaderboard, estate and government-dashboard land valuations.
+                    plot_value = (plot.monthly_tax or 0.0) * 120
                     breakdown["land_value"] += plot_value
                     breakdown["details"]["land_plots"].append({
                         "plot_id": plot.id,
@@ -1343,7 +1345,29 @@ def calculate_player_total_net_worth(player_id: int) -> dict:
                     "price": company.current_price,
                     "value": holding_value
                 })
-        
+
+        # 5b. BANK SHARE HOLDINGS — matches estate/leaderboard valuations,
+        # which both count bank shares (BankShareholding × share_price).
+        try:
+            from banks import BankShareholding, BankEntity
+            bank_holdings = db.query(BankShareholding).filter(
+                BankShareholding.player_id == player_id,
+                BankShareholding.shares_owned > 0
+            ).all()
+            for h in bank_holdings:
+                bank = db.query(BankEntity).filter(BankEntity.bank_id == h.bank_id).first()
+                if bank:
+                    bank_val = h.shares_owned * (bank.share_price or 0)
+                    breakdown["shares_value"] += bank_val
+                    breakdown["details"]["share_holdings"].append({
+                        "ticker": h.bank_id,
+                        "shares": h.shares_owned,
+                        "price": bank.share_price or 0,
+                        "value": bank_val
+                    })
+        except Exception as e:
+            print(f"[{BANK_NAME}] Bank share valuation error: {e}")
+
         breakdown["total_net_worth"] = (
             breakdown["cash_value"] +
             breakdown["inventory_value"] +
