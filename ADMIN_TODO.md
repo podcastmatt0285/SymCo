@@ -124,9 +124,20 @@ Items are grouped by category and ranked by value/complexity at the bottom.
 - [ ] **Custom profile** — name color / business-card theme.
 - [ ] **Permanent profile picture** shown in the P2P contact card.
 - [ ] **Higher trophy multiplier** on events.
+- [ ] **Access to unique reserve currencies** — subscriber-only currencies via
+      the State Reserve Banks.
+- [ ] **Free city + mayoralship** — subscribers get a city founded for free and
+      the mayor position (normally a paid/earned governance role).
 
 ## ⚠️ Still missing
-User recalls the full list had **more features (~17 total; ~11 recovered)**.
+User recalls the full list had **more features (~17 total; ~13 recovered)**.
 Add them here as they come back:
 - [ ] _…_
 - [ ] _…_
+
+## 🗑️ Deprecation candidates — review & remove
+The original brainstorm also included **extra buttons/features we likely no
+longer need.** (Reviewing the list to prune these is *why* the to-do was wanted.)
+Identify and strike these once the full list is reassembled:
+- [ ] _(brainstormed button — likely drop; identify)_
+- [ ] _(brainstormed button — likely drop; identify)_
