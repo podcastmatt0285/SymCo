@@ -360,7 +360,7 @@ def calculate_estate_value(player_id: int, db) -> dict:
             InventoryItem.quantity > 0
         ).all()
         for item in items:
-            price = get_market_price(item.item_type) or 1.0
+            price = get_market_price(item.item_type) or 0.0
             estate["inventory"] += item.quantity * price
     except Exception as e:
         print(f"[Estate] Inventory valuation error: {e}")
@@ -373,7 +373,7 @@ def calculate_estate_value(player_id: int, db) -> dict:
         for plot in plots:
             if getattr(plot, 'is_tutorial_reward', False):
                 continue  # free-forever; carries no capitalized value
-            estate["land"] += (plot.monthly_tax or 50.0) * 12
+            estate["land"] += (plot.monthly_tax or 50.0) * 120  # 10-year cap rate (monthly_tax × 12 × 10)
     except Exception as e:
         print(f"[Estate] Land valuation error: {e}")
 
@@ -645,7 +645,7 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
                 if getattr(plot, 'is_tutorial_reward', False):
                     plot_value = 0.0  # free-forever; no liquidation value
                 else:
-                    plot_value = (plot.monthly_tax or 50.0) * 12 * LIQUIDATION_DISCOUNT
+                    plot_value = (plot.monthly_tax or 50.0) * 120 * LIQUIDATION_DISCOUNT  # 10-year cap rate
                 liquidation_value += plot_value
 
                 # Remove any businesses on this land

@@ -13,7 +13,7 @@ Handles:
 - Initial inventory distribution for new players
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional, List, Tuple
 from enum import Enum
 from sqlalchemy import Column, String, Float, DateTime, Integer, Boolean, Index
@@ -890,21 +890,46 @@ def get_all_market_prices(item_keys: "list[str] | None" = None) -> "dict[str, fl
         db.close()
 
 
+_PRICE_STALENESS_DAYS = 30  # trades older than this don't set valuations
+
 def get_market_price(item_type: str) -> Optional[float]:
-    """Midpoint bid/ask or last trade price, adjusted by any active event price factor."""
+    """Best available price for an item, adjusted by any active event factor.
+
+    Priority: live bid/ask midpoint → recent trade (≤30 days) → None.
+    Trades older than _PRICE_STALENESS_DAYS are ignored so a single ancient
+    fat-finger trade can't distort valuations indefinitely.
+    """
     db = get_db()
-    last_trade = db.query(Trade).filter(Trade.item_type == item_type).order_by(Trade.executed_at.desc()).first()
-    if last_trade:
-        price = last_trade.price
-        db.close()
-    else:
-        best_bid = db.query(MarketOrder).filter(MarketOrder.item_type == item_type, MarketOrder.order_type == OrderType.BUY, MarketOrder.status == OrderStatus.ACTIVE, MarketOrder.price != None).order_by(MarketOrder.price.desc()).first()
-        best_ask = db.query(MarketOrder).filter(MarketOrder.item_type == item_type, MarketOrder.order_type == OrderType.SELL, MarketOrder.status == OrderStatus.ACTIVE, MarketOrder.price != None).order_by(MarketOrder.price.asc()).first()
-        db.close()
+    try:
+        best_bid = db.query(MarketOrder).filter(
+            MarketOrder.item_type == item_type,
+            MarketOrder.order_type == OrderType.BUY,
+            MarketOrder.status == OrderStatus.ACTIVE,
+            MarketOrder.price != None,
+        ).order_by(MarketOrder.price.desc()).first()
+        best_ask = db.query(MarketOrder).filter(
+            MarketOrder.item_type == item_type,
+            MarketOrder.order_type == OrderType.SELL,
+            MarketOrder.status == OrderStatus.ACTIVE,
+            MarketOrder.price != None,
+        ).order_by(MarketOrder.price.asc()).first()
+
         if best_bid and best_ask:
             price = (best_bid.price + best_ask.price) / 2
+        elif best_bid or best_ask:
+            price = best_bid.price if best_bid else best_ask.price
         else:
-            price = best_bid.price if best_bid else best_ask.price if best_ask else None
+            # No live orders — fall back to a recent trade
+            cutoff = datetime.utcnow() - timedelta(days=_PRICE_STALENESS_DAYS)
+            last_trade = (
+                db.query(Trade)
+                .filter(Trade.item_type == item_type, Trade.executed_at >= cutoff)
+                .order_by(Trade.executed_at.desc())
+                .first()
+            )
+            price = last_trade.price if last_trade else None
+    finally:
+        db.close()
     if price is not None:
         try:
             from events import get_active_market_price_factor

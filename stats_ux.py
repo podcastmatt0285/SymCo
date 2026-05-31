@@ -248,7 +248,7 @@ def calculate_player_stats(player_id: int) -> dict:
             from sqlalchemy import func as sqlfunc
             count_q = db.query(sqlfunc.count(LandPlot.id)).filter(LandPlot.owner_id == player_id)
             value_q = db.query(
-                sqlfunc.coalesce(sqlfunc.sum(LandPlot.monthly_tax * 12), 0.0)
+                sqlfunc.coalesce(sqlfunc.sum(LandPlot.monthly_tax * 120), 0.0)
             ).filter(LandPlot.owner_id == player_id)
             if hasattr(LandPlot, "is_tutorial_reward"):
                 value_q = value_q.filter(LandPlot.is_tutorial_reward.isnot(True))
@@ -265,7 +265,7 @@ def calculate_player_stats(player_id: int) -> dict:
             inventory_val = 0.0
             for item in items:
                 if item.quantity > 0:
-                    price = get_market_price(item.item_type) or 1.0
+                    price = get_market_price(item.item_type) or 0.0
                     inventory_val += item.quantity * price
             stats["inventory_value"] = inventory_val
         except:
