@@ -1540,22 +1540,24 @@ def process_government_grants(current_tick: int):
         # Get government account
         government = db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
         if not government or government.cash_balance <= 0:
-            return
-        
+            return {"banks": 0, "total": 0.0, "per_bank": 0.0,
+                    "message": "Government has no operating cash to distribute."}
+
         # Count city banks
         banks = db.query(CityBank).all()
         if not banks:
-            return
-        
+            return {"banks": 0, "total": 0.0, "per_bank": 0.0,
+                    "message": "No city banks exist to receive grants."}
+
         # Calculate grant amount per bank
         total_grant = government.cash_balance * GOV_GRANT_PERCENT
         grant_per_bank = total_grant / len(banks)
-        
+
         # Distribute grants
         for bank in banks:
             government.cash_balance -= grant_per_bank
             bank.cash_reserves += grant_per_bank
-        
+
         db.commit()
 
         try:
@@ -1566,10 +1568,12 @@ def process_government_grants(current_tick: int):
         except Exception:
             pass
         print(f"[Cities] Government grants distributed: ${grant_per_bank:,.2f} to each of {len(banks)} banks")
-        
+        return {"banks": len(banks), "total": total_grant, "per_bank": grant_per_bank}
+
     except Exception as e:
         db.rollback()
         print(f"[Cities] Error processing grants: {e}")
+        return {"banks": 0, "total": 0.0, "per_bank": 0.0, "message": f"Error: {e}"}
     finally:
         db.close()
 
@@ -2743,13 +2747,16 @@ def initialize():
     print("[Cities] Module initialized")
 
 
-def tick_government_bond_investing(current_tick: int):
+def tick_government_bond_investing(current_tick: int, force: bool = False):
     """
     Automatically invest surplus government cash into reserve bank bonds every
     GOV_BOND_INVEST_INTERVAL_TICKS ticks.  Also sweeps matured bond interest
     from PlayerCurrencyBalance("USD") for player 0 back into cash_balance.
+
+    force=True bypasses the schedule gate (used by the admin "Force Bond
+    Investment" control to run the sweep+invest immediately).
     """
-    if current_tick % GOV_BOND_INVEST_INTERVAL_TICKS != 0:
+    if not force and current_tick % GOV_BOND_INVEST_INTERVAL_TICKS != 0:
         return
 
     from auth import Player, get_db as get_auth_db
@@ -2761,10 +2768,11 @@ def tick_government_bond_investing(current_tick: int):
 
     auth_db = get_auth_db()
     rb_db   = get_rb_db()
+    swept_total = 0.0
     try:
         government = auth_db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
         if not government:
-            return
+            return {"swept": 0.0, "invested": 0.0, "message": "Government account not found."}
 
         # ── Step 1: Sweep matured bond payouts from reserve USD balance → cash ──
         usd_bal = rb_db.query(PlayerCurrencyBalance).filter(
@@ -2772,20 +2780,22 @@ def tick_government_bond_investing(current_tick: int):
             PlayerCurrencyBalance.currency_code == "USD",
         ).first()
         if usd_bal and usd_bal.balance > 0:
-            swept = usd_bal.balance
-            government.cash_balance += swept
+            swept_total = usd_bal.balance
+            government.cash_balance += swept_total
             usd_bal.balance = 0.0
             auth_db.commit()
             rb_db.commit()
-            print(f"[Cities] Gov bond harvest: ${swept:,.2f} swept back to cash_balance")
+            print(f"[Cities] Gov bond harvest: ${swept_total:,.2f} swept back to cash_balance")
 
         # ── Step 2: Invest surplus cash into best-yield USD bond ──
         excess = government.cash_balance - GOV_BOND_INVEST_THRESHOLD
         if excess <= 0:
-            return
+            return {"swept": swept_total, "invested": 0.0,
+                    "message": "Cash below investment threshold — nothing invested."}
         invest_amount = excess * GOV_BOND_INVEST_PCT
         if invest_amount < 1.0:
-            return
+            return {"swept": swept_total, "invested": 0.0,
+                    "message": "Investable surplus below $1 — nothing invested."}
 
         best_bank = (
             rb_db.query(StateReserveBank)
@@ -2794,7 +2804,8 @@ def tick_government_bond_investing(current_tick: int):
             .first()
         )
         if not best_bank:
-            return
+            return {"swept": swept_total, "invested": 0.0,
+                    "message": "No USD reserve bank available to buy bonds."}
 
         # Deduct from government cash (USD bonds are priced 1:1 with USD)
         government.cash_balance -= invest_amount
@@ -2827,10 +2838,12 @@ def tick_government_bond_investing(current_tick: int):
                           f"{GOV_BOND_MATURITY_DAYS}d bond @ {best_bank.yield_rate*100:.3f}% p.a.")
         except Exception:
             pass
+        return {"swept": swept_total, "invested": invest_amount, "bond_currency": "USD"}
     except Exception as e:
         auth_db.rollback()
         rb_db.rollback()
         print(f"[Cities] Gov bond invest error: {e}")
+        return {"swept": swept_total, "invested": 0.0, "message": f"Error: {e}"}
     finally:
         auth_db.close()
         rb_db.close()
@@ -2918,16 +2931,20 @@ def tick_city_bank_charter_fees(current_tick: int):
     try:
         banks = db.query(CityBank).all()
         total_collected = 0.0
+        banks_charged = 0
         for bank in banks:
-            # Due if never paid, or 30 days have elapsed since last payment
+            # Due if never paid, or 30 days have elapsed since last payment.
+            # Guard against current_tick < last (e.g. a forced run before the
+            # tick counter caught up) so elapsed is never treated as negative.
             last = bank.last_charter_fee_tick
-            if last is not None and current_tick - last < CITY_BANK_CHARTER_INTERVAL_TICKS:
+            if last is not None and 0 <= (current_tick - last) < CITY_BANK_CHARTER_INTERVAL_TICKS:
                 continue
             if (bank.cash_reserves or 0.0) < CITY_BANK_CHARTER_FEE:
                 continue  # bank can't cover fee — skip, will retry next day
             bank.cash_reserves -= CITY_BANK_CHARTER_FEE
             bank.last_charter_fee_tick = current_tick
             total_collected += CITY_BANK_CHARTER_FEE
+            banks_charged += 1
         db.commit()
 
         if total_collected > 0:
@@ -2951,8 +2968,10 @@ def tick_city_bank_charter_fees(current_tick: int):
             except Exception:
                 pass
             print(f"[Cities] Charter fees collected: ${total_collected:,.0f} → federal gov")
+        return {"banks": banks_charged, "total": total_collected}
     except Exception as e:
         print(f"[Cities] Charter fee tick error: {e}")
+        return {"banks": 0, "total": 0.0, "message": f"Error: {e}"}
     finally:
         db.close()
 

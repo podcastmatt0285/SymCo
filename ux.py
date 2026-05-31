@@ -3484,6 +3484,17 @@ def government_dashboard(
     """
     return shell("Government", body, player.cash_balance, player.id)
 
+def _read_current_tick() -> int:
+    """Read the live game tick from tick_state.txt (0 if unavailable)."""
+    import os as _os
+    try:
+        _tf = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "tick_state.txt")
+        with open(_tf) as _f:
+            return int(_f.read().strip())
+    except Exception:
+        return 0
+
+
 @router.post("/api/gov/force-grants")
 def gov_force_grants(session_token: Optional[str] = Cookie(None)):
     from fastapi.responses import RedirectResponse as _RR
@@ -3494,10 +3505,18 @@ def gov_force_grants(session_token: Optional[str] = Cookie(None)):
         if not _ia(player.id):
             return _RR("/admin?error=Admin+only", status_code=303)
         from cities import process_government_grants
-        process_government_grants(0)
-        return _RR("/admin?success=City+grants+distributed+successfully", status_code=303)
+        from urllib.parse import quote_plus
+        result = process_government_grants(_read_current_tick())
+        if isinstance(result, dict) and result.get("banks"):
+            msg = f"City grants distributed: ${result['total']:,.0f} across {result['banks']} city banks (${result['per_bank']:,.0f} each)."
+        elif isinstance(result, dict):
+            msg = result.get("message", "No grants distributed — no city banks or government has no cash.")
+        else:
+            msg = "City grants tick completed."
+        return _RR(f"/admin?success={quote_plus(msg)}", status_code=303)
     except Exception as e:
-        return _RR(f"/admin?error={str(e)[:80]}", status_code=303)
+        from urllib.parse import quote_plus
+        return _RR(f"/admin?error={quote_plus(str(e)[:120])}", status_code=303)
 
 
 @router.post("/api/gov/force-bond-invest")
@@ -3510,10 +3529,21 @@ def gov_force_bond_invest(session_token: Optional[str] = Cookie(None)):
         if not _ia(player.id):
             return _RR("/admin?error=Admin+only", status_code=303)
         from cities import tick_government_bond_investing
-        tick_government_bond_investing(0)
-        return _RR("/admin?success=Bond+investment+tick+completed", status_code=303)
+        from urllib.parse import quote_plus
+        result = tick_government_bond_investing(_read_current_tick(), force=True)
+        if isinstance(result, dict):
+            parts = []
+            if result.get("swept"):
+                parts.append(f"swept ${result['swept']:,.0f} matured interest to cash")
+            if result.get("invested"):
+                parts.append(f"invested ${result['invested']:,.0f} into {result.get('bond_currency','USD')} bonds")
+            msg = ("Bond tick: " + "; ".join(parts) + ".") if parts else result.get("message", "Bond tick completed — nothing to invest (cash below threshold).")
+        else:
+            msg = "Bond investment tick completed."
+        return _RR(f"/admin?success={quote_plus(msg)}", status_code=303)
     except Exception as e:
-        return _RR(f"/admin?error={str(e)[:80]}", status_code=303)
+        from urllib.parse import quote_plus
+        return _RR(f"/admin?error={quote_plus(str(e)[:120])}", status_code=303)
 
 
 @router.post("/api/gov/force-charter-fees")
@@ -3526,10 +3556,19 @@ def gov_force_charter_fees(session_token: Optional[str] = Cookie(None)):
         if not _ia(player.id):
             return _RR("/admin?error=Admin+only", status_code=303)
         from cities import tick_city_bank_charter_fees
-        tick_city_bank_charter_fees(0)
-        return _RR("/admin?success=Charter+fees+collected", status_code=303)
+        from urllib.parse import quote_plus
+        result = tick_city_bank_charter_fees(_read_current_tick())
+        if isinstance(result, dict) and result.get("banks"):
+            msg = f"Charter fees collected: ${result['total']:,.0f} from {result['banks']} city banks → federal gov."
+        elif isinstance(result, dict):
+            msg = result.get("message", "No charter fees due — all banks within their 30-day window.")
+        else:
+            msg = "Charter fees tick completed."
+        return _RR(f"/admin?success={quote_plus(msg)}", status_code=303)
     except Exception as e:
-        return _RR(f"/admin?error={str(e)[:80]}", status_code=303)
+        from urllib.parse import quote_plus
+        return _RR(f"/admin?error={quote_plus(str(e)[:120])}", status_code=303)
+
 
 
 @router.post("/api/estate/buy-gov-listing")

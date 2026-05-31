@@ -470,7 +470,11 @@ def _time_ago(iso_str: str) -> str:
 # ==========================
 
 @router.get("/admin", response_class=HTMLResponse)
-def admin_dashboard(session_token: Optional[str] = Cookie(None)):
+def admin_dashboard(
+    session_token: Optional[str] = Cookie(None),
+    success: Optional[str] = Query(None),
+    error: Optional[str] = Query(None),
+):
     player, redirect = _guard(session_token)
     if redirect:
         return redirect
@@ -529,6 +533,7 @@ def admin_dashboard(session_token: Optional[str] = Cookie(None)):
         pass
 
     body = f"""
+    {_flash(msg=success, err=error)}
     <div class="stat-grid">
         <div class="stat-box"><div class="stat-value">{total_players}</div><div class="stat-label">Players</div></div>
         <div class="stat-box"><div class="stat-value" style="color:#22c55e;">{online_count}</div><div class="stat-label">Online Now</div></div>
