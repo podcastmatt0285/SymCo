@@ -2456,22 +2456,39 @@ async def stats_leaderboard(
     disp = get_player_display_currency(player.id)
     update_all_rankings()
     
-    valid_sorts = ["total_net_worth", "cash_balance", "land_value", "inventory_value", "share_value", "business_value"]
+    valid_sorts = ["total_net_worth", "cash_balance", "land_value", "inventory_value", "share_value", "business_value", "trophies"]
     if sort not in valid_sorts:
         sort = "total_net_worth"
-    
-    sort_column = getattr(PlayerStats, sort)
-    # Join Player so we can (a) exclude NPCs / orphaned stat rows and
-    # (b) avoid an N+1 lookup per leaderboard row. is_npc.isnot(True)
-    # keeps real players whose legacy is_npc value is NULL.
-    top = (
-        db.query(PlayerStats, Player)
-        .join(Player, Player.id == PlayerStats.player_id)
-        .filter(Player.is_npc.isnot(True), PlayerStats.player_id > 0)
-        .order_by(desc(sort_column))
-        .limit(50)
-        .all()
-    )
+
+    # Load trophy/level data for all players in one query
+    try:
+        from events import PlayerRank, SessionLocal as _ESL
+        _edb = _ESL()
+        _rank_rows = _edb.query(PlayerRank).all()
+        _edb.close()
+        _trophy_map = {r.player_id: (r.trophies or 0, r.level or 1) for r in _rank_rows}
+    except Exception:
+        _trophy_map = {}
+
+    if sort == "trophies":
+        # Sort by trophies: pull all players then sort by trophy_map
+        top_raw = (
+            db.query(PlayerStats, Player)
+            .join(Player, Player.id == PlayerStats.player_id)
+            .filter(Player.is_npc.isnot(True), PlayerStats.player_id > 0)
+            .all()
+        )
+        top = sorted(top_raw, key=lambda x: _trophy_map.get(x[1].id, (0, 1))[0], reverse=True)[:50]
+    else:
+        sort_column = getattr(PlayerStats, sort)
+        top = (
+            db.query(PlayerStats, Player)
+            .join(Player, Player.id == PlayerStats.player_id)
+            .filter(Player.is_npc.isnot(True), PlayerStats.player_id > 0)
+            .order_by(desc(sort_column))
+            .limit(50)
+            .all()
+        )
 
     rows_html = ""
     for rank, (s, p) in enumerate(top, 1):
@@ -2482,9 +2499,21 @@ async def stats_leaderboard(
             badge = '<span class="badge badge-silver">2nd</span>'
         elif rank == 3:
             badge = '<span class="badge badge-bronze">3rd</span>'
-        
+
+        p_trophies, p_level = _trophy_map.get(p.id, (0, 1))
+        level_badge = (
+            f'<span style="background:#1e293b;color:#a78bfa;border:1px solid #4c3d8f;'
+            f'border-radius:3px;padding:1px 5px;font-size:0.65rem;font-weight:700;'
+            f'margin-left:4px;">Lv {p_level}</span>'
+        )
+        trophy_cell = (
+            f'<span style="color:#fbbf24;font-weight:600;">{p_trophies:,}</span>'
+            f' <span style="color:#64748b;font-size:0.75rem;">&#9733;</span>'
+            f'{level_badge}'
+        )
+
         highlight = 'style="background: #1e293b;"' if p.id == player.id else ""
-        
+
         rows_html += f"""
         <tr {highlight}>
             <td>{badge or rank}</td>
@@ -2495,9 +2524,10 @@ async def stats_leaderboard(
             <td>{fmt_usd(s.inventory_value, disp, precision=0)}</td>
             <td>{fmt_usd(s.share_value, disp, precision=0)}</td>
             <td>{fmt_usd(s.business_value, disp, precision=0)}<span style="color:#64748b;font-size:0.78rem;"> · {s.businesses_owned}</span></td>
+            <td>{trophy_cell}</td>
         </tr>
         """
-    
+
     db.close()
     
     def sort_link(field, label):
@@ -2514,6 +2544,7 @@ async def stats_leaderboard(
         <a href="/stats/leaderboard?sort=inventory_value" class="filter-tab {'active' if sort == 'inventory_value' else ''}">Inventory</a>
         <a href="/stats/leaderboard?sort=share_value" class="filter-tab {'active' if sort == 'share_value' else ''}">Shares</a>
         <a href="/stats/leaderboard?sort=business_value" class="filter-tab {'active' if sort == 'business_value' else ''}">Businesses</a>
+        <a href="/stats/leaderboard?sort=trophies" class="filter-tab {'active' if sort == 'trophies' else ''}">&#9733; Trophies</a>
     </div>
     
     <div class="card" style="cursor: default; overflow-x: auto;">
@@ -2528,6 +2559,7 @@ async def stats_leaderboard(
                     {sort_link('inventory_value', 'Inventory')}
                     {sort_link('share_value', 'Shares')}
                     {sort_link('business_value', 'Businesses')}
+                    {sort_link('trophies', '&#9733; Trophies')}
                 </tr>
             </thead>
             <tbody>
