@@ -239,16 +239,21 @@ def calculate_player_stats(player_id: int) -> dict:
             "districts_owned": 0
         }
 
-        # Land value - use SQL aggregation instead of loading all plots
+        # Land value - use SQL aggregation instead of loading all plots.
+        # Tutorial-reward plots are free-forever and carry no capitalized
+        # value, so they're excluded from land_value (but still counted as
+        # owned) to match the estate valuation.
         try:
             from land import LandPlot
             from sqlalchemy import func as sqlfunc
-            land_agg = db.query(
-                sqlfunc.count(LandPlot.id),
+            count_q = db.query(sqlfunc.count(LandPlot.id)).filter(LandPlot.owner_id == player_id)
+            value_q = db.query(
                 sqlfunc.coalesce(sqlfunc.sum(LandPlot.monthly_tax * 12), 0.0)
-            ).filter(LandPlot.owner_id == player_id).first()
-            stats["lands_owned"] = land_agg[0] or 0
-            stats["land_value"] = land_agg[1] or 0.0
+            ).filter(LandPlot.owner_id == player_id)
+            if hasattr(LandPlot, "is_tutorial_reward"):
+                value_q = value_q.filter(LandPlot.is_tutorial_reward.isnot(True))
+            stats["lands_owned"] = count_q.scalar() or 0
+            stats["land_value"] = value_q.scalar() or 0.0
         except:
             pass
 
@@ -268,15 +273,25 @@ def calculate_player_stats(player_id: int) -> dict:
 
         # Business value
         try:
-            from business import Business, BUSINESS_TYPES
+            from business import Business, BUSINESS_TYPES, get_district_business_types
             businesses = db.query(Business).filter(
                 Business.owner_id == player_id,
                 Business.is_active == True
             ).all()
             stats["businesses_owned"] = len(businesses)
             biz_val = 0.0
+            _district_btypes = None
             for biz in businesses:
                 config = BUSINESS_TYPES.get(biz.business_type, {})
+                # District / tutorial businesses aren't in BUSINESS_TYPES — fall
+                # back to the district registry instead of defaulting to $10k.
+                if not config:
+                    if _district_btypes is None:
+                        try:
+                            _district_btypes = get_district_business_types()
+                        except Exception:
+                            _district_btypes = {}
+                    config = _district_btypes.get(biz.business_type, {})
                 biz_val += config.get("startup_cost", 10000)
             stats["business_value"] = biz_val
         except:
@@ -295,21 +310,33 @@ def calculate_player_stats(player_id: int) -> dict:
         except:
             pass
 
-        # Share value
+        # Share value (bank shares + brokerage shares — must match estate calc)
+        share_val = 0.0
+        try:
+            from banks import BankShareholding, BankEntity
+            holdings = db.query(BankShareholding).filter(
+                BankShareholding.player_id == player_id,
+                BankShareholding.shares_owned > 0
+            ).all()
+            for h in holdings:
+                bank = db.query(BankEntity).filter(BankEntity.bank_id == h.bank_id).first()
+                if bank:
+                    share_val += h.shares_owned * (bank.share_price or 0)
+        except Exception:
+            pass
         try:
             from banks.brokerage_firm import ShareholderPosition, CompanyShares
             positions = db.query(ShareholderPosition).filter(
                 ShareholderPosition.player_id == player_id,
                 ShareholderPosition.shares_owned > 0
             ).all()
-            share_val = 0.0
             for pos in positions:
                 company = db.query(CompanyShares).filter(CompanyShares.id == pos.company_shares_id).first()
                 if company:
-                    share_val += pos.shares_owned * company.current_price
-            stats["share_value"] = share_val
-        except:
+                    share_val += pos.shares_owned * (company.current_price or 0)
+        except Exception:
             pass
+        stats["share_value"] = share_val
 
         stats["total_net_worth"] = (
             stats["cash_balance"] +
