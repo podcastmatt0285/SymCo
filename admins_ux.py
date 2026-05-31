@@ -5097,388 +5097,122 @@ def admin_events(session_token: Optional[str] = Cookie(None),
     _inp = ('background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:4px;'
             'padding:6px 9px;font-size:0.8rem;width:100%;box-sizing:border-box;')
     _sel = _inp + 'cursor:pointer;'
-    create_form = f"""
-    <div class="card" style="margin-bottom:18px;">
-      <div style="font-size:0.72rem;color:#94a3b8;text-transform:uppercase;
-                  letter-spacing:.08em;margin-bottom:4px;font-weight:700;">➕ Create New Event / Task</div>
-      <p style="font-size:0.75rem;color:#475569;margin:0 0 12px;">
-        Creates the event in the database as <strong style="color:#94a3b8;">inactive</strong> by default.
-        Activate it with <strong style="color:#94a3b8;">▶ Start</strong> below, or tick
-        <strong style="color:#94a3b8;">Active now</strong> to go live immediately.
-      </p>
-      <form method="post" action="/admin/events/create">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-          <div>
-            <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">Title *</div>
-            <input name="title" placeholder="e.g. Weekly Meme Challenge" required style="{_inp}">
-          </div>
-          <div>
-            <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">Trophy reward (0 = none)</div>
-            <input name="trophy_reward" type="number" min="0" value="0" style="{_inp}">
-          </div>
-        </div>
-        <div style="margin-bottom:8px;">
-          <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">Description shown to players</div>
-          <textarea name="description" placeholder="What players need to do and why it matters…" rows="2"
-                    style="{_inp}resize:vertical;"></textarea>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-          <div>
-            <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">Schedule — how often</div>
-            <select name="duration_class" style="{_sel}">
-              <option value="daily">Daily</option>
-              <option value="weekly" selected>Weekly</option>
-              <option value="monthly">Monthly</option>
-              <option value="special">Special / one-off</option>
-            </select>
-          </div>
-          <div>
-            <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">Category</div>
-            <select name="event_type" style="{_sel}" onchange="evTypeChange(this)">
-              <option value="task" selected>Task (tracks player progress)</option>
-              <option value="index_challenge">Index Challenge (enter/exit Top 50)</option>
-              <option value="item_crisis">⚠️ Item Crisis (cartel / supply shock)</option>
-              <option value="market">Market (price effect)</option>
-              <option value="production">Production (output effect)</option>
-              <option value="gov">Government / policy</option>
-              <option value="bank">Bank / interest rate</option>
-              <option value="city">City</option>
-              <option value="crypto_scam">Crypto Scam (WSC buy event)</option>
-            </select>
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-          <div>
-            <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">
-              Starts at (UTC) — blank = right now</div>
-            <input type="datetime-local" name="starts_at" style="{_inp}">
-          </div>
-          <div>
-            <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">
-              Ends at (UTC) — blank = no deadline</div>
-            <input type="datetime-local" name="ends_at" style="{_inp}">
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-          <div>
-            <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">
-              Task metric (task events only)</div>
-            <select name="task_metric" style="{_sel}">
-              <option value="">— not a tracked task —</option>
-              <option value="meme_buy_usd">Spend $ buying meme tokens</option>
-              <option value="executive_action">Fire or hire an executive</option>
-              <option value="market_sales_tax_usd">Generate market sales tax (USD)</option>
-              <option value="wbc50_index_challenge">WBC-50 Index Challenge (enter/exit)</option>
-              <option value="beta_group_verified">Join beta Google Group</option>
-              <option value="twa_first_login">First app login (Pocket Empire)</option>
-              <option value="daily_twa_login">Daily app login (Active Duty)</option>
-            </select>
-          </div>
-          <div>
-            <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">
-              Target amount (0 = unlimited / badge-only)</div>
-            <input name="task_target" type="number" step="any" min="0"
-                   placeholder="e.g. 2500 for $2,500 · 1 for one action" style="{_inp}">
-          </div>
-        </div>
-        <!-- Item Crisis helper fields (hidden unless item_crisis selected) -->
-        <div id="crisis_fields" style="display:none;background:#0a0f1e;border:1px solid #7f1d1d;
-             border-radius:6px;padding:12px;margin-bottom:10px;">
-          <div style="font-size:0.72rem;color:#fca5a5;font-weight:700;margin-bottom:10px;">
-            ⚠️ Item Crisis Configuration
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-            <div>
-              <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">Affected Commodity</div>
-              <select id="crisis_item_type" style="{_sel}" onchange="crisisUpdate()">
-                <optgroup label="— Crops —">
-                  <option value="coffee_beans">Coffee Beans</option>
-                  <option value="sugar">Sugar</option>
-                  <option value="wheat">Wheat</option>
-                  <option value="corn">Corn</option>
-                  <option value="rice">Rice</option>
-                  <option value="barley">Barley</option>
-                  <option value="cinnamon">Cinnamon</option>
-                  <option value="cotton">Cotton</option>
-                  <option value="spices">Spices</option>
-                </optgroup>
-                <optgroup label="— Metals —">
-                  <option value="copper">Copper</option>
-                  <option value="gold">Gold</option>
-                  <option value="silver">Silver</option>
-                  <option value="aluminum">Aluminum</option>
-                  <option value="iron">Iron</option>
-                  <option value="lithium">Lithium</option>
-                  <option value="cobalt">Cobalt</option>
-                  <option value="nickel">Nickel</option>
-                  <option value="tin">Tin</option>
-                  <option value="zinc">Zinc</option>
-                  <option value="manganese">Manganese</option>
-                  <option value="platinum">Platinum</option>
-                  <option value="chromite">Chromite</option>
-                </optgroup>
-                <optgroup label="— Ore —">
-                  <option value="bauxite">Bauxite</option>
-                  <option value="chromite">Chromite</option>
-                  <option value="cobalt_ore">Cobalt Ore</option>
-                </optgroup>
-                <optgroup label="— Energy —">
-                  <option value="oil">Crude Oil</option>
-                  <option value="natural_gas">Natural Gas</option>
-                  <option value="coal">Coal</option>
-                </optgroup>
-                <optgroup label="— Seafood —">
-                  <option value="cod">Cod</option>
-                  <option value="salmon">Atlantic Salmon</option>
-                </optgroup>
-                <optgroup label="— Other —">
-                  <option value="timber">Timber</option>
-                  <option value="rubber">Synthetic Rubber</option>
-                </optgroup>
-              </select>
-            </div>
-            <div>
-              <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">Production Drop % (0–99)</div>
-              <input type="number" id="crisis_drop_pct" min="1" max="99" value="40"
-                     style="{_inp}" oninput="crisisUpdate()">
-              <div style="font-size:0.65rem;color:#475569;margin-top:3px;">
-                e.g. 40 = 40% drop → output ×0.60 · 70 = 70% drop → output ×0.30
-              </div>
-            </div>
-          </div>
-          <div style="font-size:0.68rem;color:#64748b;margin-top:8px;">
-            Title is auto-filled. Effect data JSON is auto-generated below — edit manually if needed.
-          </div>
-        </div>
-        <div style="margin-bottom:10px;">
-          <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">
-            Effect data JSON (non-task events) — e.g.
-            <code style="color:#f59e0b;">{{"price_factor":1.25}}</code> for a 25% price boost,
-            <code style="color:#f59e0b;">{{"production_factor":1.5}}</code> for 50% more output,
-            <code style="color:#f59e0b;">{{"item_type":"coffee_beans","production_factor":0.6}}</code> for a crisis,
-            <code style="color:#f59e0b;">{{"type":"crypto_scam","wsc_pool":10000}}</code> for WSC event
-          </div>
-          <textarea name="effect_data" placeholder='{{"price_factor": 1.0}}' rows="2"
-                    style="{_inp}font-family:monospace;resize:vertical;"></textarea>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;">
-          <button type="submit" style="background:#14532d;color:#fff;border:none;border-radius:4px;
-                  padding:7px 18px;font-size:0.82rem;font-weight:700;cursor:pointer;">
-            Create Event
-          </button>
-          <label style="display:flex;align-items:center;gap:6px;color:#94a3b8;font-size:0.78rem;cursor:pointer;">
-            <input type="checkbox" name="activate_now" value="1" style="width:auto;margin:0;">
-            Active now
-          </label>
-          <span style="font-size:0.72rem;color:#475569;">
-            (unchecked = saved inactive, start manually from the card below)
-          </span>
-        </div>
-        <script>
-        var _CRISIS_NAMES = {{
-          'coffee_beans':'Coffee Beans','sugar':'Sugar','wheat':'Wheat','corn':'Corn',
-          'rice':'Rice','barley':'Barley','cinnamon':'Cinnamon','cotton':'Cotton','spices':'Spices',
-          'copper':'Copper','gold':'Gold','silver':'Silver','aluminum':'Aluminum','iron':'Iron',
-          'lithium':'Lithium','cobalt':'Cobalt','nickel':'Nickel','tin':'Tin','zinc':'Zinc',
-          'manganese':'Manganese','platinum':'Platinum','chromite':'Chromite','bauxite':'Bauxite',
-          'cobalt_ore':'Cobalt Ore','oil':'Crude Oil','natural_gas':'Natural Gas','coal':'Coal',
-          'cod':'Cod','salmon':'Atlantic Salmon','timber':'Timber','rubber':'Synthetic Rubber'
-        }};
-        function crisisUpdate() {{
-          var ef = document.querySelector('textarea[name="effect_data"]');
-          var titleEl = document.querySelector('input[name="title"]');
-          var itemSel = document.getElementById('crisis_item_type');
-          var dropPct = document.getElementById('crisis_drop_pct');
-          if (!itemSel || !dropPct || !ef) return;
-          var item = itemSel.value;
-          var pct = Math.min(99, Math.max(1, parseInt(dropPct.value) || 40));
-          var factor = parseFloat(((100 - pct) / 100).toFixed(4));
-          ef.value = JSON.stringify({{"item_type": item, "production_factor": factor}});
-          var name = _CRISIS_NAMES[item] || item.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
-          if (titleEl && (!titleEl.value || titleEl.dataset.crisisAuto === '1')) {{
-            titleEl.value = name + ' Crisis!';
-            titleEl.dataset.crisisAuto = '1';
-          }}
-        }}
-        function evTypeChange(sel) {{
-          var ef = document.querySelector('textarea[name="effect_data"]');
-          var dur = document.querySelector('select[name="duration_class"]');
-          var metric = document.querySelector('select[name="task_metric"]');
-          var crisisDiv = document.getElementById('crisis_fields');
-          var titleEl = document.querySelector('input[name="title"]');
-          // Hide crisis panel by default
-          if (crisisDiv) crisisDiv.style.display = 'none';
-          if (titleEl) titleEl.dataset.crisisAuto = '0';
-          if (sel.value === 'crypto_scam') {{
-            if (ef && (!ef.value || ef.value.trim() === '' || ef.value.trim() === '{{"price_factor": 1.0}}')) {{
-              ef.value = '{{"type":"crypto_scam","wsc_pool":10000}}';
-            }}
-          }} else if (sel.value === 'index_challenge') {{
-            if (dur) {{ dur.value = 'monthly'; }}
-            if (metric) {{ metric.value = 'wbc50_index_challenge'; }}
-            if (ef) {{ ef.value = '{{}}'; }}
-            var tgt = document.querySelector('input[name="task_target"]');
-            if (tgt && !tgt.value) {{ tgt.value = '1'; }}
-          }} else if (sel.value === 'item_crisis') {{
-            if (crisisDiv) crisisDiv.style.display = 'block';
-            crisisUpdate();
-          }}
-        }}
-        </script>
-      </form>
-    </div>"""
+    # === Item-crisis dropdown: every commodity + district item, grouped ===
+    import json as _cjson, os as _cos
+    _ci_all = {}
+    try:
+        _cbase = _cos.path.dirname(_cos.path.abspath(__file__))
+        with open(_cos.path.join(_cbase, "district_items.json")) as _cf:
+            _ci_all.update(_cjson.load(_cf))
+        with open(_cos.path.join(_cbase, "item_types.json")) as _cf:
+            _ci_all.update(_cjson.load(_cf))   # regular items win on key collision
+    except Exception:
+        pass
+    _CI_CAT_ORDER = [('crops', 'Crops'), ('agriculture', 'Agriculture'), ('seeds', 'Seeds'), ('produce', 'Produce'), ('livestock', 'Livestock'), ('animals', 'Animals'), ('meat', 'Meat'), ('dairy', 'Dairy'), ('seafood', 'Seafood'), ('shellfish', 'Shellfish'), ('seafood_product', 'Seafood Products'), ('canned_goods', 'Canned Goods'), ('flowers', 'Flowers'), ('floral_products', 'Floral Products'), ('essential_oils', 'Essential Oils'), ('ore', 'Ores & Minerals'), ('metals', 'Metals'), ('materials', 'Materials'), ('industrial', 'Industrial'), ('raw_materials', 'Raw Materials'), ('energy', 'Energy'), ('fuel', 'Fuel'), ('utilities', 'Utilities'), ('food', 'Food'), ('prepared_food', 'Prepared Food'), ('ingredients', 'Ingredients'), ('baked_goods', 'Baked Goods'), ('confectionery', 'Confectionery'), ('sweeteners', 'Sweeteners'), ('condiments', 'Condiments'), ('food_service', 'Food Service'), ('beverages', 'Beverages'), ('alcohol', 'Alcohol'), ('tobacco', 'Tobacco'), ('cured_tobacco', 'Cured Tobacco'), ('textiles', 'Textiles'), ('apparel', 'Apparel'), ('accessories', 'Accessories'), ('components', 'Components'), ('electronics', 'Electronics'), ('vehicle_parts', 'Vehicle Parts'), ('vehicles', 'Vehicles'), ('military', 'Military & Defense'), ('gem', 'Gems & Gemstones'), ('luxury', 'Luxury Goods'), ('packaging', 'Packaging'), ('liquids', 'Liquids'), ('health', 'Health & Pharma'), ('medical_equipment', 'Medical Equipment'), ('medical_supplies', 'Medical Supplies'), ('personal_care', 'Personal Care'), ('cosmetic', 'Cosmetics'), ('entertainment', 'Entertainment'), ('media', 'Media'), ('home_goods', 'Home Goods'), ('appliances', 'Appliances'), ('hospitality', 'Hospitality'), ('logistics', 'Logistics'), ('prison', 'Prison Goods'), ('prison_infrastructure', 'Prison Infrastructure'), ('retail_service', 'Retail Services'), ('retail_entertainment', 'Retail Entertainment'), ('retail_food', 'Retail Food'), ('retail_shopping', 'Retail Shopping'), ('retail_prison', 'Prison Retail'), ('services', 'Services'), ('education', 'Education'), ('financial', 'Financial'), ('zoo_infrastructure', 'Zoo')]
+    def _ci_esc(s):
+        return str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    _ci_by_cat = {}
+    for _ck, _cv in _ci_all.items():
+        _cv = _cv or {}
+        _ci_by_cat.setdefault(_cv.get("category", "other"), []).append((_ck, _cv.get("name", _ck)))
+    for _lst in _ci_by_cat.values():
+        _lst.sort(key=lambda kv: kv[1].lower())
+    _ci_seen = set()
+    _ci_parts = []
+    for _catk, _catl in _CI_CAT_ORDER:
+        if _catk in _ci_by_cat and _catk not in _ci_seen:
+            _ci_seen.add(_catk)
+            _opts = "".join('<option value="%s">%s</option>' % (_ci_esc(k), _ci_esc(n)) for k, n in _ci_by_cat[_catk])
+            _ci_parts.append('<optgroup label="\u2014 %s \u2014">%s</optgroup>' % (_ci_esc(_catl), _opts))
+    for _catk in sorted(_ci_by_cat):
+        if _catk not in _ci_seen:
+            _opts = "".join('<option value="%s">%s</option>' % (_ci_esc(k), _ci_esc(n)) for k, n in _ci_by_cat[_catk])
+            _ci_parts.append('<optgroup label="\u2014 %s \u2014">%s</optgroup>' % (_ci_esc(_catk.replace("_", " ").title()), _opts))
+    _crisis_item_opts = "".join(_ci_parts)
+    _qc_names_js = _cjson.dumps({k: ((_ci_all.get(k) or {}).get("name", k)) for k in _ci_all})
 
-    _crisis_item_opts = f"""
-                <optgroup label="— Crops —">
-                  <option value="coffee_beans">Coffee Beans</option>
-                  <option value="sugar">Sugar</option>
-                  <option value="wheat">Wheat</option>
-                  <option value="corn">Corn</option>
-                  <option value="rice">Rice</option>
-                  <option value="barley">Barley</option>
-                  <option value="cinnamon">Cinnamon</option>
-                  <option value="cotton">Cotton</option>
-                  <option value="spices">Spices</option>
-                </optgroup>
-                <optgroup label="— Metals —">
-                  <option value="copper">Copper</option>
-                  <option value="gold">Gold</option>
-                  <option value="silver">Silver</option>
-                  <option value="aluminum">Aluminum</option>
-                  <option value="iron">Iron</option>
-                  <option value="lithium">Lithium</option>
-                  <option value="cobalt">Cobalt</option>
-                  <option value="nickel">Nickel</option>
-                  <option value="tin">Tin</option>
-                  <option value="zinc">Zinc</option>
-                  <option value="manganese">Manganese</option>
-                  <option value="platinum">Platinum</option>
-                  <option value="chromite">Chromite</option>
-                </optgroup>
-                <optgroup label="— Ore —">
-                  <option value="bauxite">Bauxite</option>
-                  <option value="cobalt_ore">Cobalt Ore</option>
-                </optgroup>
-                <optgroup label="— Energy —">
-                  <option value="oil">Crude Oil</option>
-                  <option value="natural_gas">Natural Gas</option>
-                  <option value="coal">Coal</option>
-                </optgroup>
-                <optgroup label="— Seafood —">
-                  <option value="cod">Cod</option>
-                  <option value="salmon">Atlantic Salmon</option>
-                </optgroup>
-                <optgroup label="— Other —">
-                  <option value="timber">Timber</option>
-                  <option value="rubber">Synthetic Rubber</option>
-                </optgroup>"""
-
-    crisis_quick_form = f"""
+    crisis_quick_form = """
     <div class="card" style="margin-bottom:18px;border:2px solid #7f1d1d;background:#0d0808;">
-      <div style="font-size:0.85rem;color:#fca5a5;font-weight:700;margin-bottom:4px;">⚠️ Item Crisis — Quick Launch</div>
-      <p style="font-size:0.73rem;color:#9f7272;margin:0 0 12px;">
-        Cartel violence or supply shock reduces production of one commodity for a set duration.
-        Title and effect data are auto-generated.
+      <div style="font-size:0.9rem;color:#fca5a5;font-weight:800;margin-bottom:4px;">&#9888;&#65039; Create Crisis Event</div>
+      <p style="font-size:0.74rem;color:#9f7272;margin:0 0 12px;line-height:1.45;">
+        A surge of cartels fighting security forces internationally disrupts supply chains,
+        cutting production of one commodity. Pick the commodity, the production drop, and whether
+        it runs daily, weekly or monthly &mdash; the name, the player-facing description and the
+        end date are all generated automatically.
       </p>
-      <form method="post" action="/admin/events/create" id="qcrisis_form"
-            onsubmit="return qcBuildCrisis()">
+      <form method="post" action="/admin/events/create" onsubmit="return qcBuild()">
         <input type="hidden" name="event_type" value="item_crisis">
         <input type="hidden" name="task_metric" value="">
         <input type="hidden" name="task_target" value="0">
         <input type="hidden" name="trophy_reward" value="0">
-        <input type="hidden" name="title" id="qc_title_hidden">
-        <input type="hidden" name="effect_data" id="qc_effect_hidden">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+        <input type="hidden" name="title" id="qc_title">
+        <input type="hidden" name="effect_data" id="qc_eff">
+        <div style="display:grid;grid-template-columns:2fr 1fr 1.5fr;gap:8px;margin-bottom:10px;">
           <div>
             <div style="font-size:0.68rem;color:#9f7272;margin-bottom:3px;">Affected Commodity *</div>
-            <select id="qc_crisis_item" style="{_sel}" onchange="qcRefresh()">
-              {_crisis_item_opts}
+            <select id="qc_item" style="QC_SEL" onchange="qcRefresh()">
+              QC_ITEM_OPTS
             </select>
           </div>
           <div>
-            <div style="font-size:0.68rem;color:#9f7272;margin-bottom:3px;">Production Drop % (1–99)</div>
-            <input type="number" id="qc_crisis_pct" min="1" max="99" value="40"
-                   style="{_inp}" oninput="qcRefresh()">
-            <div style="font-size:0.64rem;color:#7f4040;margin-top:2px;">
-              40 = output ×0.60 · 70 = output ×0.30
-            </div>
+            <div style="font-size:0.68rem;color:#9f7272;margin-bottom:3px;">Production Drop %</div>
+            <input type="number" id="qc_pct" min="1" max="99" value="40" style="QC_INP" oninput="qcRefresh()">
+            <div style="font-size:0.62rem;color:#7f4040;margin-top:2px;">40 &rarr; &times;0.60 &middot; 70 &rarr; &times;0.30</div>
           </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
           <div>
-            <div style="font-size:0.68rem;color:#9f7272;margin-bottom:3px;">Duration</div>
-            <select name="duration_class" style="{_sel}">
-              <option value="daily">Daily</option>
-              <option value="weekly" selected>Weekly</option>
-              <option value="monthly">Monthly</option>
-              <option value="special">Special / one-off</option>
+            <div style="font-size:0.68rem;color:#9f7272;margin-bottom:3px;">Duration (sets end date)</div>
+            <select name="duration_class" id="qc_dur" style="QC_SEL" onchange="qcRefresh()">
+              <option value="daily">Daily &middot; ends in 24h</option>
+              <option value="weekly" selected>Weekly &middot; ends in 7 days</option>
+              <option value="monthly">Monthly &middot; ends in 30 days</option>
             </select>
           </div>
-          <div>
-            <div style="font-size:0.68rem;color:#9f7272;margin-bottom:3px;">Custom description (optional)</div>
-            <textarea name="description" rows="1" placeholder="Leave blank for auto-description…"
-                      style="{_inp}resize:none;"></textarea>
-          </div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
-          <div>
-            <div style="font-size:0.68rem;color:#9f7272;margin-bottom:3px;">Starts at (UTC) — blank = now</div>
-            <input type="datetime-local" name="starts_at" style="{_inp}">
-          </div>
-          <div>
-            <div style="font-size:0.68rem;color:#9f7272;margin-bottom:3px;">Ends at (UTC) — blank = no deadline</div>
-            <input type="datetime-local" name="ends_at" style="{_inp}">
-          </div>
-        </div>
-        <div style="background:#1a0808;border:1px solid #7f1d1d;border-radius:4px;
-                    padding:8px 10px;margin-bottom:10px;font-size:0.72rem;font-family:monospace;color:#fca5a5;"
-             id="qc_preview">
-          Loading…
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;">
+        <div id="qc_preview" style="background:#1a0808;border:1px solid #7f1d1d;border-radius:4px;
+             padding:9px 11px;margin-bottom:10px;font-size:0.74rem;color:#fca5a5;line-height:1.5;">&hellip;</div>
+        <div style="display:flex;align-items:center;gap:12px;">
           <button type="submit" style="background:#7f1d1d;color:#fff;border:none;border-radius:4px;
-                  padding:7px 18px;font-size:0.84rem;font-weight:700;cursor:pointer;">
-            🚨 Launch Crisis
-          </button>
+                  padding:8px 20px;font-size:0.85rem;font-weight:800;cursor:pointer;">&#128680; Launch Crisis</button>
           <label style="display:flex;align-items:center;gap:6px;color:#9f7272;font-size:0.78rem;cursor:pointer;">
-            <input type="checkbox" name="activate_now" value="1" style="width:auto;margin:0;" checked>
-            Active now
+            <input type="checkbox" name="activate_now" value="1" style="width:auto;margin:0;" checked> Active immediately
           </label>
         </div>
         <script>
-        var _QC_NAMES = {{
-          'coffee_beans':'Coffee Beans','sugar':'Sugar','wheat':'Wheat','corn':'Corn',
-          'rice':'Rice','barley':'Barley','cinnamon':'Cinnamon','cotton':'Cotton','spices':'Spices',
-          'copper':'Copper','gold':'Gold','silver':'Silver','aluminum':'Aluminum','iron':'Iron',
-          'lithium':'Lithium','cobalt':'Cobalt','nickel':'Nickel','tin':'Tin','zinc':'Zinc',
-          'manganese':'Manganese','platinum':'Platinum','chromite':'Chromite','bauxite':'Bauxite',
-          'cobalt_ore':'Cobalt Ore','oil':'Crude Oil','natural_gas':'Natural Gas','coal':'Coal',
-          'cod':'Cod','salmon':'Atlantic Salmon','timber':'Timber','rubber':'Synthetic Rubber'
-        }};
-        function qcRefresh() {{
-          var item = document.getElementById('qc_crisis_item').value;
-          var pct  = Math.min(99, Math.max(1, parseInt(document.getElementById('qc_crisis_pct').value) || 40));
-          var name = _QC_NAMES[item] || item.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+        var _QC_NAMES = QC_NAMES_JSON;
+        function _qcParts() {
+          var item = document.getElementById('qc_item').value;
+          var pct  = Math.min(99, Math.max(1, parseInt(document.getElementById('qc_pct').value) || 40));
+          var dur  = document.getElementById('qc_dur').value;
+          var name = _QC_NAMES[item] || item.replace(/_/g,' ').replace(/\b\w/g,function(c){return c.toUpperCase();});
           var factor = parseFloat(((100-pct)/100).toFixed(4));
-          var title  = name + ' Crisis!';
-          var eff    = JSON.stringify({{"item_type":item,"production_factor":factor}});
-          var prev   = document.getElementById('qc_preview');
-          if (prev) prev.textContent = title + ' · effect_data: ' + eff;
-        }}
-        function qcBuildCrisis() {{
-          var item = document.getElementById('qc_crisis_item').value;
-          var pct  = Math.min(99, Math.max(1, parseInt(document.getElementById('qc_crisis_pct').value) || 40));
-          var name = _QC_NAMES[item] || item.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
-          var factor = parseFloat(((100-pct)/100).toFixed(4));
-          document.getElementById('qc_title_hidden').value  = name + ' Crisis!';
-          document.getElementById('qc_effect_hidden').value = JSON.stringify({{"item_type":item,"production_factor":factor}});
+          return {item:item, pct:pct, dur:dur, name:name, factor:factor};
+        }
+        function _qcDesc(p) {
+          var span = {daily:'24 hours', weekly:'one week', monthly:'one month'}[p.dur] || p.dur;
+          return 'A surge of cartels fighting security forces internationally has disrupted ' + p.name +
+                 ' supply chains, cutting production by ' + p.pct + '% for ' + span + '.';
+        }
+        function qcRefresh() {
+          var p = _qcParts();
+          var prev = document.getElementById('qc_preview');
+          if (prev) prev.innerHTML = '<b>' + p.name + ' Crisis!</b> &mdash; ' + _qcDesc(p) +
+            ' <span style="color:#7f4040;">(output &times;' + p.factor.toFixed(2) + ')</span>';
+        }
+        function qcBuild() {
+          var p = _qcParts();
+          document.getElementById('qc_title').value = p.name + ' Crisis!';
+          document.getElementById('qc_eff').value   = JSON.stringify({item_type:p.item, production_factor:p.factor});
           return true;
-        }}
+        }
         qcRefresh();
         </script>
       </form>
     </div>"""
-
+    crisis_quick_form = (crisis_quick_form
+        .replace("QC_SEL", _sel)
+        .replace("QC_INP", _inp)
+        .replace("QC_ITEM_OPTS", _crisis_item_opts)
+        .replace("QC_NAMES_JSON", _qc_names_js))
     body = f"""
     {flash}
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
@@ -5494,7 +5228,6 @@ def admin_events(session_token: Optional[str] = Cookie(None),
         </div>
     </div>
     {crisis_quick_form}
-    {create_form}
     {event_cards}"""
 
     return HTMLResponse(admin_shell("Events", body, admin.business_name, "/admin/events"))
@@ -5786,11 +5519,31 @@ def admin_event_create(
         from events import GameEvent, SessionLocal as _ES, broadcast_event_push, schedule_event_notifications
         def _parse(s):
             return datetime.fromisoformat(s) if s and s.strip() else None
+        from datetime import timedelta as _td
         now       = datetime.utcnow()
         start     = _parse(starts_at) or now
         end       = _parse(ends_at)
         is_active = activate_now == "1"
         metric    = (task_metric.strip() or None) if task_metric else None
+        # Item Crisis: the duration class alone determines when it ends — no manual
+        # start/stop required, and the player-facing description is auto-generated.
+        if event_type == "item_crisis":
+            _crisis_span = {"daily": _td(days=1), "weekly": _td(days=7),
+                            "monthly": _td(days=30)}.get(duration_class.strip(), _td(days=7))
+            end = start + _crisis_span
+            if not (description and description.strip()):
+                try:
+                    _cd = _json.loads(effect_data) if (effect_data and effect_data.strip()) else {}
+                    _cit = _cd.get("item_type", "")
+                    _cpf = float(_cd.get("production_factor", 0.6))
+                    _cdr = int(round((1.0 - _cpf) * 100))
+                    _span_lbl = {"daily": "24 hours", "weekly": "one week",
+                                 "monthly": "one month"}.get(duration_class.strip(), duration_class.strip())
+                    _nm = _cit.replace("_", " ").title() if _cit else "this commodity"
+                    description = (f"A surge of cartels fighting security forces internationally has "
+                                   f"disrupted {_nm} supply chains, cutting production by {_cdr}% for {_span_lbl}.")
+                except Exception:
+                    pass
         # index_challenge is monthly-only — enforce server-side
         if event_type == "index_challenge" and duration_class != "monthly":
             return RedirectResponse(
