@@ -2774,20 +2774,33 @@ def tick_government_bond_investing(current_tick: int, force: bool = False):
         if not government:
             return {"swept": 0.0, "invested": 0.0, "message": "Government account not found."}
 
-        # ── Step 1: Sweep matured bond payouts from reserve USD balance → cash ──
-        usd_bal = rb_db.query(PlayerCurrencyBalance).filter(
-            PlayerCurrencyBalance.player_id     == GOVERNMENT_PLAYER_ID,
-            PlayerCurrencyBalance.currency_code == "USD",
-        ).first()
-        if usd_bal and usd_bal.balance > 0:
-            swept_total = usd_bal.balance
-            government.cash_balance += swept_total
-            usd_bal.balance = 0.0
+        # ── Step 1: Sweep all bond payouts from every currency balance → cash ──
+        # Principal always returns as USD; interest accrues in the bond's native currency.
+        import market
+        all_balances = rb_db.query(PlayerCurrencyBalance).filter(
+            PlayerCurrencyBalance.player_id == GOVERNMENT_PLAYER_ID,
+            PlayerCurrencyBalance.balance   >  0,
+        ).all()
+        for bal in all_balances:
+            if bal.currency_code == "USD":
+                usd_amount = bal.balance
+            else:
+                try:
+                    fx = market.get_market_price(bal.currency_code)
+                except Exception:
+                    fx = None
+                if not fx:
+                    continue  # no market price — leave balance in place
+                usd_amount = bal.balance * fx
+            swept_total += usd_amount
+            government.cash_balance += usd_amount
+            bal.balance = 0.0
+        if swept_total > 0:
             auth_db.commit()
             rb_db.commit()
             print(f"[Cities] Gov bond harvest: ${swept_total:,.2f} swept back to cash_balance")
 
-        # ── Step 2: Invest surplus cash into best-yield USD bond ──
+        # ── Step 2: Invest surplus cash into globally highest-yield bond ──
         excess = government.cash_balance - GOV_BOND_INVEST_THRESHOLD
         if excess <= 0:
             return {"swept": swept_total, "invested": 0.0,
@@ -2799,13 +2812,12 @@ def tick_government_bond_investing(current_tick: int, force: bool = False):
 
         best_bank = (
             rb_db.query(StateReserveBank)
-            .filter(StateReserveBank.currency_code == "USD")
             .order_by(StateReserveBank.yield_rate.desc())
             .first()
         )
         if not best_bank:
             return {"swept": swept_total, "invested": 0.0,
-                    "message": "No USD reserve bank available to buy bonds."}
+                    "message": "No reserve bank available to buy bonds."}
 
         # Deduct from government cash (USD bonds are priced 1:1 with USD)
         government.cash_balance -= invest_amount
@@ -2828,17 +2840,17 @@ def tick_government_bond_investing(current_tick: int, force: bool = False):
         rb_db.commit()
 
         print(
-            f"[Cities] Gov bond invest: ${invest_amount:,.2f} → USD "
+            f"[Cities] Gov bond invest: ${invest_amount:,.2f} → {best_bank.currency_code} "
             f"{GOV_BOND_MATURITY_DAYS}d bond @ {best_bank.yield_rate * 100:.3f}% p.a."
         )
         try:
             from govt_ledger import log_gov_event
             log_gov_event("bond_purchase", "out", invest_amount, "USD",
-                          "USD Reserve Bank",
+                          f"{best_bank.currency_code} Reserve Bank",
                           f"{GOV_BOND_MATURITY_DAYS}d bond @ {best_bank.yield_rate*100:.3f}% p.a.")
         except Exception:
             pass
-        return {"swept": swept_total, "invested": invest_amount, "bond_currency": "USD"}
+        return {"swept": swept_total, "invested": invest_amount, "bond_currency": best_bank.currency_code}
     except Exception as e:
         auth_db.rollback()
         rb_db.rollback()
