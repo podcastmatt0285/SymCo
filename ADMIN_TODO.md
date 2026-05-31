@@ -87,3 +87,46 @@ Items are grouped by category and ranked by value/complexity at the bottom.
 - **vs. Discord** — mod notes, report queue, warning/strike primitive
 - **vs. Reddit** — modqueue triage workflow
 - **vs. Twitch** — AutoMod word filters
+
+---
+
+# 💰 Monetization — Subscription Plan ("Wadsworth Pro")
+
+> **Recovery note (2026-05-31):** The original brainstorm (~17 features, all one
+> basic tier) was lost — it was hand-edited into this file after the manure item
+> but never committed (old `backup.sh` only staged the SQL dumps; a server
+> restore wiped the uncommitted edit). The items below were recovered from
+> session summaries + user recognition. **The list is INCOMPLETE — more features
+> existed; add them as remembered.**
+
+## Delivery / implementation
+- **Android app users only.** Purchase flows through Google Play billing via the
+  TWA `getDigitalGoodsService('https://play.google.com/billing')` API, which only
+  exists inside the Trusted Web Activity — browser users never see the buy button.
+- **Single basic tier** (no tiered pricing).
+- Server verifies the Google Play `purchaseToken` against the Play Developer API
+  before flipping a `subscriber` flag on the player account.
+- Price point: **TBD** (not recovered).
+
+## Recovered features — confirmed from session summaries
+- [ ] **Forex trading floor** — subscriber-only currency-exchange dashboard.
+- [ ] **Player API** — extensive read access + write limited to **buy/sell on the
+      commodity market and district market only** (no other write access).
+- [ ] **Mint District coins** — usable for **forex / gifting / display only**, NOT
+      spendable in the game economy.
+- [ ] **Cosmetic skins.**
+- [ ] **City perk — "option B"** (a revised option B; exact form lost — RECOVER).
+- [ ] **P2P unchanged for non-subscribers** (no nerf to free players' P2P).
+
+## Recovered features — confirmed by user recognition (2026-05-31)
+- [ ] **Subscriber badge** on the leaderboard / P2P contact card.
+- [ ] **Extra P2P contact capacity** above the standard 46-contact cap.
+- [ ] **Custom profile** — name color / business-card theme.
+- [ ] **Permanent profile picture** shown in the P2P contact card.
+- [ ] **Higher trophy multiplier** on events.
+
+## ⚠️ Still missing
+User recalls the full list had **more features (~17 total; ~11 recovered)**.
+Add them here as they come back:
+- [ ] _…_
+- [ ] _…_
