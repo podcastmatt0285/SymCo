@@ -14031,6 +14031,43 @@ def api_widget_data(request: Request, session_token: Optional[str] = Cookie(None
                     for t in txs
                 ]
 
+            # ── Active land_grant event notice ───────────────────────────────
+            try:
+                from events import GameEvent, LandGrantEntry, GRANT_ENTRY_COST_TROPHIES as _LGCOST, SessionLocal as _LGES
+                _now = datetime.utcnow()
+                _lge_db = _LGES()
+                try:
+                    _lg_ev = (
+                        _lge_db.query(GameEvent)
+                        .filter(
+                            GameEvent.event_type == "land_grant",
+                            GameEvent.is_active == True,
+                            GameEvent.starts_at <= _now,
+                            (GameEvent.ends_at == None) | (GameEvent.ends_at >= _now),
+                        )
+                        .first()
+                    )
+                    if _lg_ev:
+                        _lg_entered = _lge_db.query(LandGrantEntry).filter(
+                            LandGrantEntry.event_id == _lg_ev.id,
+                            LandGrantEntry.player_id == player.id,
+                        ).first() is not None
+                        _lg_msg = (
+                            "✓ Entered — Federal Development Grant in progress"
+                            if _lg_entered
+                            else f"Federal Development Grant open — enter for {_LGCOST} trophies"
+                        )
+                        result["notifications"].insert(0, {
+                            "text": _lg_msg,
+                            "time": "",
+                            "amount": "",
+                            "positive": True,
+                        })
+                finally:
+                    _lge_db.close()
+            except Exception:
+                pass
+
             # ── Indices ───────────────────────────────────────────────────────
             INDEX_CODES = ["WBC50","GLVI","CCC","EPI","CDI","REGI","BEE","WEI","GPI","SEED"]
             for code in INDEX_CODES:
@@ -16651,7 +16688,9 @@ def events_page(request: Request,
                 _lg_trophies = 0
             _tier_summary = " &nbsp;·&nbsp; ".join(
                 f'<span style="color:#e2e8f0;font-weight:700;">{t["plots"]} plots</span>'
-                f'<span style="color:#64748b;"> ({t["name"]}, top {t["winners"]})</span>'
+                f'<span style="color:#64748b;"> ({t["name"]}, top {t["winners"]}</span>'
+                f'<span style="color:#a78bfa;">, +{t.get("trophy_reward",0)}★</span>'
+                f'<span style="color:#64748b;">)</span>'
                 for t in (_GT or [])
             )
             _lg_btn = ""
@@ -17584,6 +17623,7 @@ def land_grant_leaderboard_page(
             f"<td style='color:#e2e8f0;text-transform:capitalize;padding:4px 8px;'>{tier['name']}</td>"
             f"<td style='color:#fbbf24;text-align:center;padding:4px 8px;'>{tier['plots']}</td>"
             f"<td style='color:#38bdf8;text-align:center;padding:4px 8px;'>{tier['winners']}</td>"
+            f"<td style='color:#a78bfa;text-align:center;padding:4px 8px;'>{tier.get('trophy_reward', 0)} &#9733;</td>"
             f"</tr>"
         )
 
@@ -17701,6 +17741,7 @@ def land_grant_leaderboard_page(
                         <th style="text-align:left;padding-bottom:6px;padding-left:8px;">Tier</th>
                         <th style="text-align:center;padding-bottom:6px;">Plots</th>
                         <th style="text-align:center;padding-bottom:6px;">Winners</th>
+                        <th style="text-align:center;padding-bottom:6px;">Trophies</th>
                     </tr>
                     {tiers_rows}
                 </table>

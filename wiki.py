@@ -74,6 +74,51 @@ def _s(text) -> str:
 def initialize():
     Base.metadata.create_all(bind=engine)
     _migrate_from_json()
+    _seed_land_grant_entry()
+
+
+def _seed_land_grant_entry():
+    db = _db()
+    try:
+        exists = db.query(WikiMedia).filter(WikiMedia.title == "Federal Development Grant").first()
+        if exists:
+            return
+        max_order = db.query(WikiMedia).count()
+        db.add(WikiMedia(
+            youtube_id="",
+            kind="video",
+            title="Federal Development Grant",
+            description=(
+                "The Federal Development Grant is a monthly competition where players spend 425 trophies "
+                "to enter and compete on net worth growth percentage over the event window.\n\n"
+                "How it works:\n"
+                "1. Pay 425 trophies to enter — this is deducted from your trophy count and affects your rank.\n"
+                "2. Your net worth is snapshotted at entry time.\n"
+                "3. At month end, all entrants are ranked by how much their net worth grew (%) since they entered.\n"
+                "4. Top performers win government-owned land plots, matched to your most common terrain type:\n"
+                "   • Platinum (top 1): 20 plots + 100 trophies\n"
+                "   • Gold (top 2-4): 15 plots + 50 trophies\n"
+                "   • Silver (top 5-11): 13 plots + 25 trophies\n"
+                "   • Bronze (top 12-26): 10 plots + 10 trophies\n\n"
+                "Strategy tips:\n"
+                "• Enter early to maximize the growth window.\n"
+                "• Winning 10–20 plots gives you the footprint for a full district.\n"
+                "• Plots are government-seized land from bankrupt players — they go to active builders.\n"
+                "• Land hoarding tax applies to all plots you own, including granted ones.\n"
+                "• Executives with the Land Grant Program perk (VP of County Relations) reduce all taxes by 20%, "
+                "lowering the cost of holding many plots after winning."
+            ),
+            category="land",
+            sort_order=max_order,
+            pinned=False,
+        ))
+        db.commit()
+        print("[Wiki] Seeded Federal Development Grant entry")
+    except Exception as e:
+        db.rollback()
+        print(f"[Wiki] Seed land grant error: {e}")
+    finally:
+        db.close()
 
 
 def _migrate_from_json():

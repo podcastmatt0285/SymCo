@@ -20,10 +20,10 @@ Base = declarative_base()
 # ── Land Grant constants ──────────────────────────────────────────────────────
 GRANT_ENTRY_COST_TROPHIES = 425
 GRANT_TIERS = [
-    {"name": "platinum", "plots": 20, "winners": 1},
-    {"name": "gold",     "plots": 15, "winners": 3},
-    {"name": "silver",   "plots": 13, "winners": 7},
-    {"name": "bronze",   "plots": 10, "winners": 15},
+    {"name": "platinum", "plots": 20, "winners": 1,  "trophy_reward": 100},
+    {"name": "gold",     "plots": 15, "winners": 3,  "trophy_reward": 50},
+    {"name": "silver",   "plots": 13, "winners": 7,  "trophy_reward": 25},
+    {"name": "bronze",   "plots": 10, "winners": 15, "trophy_reward": 10},
 ]
 
 
@@ -1007,6 +1007,36 @@ def resolve_land_grant_event(event_id: int) -> dict:
                 except Exception as _e:
                     print(f"[LandGrant] log_transaction award error: {_e}")
 
+                # Award trophies for winning
+                tier_data = next((t for t in GRANT_TIERS if t["name"] == tier_name), None)
+                trophy_count = tier_data["trophy_reward"] if tier_data else 0
+                if trophy_count > 0:
+                    try:
+                        rank = db.query(PlayerRank).filter(
+                            PlayerRank.player_id == entry.player_id
+                        ).first()
+                        if not rank:
+                            rank = PlayerRank(player_id=entry.player_id, trophies=0, level=1)
+                            db.add(rank)
+                        rank.trophies = (rank.trophies or 0) + trophy_count
+                        level = 1
+                        for i, threshold in enumerate(LEVEL_THRESHOLDS):
+                            if rank.trophies >= threshold:
+                                level = i + 2
+                            else:
+                                break
+                        rank.level = level
+                        rank.updated_at = now
+                        from stats_ux import log_transaction as _lt2
+                        _lt2(
+                            entry.player_id, "trophy_award", "events", 0.0,
+                            description=f"Federal Development Grant — {tier_name} tier winner",
+                            reference_id=f"grant-{event_id}",
+                            item_type="trophy", quantity=float(trophy_count),
+                        )
+                    except Exception as _e:
+                        print(f"[LandGrant] trophy award error for player {entry.player_id}: {_e}")
+
         db.commit()
 
         if total_plots > 0:
@@ -1023,8 +1053,13 @@ def resolve_land_grant_event(event_id: int) -> dict:
         for entry, growth_pct in scored:
             tier = entry.tier_awarded
             if tier and tier != "none":
+                _td = next((t for t in GRANT_TIERS if t["name"] == tier), None)
+                _tc = _td["trophy_reward"] if _td else 0
                 p_title = "Federal Development Grant — Winner!"
-                p_body = f"You placed {tier} tier and won {entry.plots_awarded} plot(s)!"
+                p_body = (
+                    f"🏆 {tier.title()} tier — {entry.plots_awarded} plot(s) awarded"
+                    + (f" + {_tc} trophies!" if _tc else "!")
+                )
             else:
                 p_title = "Federal Development Grant — Results"
                 p_body = "The event has ended. Check the leaderboard to see the results."

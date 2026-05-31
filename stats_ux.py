@@ -1338,8 +1338,10 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         "annuity_payout":       "💰",
         "annuity_surrender":    "🔓",
         "annuity_maturity":     "✅",
-        # Events / Trophies
+        # Events / Trophies / Land Grant
         "trophy_award": "🏆",
+        "trophy_spend": "🏆",
+        "land_grant_award": "🌍",
     }
     TYPE_BADGE_COLORS = {
         # Market
@@ -1382,8 +1384,10 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         "annuity_payout":       "#22c55e",
         "annuity_surrender":    "#f59e0b",
         "annuity_maturity":     "#10b981",
-        # Events / Trophies
+        # Events / Trophies / Land Grant
         "trophy_award": "#a78bfa",
+        "trophy_spend": "#f97316",
+        "land_grant_award": "#4ade80",
     }
 
     # Maps filter-chip key → type-prefix tuples matching actual log_transaction() call sites.
@@ -1420,8 +1424,9 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         "inheritance":     ("inheritance",),
         # Annuities
         "annuities":       ("annuity_",),
-        # Events / Trophies
-        "trophies":        ("trophy_award",),
+        # Events / Trophies / Land Grant
+        "trophies":        ("trophy_award", "trophy_spend"),
+        "land_grant":      ("land_grant_award",),
     }
     # Build a flat JSON map of type → category list for JS
     type_to_tabs: Dict[str, List[str]] = {}
