@@ -6856,7 +6856,6 @@
     "category": "components",
     "base_price": 0
   },
-  "fertilizer": {"category": "agriculture", "name": "Fertilizer", "description": "Chemical fertilizer for boosting crop yields."},
   "compost": {"category": "agriculture", "name": "Compost", "description": "Organic compost for soil enrichment."},
   "chemical_solvent": {"category": "industrial", "name": "Chemical Solvent", "description": "Industrial solvent used in manufacturing and tanning."},
   "animal_hide": {"category": "raw_materials", "name": "Animal Hide", "description": "Raw unprocessed animal hides for leather production."},

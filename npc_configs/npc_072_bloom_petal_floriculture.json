@@ -53,7 +53,7 @@
       "max_price_multiplier": 1.05,
       "market": "regular"
     },
-    "fertilizer": {
+    "fertilizer_npk": {
       "target_inventory": 5000,
       "reorder_at": 1000,
       "max_price_multiplier": 1.1,

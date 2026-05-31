@@ -28113,7 +28113,7 @@
     "production_lines": [
       {"inputs": [{"item": "salt", "quantity": 20}, {"item": "energy", "quantity": 1000}, {"item": "water", "quantity": 50}, {"item": "paper", "quantity": 1}], "output_item": "caustic_soda", "output_qty": 10},
       {"inputs": [{"item": "sulfur", "quantity": 10}, {"item": "water", "quantity": 30}, {"item": "energy", "quantity": 500}, {"item": "paper", "quantity": 1}], "output_item": "acid_solution", "output_qty": 15},
-      {"inputs": [{"item": "energy", "quantity": 200}, {"item": "water", "quantity": 20}, {"item": "paper", "quantity": 1}], "output_item": "fertilizer", "output_qty": 20},
+      {"inputs": [{"item": "ammonia", "quantity": 10}, {"item": "phosphoric_acid", "quantity": 8}, {"item": "potash_ore", "quantity": 10}, {"item": "energy", "quantity": 1000}, {"item": "paper", "quantity": 1}], "output_item": "fertilizer_npk", "output_qty": 30},
       {"inputs": [{"item": "energy", "quantity": 100}, {"item": "water", "quantity": 10}, {"item": "paper", "quantity": 1}], "output_item": "compost", "output_qty": 20},
       {"inputs": [{"item": "energy", "quantity": 300}, {"item": "water", "quantity": 15}, {"item": "paper", "quantity": 1}], "output_item": "chemical_solvent", "output_qty": 10}
     ]
