@@ -16,7 +16,7 @@ Cache busting: increment _SKIN_V on each deploy so browsers pick up updated file
 
 import os as _os
 
-_SKIN_V = 3  # ← increment on each deploy to bust browser CSS/JS cache
+_SKIN_V = 4  # ← increment on each deploy to bust browser CSS/JS cache
 
 
 def skin_links(player_id: int = None, module: str = None) -> str:

@@ -240,7 +240,12 @@ input, select {
 }
 
 .ticker {
-  background: var(--bg-ticker);
+  background: rgba(10,5,20,0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(255,255,255,0.10);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  box-shadow: 0 -8px 30px rgba(255,133,179,0.18);
 }
 
 a:hover {
@@ -269,40 +274,55 @@ a:hover {
 /* ── Universal card — glass morphism ─────────────────────────────────────── */
 [data-skin="kawaii"] .card {
   background: rgba(24,14,42,0.82);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-color: var(--border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255,255,255,0.10);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4px 15px rgba(253,181,204,0.18);
 }
 [data-skin="kawaii"] .card:hover {
-  border-color: var(--border-subtle);
-  box-shadow: var(--shadow-glow);
+  border-color: rgba(255,255,255,0.18);
+  box-shadow: 0 8px 28px rgba(253,181,204,0.30);
 }
 
 /* ── Shared shell overrides (stats_ux.py / exec_shell redefine these) ─────── */
 [data-skin="kawaii"] body > .header,
 [data-skin="kawaii"] .container > .header {
   background: var(--bg-header);
-  border-bottom-color: var(--border);
+  border-bottom: 1.5px solid rgba(255,255,255,0.12);
+  box-shadow: 0 4px 20px rgba(253,181,204,0.25);
 }
-[data-skin="kawaii"] .header { background: var(--bg-header); border-bottom-color: var(--border); }
+[data-skin="kawaii"] .header {
+  background: var(--bg-header);
+  border-bottom: 1.5px solid rgba(255,255,255,0.12);
+  box-shadow: 0 4px 20px rgba(253,181,204,0.25);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
 [data-skin="kawaii"] .brand  { color: var(--accent); }
-[data-skin="kawaii"] .balance { color: var(--color-success); }
+[data-skin="kawaii"] .balance {
+  color: var(--color-success);
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--radius-pill);
+  padding: 2px 10px;
+}
 [data-skin="kawaii"] .nav {
   background: var(--bg-header);
-  border-bottom-color: var(--border);
+  border-bottom: 1.5px solid rgba(255,255,255,0.10);
+  box-shadow: 0 4px 20px rgba(253,181,204,0.20);
 }
 [data-skin="kawaii"] .nav a {
-  background: var(--bg-card-2);
+  background: rgba(255,255,255,0.06);
   color: var(--text-secondary);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
 }
 [data-skin="kawaii"] .nav a:hover,
 [data-skin="kawaii"] .nav a.active {
   background: var(--accent);
   color: var(--text-on-accent);
   text-decoration: none;
+  box-shadow: inset 0 2px 4px rgba(255,255,255,0.25), 0 0 12px rgba(244,114,182,0.40);
 }
 [data-skin="kawaii"] .page-title { color: var(--text-bright); }
 [data-skin="kawaii"] .nav-link {
@@ -314,15 +334,25 @@ a:hover {
 
 /* ── Dashboard cards (.dc) ───────────────────────────────────────────────── */
 [data-skin="kawaii"] .dc {
-  background: linear-gradient(135deg, #100826 0%, #180e2a 100%);
+  background: rgba(24,14,42,0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255,255,255,0.10);
   border-radius: var(--radius-lg);
+  box-shadow: 0 4px 15px rgba(253,181,204,0.18);
 }
-[data-skin="kawaii"] .dc-d { color: #6b4a7e; }
+[data-skin="kawaii"] .dc-d { color: #8b6a9e; }
 [data-skin="kawaii"] .dc:hover {
-  box-shadow: 0 10px 36px rgba(0,0,0,0.55), 0 0 28px var(--accent-bg);
+  border-color: rgba(255,255,255,0.20);
+  box-shadow: 0 8px 28px rgba(253,181,204,0.30);
   text-decoration: none;
 }
-[data-skin="kawaii"] .dc-btn { border-radius: var(--radius-md); font-weight: 800; }
+/* Alternate-tinted large hero dashboard cards */
+[data-skin="kawaii"] .dc.dc-hero {
+  background: linear-gradient(135deg, rgba(244,114,182,0.18) 0%, rgba(192,132,252,0.14) 100%);
+  border-color: rgba(244,114,182,0.25);
+}
+[data-skin="kawaii"] .dc-btn { border-radius: var(--radius-pill); font-weight: 800; }
 
 /* ── Executive cards & internals ─────────────────────────────────────────── */
 [data-skin="kawaii"] .card-special {
@@ -988,3 +1018,175 @@ a:hover {
 [data-skin="kawaii"] .patch-note-msg { background: var(--bg-card); border-color: var(--border); border-radius: var(--radius-sm); }
 [data-skin="kawaii"] .patch-note-icon { color: var(--accent); }
 [data-skin="kawaii"] .mention-trigger-badge { background: var(--accent-bg); color: var(--accent); border-radius: var(--radius-pill); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GACHA PRINCESS REFERENCE — ANIMATIONS & MICRO-INTERACTIONS
+   Ported from the Gacha Princess sample: floating, shimmer, bubbly press,
+   pink-glow glass cards, inset active states, event banner accent block.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Tap highlight removal ───────────────────────────────────────────────── */
+[data-skin="kawaii"] * { -webkit-tap-highlight-color: transparent; }
+
+/* ── Bubbly press — all interactive elements ─────────────────────────────── */
+[data-skin="kawaii"] button:active,
+[data-skin="kawaii"] .btn:active,
+[data-skin="kawaii"] .btn-sm:active,
+[data-skin="kawaii"] .btn-blue:active,
+[data-skin="kawaii"] .btn-green:active,
+[data-skin="kawaii"] .btn-red:active,
+[data-skin="kawaii"] .btn-primary:active,
+[data-skin="kawaii"] .btn-secondary:active,
+[data-skin="kawaii"] .btn-danger:active,
+[data-skin="kawaii"] .btn-buy:active,
+[data-skin="kawaii"] .btn-sell:active,
+[data-skin="kawaii"] .dc:active,
+[data-skin="kawaii"] .nav a:active,
+[data-skin="kawaii"] .biz-filter-btn:active,
+[data-skin="kawaii"] .tab-btn:active,
+[data-skin="kawaii"] .fcc-btn:active,
+[data-skin="kawaii"] .inv-list-toggle:active {
+  transform: scale(0.95);
+  transition: transform 0.1s ease;
+}
+[data-skin="kawaii"] button,
+[data-skin="kawaii"] .btn,
+[data-skin="kawaii"] .dc {
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+/* ── Floating animation (hero icons, level badge, avatar ring) ───────────── */
+@keyframes _kw-float {
+  0%, 100% { transform: translateY(0);    }
+  50%       { transform: translateY(-6px); }
+}
+[data-skin="kawaii"] .level-badge,
+[data-skin="kawaii"] .player-avatar-hero,
+[data-skin="kawaii"] .hero-icon,
+[data-skin="kawaii"] .floating {
+  animation: _kw-float 4s ease-in-out infinite;
+}
+
+/* ── Shimmer on ALL progress / XP / value bars (matches sample 3s speed) ─── */
+@keyframes _kw-shimmer-ltr {
+  0%   { left: -100%; }
+  100% { left:  100%; }
+}
+[data-skin="kawaii"] .progress-bar-fill,
+[data-skin="kawaii"] .inv-value-bar > div,
+[data-skin="kawaii"] .mining-bar-fill,
+[data-skin="kawaii"] .supply-bar-fill,
+[data-skin="kawaii"] .vote-bar-yes,
+[data-skin="kawaii"] .vote-bar-no {
+  position: relative;
+  overflow: hidden;
+}
+[data-skin="kawaii"] .progress-bar-fill::after,
+[data-skin="kawaii"] .inv-value-bar > div::after,
+[data-skin="kawaii"] .mining-bar-fill::after,
+[data-skin="kawaii"] .supply-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.40), transparent);
+  animation: _kw-shimmer-ltr 3s infinite;
+}
+
+/* ── Glass card: remaining card variants get the same white-tinted border ─── */
+[data-skin="kawaii"] .inv-card {
+  background: rgba(24,14,42,0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255,255,255,0.10);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(253,181,204,0.14);
+}
+[data-skin="kawaii"] .inv-card:hover {
+  border-color: rgba(255,255,255,0.18);
+  box-shadow: 0 6px 20px rgba(253,181,204,0.24);
+}
+[data-skin="kawaii"] .biz-card {
+  background: rgba(24,14,42,0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255,255,255,0.09);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(253,181,204,0.14);
+}
+[data-skin="kawaii"] .meme-card,
+[data-skin="kawaii"] .wsc-card,
+[data-skin="kawaii"] .wallet-card {
+  border: 1.5px solid rgba(255,255,255,0.10);
+  box-shadow: 0 4px 16px rgba(253,181,204,0.16);
+}
+[data-skin="kawaii"] .bank-card {
+  border: 1.5px solid rgba(255,255,255,0.09);
+  box-shadow: 0 4px 14px rgba(253,181,204,0.14);
+}
+[data-skin="kawaii"] .poll-card,
+[data-skin="kawaii"] .proposal-card,
+[data-skin="kawaii"] .heir-slot {
+  background: rgba(24,14,42,0.80);
+  border: 1.5px solid rgba(255,255,255,0.09);
+}
+[data-skin="kawaii"] .modal {
+  border: 1.5px solid rgba(255,255,255,0.12);
+  box-shadow: 0 8px 30px rgba(253,181,204,0.30);
+}
+
+/* ── Event / notification banner (left accent block + glass body) ────────── */
+[data-skin="kawaii"] .event-card,
+[data-skin="kawaii"] .notif-card,
+[data-skin="kawaii"] .alert-event {
+  display: flex;
+  overflow: hidden;
+  background: rgba(24,14,42,0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255,255,255,0.10);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 16px rgba(253,181,204,0.20);
+}
+[data-skin="kawaii"] .event-card-accent,
+[data-skin="kawaii"] .notif-icon-block {
+  background: linear-gradient(180deg, rgba(244,114,182,0.40) 0%, rgba(192,132,252,0.30) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  min-width: 56px;
+}
+[data-skin="kawaii"] .event-tag,
+[data-skin="kawaii"] .notif-tag {
+  background: rgba(244,114,182,0.18);
+  color: var(--accent);
+  border-radius: var(--radius-pill);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 1px 8px;
+}
+
+/* ── Currency / balance pill (rounded-full white-tint) ───────────────────── */
+[data-skin="kawaii"] .currency-pill,
+[data-skin="kawaii"] .stat-pill,
+[data-skin="kawaii"] .balance-pill {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: var(--radius-pill);
+  padding: 3px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Bottom ticker: override the component-level rule too ────────────────── */
+[data-skin="kawaii"] .ticker {
+  background: rgba(10,5,20,0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(255,255,255,0.10);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  box-shadow: 0 -8px 30px rgba(255,133,179,0.18);
+}
