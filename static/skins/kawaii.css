@@ -240,12 +240,7 @@ input, select {
 }
 
 .ticker {
-  background: rgba(10,5,20,0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-top: 1px solid rgba(255,255,255,0.10);
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
-  box-shadow: 0 -8px 30px rgba(255,133,179,0.18);
+  background: var(--bg-ticker);
 }
 
 a:hover {
@@ -432,11 +427,6 @@ a:hover {
 [data-skin="kawaii"] .biz-filter-btn.active { border-color: var(--accent); color: var(--accent); }
 [data-skin="kawaii"] .biz-sort-btn        { color: var(--text-muted); }
 [data-skin="kawaii"] .biz-sort-btn.active { color: var(--accent); }
-[data-skin="kawaii"] .biz-card {
-  background: var(--bg-card);
-  border-color: var(--border);
-  border-radius: var(--radius-md);
-}
 [data-skin="kawaii"] .biz-card-header,
 [data-skin="kawaii"] .biz-card-body { border-color: var(--border); }
 [data-skin="kawaii"] .btn-sm { border-radius: var(--radius-sm); font-weight: 700; }
@@ -451,15 +441,6 @@ a:hover {
 [data-skin="kawaii"] .progress-bar-fill {
   background: linear-gradient(to right, var(--accent), var(--accent-2));
   border-radius: var(--radius-sm);
-  position: relative;
-  overflow: hidden;
-}
-[data-skin="kawaii"] .progress-bar-fill::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.35) 50%, transparent 100%);
-  animation: _kw-shimmer 2.2s ease-in-out infinite;
 }
 [data-skin="kawaii"] .line-row {
   background: var(--bg-page);
@@ -507,17 +488,6 @@ a:hover {
   border-radius: var(--radius-sm);
 }
 [data-skin="kawaii"] .inv-quick-btn:hover { background: var(--bg-card-2); border-color: var(--accent-2); }
-[data-skin="kawaii"] .inv-card {
-  background: rgba(24,14,42,0.82);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  border-color: var(--border);
-  border-radius: var(--radius-md);
-}
-[data-skin="kawaii"] .inv-card:hover {
-  border-color: var(--border-subtle);
-  box-shadow: 0 4px 18px rgba(244,114,182,0.14);
-}
 [data-skin="kawaii"] .inv-qty-badge     { color: var(--accent); }
 [data-skin="kawaii"] .inv-card-name     { color: var(--text-bright); }
 [data-skin="kawaii"] .inv-card-desc     { color: var(--text-secondary); }
@@ -609,11 +579,7 @@ a:hover {
   position: absolute;
   inset: 0;
   background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
-  animation: _kw-shimmer 2.2s ease-in-out infinite;
-}
-@keyframes _kw-shimmer {
-  0%   { transform: translateX(-200%); }
-  100% { transform: translateX(200%); }
+  animation: _kw-shimmer-ltr 3s infinite;
 }
 
 /* ── Admin/Mod shells (.admin-*, filter buttons, table rows) ─────────────── */
@@ -853,7 +819,6 @@ a:hover {
 [data-skin="kawaii"] .pool-val      { color: var(--accent); }
 
 /* ── Counties / crypto exchanges / governance ────────────────────────────── */
-[data-skin="kawaii"] .token-hero    { border-radius: var(--radius-lg); }
 [data-skin="kawaii"] .exchange-panel {
   background: var(--bg-card);
   border-color: var(--accent);
@@ -872,10 +837,8 @@ a:hover {
   border-color: var(--accent-2);
   border-radius: var(--radius-md);
 }
-[data-skin="kawaii"] .holder-rank { background: var(--accent-2-bg); color: var(--accent-2); }
 [data-skin="kawaii"] .supply-bar  { background: var(--bg-card-2); border-radius: var(--radius-sm); }
 [data-skin="kawaii"] .supply-bar-fill { background: linear-gradient(to right, var(--accent-2), var(--accent)); border-radius: var(--radius-sm); }
-[data-skin="kawaii"] .wallet-balance { color: var(--accent-2); }
 [data-skin="kawaii"] .cycle-stat  { background: var(--bg-card); border-radius: var(--radius-sm); }
 [data-skin="kawaii"] .cycle-stat-label { color: var(--text-muted); }
 [data-skin="kawaii"] .cycle-stat-value { color: var(--color-warning); }

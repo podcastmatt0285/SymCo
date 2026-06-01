@@ -25,6 +25,7 @@ from sqlalchemy.orm import sessionmaker, Session
 # DATABASE SETUP
 # ==========================
 from database import engine, SessionLocal
+from skin_utils import skin_links as _skin_links
 Base = declarative_base()
 
 # ==========================
@@ -625,7 +626,8 @@ def login_page(session_token: Optional[str] = Cookie(None)):
     if player:
         return RedirectResponse(url="/", status_code=303)
     
-    return """
+    _skin_tags = _skin_links(None)
+    return ("""
 <!DOCTYPE html>
 <html>
 <head>
@@ -638,8 +640,7 @@ def login_page(session_token: Optional[str] = Cookie(None)):
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Wadsworth">
     <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
-        <link rel="stylesheet" href="/static/skins/wadsworth-base.css?v=1">
-        <link rel="stylesheet" href="/static/skins/default.css?v=1">
+        """ + _skin_tags + """
     <style>
         * {
             margin: 0;
@@ -1149,7 +1150,7 @@ def login_page(session_token: Optional[str] = Cookie(None)):
     </script>
 </body>
 </html>
-"""
+""")
 
 @router.post("/api/login")
 async def login(
