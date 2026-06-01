@@ -608,6 +608,10 @@ async def tick(current_tick: int, now: datetime, bank_entity):
         collect_expense_ratio()
         last_expense_tick = current_tick
 
+    # Maintain standing buy order so players can always sell shares
+    from banks import maintain_etf_share_bid
+    maintain_etf_share_bid(BANK_ID, BANK_PLAYER_ID, SHARE_ITEM_TYPE, bank_entity, current_tick)
+
     # Hourly stats
     if current_tick % 3600 == 0:
         try:

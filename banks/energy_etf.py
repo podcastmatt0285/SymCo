@@ -1112,7 +1112,11 @@ async def tick(current_tick: int, now: datetime, bank_entity):
         
         check_and_execute_split(current_tick)
         check_and_execute_buyback(current_tick)
-    
+
+        # Maintain standing buy order so players can always sell shares
+        from banks import maintain_etf_share_bid
+        maintain_etf_share_bid(BANK_ID, BANK_PLAYER_ID, SHARE_ITEM_TYPE, bank_entity, current_tick)
+
     if current_tick % 3600 == 0:
         retire_bought_shares()
     

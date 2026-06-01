@@ -441,6 +441,11 @@ async def tick(current_tick: int, now: datetime, bank_entity=None):
             _sell_land_holdings()
             last_land_sell_tick = current_tick
 
+        # Maintain standing buy order so players can always sell shares
+        if bank_entity:
+            from banks import maintain_etf_share_bid
+            maintain_etf_share_bid(BANK_ID, BANK_PLAYER_ID, SHARE_ITEM_TYPE, bank_entity, current_tick)
+
     except Exception as e:
         print(f"[{BANK_NAME}] Tick error: {e}")
 

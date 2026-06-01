@@ -5838,6 +5838,44 @@ contribute cash. Your contribution is non-refundable; the reward applies to all
 players equally once the project completes."""),
         ],
     },
+    {
+        "slug": "etf-funds",
+        "title": "ETF & Index Funds",
+        "icon": "🏦",
+        "keywords": [
+            "etf", "exchange traded fund", "fund", "shares", "index fund",
+            "apple seeds etf", "energy etf", "city nav etf", "land bank", "wbc50 fund",
+            "buy etf", "sell etf", "etf shares", "trading floor", "brokerage",
+        ],
+        "summary": "ETFs and index funds let you invest in baskets of assets with a single share purchase.",
+        "sections": [
+            ("What Is an ETF?", """An Exchange-Traded Fund (ETF) is a fund whose shares trade on the open market
+just like any other item. Each ETF holds an underlying basket of assets.
+The share price tracks the fund's Net Asset Value (NAV = cash reserves + asset value)
+divided by total shares issued."""),
+            ("Available Funds", """Apple Seeds ETF: holds apple_seeds commodity.
+Energy ETF: holds energy commodity.
+City NAV ETF: holds city land plots.
+Land Bank: provides land mortgage financing.
+WBC-50 Index Fund: holds equity in all 50 WBC-50 constituents."""),
+            ("How to Buy", """1. Go to Brokerage -> ETF Trading Floor.
+2. Select a fund from the left sidebar.
+3. Switch to the Buy tab, enter quantity and limit price, click Buy.
+4. Your limit order sits in the order book until a seller matches."""),
+            ("How to Sell", """1. Go to Brokerage -> ETF Trading Floor.
+2. Select the fund whose shares you hold.
+3. Switch to the Sell tab, enter quantity and limit price, click Sell.
+4. Each ETF bank maintains a standing buy order at ~92% of share price, giving
+   you a guaranteed exit at a slight discount. Open orders appear under
+   Open Orders on the right panel. Click X to cancel an order."""),
+            ("NAV vs Market Price", """NAV/share = (cash + assets) / total shares. A premium means market price is
+above NAV. A discount means below NAV. The bank's standing bid at 92% of share
+price prevents extreme discounts."""),
+            ("Fees & Taxes", """Holder fee: annual fee deducted from NAV. Federal sales tax: 2.02% on every
+trade (charged to buyer). City sales tax: variable rate on seller proceeds.
+Solvency levy: charged to shareholders if the fund becomes insolvent."""),
+        ],
+    },
 ]
 
 # Build a flat keyword index for search

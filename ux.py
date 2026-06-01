@@ -9224,11 +9224,23 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
             nav_fmt = _abbr(sel_nav, disp)
             your_val_fmt = fmt_usd(sel_your_shares * sel_price, disp)
 
+            # Success / error banner
+            _etf_alert = ""
+            if success == "etf_order_placed":
+                _etf_alert = '<div style="background:#14532d;color:#86efac;padding:8px 12px;border-radius:4px;margin-bottom:10px;font-size:0.8rem;">✓ Limit order placed — it will fill when a counterparty matches your price. Check Open Orders below.</div>'
+            elif error == "etf_order_failed":
+                _etf_alert = '<div style="background:#7f1d1d;color:#fca5a5;padding:8px 12px;border-radius:4px;margin-bottom:10px;font-size:0.8rem;">✗ Order rejected — check you have sufficient shares/funds and the quantity is greater than zero.</div>'
+            elif success:
+                _etf_alert = f'<div style="background:#14532d;color:#86efac;padding:8px 12px;border-radius:4px;margin-bottom:10px;font-size:0.8rem;">✓ {html_escape(success)}</div>'
+            elif error:
+                _etf_alert = f'<div style="background:#7f1d1d;color:#fca5a5;padding:8px 12px;border-radius:4px;margin-bottom:10px;font-size:0.8rem;">✗ {html_escape(error)}</div>'
+
             etf_body = td_css + etf_tab_css + f'''
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
                 <a href="/banks/brokerage-firm" style="color:#38bdf8;font-size:0.8rem;">&larr; Brokerage Firm</a>
                 <span style="font-size:0.85rem;color:#94a3b8;font-weight:600;">ETF Trading Floor</span>
             </div>
+            {_etf_alert}
             <!-- Mode tabs -->
             <div style="display:flex;gap:8px;margin-bottom:12px;">
                 <a href="/brokerage/trading"
@@ -15342,7 +15354,7 @@ async def brokerage_etf_order(
     disp = get_player_display_currency(player.id)
     import market
     price_usd = price * disp["usd_per_unit"]
-    market.create_order(
+    order = market.create_order(
         player.id,
         market.OrderType.BUY if order_type == "buy" else market.OrderType.SELL,
         market.OrderMode.LIMIT,
@@ -15353,7 +15365,8 @@ async def brokerage_etf_order(
     from market_ws import push_market_snapshot_now
     asyncio.create_task(push_market_snapshot_now())
     fund_param = f"&fund={fund}" if fund else ""
-    return RedirectResponse(url=f"/brokerage/trading?mode=etf{fund_param}", status_code=303)
+    result_param = "etf_order_placed" if order else "etf_order_failed"
+    return RedirectResponse(url=f"/brokerage/trading?mode=etf{fund_param}&success={result_param}" if order else f"/brokerage/trading?mode=etf{fund_param}&error={result_param}", status_code=303)
 
 
 @router.post("/api/brokerage/cancel-etf-order")

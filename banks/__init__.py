@@ -486,6 +486,83 @@ def log_banking_stats():
 
 
 # ==========================
+# ETF SHARE LIQUIDITY
+# ==========================
+
+_etf_bid_last_tick: dict = {}  # bank_id -> last tick when bid was placed
+
+def maintain_etf_share_bid(
+    bank_id: str,
+    bank_player_id: int,
+    share_item: str,
+    bank_entity,
+    current_tick: int,
+    interval: int = 360,
+    bid_pct: float = 0.92,
+    qty_pct: float = 0.005,
+    reserve_pct: float = 0.03,
+) -> None:
+    """Post a standing buy order for ETF/fund shares to provide sell-side liquidity.
+
+    Runs every *interval* ticks. Cancels the previous bid and places a new one at
+    *bid_pct* × current share price. The bid quantity is limited to *qty_pct* of
+    total_shares_issued and by *reserve_pct* of cash_reserves (so the bank never
+    over-commits its cash on share buybacks).
+    """
+    global _etf_bid_last_tick
+    last = _etf_bid_last_tick.get(bank_id, 0)
+    if current_tick - last < interval:
+        return
+    _etf_bid_last_tick[bank_id] = current_tick
+
+    try:
+        import market as _mkt
+        share_price = bank_entity.share_price or 0
+        if share_price <= 0:
+            return
+
+        mdb = _mkt.get_db()
+        try:
+            # Cancel existing standing bids from this bank
+            old_bids = mdb.query(_mkt.MarketOrder).filter(
+                _mkt.MarketOrder.player_id == bank_player_id,
+                _mkt.MarketOrder.item_type == share_item,
+                _mkt.MarketOrder.order_type == _mkt.OrderType.BUY.value,
+                _mkt.MarketOrder.status.in_([
+                    _mkt.OrderStatus.ACTIVE.value,
+                    _mkt.OrderStatus.PARTIALLY_FILLED.value,
+                ]),
+            ).all()
+            for bid in old_bids:
+                bid.status = _mkt.OrderStatus.CANCELLED.value
+            mdb.commit()
+        finally:
+            mdb.close()
+
+        bid_price = share_price * bid_pct
+        total_shares = bank_entity.total_shares_issued or 0
+        cash = bank_entity.cash_reserves or 0
+        if cash <= 0 or bid_price <= 0:
+            return
+
+        max_by_qty = total_shares * qty_pct
+        max_by_cash = (cash * reserve_pct) / bid_price
+        qty = max(1.0, min(max_by_qty, max_by_cash))
+
+        _mkt.create_order(
+            player_id=bank_player_id,
+            order_type=_mkt.OrderType.BUY,
+            order_mode=_mkt.OrderMode.LIMIT,
+            item_type=share_item,
+            quantity=qty,
+            price=bid_price,
+        )
+        print(f"[Banks/{bank_id}] Standing bid: {qty:,.0f} {share_item} @ ${bid_price:.6f}")
+    except Exception as e:
+        print(f"[Banks/{bank_id}] Standing bid error: {e}")
+
+
+# ==========================
 # PUBLIC API
 # ==========================
 
@@ -497,6 +574,7 @@ __all__ = [
     'update_bank_assets',
     'calculate_bank_value',
     'update_share_price',
+    'maintain_etf_share_bid',
     'BankEntity',
     'BankShareholding',
     'BankTransaction',

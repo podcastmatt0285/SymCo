@@ -182,7 +182,9 @@ def create_order(
         print(f"[Market] Shutdown check error: {_e}")
 
     # 2. Cash Validation: Prevent buy orders if player is broke
-    if order_type == OrderType.BUY:
+    # Only applies to real players (player_id > 0). Banks, NPCs, and city entities
+    # manage their own reserves and are trusted to have sufficient funds.
+    if order_type == OrderType.BUY and player_id > 0:
         from auth import Player
         from reserve_banks import can_afford_usd
         player = db.query(Player).filter(Player.id == player_id).first()
@@ -372,6 +374,12 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
         is_bank_ipo = True  # Reuse the IPO logic (money goes to bank reserves)
         bank_id = f"city_bank_{-sell_order.player_id - 1000}"  # Extract city_id
 
+    # ETF / Land Bank buy detection (buybacks — bank buying its own shares back from players)
+    # IDs: -2 = land_bank, -3 = apple_seeds_etf, -4 = energy_etf, -6 = city_nav_etf, -7 = wbc50_index_fund
+    elif buy_order.player_id in (-2, -3, -4, -6, -7):
+        is_bank_buyer = True
+        bank_buyer_city_id = None  # signals ETF/land bank (not city bank)
+
     # City Bank buy detection (bank acquiring currency from market)
     elif -1999 <= buy_order.player_id <= -1001:
         is_bank_buyer = True
@@ -476,34 +484,75 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
             return
 
     elif is_bank_buyer:
-        # City bank is buying currency from market: pay seller from bank reserves
-        try:
-            from cities import CityBank
-            from auth import Player
-            city_bank = db.query(CityBank).filter(CityBank.city_id == bank_buyer_city_id).first()
-            seller_player = db.query(Player).filter(Player.id == sell_order.player_id).first()
-            if not city_bank or not seller_player:
-                print(f"[Market] City bank buy error: bank or seller not found")
-                db.rollback()
-                return
-            if city_bank.cash_reserves < total_cost:
-                print(f"[Market] City bank {bank_buyer_city_id} has insufficient reserves (need ${total_cost:.2f}, have ${city_bank.cash_reserves:.2f})")
-                db.rollback()
-                return
-            city_bank.cash_reserves -= total_cost
+        if bank_buyer_city_id is None:
+            # ETF / Land Bank buyback: pay seller from bank cash reserves (BankEntity)
             try:
-                from reserve_banks import convert_to_legal_tender
-                convert_to_legal_tender(seller_player.id, total_cost)
-            except Exception:
-                from reserve_banks import credit_usd
-                credit_usd(seller_player.id, total_cost)
-            print(f"[Market] CITY BANK BUY: Bank {bank_buyer_city_id} bought {quantity:.2f} {buy_order.item_type} from Player {sell_order.player_id} @ ${price:.2f}")
-        except Exception as e:
-            print(f"[Market] City bank buy error: {e}")
-            import traceback
-            traceback.print_exc()
-            db.rollback()
-            return
+                import banks as _banks_mod
+                from auth import Player
+                _etf_bank_map = {
+                    -2: "land_bank",
+                    -3: "apple_seeds_etf",
+                    -4: "energy_etf",
+                    -6: "city_nav_etf",
+                    -7: "wbc50_index_fund",
+                }
+                _etf_bank_id = _etf_bank_map.get(buy_order.player_id)
+                if not _etf_bank_id:
+                    print(f"[Market] ETF bank buy error: unknown buyer id {buy_order.player_id}")
+                    db.rollback()
+                    return
+                ok = _banks_mod.add_bank_expense(
+                    _etf_bank_id, total_cost,
+                    f"Buyback: {quantity:.4f} {buy_order.item_type} @ ${price:.6f}"
+                )
+                if not ok:
+                    print(f"[Market] ETF bank {_etf_bank_id} has insufficient cash reserves for buyback (need ${total_cost:.2f})")
+                    db.rollback()
+                    return
+                seller_player = db.query(Player).filter(Player.id == sell_order.player_id).first()
+                if seller_player:
+                    try:
+                        from reserve_banks import convert_to_legal_tender
+                        convert_to_legal_tender(seller_player.id, total_cost)
+                    except Exception:
+                        from reserve_banks import credit_usd
+                        credit_usd(seller_player.id, total_cost)
+                print(f"[Market] ETF BUYBACK: {_etf_bank_id} bought {quantity:.4f} {buy_order.item_type} from Player {sell_order.player_id} @ ${price:.6f} (${total_cost:.2f} from reserves)")
+            except Exception as e:
+                print(f"[Market] ETF bank buy error: {e}")
+                import traceback
+                traceback.print_exc()
+                db.rollback()
+                return
+        else:
+            # City bank is buying currency from market: pay seller from bank reserves
+            try:
+                from cities import CityBank
+                from auth import Player
+                city_bank = db.query(CityBank).filter(CityBank.city_id == bank_buyer_city_id).first()
+                seller_player = db.query(Player).filter(Player.id == sell_order.player_id).first()
+                if not city_bank or not seller_player:
+                    print(f"[Market] City bank buy error: bank or seller not found")
+                    db.rollback()
+                    return
+                if city_bank.cash_reserves < total_cost:
+                    print(f"[Market] City bank {bank_buyer_city_id} has insufficient reserves (need ${total_cost:.2f}, have ${city_bank.cash_reserves:.2f})")
+                    db.rollback()
+                    return
+                city_bank.cash_reserves -= total_cost
+                try:
+                    from reserve_banks import convert_to_legal_tender
+                    convert_to_legal_tender(seller_player.id, total_cost)
+                except Exception:
+                    from reserve_banks import credit_usd
+                    credit_usd(seller_player.id, total_cost)
+                print(f"[Market] CITY BANK BUY: Bank {bank_buyer_city_id} bought {quantity:.2f} {buy_order.item_type} from Player {sell_order.player_id} @ ${price:.2f}")
+            except Exception as e:
+                print(f"[Market] City bank buy error: {e}")
+                import traceback
+                traceback.print_exc()
+                db.rollback()
+                return
 
     else:
         # Regular player-to-player trade: invoke petrodollar hook, then transfer cash
