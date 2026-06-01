@@ -367,7 +367,7 @@ def exec_shell(title: str, body: str, player=None) -> str:
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Wadsworth — {title}</title>
-        {_skin_links(player_id, "executive")}
+        {_skin_links(player.id if player else None, "executive")}
     {EXEC_STYLES}
     {FILTER_JS}
 </head><body>

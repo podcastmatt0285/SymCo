@@ -29,15 +29,21 @@ def skin_links(player_id: int = None, module: str = None) -> str:
     """
     skin = "default"
     if player_id:
+        db = None
         try:
             from auth import get_db, Player as _Player
             db = get_db()
             p = db.query(_Player).filter(_Player.id == player_id).first()
             if p and getattr(p, "skin", None):
                 skin = p.skin
-            db.close()
         except Exception:
             pass
+        finally:
+            if db is not None:
+                try:
+                    db.close()
+                except Exception:
+                    pass
 
     v = _SKIN_V
     tags = (

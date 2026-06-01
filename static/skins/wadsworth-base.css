@@ -198,9 +198,9 @@ input:focus, select:focus {
     color: var(--text-bright);
 }
 .ticker-btn.active {
-    background: #1d4ed8;
-    border-color: #3b82f6;
-    color: var(--text-bright);
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: var(--text-on-accent);
 }
 #tkViewport {
     overflow: hidden;

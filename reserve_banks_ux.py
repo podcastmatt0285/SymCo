@@ -386,7 +386,7 @@ def bond_market(
     <h2>Available Reserve Banks</h2>
     {bank_cards}
     """
-    return _page("Bond Market", body)
+    return _page("Bond Market", body, player.id)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -614,7 +614,7 @@ def forex_dashboard(
     {ib_html}
     {fx_trades_html}
     """
-    return _page("Forex Market", body)
+    return _page("Forex Market", body, player.id)
 
 
 # ──────────────────────────────────────────────────────────────────────────────

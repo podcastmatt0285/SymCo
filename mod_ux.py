@@ -195,7 +195,7 @@ async def mod_overview(session_token: str = Cookie(None)):
   </table>
 </div>
 """
-    return HTMLResponse(mod_shell("Overview", body, mod.business_name, "/mod"))
+    return HTMLResponse(mod_shell("Overview", body, mod.business_name, "/mod", player_id=mod.id))
 
 
 # ==========================
@@ -266,7 +266,7 @@ async def mod_players(
 </div>
 {detail_html}
 """
-    return HTMLResponse(mod_shell("Players", body, mod.business_name, "/mod/players"))
+    return HTMLResponse(mod_shell("Players", body, mod.business_name, "/mod/players", player_id=mod.id))
 
 
 def _build_player_detail(player_id: int, mod_id: int) -> str:
@@ -429,7 +429,7 @@ async def mod_mutes(
   </form>
 </div>
 """
-    return HTMLResponse(mod_shell("Mutes", body, mod.business_name, "/mod/mutes"))
+    return HTMLResponse(mod_shell("Mutes", body, mod.business_name, "/mod/mutes", player_id=mod.id))
 
 
 # ==========================
@@ -466,7 +466,7 @@ async def mod_log(session_token: str = Cookie(None)):
   </table>
 </div>
 """
-    return HTMLResponse(mod_shell("Action Log", body, mod.business_name, "/mod/log"))
+    return HTMLResponse(mod_shell("Action Log", body, mod.business_name, "/mod/log", player_id=mod.id))
 
 
 # ==========================

@@ -2782,16 +2782,11 @@ def _widgets_tab(player) -> str:
 """
 
 
-def _skins_tab(player) -> str:
+def _scan_skins() -> list:
+    """Return list of (key, name, description, tier) for every skin CSS file."""
     import glob, re
-    from skin_utils import is_pro as _is_pro
-
-    is_pro_user = _is_pro(player)
-    current_skin = getattr(player, "skin", "default") or "default"
-
-    skin_files = sorted(glob.glob("static/skins/*.css"))
     skins = []
-    for path in skin_files:
+    for path in sorted(glob.glob("static/skins/*.css")):
         fname = os.path.basename(path)
         if fname == "wadsworth-base.css":
             continue
@@ -2805,15 +2800,28 @@ def _skins_tab(player) -> str:
             m = re.search(r"Wadsworth Skin:\s*(.+)", header)
             if m:
                 name = m.group(1).strip()
-            m = re.search(r"Description:\s*(.+?)(?:\n|\*)", header, re.DOTALL)
+            # Capture description up to the next metadata field (e.g. "* Author:"),
+            # joining continuation lines (lines that start with " * ").
+            m = re.search(r"Description:\s*(.*?)(?=\n\s*\*\s*\w+:|$)", header, re.DOTALL)
             if m:
-                description = re.sub(r"\s+", " ", m.group(1)).strip().rstrip("*").strip()
+                raw = m.group(1)
+                description = re.sub(r"\n\s*\*\s*", " ", raw).strip()
             m = re.search(r"Tier:\s*(\w+)", header)
             if m:
                 tier = m.group(1).strip().lower()
         except Exception:
             pass
         skins.append((key, name, description, tier))
+    return skins
+
+
+def _skins_tab(player) -> str:
+    from skin_utils import is_pro as _is_pro
+
+    is_pro_user = _is_pro(player)
+    current_skin = getattr(player, "skin", "default") or "default"
+
+    skins = _scan_skins()
 
     cards = ""
     for key, name, description, tier in skins:
@@ -2962,41 +2970,32 @@ def api_save_skin(
     session_token: Optional[str] = Cookie(None),
     skin: str = Form(...),
 ):
-    import auth as _auth, glob, re
+    import auth as _auth
     from skin_utils import is_pro as _is_pro
     player = _require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return JSONResponse({"ok": False, "error": "Not authenticated"}, status_code=403)
-    valid = {}
-    for path in glob.glob("static/skins/*.css"):
-        fname = os.path.basename(path)
-        if fname == "wadsworth-base.css":
-            continue
-        key = fname[:-4]
-        tier = "free"
-        try:
-            with open(path, encoding="utf-8") as f:
-                header = f.read(500)
-            m = re.search(r"Tier:\s*(\w+)", header)
-            if m:
-                tier = m.group(1).strip().lower()
-        except Exception:
-            pass
-        valid[key] = tier
+    valid = {key: tier for key, _name, _desc, tier in _scan_skins()}
     if skin not in valid:
         return JSONResponse({"ok": False, "error": "Unknown skin"})
     if valid[skin] == "pro" and not _is_pro(player):
         return JSONResponse({"ok": False, "error": "Pro subscription required"})
+    db = None
     try:
         db = _auth.get_db()
         p = db.query(_auth.Player).filter(_auth.Player.id == player.id).first()
         if p:
             p.skin = skin
             db.commit()
-        db.close()
         return JSONResponse({"ok": True})
     except Exception as e:
         return JSONResponse({"ok": False, "error": str(e)})
+    finally:
+        if db is not None:
+            try:
+                db.close()
+            except Exception:
+                pass
 
 
 @router.get("/settings", response_class=HTMLResponse)

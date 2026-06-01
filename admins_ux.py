@@ -609,7 +609,7 @@ def admin_dashboard(
         {f'<div class="table-wrap"><table><tr><th>Time</th><th>Action</th><th>Target</th><th>Details</th></tr>{log_rows}</table></div>' if log_rows else '<p style="color:#64748b;font-size:0.75rem;">No actions yet.</p>'}
     </div>
     """
-    return HTMLResponse(admin_shell("Dashboard", body, player.business_name, "/admin"))
+    return HTMLResponse(admin_shell("Dashboard", body, player.business_name, "/admin", player_id=player.id))
 
 
 # ==========================
@@ -651,7 +651,7 @@ def admin_players(session_token: Optional[str] = Cookie(None), msg: Optional[str
         <table><tr><th>ID</th><th>Name</th><th>Cash</th><th>Last Login</th></tr>{rows}</table>
     </div></div>
     """
-    return HTMLResponse(admin_shell("Players", body, player.business_name, "/admin/players"))
+    return HTMLResponse(admin_shell("Players", body, player.business_name, "/admin/players", player_id=player.id))
 
 
 # ==========================
@@ -675,7 +675,7 @@ def admin_player_detail(
 
     detail = get_player_detail(pid)
     if not detail:
-        return HTMLResponse(admin_shell("Not Found", '<p style="color:#ef4444;">Player not found.</p>', admin.business_name, "/admin/players"))
+        return HTMLResponse(admin_shell("Not Found", '<p style="color:#ef4444;">Player not found.</p>', admin.business_name, "/admin/players", player_id=admin.id))
 
     flash = _flash(msg=msg, err=err)
 
@@ -738,7 +738,7 @@ def admin_player_detail(
     <div class="tabs">{tabs_html}</div>
     {tab_body}
     """
-    return HTMLResponse(admin_shell(f"Player #{pid}", body, admin.business_name, "/admin/players"))
+    return HTMLResponse(admin_shell(f"Player #{pid}", body, admin.business_name, "/admin/players", player_id=admin.id))
 
 
 def _player_push_panel(pid):
@@ -1840,7 +1840,7 @@ def admin_cities(session_token: Optional[str] = Cookie(None), msg: Optional[str]
         {f'<div class="table-wrap"><table><tr><th>ID</th><th>Name</th><th>Token</th><th>Cities</th><th>Supply</th><th>Action</th></tr>{county_rows}</table></div>' if county_rows else '<p style="color:#64748b;font-size:0.75rem;">No counties yet.</p>'}
     </div>
     """
-    return HTMLResponse(admin_shell("Cities & Counties", body, admin.business_name, "/admin/cities"))
+    return HTMLResponse(admin_shell("Cities & Counties", body, admin.business_name, "/admin/cities", player_id=admin.id))
 
 
 @router.post("/admin/cities/create")
@@ -1929,7 +1929,7 @@ def admin_city_detail(city_id: int, session_token: Optional[str] = Cookie(None),
             city = city_db.query(City).filter(City.id == city_id).first()
             if not city:
                 return HTMLResponse(admin_shell("Not Found",
-                    '<p style="color:#ef4444;">City not found.</p>', admin.business_name, "/admin/cities"))
+                    '<p style="color:#ef4444;">City not found.</p>', admin.business_name, "/admin/cities", player_id=admin.id))
             members = city_db.query(CityMember).filter(CityMember.city_id == city_id).all()
             member_ids = [m.player_id for m in members]
         finally:
@@ -1955,7 +1955,7 @@ def admin_city_detail(city_id: int, session_token: Optional[str] = Cookie(None),
         )
     except Exception as e:
         return HTMLResponse(admin_shell("Error",
-            f'<p style="color:#ef4444;">Error loading city: {e}</p>', admin.business_name, "/admin/cities"))
+            f'<p style="color:#ef4444;">Error loading city: {e}</p>', admin.business_name, "/admin/cities", player_id=admin.id))
 
     # Load city polls
     polls = admin_get_city_polls(city_id)
@@ -2106,7 +2106,7 @@ def admin_city_detail(city_id: int, session_token: Optional[str] = Cookie(None),
         <div class="table-wrap"><table><tr><th>ID</th><th>Type</th><th>Target</th><th>Result</th><th>Y/N</th></tr>{past_poll_rows}</table></div>
     </div>''' if past_polls else ""}
     """
-    return HTMLResponse(admin_shell(f"City: {city_info['name']}", body, admin.business_name, "/admin/cities"))
+    return HTMLResponse(admin_shell(f"City: {city_info['name']}", body, admin.business_name, "/admin/cities", player_id=admin.id))
 
 
 @router.post("/admin/cities/{city_id}/resolve-poll")
@@ -2205,14 +2205,14 @@ def admin_county_detail(county_id: int, session_token: Optional[str] = Cookie(No
             county = county_db.query(County).filter(County.id == county_id).first()
             if not county:
                 return HTMLResponse(admin_shell("Not Found",
-                    '<p style="color:#ef4444;">County not found.</p>', admin.business_name, "/admin/cities"))
+                    '<p style="color:#ef4444;">County not found.</p>', admin.business_name, "/admin/cities", player_id=admin.id))
             county_info = {"id": county.id, "name": county.name,
                            "crypto_symbol": county.crypto_symbol, "crypto_name": county.crypto_name}
         finally:
             county_db.close()
     except Exception as e:
         return HTMLResponse(admin_shell("Error",
-            f'<p style="color:#ef4444;">Error loading county: {e}</p>', admin.business_name, "/admin/cities"))
+            f'<p style="color:#ef4444;">Error loading county: {e}</p>', admin.business_name, "/admin/cities", player_id=admin.id))
 
     polls = admin_get_county_polls(county_id)
     active_polls = [p for p in polls if p["status"] == "active"]
@@ -2269,7 +2269,7 @@ def admin_county_detail(county_id: int, session_token: Optional[str] = Cookie(No
         <div class="table-wrap"><table><tr><th>ID</th><th>Target City</th><th>Result</th><th>Y/N</th></tr>{past_poll_rows}</table></div>
     </div>''' if past_polls else ""}
     """
-    return HTMLResponse(admin_shell(f"County: {county_info['name']}", body, admin.business_name, "/admin/cities"))
+    return HTMLResponse(admin_shell(f"County: {county_info['name']}", body, admin.business_name, "/admin/cities", player_id=admin.id))
 
 
 @router.post("/admin/counties/{county_id}/resolve-poll")
@@ -2466,7 +2466,7 @@ def admin_updates(session_token: Optional[str] = Cookie(None), msg: Optional[str
         {f'<div class="table-wrap"><table><tr><th>Time</th><th>From</th><th>Message</th></tr>{msg_rows}</table></div>' if msg_rows else '<p style="color:#64748b;font-size:0.75rem;">No updates posted yet.</p>'}
     </div>
     """
-    return HTMLResponse(admin_shell("Updates", body, player.business_name, "/admin/updates"))
+    return HTMLResponse(admin_shell("Updates", body, player.business_name, "/admin/updates", player_id=player.id))
 
 
 @router.post("/admin/updates/post")
@@ -2575,7 +2575,7 @@ def admin_chat(session_token: Optional[str] = Cookie(None), room: Optional[str] 
     {messages_html}
     {dm_html}
     """
-    return HTMLResponse(admin_shell("Chat", body, player.business_name, "/admin/chat"))
+    return HTMLResponse(admin_shell("Chat", body, player.business_name, "/admin/chat", player_id=player.id))
 
 
 @router.get("/admin/chat/dm", response_class=HTMLResponse)
@@ -2613,7 +2613,7 @@ def admin_chat_dm(session_token: Optional[str] = Cookie(None), a: int = Query(..
         {msg_items if msg_items else '<p style="color:#64748b;font-size:0.75rem;">No messages in this thread.</p>'}
     </div>
     """
-    return HTMLResponse(admin_shell("DM Thread", body, player.business_name, "/admin/chat"))
+    return HTMLResponse(admin_shell("DM Thread", body, player.business_name, "/admin/chat", player_id=player.id))
 
 
 @router.post("/admin/chat/delete-message")
@@ -2672,7 +2672,7 @@ def admin_p2p(session_token: Optional[str] = Cookie(None)):
     overview = get_p2p_overview()
     if "error" in overview:
         body = f'<h2 style="font-size:0.9rem;margin-bottom:10px;">P2P Contracts</h2><div class="card"><p style="color:#64748b;">P2P module error: {overview["error"]}</p></div>'
-        return HTMLResponse(admin_shell("P2P", body, player.business_name, "/admin/p2p"))
+        return HTMLResponse(admin_shell("P2P", body, player.business_name, "/admin/p2p", player_id=player.id))
 
     recent_rows = ""
     for c in overview.get("recent", []):
@@ -2694,7 +2694,7 @@ def admin_p2p(session_token: Optional[str] = Cookie(None)):
         {f'<div class="table-wrap"><table><tr><th>ID</th><th>Creator</th><th>Holder</th><th>Status</th><th>Mode</th><th>Created</th></tr>{recent_rows}</table></div>' if recent_rows else '<p style="color:#64748b;font-size:0.75rem;">No contracts.</p>'}
     </div>
     """
-    return HTMLResponse(admin_shell("P2P", body, player.business_name, "/admin/p2p"))
+    return HTMLResponse(admin_shell("P2P", body, player.business_name, "/admin/p2p", player_id=player.id))
 
 
 @router.get("/admin/p2p/{contract_id}", response_class=HTMLResponse)
@@ -2707,9 +2707,9 @@ def admin_p2p_detail(contract_id: int, session_token: Optional[str] = Cookie(Non
 
     detail = get_p2p_contract_detail(contract_id)
     if not detail:
-        return HTMLResponse(admin_shell("P2P", '<p style="color:#ef4444;">Contract not found.</p>', player.business_name, "/admin/p2p"))
+        return HTMLResponse(admin_shell("P2P", '<p style="color:#ef4444;">Contract not found.</p>', player.business_name, "/admin/p2p", player_id=player.id))
     if "error" in detail:
-        return HTMLResponse(admin_shell("P2P", f'<p style="color:#ef4444;">Error: {detail["error"]}</p>', player.business_name, "/admin/p2p"))
+        return HTMLResponse(admin_shell("P2P", f'<p style="color:#ef4444;">Error: {detail["error"]}</p>', player.business_name, "/admin/p2p", player_id=player.id))
 
     sc_map = {"active": "#22c55e", "listed": "#38bdf8", "breached": "#ef4444", "completed": "#64748b", "draft": "#94a3b8", "voided": "#64748b"}
     sc = sc_map.get(detail["status"], "#94a3b8")
@@ -2767,7 +2767,7 @@ def admin_p2p_detail(contract_id: int, session_token: Optional[str] = Cookie(Non
         {f'<div class="table-wrap"><table><tr><th>#</th><th>Delivered</th></tr>{delivery_rows}</table></div>' if delivery_rows else '<p style="color:#64748b;font-size:0.75rem;">No deliveries yet.</p>'}
     </div>
     """
-    return HTMLResponse(admin_shell(f"P2P Contract #{contract_id}", body, player.business_name, "/admin/p2p"))
+    return HTMLResponse(admin_shell(f"P2P Contract #{contract_id}", body, player.business_name, "/admin/p2p", player_id=player.id))
 
 
 # ==========================
@@ -2826,7 +2826,7 @@ def admin_landbank(session_token: Optional[str] = Cookie(None), msg: Optional[st
         <p style="font-size:0.65rem;color:#475569;margin-top:8px;"><b>Remove</b> = take out of bank (keep plot). <b>Delete</b> = remove from bank AND delete the plot.</p>
     </div>
     """
-    return HTMLResponse(admin_shell("Land Bank", body, player.business_name, "/admin/landbank"))
+    return HTMLResponse(admin_shell("Land Bank", body, player.business_name, "/admin/landbank", player_id=player.id))
 
 
 @router.post("/admin/landbank/add")
@@ -3020,7 +3020,7 @@ def admin_annuities(session_token: Optional[str] = Cookie(None)):
   <tbody style="color:#e2e8f0;">{accum_rows}</tbody>
 </table>
 </div>"""
-        return HTMLResponse(admin_shell("Annuities", body, admin.business_name, "/admin/annuities"))
+        return HTMLResponse(admin_shell("Annuities", body, admin.business_name, "/admin/annuities", player_id=admin.id))
 
     except Exception as e:
         import traceback
@@ -3028,6 +3028,7 @@ def admin_annuities(session_token: Optional[str] = Cookie(None)):
             "Annuities",
             f'<p style="color:#ef4444;">Error: {e}</p><pre style="color:#64748b;font-size:9px;">{traceback.format_exc()}</pre>',
             admin.business_name,
+            player_id=admin.id,
         ))
 
 
@@ -3101,7 +3102,7 @@ def admin_logs(
         <p style="color:#475569;font-size:0.7rem;margin-top:8px;">Showing up to 200 results.</p>
     </div></div>
     """
-    return HTMLResponse(admin_shell("Logs", body, player.business_name, "/admin/logs"))
+    return HTMLResponse(admin_shell("Logs", body, player.business_name, "/admin/logs", player_id=player.id))
 
 
 # ==========================
@@ -3176,7 +3177,7 @@ def admin_moderators_page(session_token: Optional[str] = Cookie(None), msg: Opti
         </form>
     </div>
     """
-    return HTMLResponse(admin_shell("Moderators", body, admin.business_name, "/admin/moderators"))
+    return HTMLResponse(admin_shell("Moderators", body, admin.business_name, "/admin/moderators", player_id=admin.id))
 
 
 @router.post("/admin/moderators/add")
@@ -3529,7 +3530,7 @@ def admin_etf(session_token: Optional[str] = Cookie(None),
     {brokerage_html}
     {orphan_section}
     """
-    return HTMLResponse(admin_shell("ETF Banks", body, admin.business_name, "/admin/etf"))
+    return HTMLResponse(admin_shell("ETF Banks", body, admin.business_name, "/admin/etf", player_id=admin.id))
 
 
 @router.post("/admin/etf/cancel-orders")
@@ -3945,7 +3946,7 @@ def admin_wiki(
 
 {add_form}
 """
-    return HTMLResponse(admin_shell("Wiki Media", body, admin.business_name, "/admin/wiki"))
+    return HTMLResponse(admin_shell("Wiki Media", body, admin.business_name, "/admin/wiki", player_id=admin.id))
 
 
 @router.post("/admin/wiki/add")
@@ -4349,7 +4350,7 @@ function filterCards() {{
 }}
 </script>
 """
-    return HTMLResponse(admin_shell("Item Routes", body, admin.business_name, "/admin/item-routes"))
+    return HTMLResponse(admin_shell("Item Routes", body, admin.business_name, "/admin/item-routes", player_id=admin.id))
 
 
 # ==========================
@@ -4496,7 +4497,7 @@ def admin_bonds(
     </p>
 </div>
 """
-    return HTMLResponse(admin_shell("Bonds", body, admin.business_name, "/admin/bonds"))
+    return HTMLResponse(admin_shell("Bonds", body, admin.business_name, "/admin/bonds", player_id=admin.id))
 
 
 # ── Notification Sound Admin ───────────────────────────────────────────────────
@@ -4560,7 +4561,7 @@ def admin_notif_sound(
   {_delete_form}
 </div>
 """
-    return HTMLResponse(admin_shell("Notification Sound", body, admin.business_name, "/admin/notification-sound"))
+    return HTMLResponse(admin_shell("Notification Sound", body, admin.business_name, "/admin/notification-sound", player_id=admin.id))
 
 
 @router.post("/admin/notification-sound/upload", response_class=HTMLResponse)
@@ -4665,7 +4666,7 @@ def admin_push_keys(session_token: Optional[str] = Cookie(None)):
   Set both as environment variables on your server and restart — the 503 on /api/push/public-key will be gone.
 </p>
 """
-    return HTMLResponse(admin_shell("VAPID Keys", body, admin.business_name, "/admin/notification-sound"))
+    return HTMLResponse(admin_shell("VAPID Keys", body, admin.business_name, "/admin/notification-sound", player_id=admin.id))
 
 
 # ── /admin/careers ────────────────────────────────────────────────────────────
@@ -4716,7 +4717,7 @@ def admin_careers(session_token: Optional[str] = Cookie(None)):
 <h2 style="margin:0 0 20px;color:#e5e7eb;">Career Submissions ({len(submissions)})</h2>
 {rows}
 """
-    return HTMLResponse(admin_shell("Careers", body, admin.business_name, "/admin/careers"))
+    return HTMLResponse(admin_shell("Careers", body, admin.business_name, "/admin/careers", player_id=admin.id))
 
 
 @router.post("/admin/careers/{sub_id}/mark-reviewed", response_class=HTMLResponse)
@@ -5319,7 +5320,7 @@ def admin_events(session_token: Optional[str] = Cookie(None),
     </div>
     {event_cards}"""
 
-    return HTMLResponse(admin_shell("Events", body, admin.business_name, "/admin/events"))
+    return HTMLResponse(admin_shell("Events", body, admin.business_name, "/admin/events", player_id=admin.id))
 
 
 def _invalidate_event_cache():

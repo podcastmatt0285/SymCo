@@ -1,0 +1,248 @@
+/*
+ * Wadsworth Skin: Kawaii Night
+ * Author: Wadsworth Team
+ * Description: Soft dark purple backdrop with pastel pink and lavender accents.
+ *              Rounded corners, gentle glows, and floating hearts ✨
+ * Tier: pro
+ *
+ * Effects: kawaii.js — floating hearts + sparkles (prefers-reduced-motion safe)
+ *
+ * Sections
+ * ─────────────────────────────────────────────────────
+ * CORE UI (79 vars):
+ *   Backgrounds · Borders · Text · Accent/Brand · Semantic · Medals ·
+ *   Fonts · Border-Radius · Z-Index · Shadows · Transitions · Gradients
+ *
+ * SPECIALTY THEMES (22 vars):
+ *   Nav-Loader · Audio Player · Company Pages (Leather) · WikiWads
+ *
+ * SEMANTIC DATA (39 vars): game-specific meaning, pink/lavender tinted
+ *
+ * COMPONENT OVERRIDES: rounder corners, pink glows, kawaii button shapes
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400&display=swap');
+
+:root {
+  /* ── Backgrounds ──────────────────────────────────────────── */
+  --bg-page:    #0c0718;            /* deep indigo-black                */
+  --bg-card:    #180e2a;            /* dark violet card                 */
+  --bg-card-2:  #241539;            /* medium dark violet               */
+  --bg-input:   #180e2a;            /* same as card                     */
+  --bg-header:  #0a0514;            /* darkest strip for header         */
+  --bg-ticker:  #0a0514;            /* bottom ticker matches header     */
+  --bg-overlay: rgba(8,4,18,0.80);  /* modal overlay                    */
+
+  /* ── Borders ──────────────────────────────────────────────── */
+  --border:        #3d1a5e;         /* primary card / input border      */
+  --border-subtle: #5c2e80;         /* dividers, section separators     */
+  --border-focus:  #f472b6;         /* pink focus ring                  */
+
+  /* ── Text ─────────────────────────────────────────────────── */
+  --text-primary:   #f5d8f0;        /* warm pinkish white               */
+  --text-bright:    #fce7f8;        /* near-white for numbers           */
+  --text-secondary: #c49fd4;        /* muted lavender labels            */
+  --text-muted:     #7e5a8a;        /* disabled / placeholders          */
+  --text-faint:     #513660;        /* metadata, timestamps             */
+  --text-on-accent: #1a0c28;        /* dark text on pink backgrounds    */
+  --text-on-danger: #ffffff;        /* white on danger red              */
+
+  /* ── Accent / Brand ───────────────────────────────────────── */
+  --accent:       #f472b6;          /* hot pink — links, interactive    */
+  --accent-dim:   #ec4899;          /* pressed / hover                  */
+  --accent-bg:    rgba(244,114,182,0.10);
+  --accent-2:     #c084fc;          /* lavender — secondary             */
+  --accent-2-dim: #a855f7;
+  --accent-2-bg:  rgba(192,132,252,0.10);
+  --accent-3:     #67e8f9;          /* aqua — tertiary (events/levels)  */
+  --accent-3-dim: #22d3ee;
+  --accent-3-bg:  rgba(103,232,249,0.10);
+
+  /* ── Semantic Colors ──────────────────────────────────────── */
+  --color-success:        #4ade80;
+  --color-success-light:  #86efac;
+  --color-success-dark:   #22c55e;
+  --color-success-bg:     rgba(74,222,128,0.10);
+  --color-danger:         #fb7185;
+  --color-danger-light:   #fda4af;
+  --color-danger-dark:    #f43f5e;
+  --color-danger-xdark:   #9f1239;
+  --color-danger-bg:      rgba(251,113,133,0.10);
+  --color-warning:        #fbbf24;
+  --color-warning-light:  #fde68a;
+  --color-warning-bg:     rgba(251,191,36,0.10);
+  --color-gold:           #fcd34d;
+  --color-gold-bg:        rgba(252,211,77,0.14);
+  --color-orange:         #fb923c;
+  --color-purple:         #c084fc;
+  --color-teal:           #2dd4bf;
+  --color-pink:           #f472b6;
+  --color-lime:           #a3e635;
+  --color-sky:            #7dd3fc;
+
+  /* ── Medals ────────────────────────────────────────────────── */
+  --color-rank-1: #fcd34d;          /* gold */
+  --color-rank-2: #d1d5db;          /* silver */
+  --color-rank-3: #fb923c;          /* bronze (warm) */
+
+  /* ── Fonts ─────────────────────────────────────────────────── */
+  --font-body:    'Nunito', 'Segoe UI', system-ui, sans-serif;
+  --font-serif:   Georgia, serif;
+  --font-cursive: 'Caveat', cursive;
+  --font-sans:    'Nunito', system-ui, sans-serif;
+
+  /* ── Border Radius (rounder for kawaii feel) ─────────────── */
+  --radius-sm:     6px;
+  --radius-md:     10px;
+  --radius-lg:     16px;
+  --radius-xl:     22px;
+  --radius-2xl:    32px;
+  --radius-pill:   9999px;
+  --radius-circle: 50%;
+
+  /* ── Z-Index ────────────────────────────────────────────────── */
+  --z-below:  -1;
+  --z-base:   100;
+  --z-audio:  150;
+  --z-ticker: 1000;
+  --z-modal:  9999;
+
+  /* ── Shadows (pink glow) ──────────────────────────────────── */
+  --shadow-sm:          0 1px 6px  rgba(244,114,182,0.22);
+  --shadow-md:          0 4px 22px rgba(244,114,182,0.20);
+  --shadow-glow:        0 8px 30px rgba(244,114,182,0.30);
+  --shadow-glow-danger: 0 8px 30px rgba(251,113,133,0.30);
+
+  /* ── Transitions ────────────────────────────────────────────── */
+  --dur-fast:   0.15s;
+  --dur-normal: 0.2s;
+  --dur-slow:   2s;
+
+  /* ── Gradients ──────────────────────────────────────────────── */
+  --grad-card:        linear-gradient(135deg, #180e2a 0%, #241539 100%);
+  --grad-bar:         linear-gradient(to top, #f472b6, #c084fc);
+  --grad-cert:        linear-gradient(135deg, #0c0718 0%, #180e2a 100%);
+  --grad-cert-border: linear-gradient(90deg, #5c2e80, #3d1a5e, #5c2e80);
+  --grad-delete-zone: linear-gradient(135deg, #0c0718 0%, #2a0a1a 100%);
+  --grad-audio-knob:  linear-gradient(to bottom, #3d1a5e, #0c0718);
+  --grad-kpi:         linear-gradient(135deg, #0c0718 0%, #180e2a 100%);
+
+  /* ── Specialty: Nav-Loader ──────────────────────────────────── */
+  --loader-border:    #5c2e80;
+  --loader-bar-start: #ec4899;
+
+  /* ── Specialty: Audio Player ────────────────────────────────── */
+  --audio-bg-dark:  #1a0d26;
+  --audio-bg-mid:   #3d1a5e;
+  --audio-accent:   #f472b6;
+  --audio-font:     var(--font-serif);
+  --audio-pastels-json: '["#FFB7CE","#FFDCE8","#E8D5F5","#C5E8F5","#D5F5E8","#FFB7D5","#F5BBD5","#E8B7F5","#D5C5F0","#B7D5FF","#C5E8C5","#F0F5C5","#FFF5C5","#FFE5B5","#FFF0DC"]';
+
+  /* ── Specialty: Company Pages (Leather & Parchment) ────────── */
+  --leather-bg-dark:  #1a0d26;
+  --leather-bg-light: #fce7f8;      /* blush parchment instead of cream */
+  --leather-text:     #2a1535;
+  --leather-accent:   #c084fc;
+  --leather-accent-2: #7c3aed;
+  --leather-border:   #3d1a5e;
+
+  /* ── Specialty: WikiWads ────────────────────────────────────── */
+  --wiki-bg-page:    #0a0514;
+  --wiki-bg-card:    #140a22;
+  --wiki-bg-card-2:  #1e1030;
+  --wiki-border:     #4a1e6e;
+  --wiki-text:       #f5d8f0;
+  --wiki-text-muted: #8a5f98;
+  --wiki-accent-1:   #f472b6;
+  --wiki-accent-2:   #fcd34d;
+  --wiki-accent-3:   #c084fc;
+
+  /* ── Semantic Data: Transactions ───────────────────────────── */
+  --tx-market:    #7dd3fc;
+  --tx-resource:  #67e8f9;
+  --tx-cash-in:   #4ade80;
+  --tx-cash-out:  #fb7185;
+  --tx-business:  #c084fc;
+  --tx-land:      #a3e635;
+  --tx-district:  #fbbf24;
+  --tx-crypto:    #fbbf24;
+  --tx-bonds:     #67e8f9;
+  --tx-shares:    #7dd3fc;
+  --tx-dividend:  #4ade80;
+  --tx-tax:       #fb923c;
+  --tx-p2p:       #c084fc;
+
+  /* ── Semantic Data: Charts ──────────────────────────────────── */
+  --chart-income:         rgba(74,222,128,0.70);
+  --chart-expense:        rgba(251,113,133,0.65);
+  --chart-line:           #f472b6;
+  --chart-line-fill:      rgba(244,114,182,0.08);
+  --chart-tooltip-bg:     #180e2a;
+  --chart-tooltip-border: #3d1a5e;
+  --chart-grid:           #1e1030;
+  --chart-tick:           #513660;
+
+  /* ── Semantic Data: Chat / Notifications ───────────────────── */
+  --mention-player:  #4ade80;
+  --mention-item:    #67e8f9;
+  --mention-crypto:  #fcd34d;
+  --mention-stock:   #fb923c;
+  --chat-mod-accent: #fbbf24;
+
+  --notif-badge:     #fb7185;
+  --notif-badge-bg:  rgba(251,113,133,0.15);
+  --notif-market:    #fbbf24;
+  --notif-corporate: #67e8f9;
+  --notif-execs:     #c084fc;
+  --notif-general:   #7e5a8a;
+  --notif-govt:      #4ade80;
+  --notif-business:  #fb923c;
+  --notif-land:      #a3e635;
+  --notif-contract:  #f472b6;
+  --notif-dm:        #7dd3fc;
+
+  --dm-own-accent: #c084fc;
+  --dm-unread:     #c084fc;
+}
+
+/* ── Component overrides — rounder, glowy kawaii aesthetic ─────── */
+
+.card {
+  border-radius: var(--radius-lg);
+  border-color: var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-glow);
+}
+
+.badge {
+  border-radius: var(--radius-pill);
+}
+
+.btn,
+.btn-blue, .btn-orange, .btn-red, .btn-gold, .btn-green, .btn-gray {
+  border-radius: var(--radius-md);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.btn-blue   { box-shadow: 0 0 12px rgba(244,114,182,0.30); }
+.btn-green  { box-shadow: 0 0 10px rgba(74,222,128,0.25); }
+
+.header {
+  background: var(--bg-header);
+}
+
+input, select {
+  border-radius: var(--radius-md);
+}
+
+.ticker {
+  background: var(--bg-ticker);
+}
+
+a:hover {
+  color: var(--accent-dim);
+}
