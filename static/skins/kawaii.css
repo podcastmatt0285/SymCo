@@ -619,3 +619,372 @@ a:hover {
 [data-skin="kawaii"] ::-webkit-scrollbar-track  { background: var(--bg-page); }
 [data-skin="kawaii"] ::-webkit-scrollbar-thumb  { background: var(--border-subtle); border-radius: 3px; }
 [data-skin="kawaii"] ::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CROSS-FILE UTILITY CLASS OVERRIDES
+   Common classes reused with hardcoded hex across chat, memecoins, counties,
+   cities, districts, estate, reserve_banks, admins, settings pages.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Alerts ──────────────────────────────────────────────────────────────── */
+[data-skin="kawaii"] .alert-success,
+[data-skin="kawaii"] .flash-success,
+[data-skin="kawaii"] .alert-price-up  { background: var(--color-success-bg); border-color: var(--color-success-dark); color: var(--color-success-light); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .alert-error,
+[data-skin="kawaii"] .flash-error,
+[data-skin="kawaii"] .alert-price-down { background: var(--color-danger-bg); border-color: var(--color-danger-dark); color: var(--color-danger-light); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .alert-info      { background: var(--accent-bg);         border-color: var(--accent-dim);        color: var(--accent); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .alert-warning   { background: var(--color-warning-bg);  border-color: var(--color-warning);     color: var(--color-warning-light); border-radius: var(--radius-sm); }
+
+/* ── Badges ──────────────────────────────────────────────────────────────── */
+[data-skin="kawaii"] .badge-success,
+[data-skin="kawaii"] .badge-green,
+[data-skin="kawaii"] .badge-buy       { background: var(--color-success-bg); color: var(--color-success-light); }
+[data-skin="kawaii"] .badge-danger,
+[data-skin="kawaii"] .badge-red,
+[data-skin="kawaii"] .badge-sell      { background: var(--color-danger-bg);  color: var(--color-danger-light); }
+[data-skin="kawaii"] .badge-warning,
+[data-skin="kawaii"] .badge-yellow,
+[data-skin="kawaii"] .badge-partial,
+[data-skin="kawaii"] .badge-meme,
+[data-skin="kawaii"] .badge-governance { background: var(--color-gold-bg); color: var(--color-gold); }
+[data-skin="kawaii"] .badge-info,
+[data-skin="kawaii"] .badge-blue,
+[data-skin="kawaii"] .badge-filled    { background: var(--accent-bg);        color: var(--accent); }
+[data-skin="kawaii"] .badge-crypto,
+[data-skin="kawaii"] .badge-native    { background: var(--accent-2-bg);      color: var(--accent-2); }
+[data-skin="kawaii"] .badge-active,
+[data-skin="kawaii"] .badge-cancelled { background: var(--bg-card-2);        color: var(--text-muted); }
+
+/* ── Common buttons ──────────────────────────────────────────────────────── */
+[data-skin="kawaii"] .btn-primary  { background: var(--accent);         color: var(--text-on-accent); border-radius: var(--radius-md); font-weight: 800; }
+[data-skin="kawaii"] .btn-secondary { background: var(--bg-card-2);    color: var(--text-secondary);  border-radius: var(--radius-md); }
+[data-skin="kawaii"] .btn-danger   { background: var(--color-danger);   color: #fff;                   border-radius: var(--radius-md); }
+[data-skin="kawaii"] .btn-crypto   { background: var(--accent-2);       color: var(--text-on-accent);  border-radius: var(--radius-md); }
+[data-skin="kawaii"] .btn-governance { background: var(--color-gold);   color: #1a0c28;                border-radius: var(--radius-md); }
+[data-skin="kawaii"] .btn-buy      { background: var(--color-success);  color: #0a1a0a;                border-radius: var(--radius-md); font-weight: 800; }
+[data-skin="kawaii"] .btn-sell     { background: var(--color-danger);   color: #fff;                   border-radius: var(--radius-md); font-weight: 800; }
+[data-skin="kawaii"] .btn-meme     { background: var(--color-warning);  color: #1a0c28;                border-radius: var(--radius-md); }
+[data-skin="kawaii"] .btn-cancel   { background: var(--bg-card-2);      color: var(--text-secondary);  border-radius: var(--radius-md); }
+[data-skin="kawaii"] .btn-vote-yes { background: var(--color-success);  color: #0a1a0a;                border-radius: var(--radius-md); }
+[data-skin="kawaii"] .btn-vote-no  { background: var(--color-danger);   color: #fff;                   border-radius: var(--radius-md); }
+
+/* ── Common stat cells ───────────────────────────────────────────────────── */
+[data-skin="kawaii"] .stat         { background: var(--bg-card); border-color: var(--border); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .stat-label   { color: var(--text-secondary); }
+[data-skin="kawaii"] .stat-value   { color: var(--text-bright); }
+[data-skin="kawaii"] .stat-box     { background: var(--bg-card); border-color: var(--border); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .info-stat    { background: var(--bg-card); border-color: var(--border); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .info-stat-label { color: var(--text-muted); }
+[data-skin="kawaii"] .info-stat-value { color: var(--accent-2); }
+[data-skin="kawaii"] .info-box     { background: var(--bg-card); border-color: var(--border); color: var(--text-secondary); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .positive     { color: var(--color-success); }
+[data-skin="kawaii"] .negative     { color: var(--color-danger); }
+[data-skin="kawaii"] .neutral      { color: var(--text-muted); }
+
+/* ── Common layout ───────────────────────────────────────────────────────── */
+[data-skin="kawaii"] .form-group label,
+[data-skin="kawaii"] .form-label   { color: var(--text-muted); }
+[data-skin="kawaii"] .detail-row   { border-color: var(--border); }
+[data-skin="kawaii"] .divider      { border-color: var(--border); }
+[data-skin="kawaii"] .tabs         { border-color: var(--border); background: var(--bg-card); }
+[data-skin="kawaii"] .active       { border-color: var(--accent); color: var(--accent); }
+
+/* ── Chat & DM system ────────────────────────────────────────────────────── */
+[data-skin="kawaii"] .chat-layout  { background: var(--bg-page); }
+[data-skin="kawaii"] .chat-sidebar {
+  background: var(--bg-header);
+  border-color: var(--border);
+}
+[data-skin="kawaii"] .chat-header,
+[data-skin="kawaii"] .chat-input-bar {
+  background: var(--bg-header);
+  border-color: var(--border);
+}
+[data-skin="kawaii"] .chat-messages { background: var(--bg-page); }
+[data-skin="kawaii"] .chat-msg      { background: transparent; }
+[data-skin="kawaii"] .msg-body      { background: var(--bg-card); border-radius: var(--radius-md); }
+[data-skin="kawaii"] .msg-name      { color: var(--accent); }
+[data-skin="kawaii"] .msg-time      { color: var(--text-faint); }
+[data-skin="kawaii"] .msg-text      { color: var(--text-primary); }
+[data-skin="kawaii"] .msg-avatar,
+[data-skin="kawaii"] .msg-avatar-letter,
+[data-skin="kawaii"] .avatar-letter,
+[data-skin="kawaii"] .conv-avatar,
+[data-skin="kawaii"] .profile-avatar,
+[data-skin="kawaii"] .search-result-letter { background: var(--bg-card-2); color: var(--accent-2); border-radius: 50%; }
+[data-skin="kawaii"] .avatar-preview { background: var(--bg-card-2); border-color: var(--border); }
+[data-skin="kawaii"] .sidebar-section { border-color: var(--border); }
+[data-skin="kawaii"] .sidebar-btn  { background: var(--bg-card); border-color: var(--border); color: var(--text-secondary); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .sidebar-btn:hover { border-color: var(--accent); color: var(--accent); }
+[data-skin="kawaii"] .room-btn     { color: var(--text-secondary); }
+[data-skin="kawaii"] .conv-btn     { color: var(--text-secondary); }
+[data-skin="kawaii"] .conv-preview { color: var(--text-muted); }
+[data-skin="kawaii"] .conv-name    { color: var(--text-primary); }
+[data-skin="kawaii"] .unread-badge { background: var(--color-danger); color: #fff; border-radius: var(--radius-pill); }
+[data-skin="kawaii"] .online-status { background: var(--color-success); border-radius: 50%; }
+[data-skin="kawaii"] .typing-indicator { color: var(--text-muted); }
+[data-skin="kawaii"] .system-msg   { color: var(--text-faint); }
+[data-skin="kawaii"] .dm-placeholder { color: var(--text-muted); }
+[data-skin="kawaii"] .hamburger    { background: var(--bg-card-2); color: var(--text-secondary); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .search-input {
+  background: var(--bg-page);
+  border-color: var(--border);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+}
+[data-skin="kawaii"] .search-result-item { color: var(--text-secondary); }
+[data-skin="kawaii"] .search-results { background: var(--bg-card); border-color: var(--border); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .emoji-picker  { background: var(--bg-card); border-color: var(--border); border-radius: var(--radius-md); }
+[data-skin="kawaii"] .emoji-toggle  { background: var(--bg-card-2); border-color: var(--border); color: var(--text-secondary); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .readonly-banner { background: var(--bg-card-2); border-color: var(--border-subtle); color: var(--text-muted); }
+[data-skin="kawaii"] .ban-word-tag  { background: var(--bg-card-2); color: var(--text-secondary); border-radius: var(--radius-pill); }
+[data-skin="kawaii"] .remove-x     { color: var(--color-danger); }
+[data-skin="kawaii"] .selected     { background: var(--accent-bg); border-color: var(--accent); }
+[data-skin="kawaii"] .label, [data-skin="kawaii"] .value { color: var(--text-secondary); }
+[data-skin="kawaii"] .mention          { color: var(--accent); }
+[data-skin="kawaii"] .mention-player   { color: var(--mention-player); }
+[data-skin="kawaii"] .mention-crypto   { color: var(--mention-crypto); }
+[data-skin="kawaii"] .mention-stock    { color: var(--mention-stock); }
+[data-skin="kawaii"] .mention-item     { color: var(--mention-item); }
+[data-skin="kawaii"] .mention-dropdown {
+  background: var(--bg-card);
+  border-color: var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+[data-skin="kawaii"] .mention-dropdown-header { color: var(--text-muted); }
+[data-skin="kawaii"] .mention-item     { border-color: var(--border); }
+[data-skin="kawaii"] .mention-option:hover { background: var(--accent-bg); }
+[data-skin="kawaii"] .mention-primary  { color: var(--text-primary); }
+[data-skin="kawaii"] .mention-secondary { color: var(--text-muted); }
+
+/* ── Memecoins / crypto tokens ───────────────────────────────────────────── */
+[data-skin="kawaii"] .meme-card,
+[data-skin="kawaii"] .wsc-card,
+[data-skin="kawaii"] .wallet-card {
+  background: rgba(24,14,42,0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-color: var(--border);
+  border-radius: var(--radius-lg);
+}
+[data-skin="kawaii"] .wsc-card { border-color: var(--accent-2); box-shadow: 0 0 20px rgba(192,132,252,0.15); }
+[data-skin="kawaii"] .wsc-balance { color: var(--accent-2); }
+[data-skin="kawaii"] .wallet-balance { color: var(--accent-2); }
+[data-skin="kawaii"] .wallet-value   { color: var(--text-secondary); }
+[data-skin="kawaii"] .wallet-ticker  { background: var(--bg-card-2); border-color: var(--border); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .token-hero {
+  background: linear-gradient(135deg, #1a0533 0%, #0c0718 100%);
+  border-radius: var(--radius-lg);
+}
+[data-skin="kawaii"] .token-logo     { background: var(--accent-2-bg); border-radius: var(--radius-circle); }
+[data-skin="kawaii"] .token-price-big { color: var(--text-bright); }
+[data-skin="kawaii"] .price-big      { color: var(--accent); font-weight: 800; }
+[data-skin="kawaii"] .ticker-up,
+[data-skin="kawaii"] .ticker-change.up,
+[data-skin="kawaii"] .token-change-up  { color: var(--color-success); }
+[data-skin="kawaii"] .ticker-down,
+[data-skin="kawaii"] .ticker-change.down,
+[data-skin="kawaii"] .token-change-down { color: var(--color-danger); }
+[data-skin="kawaii"] .ticker-flat,
+[data-skin="kawaii"] .token-change-flat { color: var(--text-muted); }
+[data-skin="kawaii"] .ticker-item    { color: var(--text-primary); }
+[data-skin="kawaii"] .ticker-symbol  { color: var(--accent-2); }
+[data-skin="kawaii"] .ticker-sep     { color: var(--border-subtle); }
+[data-skin="kawaii"] .ticker-chip    { background: var(--bg-card-2); border-color: var(--border); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .token-change-badge { border-radius: var(--radius-pill); }
+[data-skin="kawaii"] .bid-row        { color: var(--color-success); }
+[data-skin="kawaii"] .ask-row        { color: var(--color-danger); }
+[data-skin="kawaii"] .order-row      { background: var(--bg-card); border-color: var(--border); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .order-book-side { background: var(--bg-card); border-color: var(--border); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .depth-bar      { background: var(--bg-card-2); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .depth-cell     { color: var(--text-secondary); }
+[data-skin="kawaii"] .spread-line    { background: var(--bg-card); border-color: var(--color-gold); color: var(--color-gold); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .tab-bar        { background: var(--bg-card-2); border-color: var(--border); border-radius: var(--radius-md); }
+[data-skin="kawaii"] .tab-btn        { color: var(--text-secondary); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .tab-btn.active,
+[data-skin="kawaii"] .tab-content    { background: var(--bg-card); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .sort-tab       { background: var(--bg-card); border-color: var(--border); color: var(--text-muted); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .sort-tab.active { border-color: var(--accent); color: var(--accent); }
+[data-skin="kawaii"] .swap-box       { background: var(--bg-card); border-color: var(--accent-2); border-radius: var(--radius-lg); box-shadow: 0 0 16px rgba(192,132,252,0.12); }
+[data-skin="kawaii"] .reward-pool    { background: var(--bg-card); border-color: var(--border); border-radius: var(--radius-md); }
+[data-skin="kawaii"] .privacy-banner { background: var(--bg-card-2); border-color: var(--border-subtle); color: var(--text-muted); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .price-change-badge { border-radius: var(--radius-pill); }
+[data-skin="kawaii"] .holder-rank   { background: var(--accent-2-bg); color: var(--accent-2); border-radius: var(--radius-pill); }
+[data-skin="kawaii"] .holder-row    { border-color: var(--border); }
+[data-skin="kawaii"] .mining-bar-bg { background: var(--bg-page); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .mining-bar-fill { background: var(--grad-bar); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .native-color  { color: var(--accent-2); }
+[data-skin="kawaii"] .meme-color    { color: var(--color-gold); }
+[data-skin="kawaii"] .pie-dot       { border-radius: 50%; }
+[data-skin="kawaii"] .logo-cell     { background: var(--bg-card-2); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .logo-placeholder { background: var(--bg-card-2); color: var(--text-muted); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .pool-val      { color: var(--accent); }
+
+/* ── Counties / crypto exchanges / governance ────────────────────────────── */
+[data-skin="kawaii"] .token-hero    { border-radius: var(--radius-lg); }
+[data-skin="kawaii"] .exchange-panel {
+  background: var(--bg-card);
+  border-color: var(--accent);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 0 20px var(--accent-bg);
+}
+[data-skin="kawaii"] .governance-panel {
+  background: var(--bg-card);
+  border-color: var(--color-gold);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 0 20px var(--color-gold-bg);
+}
+[data-skin="kawaii"] .crypto { color: var(--accent-2); }
+[data-skin="kawaii"] .crypto-ticker {
+  background: linear-gradient(135deg, var(--bg-page) 0%, var(--bg-card) 100%);
+  border-color: var(--accent-2);
+  border-radius: var(--radius-md);
+}
+[data-skin="kawaii"] .holder-rank { background: var(--accent-2-bg); color: var(--accent-2); }
+[data-skin="kawaii"] .supply-bar  { background: var(--bg-card-2); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .supply-bar-fill { background: linear-gradient(to right, var(--accent-2), var(--accent)); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .wallet-balance { color: var(--accent-2); }
+[data-skin="kawaii"] .cycle-stat  { background: var(--bg-card); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .cycle-stat-label { color: var(--text-muted); }
+[data-skin="kawaii"] .cycle-stat-value { color: var(--color-warning); }
+[data-skin="kawaii"] .vote-bar    { background: var(--bg-card-2); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .vote-bar-yes { background: var(--color-success); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .vote-bar-no  { background: var(--color-danger);  border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .vote-yes    { background: var(--color-success-bg);  color: var(--color-success-light);  border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .vote-no     { background: var(--color-danger-bg);   color: var(--color-danger-light);   border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .poll-card,
+[data-skin="kawaii"] .proposal-card { background: var(--bg-card); border-color: var(--border); border-radius: var(--radius-md); }
+[data-skin="kawaii"] .poll-header,
+[data-skin="kawaii"] .proposal-header { color: var(--text-bright); border-color: var(--border); }
+[data-skin="kawaii"] .proposal-type { background: var(--accent-2-bg); color: var(--accent-2); border-radius: var(--radius-pill); }
+[data-skin="kawaii"] .poll-votes   { color: var(--text-muted); }
+[data-skin="kawaii"] .phase-indicator { background: var(--bg-card-2); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .phase-proposal { color: var(--accent-2); }
+[data-skin="kawaii"] .phase-voting   { color: var(--color-warning); }
+[data-skin="kawaii"] .phase-completed { color: var(--color-success); }
+[data-skin="kawaii"] .mining-node  { background: var(--bg-card); border-color: var(--border); border-radius: var(--radius-md); }
+[data-skin="kawaii"] .dot          { background: var(--accent); border-radius: 50%; }
+[data-skin="kawaii"] .refresh-note { color: var(--text-muted); }
+[data-skin="kawaii"] .info-grid    { background: var(--bg-card); border-radius: var(--radius-md); }
+[data-skin="kawaii"] .mayor        { background: var(--color-gold-bg); color: var(--color-gold); border-radius: var(--radius-pill); }
+[data-skin="kawaii"] .member-chip  { background: var(--bg-card-2); border-color: var(--border); border-radius: var(--radius-pill); }
+[data-skin="kawaii"] .member-list  { background: var(--bg-card); border-color: var(--border); border-radius: var(--radius-md); }
+[data-skin="kawaii"] .proj-tab     { background: var(--bg-card-2); border-color: var(--border); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .proj-tab.active { border-color: var(--accent); color: var(--accent); }
+
+/* ── Reserve Banks (bonds, forex) ────────────────────────────────────────── */
+[data-skin="kawaii"] .bank-card    { background: var(--bg-card); border-color: var(--border); border-radius: var(--radius-lg); }
+[data-skin="kawaii"] .bank-header  { background: var(--bg-header); border-color: var(--border); }
+[data-skin="kawaii"] .bond-row     { border-color: var(--border); }
+[data-skin="kawaii"] .bond-row:hover { background: var(--accent-bg); }
+[data-skin="kawaii"] .fx-row       { border-color: var(--border); }
+[data-skin="kawaii"] .fx-row-header { background: var(--bg-card-2); color: var(--text-muted); }
+[data-skin="kawaii"] .yield        { color: var(--color-success); }
+[data-skin="kawaii"] .yield-neg    { color: var(--color-danger); }
+[data-skin="kawaii"] .code         { background: var(--bg-card-2); color: var(--accent); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .grid2,
+[data-skin="kawaii"] .grid3        { gap: 12px; }
+[data-skin="kawaii"] .mini         { color: var(--text-muted); font-size: 0.75rem; }
+[data-skin="kawaii"] .rate         { color: var(--text-bright); font-weight: 700; }
+[data-skin="kawaii"] .alert-ok     { background: var(--color-success-bg); border-color: var(--color-success); color: var(--color-success-light); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .alert-err    { background: var(--color-danger-bg);  border-color: var(--color-danger);  color: var(--color-danger-light);  border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .badge-pos    { background: var(--color-success-bg); color: var(--color-success); border-radius: var(--radius-pill); }
+[data-skin="kawaii"] .badge-neg    { background: var(--color-danger-bg);  color: var(--color-danger);  border-radius: var(--radius-pill); }
+[data-skin="kawaii"] .badge-zero   { background: var(--bg-card-2); color: var(--text-muted); border-radius: var(--radius-pill); }
+
+/* ── Estate / inheritance ────────────────────────────────────────────────── */
+[data-skin="kawaii"] .cert-card    {
+  background: rgba(10,5,20,0.85);
+  border-color: var(--border);
+  border-radius: var(--radius-lg);
+}
+[data-skin="kawaii"] .cert-title   { color: var(--text-muted); }
+[data-skin="kawaii"] .cert-badge-idle      { background: var(--color-gold-bg); color: var(--color-gold); border-radius: var(--radius-pill); }
+[data-skin="kawaii"] .cert-badge-voluntary { background: var(--accent-2-bg);   color: var(--accent-2);   border-radius: var(--radius-pill); }
+[data-skin="kawaii"] .heir-slot    { background: var(--bg-card); border-color: var(--border); border-radius: var(--radius-md); }
+[data-skin="kawaii"] .heir-slot-empty { color: var(--text-muted); }
+[data-skin="kawaii"] .heir-number  { color: var(--text-muted); }
+[data-skin="kawaii"] .delete-zone  {
+  background: linear-gradient(135deg, var(--bg-page) 0%, #2a0a1a 100%);
+  border-color: var(--color-danger-dark);
+  border-radius: var(--radius-lg);
+}
+[data-skin="kawaii"] .inheritance-alert { background: var(--accent-2-bg); border-color: var(--accent-2); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .search-box   { background: var(--bg-card); border-color: var(--border); border-radius: var(--radius-md); }
+[data-skin="kawaii"] .stat-row     { border-color: var(--border); background: transparent; }
+[data-skin="kawaii"] .rank-2       { color: #d1d5db; }
+[data-skin="kawaii"] .rank-3       { color: var(--color-orange); }
+
+/* ── Admin item-routes panel (.ir-*) ─────────────────────────────────────── */
+[data-skin="kawaii"] .ir-card     { background: var(--bg-card); border-color: var(--border); border-radius: var(--radius-md); }
+[data-skin="kawaii"] .ir-card-hdr { background: var(--bg-card-2); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .ir-col-hdr  { background: var(--bg-card-2); color: var(--text-muted); }
+[data-skin="kawaii"] .ir-cons-hdr { color: var(--color-danger-light); }
+[data-skin="kawaii"] .ir-prod-hdr { color: var(--color-success-light); }
+[data-skin="kawaii"] .ir-biz-row  { background: var(--bg-page); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .ir-biz-name { color: var(--text-primary); }
+[data-skin="kawaii"] .ir-item-key { color: var(--text-faint); }
+[data-skin="kawaii"] .ir-item-name { color: var(--text-primary); }
+[data-skin="kawaii"] .ir-qty      { color: var(--text-faint); }
+[data-skin="kawaii"] .ir-stat, [data-skin="kawaii"] .ir-section-lbl { color: var(--text-muted); }
+[data-skin="kawaii"] .ir-none     { color: var(--text-faint); }
+[data-skin="kawaii"] .ir-pill     { border-radius: var(--radius-pill); }
+[data-skin="kawaii"] .ir-pill-c   { color: var(--color-danger); }
+[data-skin="kawaii"] .ir-pill-d   { color: var(--accent); }
+[data-skin="kawaii"] .ir-pill-r   { color: var(--text-muted); }
+[data-skin="kawaii"] .ir-more     { color: var(--color-danger); }
+[data-skin="kawaii"] .ir-dl-btn   { color: var(--color-danger); }
+[data-skin="kawaii"] .ir-search, [data-skin="kawaii"] .ir-inp {
+  background: var(--bg-page);
+  border-color: var(--border-subtle);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+}
+[data-skin="kawaii"] .ir-filters  { background: var(--bg-card-2); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .ir-toolbar  { background: var(--bg-card); border-color: var(--border); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .ir-ft       { border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .ir-search-ico, [data-skin="kawaii"] .ir-search-wrap { color: var(--text-muted); }
+[data-skin="kawaii"] .link-card   { background: var(--bg-card); border-color: var(--border); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .lc-title    { color: var(--text-primary); }
+[data-skin="kawaii"] .lc-desc     { color: var(--text-muted); }
+[data-skin="kawaii"] .flash       { border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .tabs        { border-color: var(--border); background: var(--bg-card); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .chat-msg-row { background: var(--bg-card); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .cm-name     { color: var(--accent); }
+[data-skin="kawaii"] .cm-text     { color: var(--text-primary); }
+[data-skin="kawaii"] .cm-time     { color: var(--text-faint); }
+
+/* ── Settings page ───────────────────────────────────────────────────────── */
+[data-skin="kawaii"] .fcc-btn {
+  background: var(--bg-card-2);
+  border-color: var(--border-subtle);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+}
+[data-skin="kawaii"] .fcc-btn:hover { border-color: var(--accent); color: var(--accent); }
+[data-skin="kawaii"] .rp-tl-btn {
+  background: var(--bg-card);
+  border-color: var(--border);
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+}
+[data-skin="kawaii"] .rp-tl-btn:hover { border-color: var(--accent); color: var(--accent); }
+/* Audio player warm wood aesthetic intentionally preserved; just soften bg */
+[data-skin="kawaii"] .rp-box { border-radius: var(--radius-lg); box-shadow: var(--shadow-md); }
+[data-skin="kawaii"] .rp-header { border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+
+/* ── Misc admin badges & chat modals ─────────────────────────────────────── */
+[data-skin="kawaii"] .modal-overlay { background: var(--bg-overlay); }
+[data-skin="kawaii"] .modal         { background: var(--bg-card); border-color: var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-glow); }
+[data-skin="kawaii"] .modal-btn     { border-radius: var(--radius-sm); font-weight: 700; }
+[data-skin="kawaii"] .modal-btn-blue { background: var(--accent); color: var(--text-on-accent); }
+[data-skin="kawaii"] .modal-btn-gray { background: var(--bg-card-2); color: var(--text-secondary); }
+[data-skin="kawaii"] .modal-btn-red  { background: var(--color-danger); color: #fff; }
+[data-skin="kawaii"] .profile-name  { color: var(--text-bright); }
+[data-skin="kawaii"] .profile-stat  { color: var(--text-muted); }
+[data-skin="kawaii"] .online-count  { color: var(--color-success); }
+[data-skin="kawaii"] .patch-note-msg { background: var(--bg-card); border-color: var(--border); border-radius: var(--radius-sm); }
+[data-skin="kawaii"] .patch-note-icon { color: var(--accent); }
+[data-skin="kawaii"] .mention-trigger-badge { background: var(--accent-bg); color: var(--accent); border-radius: var(--radius-pill); }
