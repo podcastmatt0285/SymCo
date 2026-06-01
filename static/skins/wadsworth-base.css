@@ -1,0 +1,290 @@
+/*
+ * Wadsworth Base — Shared Component Styles
+ * =========================================
+ * Layer 1 of the 3-tier skin cascade (loaded on every page).
+ * Contains the component CSS that was previously duplicated across shell
+ * functions, converted from hardcoded hex to var(--*) references so that
+ * skin files (layer 2) can override them by changing CSS variables.
+ *
+ * DO NOT define :root variables here — those live in skin CSS files.
+ * DO NOT add page-specific rules — each shell's own <style> block handles those.
+ *
+ * Cascade order:
+ *   1. wadsworth-base.css  ← this file (shared components, var-ified)
+ *   2. {skin}.css          ← :root variables + optional component overrides
+ *   3. modules/{mod}.css   ← accent-only page-group tint (admin/exec/mod/meme)
+ *   4. {skin}.js (defer)   ← optional particle / animation effects
+ */
+
+/* ── Reset ────────────────────────────────────────────────────────────────── */
+* { box-sizing: border-box; }
+
+/* ── Body ─────────────────────────────────────────────────────────────────── */
+body {
+    background: var(--bg-page);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    margin: 0;
+    /* Push content below OS status bar on iOS (viewport-fit=cover) and
+       below WCO titlebar on desktop */
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+    font-size: 18px;
+}
+
+/* ── Links ────────────────────────────────────────────────────────────────── */
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Header ───────────────────────────────────────────────────────────────── */
+.header {
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px;
+    /* On desktop WCO the titlebar area overlays the top of the page —
+       shift content below it so it isn't hidden behind the window controls */
+    padding-top: max(12px, env(titlebar-area-height, 12px));
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    /* Make the header draggable on desktop so the window can still be moved */
+    -webkit-app-region: drag;
+}
+.header * { -webkit-app-region: no-drag; }
+
+/* ── Brand ────────────────────────────────────────────────────────────────── */
+.brand {
+    font-weight: bold;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.brand img { height: 28px; width: auto; }
+
+/* ── Header Right ─────────────────────────────────────────────────────────── */
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* ── Balance ──────────────────────────────────────────────────────────────── */
+.balance {
+    color: var(--color-success);
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+/* ── Container ────────────────────────────────────────────────────────────── */
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px 16px;
+}
+
+/* ── Card ─────────────────────────────────────────────────────────────────── */
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 20px;
+    margin-bottom: 16px;
+}
+
+/* ── Badge ────────────────────────────────────────────────────────────────── */
+.badge {
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-card-2);
+    margin-left: 6px;
+    white-space: nowrap;
+}
+
+/* ── Button base ──────────────────────────────────────────────────────────── */
+.btn {
+    border: none;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+}
+
+.btn-blue, .btn-orange, .btn-red, .btn-gold, .btn-green, .btn-gray {
+    border: none;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+}
+.btn-blue   { background: var(--accent);        color: var(--text-on-accent); }
+.btn-orange { background: var(--accent-2);      color: var(--text-on-accent); }
+.btn-red    { background: var(--color-danger);  color: var(--text-on-danger); }
+.btn-gold   { background: var(--color-gold);    color: var(--text-on-danger); }
+.btn-green  { background: var(--color-success); color: var(--text-on-danger); }
+.btn-gray   { background: var(--bg-card-2);     color: var(--text-secondary); }
+
+/* ── Form inputs ──────────────────────────────────────────────────────────── */
+input, select {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 6px;
+    font-size: 0.9rem;
+    font-family: var(--font-body);
+}
+input:focus, select:focus {
+    outline: 1px solid var(--border-focus);
+    border-color: var(--border-focus);
+}
+
+/* ── Progress bar ─────────────────────────────────────────────────────────── */
+.progress {
+    background: var(--bg-page);
+    height: 8px;
+    margin-top: 8px;
+}
+.progress-bar {
+    background: var(--accent);
+    height: 100%;
+}
+
+/* ── Bottom ticker ────────────────────────────────────────────────────────── */
+.ticker {
+    position: fixed;
+    bottom: env(safe-area-inset-bottom, 0px);
+    left: 0;
+    right: 0;
+    background: var(--bg-ticker);
+    border-top: 1px solid var(--border-subtle);
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    height: 34px;
+    z-index: var(--z-ticker);
+}
+.ticker-controls {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    flex-shrink: 0;
+    padding-right: 8px;
+    margin-right: 8px;
+    border-right: 1px solid var(--border-subtle);
+}
+.ticker-btn {
+    background: var(--bg-card-2);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    border-radius: var(--radius-sm);
+    padding: 2px 5px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    font-family: var(--font-body);
+    line-height: 1.5;
+    user-select: none;
+}
+.ticker-btn:hover {
+    background: var(--border-subtle);
+    color: var(--text-bright);
+}
+.ticker-btn.active {
+    background: #1d4ed8;
+    border-color: #3b82f6;
+    color: var(--text-bright);
+}
+#tkViewport {
+    overflow: hidden;
+    flex: 1;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+/* ── Animations ───────────────────────────────────────────────────────────── */
+@keyframes lien-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.6; }
+}
+@keyframes gs-scroll-title {
+    0%,  15% { transform: translateX(0); }
+    85%, 100% { transform: translateX(var(--gs-se, 0px)); }
+}
+.lien-critical {
+    animation: lien-pulse var(--dur-slow) ease-in-out infinite;
+}
+
+/* ── Responsive utilities ─────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+    body       { font-size: 15px; }
+    .container { padding: 12px 10px; }
+    .card      { padding: 14px; }
+    input, select { font-size: 16px; }
+
+    /* Stack all common multi-column grid patterns on mobile */
+    div[style*="display: grid"][style*="1fr 1fr"],
+    div[style*="display: grid"][style*="2fr 1fr"],
+    div[style*="display: grid"][style*="1fr 2fr"],
+    div[style*="display: grid"][style*="3fr 1fr"],
+    div[style*="display: grid"][style*="1fr 3fr"],
+    div[style*="display: grid"][style*="repeat(2,"],
+    div[style*="display: grid"][style*="repeat(3,"],
+    div[style*="display: grid"][style*="repeat(4,"],
+    div[style*="display: grid"][style*="repeat(5,"],
+    div[style*="display: grid"][style*="repeat(2, "],
+    div[style*="display: grid"][style*="repeat(3, "],
+    div[style*="display: grid"][style*="repeat(4, "],
+    div[style*="display: grid"][style*="repeat(5, "] {
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    /* Tables: horizontal scroll instead of breaking layout */
+    table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    /* Stack forms vertically */
+    form[style*="grid-template-columns"] {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+
+    /* Wrap filter tabs */
+    div[style*="overflow-x: auto"][style*="white-space: nowrap"] {
+        white-space: normal !important;
+        overflow-x: visible !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+
+    /* Make tab links inline-block for wrapping */
+    div[style*="overflow-x: auto"] a {
+        display: inline-block;
+        margin-right: 0 !important;
+        padding: 6px 10px !important;
+        background: var(--bg-card-2) !important;
+        border-radius: var(--radius-sm) !important;
+    }
+}
+
+@media (max-width: 480px) {
+    body       { font-size: 14px; }
+    .container { padding: 10px 8px; }
+    .card      { padding: 10px; }
+}
