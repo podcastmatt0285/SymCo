@@ -1,0 +1,16 @@
+/*
+ * Wadsworth Module Override: Executive Dashboard
+ * Loaded ONLY on /executives/* pages (by executive_ux.py's shell), after the player's skin.
+ * Overrides accent from cyan to purple — the executive suite is intentionally
+ * distinct to signal prestige/power.
+ *
+ * Skin authors: you do NOT need to account for this file.
+ */
+
+:root {
+  --accent:      #c084fc;               /* executive purple                     */
+  --accent-dim:  #a855f7;
+  --accent-bg:   rgba(192,132,252,0.08);
+  --border-focus:#c084fc;
+  --shadow-glow: 0 8px 25px rgba(192,132,252,0.15);
+}

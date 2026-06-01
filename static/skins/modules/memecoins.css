@@ -1,0 +1,16 @@
+/*
+ * Wadsworth Module Override: Meme Coins Market
+ * Loaded ONLY on /memecoins/* pages, after the player's skin.
+ * Overrides accent from cyan to orange — meme coin pages use a warmer,
+ * chaotic-energy palette matching the speculative nature of meme assets.
+ *
+ * Skin authors: you do NOT need to account for this file.
+ */
+
+:root {
+  --accent:      #f59e0b;               /* meme orange                          */
+  --accent-dim:  #d97706;
+  --accent-bg:   rgba(245,158,11,0.08);
+  --border-focus:#f59e0b;
+  --shadow-glow: 0 8px 25px rgba(245,158,11,0.15);
+}
