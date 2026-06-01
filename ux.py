@@ -3270,6 +3270,8 @@ def gov_force_grants(session_token: Optional[str] = Cookie(None)):
         from admins import is_admin as _ia
         if not _ia(player.id):
             return _RR("/admin?error=Admin+only", status_code=303)
+        from auth import ensure_government_account
+        ensure_government_account()
         from cities import process_government_grants
         from urllib.parse import quote_plus
         result = process_government_grants(_read_current_tick())
@@ -3294,6 +3296,8 @@ def gov_force_bond_invest(session_token: Optional[str] = Cookie(None)):
         from admins import is_admin as _ia
         if not _ia(player.id):
             return _RR("/admin?error=Admin+only", status_code=303)
+        from auth import ensure_government_account
+        ensure_government_account()
         from cities import tick_government_bond_investing
         from urllib.parse import quote_plus
         result = tick_government_bond_investing(_read_current_tick(), force=True)
@@ -3321,6 +3325,8 @@ def gov_force_charter_fees(session_token: Optional[str] = Cookie(None)):
         from admins import is_admin as _ia
         if not _ia(player.id):
             return _RR("/admin?error=Admin+only", status_code=303)
+        from auth import ensure_government_account
+        ensure_government_account()
         from cities import tick_city_bank_charter_fees
         from urllib.parse import quote_plus
         result = tick_city_bank_charter_fees(_read_current_tick())

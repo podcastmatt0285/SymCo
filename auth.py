@@ -1421,7 +1421,47 @@ def initialize():
     Base.metadata.create_all(bind=engine)
     migrate_player_table()
     migrate_ip_tables()
+    ensure_government_account()
     print("[Auth] Module initialized")
+
+
+def ensure_government_account():
+    """Ensure the federal government Player row (id=0) exists.
+
+    The government's money lives in PlayerCurrencyBalance(player_id=0) — but
+    many subsystems (cities, counties, districts, banks) look up the ORM Player
+    row via ``Player.id == 0`` and silently skip when it's missing. Notably the
+    admin "Government Fiscal Controls" return "Government account not found"
+    when the row is absent. Creating an idempotent placeholder row fixes them
+    all at once without touching the balance (which is a property over
+    PlayerCurrencyBalance and is therefore unaffected).
+    """
+    db = get_db()
+    try:
+        gov = db.query(Player).filter(Player.id == 0).first()
+        if gov:
+            return gov
+        # An account may already occupy the reserved name from a prior partial
+        # run — reuse it rather than colliding on the unique business_name.
+        existing = db.query(Player).filter(Player.business_name == "Federal Government").first()
+        if existing:
+            return existing
+        gov = Player(
+            id=0,
+            business_name="Federal Government",
+            password_hash=hash_password("!government-no-login!"),
+            is_npc=True,
+        )
+        db.add(gov)
+        db.commit()
+        print("[Auth] Created federal government account (id=0)")
+        return gov
+    except Exception as e:
+        db.rollback()
+        print(f"[Auth] ensure_government_account error: {e}")
+        return None
+    finally:
+        db.close()
 
 def tick(current_tick: int, now):
     """Clean up expired sessions every 5 minutes."""
