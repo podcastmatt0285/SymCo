@@ -2861,13 +2861,16 @@ def tick_government_bond_investing(current_tick: int, force: bool = False):
         rb_db.close()
 
 
-def tick_government_bond_liquidation(current_tick: int):
+def tick_government_bond_liquidation(current_tick: int, force: bool = False):
     """
     Sell the nearest-to-maturity USD bond when government cash falls below
     GOV_BOND_SELL_THRESHOLD.  Runs every GOV_BOND_SELL_INTERVAL_TICKS ticks.
     Proceeds are credited directly to government cash_balance.
+
+    force=True bypasses the tick-interval gate and the cash threshold check,
+    used by the admin "Force Bond Liquidation" control.
     """
-    if current_tick % GOV_BOND_SELL_INTERVAL_TICKS != 0:
+    if not force and current_tick % GOV_BOND_SELL_INTERVAL_TICKS != 0:
         return
 
     from auth import Player, get_db as get_auth_db
@@ -2877,8 +2880,10 @@ def tick_government_bond_liquidation(current_tick: int):
     rb_db   = get_rb_db()
     try:
         government = auth_db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
-        if not government or government.cash_balance >= GOV_BOND_SELL_THRESHOLD:
-            return
+        if not government:
+            return {"proceeds": 0.0, "message": "Government account not found."}
+        if not force and government.cash_balance >= GOV_BOND_SELL_THRESHOLD:
+            return {"proceeds": 0.0, "message": "Treasury above threshold — no liquidation needed."}
 
         # Find the nearest-to-maturity active USD bond held by the government
         bond = (
@@ -2893,11 +2898,11 @@ def tick_government_bond_liquidation(current_tick: int):
             .first()
         )
         if not bond:
-            return
+            return {"proceeds": 0.0, "message": "No active USD bonds held — nothing to liquidate."}
 
         bank = rb_db.query(StateReserveBank).filter(StateReserveBank.id == bond.bank_id).first()
         if not bank:
-            return
+            return {"proceeds": 0.0, "message": "Bond's reserve bank not found."}
         proceeds = bond.face_value_wsc + (bond.interest_accrued or 0.0)
 
         # Mark bond sold and update bank holdings
@@ -2919,14 +2924,17 @@ def tick_government_bond_liquidation(current_tick: int):
             from govt_ledger import log_gov_event
             log_gov_event("bond_sale", "in", proceeds, "USD",
                           "USD Reserve Bank",
-                          f"Early liquidation — treasury cash below ${GOV_BOND_SELL_THRESHOLD:,.0f}")
+                          f"{'Forced admin liquidation' if force else 'Early liquidation'} — "
+                          f"${bond.face_value_wsc:,.2f} face + ${bond.interest_accrued or 0:.2f} interest")
         except Exception:
             pass
+        return {"proceeds": proceeds, "face_value": bond.face_value_wsc, "interest": bond.interest_accrued or 0.0}
 
     except Exception as e:
         auth_db.rollback()
         rb_db.rollback()
         print(f"[Cities] Gov bond liquidation error: {e}")
+        return {"proceeds": 0.0, "message": f"Error: {e}"}
     finally:
         auth_db.close()
         rb_db.close()

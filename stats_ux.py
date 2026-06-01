@@ -5491,6 +5491,54 @@ async def wiki_production_costs_redirect(session_token: Optional[str] = Cookie(N
 # ── WikiWads: in-game encyclopedia ───────────────────────────────────────────
 _WIKIWADS_ARTICLES = [
     {
+        "slug": "federal-government",
+        "title": "Federal Government",
+        "icon": "🏛️",
+        "keywords": ["federal government", "government", "treasury", "fiscal", "federal treasury", "government dashboard",
+                     "city grants", "city bank", "charter fee", "government loan", "petrodollar"],
+        "summary": "The Wadsworth Federal Government is an autonomous player (ID 0) that collects taxes, distributes grants, issues bonds, and loans to city banks.",
+        "sections": [
+            ("Overview", """The Federal Government of Wadsworth is a special system account (player ID 0) that acts as
+the fiscal backbone of the entire economy. It collects revenue from taxes and fees across
+all player activity, holds a diversified treasury, and redistributes money back through city
+grants, emergency loans, and bond investments."""),
+            ("Revenue Sources", """
+<table style="width:100%;border-collapse:collapse;font-size:0.83rem;">
+<tr style="border-bottom:1px solid #1d2f55;"><th style="text-align:left;padding:6px 8px;color:#f5a855;">Revenue Type</th><th style="text-align:left;padding:6px 8px;color:#f5a855;">Rate / Frequency</th></tr>
+<tr style="border-bottom:1px solid #0f1a30;"><td style="padding:6px 8px;color:#86efac;">Executive wages</td><td style="padding:6px 8px;color:#607098;">100% of salary deducted from players, credited to treasury each tick</td></tr>
+<tr style="border-bottom:1px solid #0f1a30;"><td style="padding:6px 8px;color:#86efac;">Business startup fee</td><td style="padding:6px 8px;color:#607098;">One-time fee per business built</td></tr>
+<tr style="border-bottom:1px solid #0f1a30;"><td style="padding:6px 8px;color:#86efac;">Executive hiring &amp; school fee</td><td style="padding:6px 8px;color:#607098;">Paid when hiring or sending executives to training</td></tr>
+<tr style="border-bottom:1px solid #0f1a30;"><td style="padding:6px 8px;color:#86efac;">Federal sales tax</td><td style="padding:6px 8px;color:#607098;">% of each stock/IPO/district market trade</td></tr>
+<tr style="border-bottom:1px solid #0f1a30;"><td style="padding:6px 8px;color:#86efac;">Bond interest tax (withhold)</td><td style="padding:6px 8px;color:#607098;">15% of bond interest accrued on all player bonds, hourly</td></tr>
+<tr style="border-bottom:1px solid #0f1a30;"><td style="padding:6px 8px;color:#86efac;">Reserve balance tax</td><td style="padding:6px 8px;color:#607098;">0.1% daily on reserve bank balances</td></tr>
+<tr style="border-bottom:1px solid #0f1a30;"><td style="padding:6px 8px;color:#86efac;">Land hoarding tax</td><td style="padding:6px 8px;color:#607098;">Progressive tax on large undeveloped landholdings</td></tr>
+<tr style="border-bottom:1px solid #0f1a30;"><td style="padding:6px 8px;color:#86efac;">District tax</td><td style="padding:6px 8px;color:#607098;">Monthly tax on district-owned land, collected automatically</td></tr>
+<tr style="border-bottom:1px solid #0f1a30;"><td style="padding:6px 8px;color:#86efac;">City bank charter fee</td><td style="padding:6px 8px;color:#607098;">$5,000 charged to each city bank every 30 days</td></tr>
+<tr style="border-bottom:1px solid #0f1a30;"><td style="padding:6px 8px;color:#86efac;">Petrodollar customs (50%)</td><td style="padding:6px 8px;color:#607098;">Half of customs fees on international commodity flows</td></tr>
+<tr style="border-bottom:1px solid #0f1a30;"><td style="padding:6px 8px;color:#86efac;">Land restoration fee</td><td style="padding:6px 8px;color:#607098;">Charged when restoring degraded land plots</td></tr>
+<tr><td style="padding:6px 8px;color:#86efac;">City bank loan repayments</td><td style="padding:6px 8px;color:#607098;">Installment repayments (principal + 7% per installment × 30) from insolvent banks</td></tr>
+</table>"""),
+            ("Government Outlays", """<b style="color:#dde8ff;">City Grants</b> — Every 12 hours, 2% of the federal treasury is divided equally among
+all city banks as operating grants. This funds city development, infrastructure projects,
+and interest payments to depositors.<br><br>
+<b style="color:#dde8ff;">Emergency Loans</b> — When a city bank becomes insolvent, the government automatically
+issues an emergency loan to keep the bank solvent. Loans bear 7% interest per installment
+(30 installments), repaid each tick automatically.<br><br>
+<b style="color:#dde8ff;">Bond Investment</b> — When the treasury exceeds its investment threshold, surplus cash is
+automatically invested in the highest-yield reserve bank bond available. This prevents
+cash from sitting idle and supports reserve bank liquidity."""),
+            ("Federal Treasury Dashboard", """Any player can view the full fiscal transparency dashboard at
+<a href="/government" style="color:#90c4f0;">/government</a>. It shows the complete treasury balance across all
+currencies, the active bond portfolio, land holdings, equity positions, outstanding city loans,
+active land auctions, all cities and counties with their fiscal data, and a 75-event ledger
+of recent government fiscal activity."""),
+            ("Multi-Currency Treasury", """The government holds balances in every reserve bank currency (from bond interest
+withholding and reserve balance taxes). These foreign balances are swept back to USD
+automatically during the bond investment tick. The government never holds negative balances
+in any currency."""),
+        ],
+    },
+    {
         "slug": "income-categories",
         "title": "Income Categories",
         "icon": "💰",

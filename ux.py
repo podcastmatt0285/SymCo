@@ -2411,20 +2411,9 @@ def government_dashboard(
     from datetime import datetime as _dt
 
     # ── 1. Government balances ────────────────────────────────────────────────
-    # auth DB cash_balance: funded by loan repayments, petrodollar customs (50%),
-    #                       bond interest sweeps from reserve_banks DB
-    # reserve_banks PlayerCurrencyBalance["USD"]: funded by credit_usd calls
-    # Both are government money — we show them separately and sum for total treasury
-    gov_auth_cash = 0.0
-    try:
-        from auth import get_db as _adb, Player as _Player
-        _db = _adb()
-        _gov = _db.query(_Player).filter(_Player.id == 0).first()
-        gov_auth_cash = float(_gov.cash_balance or 0) if _gov else 0.0
-        _db.close()
-    except Exception:
-        pass
-
+    # All government money lives in PlayerCurrencyBalance(player_id=0) in the
+    # reserve_banks DB. Player.cash_balance is a property backed by that same
+    # table — so we query reserve_banks directly to avoid double-counting.
     gov_usd_reserve = 0.0
     gov_currencies = []
     try:
@@ -2456,7 +2445,7 @@ def government_dashboard(
     except Exception:
         pass
 
-    gov_treasury = gov_auth_cash + gov_usd_reserve
+    gov_treasury = gov_usd_reserve
     total_foreign_usd = sum(c["usd_value"] for c in gov_currencies if c["code"] != "USD")
 
     # ── 2. Bond portfolio ─────────────────────────────────────────────────────
@@ -2783,7 +2772,7 @@ def government_dashboard(
 
     kpis = f"""<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin-bottom:28px;">
         {_kpi("TREASURY (USD)", _usd(gov_treasury),
-              "Petrodollar customs · loan repayments · bond interest", "#e2e8f0")}
+              "Taxes · fees · customs · loan repayments · bond interest", "#e2e8f0")}
         {_kpi("FOREIGN CURRENCIES", _usd(total_foreign_usd),
               f"{len([c for c in gov_currencies if c['code'] != 'USD'])} foreign currencies held", "#38bdf8")}
         {_kpi("BOND PORTFOLIO", _usd(total_bond_face),
@@ -3341,6 +3330,31 @@ def gov_force_charter_fees(session_token: Optional[str] = Cookie(None)):
         from urllib.parse import quote_plus
         return _RR(f"/admin?error={quote_plus(str(e)[:120])}", status_code=303)
 
+
+@router.post("/api/gov/force-bond-liquidate")
+def gov_force_bond_liquidate(session_token: Optional[str] = Cookie(None)):
+    from fastapi.responses import RedirectResponse as _RR
+    player = require_auth(session_token)
+    if isinstance(player, _RR): return player
+    try:
+        from admins import is_admin as _ia
+        if not _ia(player.id):
+            return _RR("/admin?error=Admin+only", status_code=303)
+        from auth import ensure_government_account
+        ensure_government_account()
+        from cities import tick_government_bond_liquidation
+        from urllib.parse import quote_plus
+        result = tick_government_bond_liquidation(0, force=True)
+        if isinstance(result, dict) and result.get("proceeds"):
+            msg = f"Bond liquidated: ${result['proceeds']:,.0f} credited to federal treasury."
+        elif isinstance(result, dict):
+            msg = result.get("message", "Nothing to liquidate — treasury above threshold or no USD bonds held.")
+        else:
+            msg = "Bond liquidation tick completed."
+        return _RR(f"/admin?success={quote_plus(msg)}", status_code=303)
+    except Exception as e:
+        from urllib.parse import quote_plus
+        return _RR(f"/admin?error={quote_plus(str(e)[:120])}", status_code=303)
 
 
 @router.post("/api/estate/buy-gov-listing")

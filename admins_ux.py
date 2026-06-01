@@ -534,6 +534,20 @@ def admin_dashboard(
     except Exception:
         pass
 
+    # Government treasury — quick fetch for the fiscal controls panel
+    _gov_treasury_usd = 0.0
+    _gov_bond_count   = 0
+    try:
+        from reserve_banks import get_usd_balance as _gub, get_db as _rdb, ReserveBankBond as _RBB
+        _gov_treasury_usd = _gub(0)
+        _rb_db = _rdb()
+        _gov_bond_count = _rb_db.query(_RBB).filter(
+            _RBB.holder_player_id == 0, _RBB.status == "active"
+        ).count()
+        _rb_db.close()
+    except Exception:
+        pass
+
     body = f"""
     {_flash(msg=success, err=error)}
     <div class="stat-grid">
@@ -575,14 +589,25 @@ def admin_dashboard(
     </div>
 
     <div class="card" style="margin-bottom:12px;">
-        <h3 style="font-size:0.78rem;color:#ef4444;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Government Fiscal Controls</h3>
-        <p style="color:#94a3b8;font-size:0.75rem;margin:0 0 12px 0;">Force-trigger government fiscal tick functions. These run automatically on schedule — use only to test or manually trigger outside of the game tick.</p>
+        <h3 style="font-size:0.78rem;color:#ef4444;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Government Fiscal Controls</h3>
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:10px;flex-wrap:wrap;">
+            <span style="color:#64748b;font-size:0.75rem;">Force-trigger fiscal tick functions — run automatically on schedule.</span>
+            <span style="margin-left:auto;display:flex;align-items:center;gap:10px;">
+                <span style="font-size:0.72rem;color:#64748b;">Treasury:</span>
+                <span style="font-size:0.88rem;font-weight:700;color:#e2e8f0;">{fmt_usd(_gov_treasury_usd, disp)}</span>
+                <span style="font-size:0.72rem;color:#64748b;">{_gov_bond_count} active bond{'s' if _gov_bond_count != 1 else ''}</span>
+                <a href="/government" style="font-size:0.72rem;color:#38bdf8;text-decoration:none;">Full dashboard →</a>
+            </span>
+        </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
             <form method="post" action="/api/gov/force-grants">
                 <button type="submit" style="background:#7f1d1d;border:1px solid #ef4444;color:#fca5a5;border-radius:6px;padding:8px 18px;cursor:pointer;font-size:0.82rem;font-weight:600;">⚡ Force City Grants</button>
             </form>
             <form method="post" action="/api/gov/force-bond-invest">
                 <button type="submit" style="background:#1e1b4b;border:1px solid #818cf8;color:#a5b4fc;border-radius:6px;padding:8px 18px;cursor:pointer;font-size:0.82rem;font-weight:600;">📈 Force Bond Investment</button>
+            </form>
+            <form method="post" action="/api/gov/force-bond-liquidate">
+                <button type="submit" style="background:#1a2535;border:1px solid #0ea5e9;color:#7dd3fc;border-radius:6px;padding:8px 18px;cursor:pointer;font-size:0.82rem;font-weight:600;">💸 Force Bond Liquidation</button>
             </form>
             <form method="post" action="/api/gov/force-charter-fees">
                 <button type="submit" style="background:#1c1917;border:1px solid #d97706;color:#fcd34d;border-radius:6px;padding:8px 18px;cursor:pointer;font-size:0.82rem;font-weight:600;">🏦 Force Charter Fees</button>
