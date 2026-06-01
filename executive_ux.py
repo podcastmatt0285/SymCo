@@ -13,6 +13,7 @@ from typing import Optional
 from fastapi import APIRouter, Cookie, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 from ux import _nav_loader_html as _nav_loader
+from skin_utils import skin_links as _skin_links
 
 router = APIRouter()
 
@@ -366,6 +367,7 @@ def exec_shell(title: str, body: str, player=None) -> str:
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Wadsworth — {title}</title>
+        {_skin_links(player_id, "executive")}
     {EXEC_STYLES}
     {FILTER_JS}
 </head><body>

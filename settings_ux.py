@@ -20,6 +20,7 @@ _TABS = [
     ("tutorials",     "📖 Tutorials"),
     ("notifications", "🔔 Notifications"),
     ("widgets",       "📱 Widgets"),
+    ("skins",         "🎨 Skins"),
     ("account",       "👤 Account"),
 ]
 
@@ -2781,6 +2782,109 @@ def _widgets_tab(player) -> str:
 """
 
 
+def _skins_tab(player) -> str:
+    import glob, re
+    from skin_utils import is_pro as _is_pro
+
+    is_pro_user = _is_pro(player)
+    current_skin = getattr(player, "skin", "default") or "default"
+
+    skin_files = sorted(glob.glob("static/skins/*.css"))
+    skins = []
+    for path in skin_files:
+        fname = os.path.basename(path)
+        if fname == "wadsworth-base.css":
+            continue
+        key = fname[:-4]
+        name = key.replace("-", " ").replace("_", " ").title()
+        description = ""
+        tier = "free"
+        try:
+            with open(path, encoding="utf-8") as f:
+                header = f.read(1500)
+            m = re.search(r"Wadsworth Skin:\s*(.+)", header)
+            if m:
+                name = m.group(1).strip()
+            m = re.search(r"Description:\s*(.+?)(?:\n|\*)", header, re.DOTALL)
+            if m:
+                description = re.sub(r"\s+", " ", m.group(1)).strip().rstrip("*").strip()
+            m = re.search(r"Tier:\s*(\w+)", header)
+            if m:
+                tier = m.group(1).strip().lower()
+        except Exception:
+            pass
+        skins.append((key, name, description, tier))
+
+    cards = ""
+    for key, name, description, tier in skins:
+        is_current = key == current_skin
+        locked = tier == "pro" and not is_pro_user
+
+        border = "#818cf8" if is_current else "#1e293b"
+        pro_badge = ('<span style="font-size:0.6rem;background:#818cf8;color:#fff;'
+                     'padding:1px 6px;border-radius:8px;font-weight:700;margin-left:6px;">PRO</span>'
+                     if tier == "pro" else "")
+
+        if is_current:
+            btn = '<button disabled style="width:100%;padding:8px;background:#818cf8;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:default;">✓ Active</button>'
+        elif locked:
+            btn = '<button disabled style="width:100%;padding:8px;background:#1e293b;color:#64748b;border:1px solid #2d3748;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:not-allowed;">🔒 Pro Only</button>'
+        else:
+            btn = (f'<button onclick="saveSkin(\'{key}\', this)" '
+                   f'style="width:100%;padding:8px;background:#1e293b;color:#38bdf8;border:1px solid #38bdf8;'
+                   f'border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;transition:background 0.15s;">Apply</button>')
+
+        cards += f"""
+        <div style="background:#1a1d2e;border:2px solid {border};border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;align-items:center;gap:6px;">
+                <span style="font-size:0.9rem;font-weight:700;color:#e2e8f0;">{name}</span>
+                {pro_badge}
+            </div>
+            <p style="font-size:0.78rem;color:#64748b;margin:0;min-height:36px;">{description or "No description."}</p>
+            {btn}
+        </div>"""
+
+    if not skins:
+        cards = '<p style="color:#64748b;">No skins available.</p>'
+
+    pro_notice = ""
+    if not is_pro_user:
+        pro_notice = """
+        <div style="background:#1e293b;border:1px solid #818cf8;border-radius:8px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;gap:12px;">
+            <span style="font-size:1.3rem;">🌟</span>
+            <div>
+                <strong style="color:#818cf8;font-size:0.85rem;">Wadsworth Pro</strong>
+                <p style="color:#64748b;font-size:0.78rem;margin:2px 0 0;">Subscribe via the Android app to unlock Pro skins and other exclusive features.</p>
+            </div>
+        </div>"""
+
+    return f"""
+<div style="max-width:700px;">
+    <h3 style="margin:0 0 4px;color:#94a3b8;">Skins</h3>
+    <p style="color:#64748b;font-size:0.82rem;margin:0 0 18px;">Choose a visual theme. Your selection is saved to your account and applies on all devices.</p>
+    {pro_notice}
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;">
+        {cards}
+    </div>
+</div>
+<script>
+function saveSkin(key, btn) {{
+    var orig = btn.textContent;
+    btn.textContent = '…';
+    btn.disabled = true;
+    fetch('/api/settings/skin', {{
+        method: 'POST',
+        headers: {{'Content-Type': 'application/x-www-form-urlencoded'}},
+        body: 'skin=' + encodeURIComponent(key)
+    }}).then(function(r) {{ return r.json(); }}).then(function(d) {{
+        if (d.ok) {{ location.reload(); }}
+        else {{ btn.textContent = d.error || 'Error'; btn.disabled = false; }}
+    }}).catch(function() {{ btn.textContent = orig; btn.disabled = false; }});
+}}
+</script>
+"""
+
+
 def _account_tab(player) -> str:
     try:
         from corporate_actions import is_player_bankrupt
@@ -2853,6 +2957,48 @@ def _account_tab(player) -> str:
 """
 
 
+@router.post("/api/settings/skin")
+def api_save_skin(
+    session_token: Optional[str] = Cookie(None),
+    skin: str = Form(...),
+):
+    import auth as _auth, glob, re
+    from skin_utils import is_pro as _is_pro
+    player = _require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return JSONResponse({"ok": False, "error": "Not authenticated"}, status_code=403)
+    valid = {}
+    for path in glob.glob("static/skins/*.css"):
+        fname = os.path.basename(path)
+        if fname == "wadsworth-base.css":
+            continue
+        key = fname[:-4]
+        tier = "free"
+        try:
+            with open(path, encoding="utf-8") as f:
+                header = f.read(500)
+            m = re.search(r"Tier:\s*(\w+)", header)
+            if m:
+                tier = m.group(1).strip().lower()
+        except Exception:
+            pass
+        valid[key] = tier
+    if skin not in valid:
+        return JSONResponse({"ok": False, "error": "Unknown skin"})
+    if valid[skin] == "pro" and not _is_pro(player):
+        return JSONResponse({"ok": False, "error": "Pro subscription required"})
+    try:
+        db = _auth.get_db()
+        p = db.query(_auth.Player).filter(_auth.Player.id == player.id).first()
+        if p:
+            p.skin = skin
+            db.commit()
+        db.close()
+        return JSONResponse({"ok": True})
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)})
+
+
 @router.get("/settings", response_class=HTMLResponse)
 def settings_page(
     session_token: Optional[str] = Cookie(None),
@@ -2876,6 +3022,8 @@ def settings_page(
         content = _notifications_tab(player, from_tutorial=bool(from_tutorial))
     elif tab == "widgets":
         content = _widgets_tab(player)
+    elif tab == "skins":
+        content = _skins_tab(player)
     elif tab == "account":
         content = _account_tab(player)
     else:

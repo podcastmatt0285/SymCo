@@ -11,6 +11,7 @@ Features:
 
 from typing import Optional
 from datetime import datetime
+from skin_utils import skin_links as _skin_links
 
 from fastapi import APIRouter, Cookie, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
@@ -29,7 +30,7 @@ router = APIRouter()
 # SHELL
 # ==========================
 
-def mod_shell(title: str, body: str, player_name: str = "", active_nav: str = "/mod") -> str:
+def mod_shell(title: str, body: str, player_name: str = "", active_nav: str = "/mod", player_id: int = None) -> str:
     nav_items = [
         ("/mod", "Overview"),
         ("/mod/players", "Players"),
@@ -46,6 +47,7 @@ def mod_shell(title: str, body: str, player_name: str = "", active_nav: str = "/
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{title} – Mod Dashboard</title>
+        {_skin_links(player_id, "mod")}
 <style>
   *{{box-sizing:border-box;margin:0;padding:0}}
   body{{background:#0f1117;color:#e2e8f0;font-family:'Inter',sans-serif;min-height:100vh}}

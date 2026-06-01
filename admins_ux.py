@@ -16,6 +16,7 @@ import json
 import re
 import os
 from typing import Optional
+from skin_utils import skin_links as _skin_links
 from datetime import datetime
 
 from fastapi import APIRouter, Cookie, File, Form, Query, UploadFile
@@ -70,7 +71,7 @@ router = APIRouter()
 # SHELL
 # ==========================
 
-def admin_shell(title: str, body: str, player_name: str = "", active_nav: str = "/admin") -> str:
+def admin_shell(title: str, body: str, player_name: str = "", active_nav: str = "/admin", player_id: int = None) -> str:
     """Admin dashboard shell - mobile-first dark theme with red accent."""
     nav_items = [
         ("/admin", "Home"),
@@ -102,6 +103,7 @@ def admin_shell(title: str, body: str, player_name: str = "", active_nav: str = 
     <head>
         <title>{title} - Admin</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+        {_skin_links(player_id, "admin")}
         <style>
             * {{ box-sizing: border-box; margin: 0; padding: 0; }}
             body {{

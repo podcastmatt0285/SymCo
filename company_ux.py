@@ -47,7 +47,10 @@ def initialize():
 
 # ── Shared CSS / helpers ──────────────────────────────────────────────────────
 
-_LEATHER_HEAD = """<!DOCTYPE html>
+from skin_utils import skin_links as _skin_links
+
+def _leather_head(player_id: int = None) -> str:
+    return """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -57,6 +60,7 @@ _LEATHER_HEAD = """<!DOCTYPE html>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&display=swap" rel="stylesheet">
+""" + _skin_links(player_id) + """
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -344,7 +348,7 @@ def _page(title, subtitle, back_href, back_label, active_nav, body_html):
     for href, label in pages:
         cls = "nav-pill active" if href == active_nav else "nav-pill"
         nav += f'<a href="{href}" class="{cls}">{label}</a>'
-    return f"""{_LEATHER_HEAD}
+    return f"""{_leather_head(None)}
 <title>{title} — Wadsworth</title>
 </head>
 <body>

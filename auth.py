@@ -62,6 +62,11 @@ class Player(Base):
     notif_push_annuities    = Column(Boolean, default=True)  # Push: annuity maturity
     # Federal Communications Commission (FCC) licence — NULL = none active; datetime = expiry (UTC)
     cco_rental_expires = Column(DateTime, nullable=True, default=None)
+    # Cosmetic skin (filename without .css extension; must exist in static/skins/)
+    skin       = Column(String(64), default="default", nullable=False)
+    # Wadsworth Pro subscriber — set by server after Google Play purchaseToken is verified.
+    # Admins are always treated as Pro regardless of this flag (checked via admins.is_admin).
+    subscriber = Column(Boolean, default=False, nullable=False)
 
     @property
     def cash_balance(self) -> float:
@@ -196,6 +201,8 @@ def migrate_player_table():
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS notif_push_govt      BOOLEAN DEFAULT TRUE",
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS notif_push_annuities BOOLEAN DEFAULT TRUE",
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS cco_rental_expires TIMESTAMP",
+        "ALTER TABLE players ADD COLUMN IF NOT EXISTS skin VARCHAR(64) DEFAULT 'default'",
+        "ALTER TABLE players ADD COLUMN IF NOT EXISTS subscriber BOOLEAN DEFAULT FALSE",
     ])
 
 
@@ -631,6 +638,8 @@ def login_page(session_token: Optional[str] = Cookie(None)):
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Wadsworth">
     <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+        <link rel="stylesheet" href="/static/skins/wadsworth-base.css?v=1">
+        <link rel="stylesheet" href="/static/skins/default.css?v=1">
     <style>
         * {
             margin: 0;

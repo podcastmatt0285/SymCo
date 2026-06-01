@@ -17,6 +17,7 @@ from fastapi import APIRouter, Cookie, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from typing import Optional
 from ux import _nav_loader_html as _nav_loader
+from skin_utils import skin_links as _skin_links
 
 from auth import get_player_from_session, get_db as get_auth_db
 from reserve_banks import (
@@ -115,11 +116,12 @@ def _auth(session_token):
     return p
 
 
-def _page(title: str, body: str) -> str:
+def _page(title: str, body: str, player_id: int = None) -> str:
     return f"""<!DOCTYPE html>
 <html><head>
 <title>{title} — Reserve Banks</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+        {_skin_links(player_id)}
 <style>{_CSS}</style>
 </head><body><div class="container">{body}</div>{_nav_loader()}</body></html>"""
 

@@ -3,6 +3,7 @@ corporate_actions_ui.py - HTML UX for Corporate Actions
 """
 
 from fastapi import APIRouter, HTTPException, Cookie, Request
+from skin_utils import skin_links as _skin_links
 from fastapi.responses import HTMLResponse
 from typing import Optional
 
@@ -255,6 +256,7 @@ async def corporate_actions_dashboard(
 <meta charset="utf-8">
 <title>Corporate Actions — Wadsworth</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+{_skin_links(player.id)}
 <style>{_BASE_CSS}</style>
 </head>
 <body>
@@ -1345,6 +1347,7 @@ async def create_buyback_form(company_id: int, session_token: Optional[str] = Co
 <meta charset="utf-8">
 <title>New Buyback — {company.ticker_symbol}</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+{_skin_links(player.id)}
 <style>{_BASE_CSS}
 .fgroup {{ margin-bottom:18px; }}
 .fgroup label {{ display:block;color:#94a3b8;font-size:0.78rem;margin-bottom:5px;font-weight:bold; }}
@@ -1524,6 +1527,7 @@ async def create_split_form(company_id: int, session_token: Optional[str] = Cook
 <meta charset="utf-8">
 <title>New Split Rule — {company.ticker_symbol}</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+{_skin_links(player.id)}
 <style>{_BASE_CSS}
 .fgroup {{ margin-bottom:18px; }}
 .fgroup label {{ display:block;color:#94a3b8;font-size:0.78rem;margin-bottom:5px;font-weight:bold; }}
@@ -1654,6 +1658,7 @@ async def create_offering_form(company_id: int, session_token: Optional[str] = C
 <meta charset="utf-8">
 <title>New Secondary Offering — {company.ticker_symbol}</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+{_skin_links(player.id)}
 <style>{_BASE_CSS}
 .fgroup {{ margin-bottom:18px; }}
 .fgroup label {{ display:block;color:#94a3b8;font-size:0.78rem;margin-bottom:5px;font-weight:bold; }}

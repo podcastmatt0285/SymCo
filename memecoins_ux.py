@@ -21,6 +21,7 @@ from typing import Optional
 from fastapi import APIRouter, Cookie, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from ux import _nav_loader_html as _nav_loader
+from skin_utils import skin_links as _skin_links
 
 router = APIRouter()
 
@@ -381,6 +382,7 @@ async def memecoins_hub(
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Meme Coins — Wadsworth</title>
+    {_skin_links(player.id, "memecoins")}
     {MEME_STYLES}
     <style>
     .sort-tab {{
@@ -538,6 +540,7 @@ async def county_memecoins(
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>{county.name} Meme Coins</title>
+    {_skin_links(player.id, "memecoins")}
     {MEME_STYLES}
 </head>
 <body>
@@ -618,6 +621,7 @@ async def launch_meme_form(
 <head>
     <meta charset="utf-8">
     <title>Launch Meme Coin</title>
+    {_skin_links(player.id, "memecoins")}
     {MEME_STYLES}
 </head>
 <body>
@@ -993,6 +997,7 @@ async def meme_coin_page(
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>{detail["name"]} ({symbol})</title>
+    {_skin_links(player.id, "memecoins")}
     {MEME_STYLES}
 </head>
 <body>
@@ -2365,6 +2370,7 @@ async def wallet_dashboard(
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Wadsworth Crypto Wallet</title>
+    {_skin_links(player.id, "memecoins")}
     {MEME_STYLES}
     {_WALLET_STYLES}
 

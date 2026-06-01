@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Cookie, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 from ux import _nav_loader_html as _nav_loader
+from skin_utils import skin_links as _skin_links
 
 router = APIRouter()
 
@@ -68,6 +69,7 @@ def death_shell(title: str, body: str, balance: float = 0.0, player_name: str = 
 <head>
     <title>{title} - Wadsworth Estate</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+        {_skin_links(player_id)}
     <style>
         * {{ box-sizing: border-box; }}
         body {{

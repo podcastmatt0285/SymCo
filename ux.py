@@ -19,6 +19,7 @@ from datetime import timedelta
 from datetime import datetime
 import json as _json
 import asyncio
+from skin_utils import skin_links as _skin_links
 
 router = APIRouter()
 
@@ -750,6 +751,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
         <!-- Preconnect kept for skin-supplied Google Fonts (skins @import their own families) -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        {_skin_links(player_id)}
         <style>
             * {{ box-sizing: border-box; }}
             body {{

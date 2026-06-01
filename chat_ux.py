@@ -9,6 +9,7 @@ import asyncio
 import base64
 from typing import Optional
 from datetime import datetime
+from skin_utils import skin_links as _skin_links
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Cookie, Form, UploadFile, File, Query
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
@@ -115,6 +116,7 @@ def chat_shell(title: str, body: str, balance: float = 0.0, player_id: int = Non
     <head>
         <title>{title} - Wadsworth</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+        {_skin_links(player_id)}
         <style>
             * {{ box-sizing: border-box; margin: 0; padding: 0; }}
             body {{

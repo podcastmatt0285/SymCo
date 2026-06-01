@@ -13,6 +13,7 @@ A full-featured analytics system providing:
 import json
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict
+from skin_utils import skin_links as _skin_links
 from fastapi import APIRouter, Cookie, Query
 from fastapi.responses import HTMLResponse
 from sqlalchemy import Column, String, Float, DateTime, Integer, Boolean, desc, func, Text
@@ -459,6 +460,7 @@ def stats_shell(title: str, body: str, balance: float = 0.0, player_name: str = 
 <head>
     <title>{title} · Wadsworth Analytics</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+        {_skin_links(player_id)}
     <style>
         * {{ box-sizing: border-box; }}
         body {{

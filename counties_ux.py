@@ -13,6 +13,7 @@ from typing import Optional, List
 from fastapi import APIRouter, Cookie, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 from ux import _nav_loader_html as _nav_loader
+from skin_utils import skin_links as _skin_links
 
 router = APIRouter()
 
@@ -760,6 +761,7 @@ async def counties_dashboard(
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Counties · Wadsworth</title>
+        {_skin_links(player.id)}
         {COUNTY_STYLES}
     </head>
     <body>
@@ -964,6 +966,7 @@ async def view_county(
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{county.name} · Wadsworth</title>
+        {_skin_links(player.id)}
         {COUNTY_STYLES}
     </head>
     <body>
@@ -1071,6 +1074,7 @@ async def petition_new_county_page(session_token: Optional[str] = Cookie(None)):
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Form New County · Wadsworth</title>
+        {_skin_links(player.id)}
         {COUNTY_STYLES}
     </head>
     <body>
@@ -1151,6 +1155,7 @@ async def petition_join_county_page(session_token: Optional[str] = Cookie(None))
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Join County · Wadsworth</title>
+        {_skin_links(player.id)}
         {COUNTY_STYLES}
     </head>
     <body>
@@ -1311,6 +1316,7 @@ async def county_mining_node(
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Mining Node · {county.name} · Wadsworth</title>
+        {_skin_links(player.id)}
         {COUNTY_STYLES}
     </head>
     <body>
@@ -1649,6 +1655,7 @@ async def crypto_exchange(
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Wadsworth Crypto Exchange</title>
+        {_skin_links(player.id)}
         {COUNTY_STYLES}
     </head>
     <body>
@@ -2118,6 +2125,7 @@ async def token_info_page(
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{info["crypto_name"]} ({crypto_symbol}) · Token Info</title>
+        {_skin_links(player.id)}
         {COUNTY_STYLES}
     </head>
     <body>
@@ -2990,6 +2998,7 @@ async def county_governance(
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Governance · {county.name} · Wadsworth</title>
+        {_skin_links(player.id)}
         {COUNTY_STYLES}
     </head>
     <body>

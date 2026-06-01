@@ -9,6 +9,7 @@ from typing import Optional, List
 from fastapi import APIRouter, Cookie, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 from ux import _nav_loader_html as _nav_loader
+from skin_utils import skin_links as _skin_links
 
 router = APIRouter()
 
@@ -401,6 +402,7 @@ async def cities_list(session_token: Optional[str] = Cookie(None), msg: Optional
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Cities · Wadsworth</title>
+        {_skin_links(player.id)}
         {CITY_STYLES}
     </head>
     <body>
@@ -586,6 +588,7 @@ async def view_applicant_profile(city_id: int, applicant_id: int, session_token:
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Applicant: {applicant.business_name} · Wadsworth</title>
+        {_skin_links(player.id)}
         {CITY_STYLES}
     </head>
     <body>
@@ -1576,6 +1579,7 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{city.name} · Wadsworth</title>
+        {_skin_links(player.id)}
         {CITY_STYLES}
     </head>
     <body>
