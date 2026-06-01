@@ -1,16 +1,16 @@
 /*
  * Wadsworth Module Override: Moderator Tools
  * Loaded ONLY on /mod/* pages, after the player's skin.
- * Mod pages use a slightly darker background and purple accent to signal
- * that moderation actions are serious and distinct from regular gameplay.
+ * Mod pages are FULLY skinned (they inherit the player's chosen skin's
+ * backgrounds, text, fonts, etc.) — this override only swaps the accent to
+ * violet so moderators get a subtle visual signal they're in mod context,
+ * without fighting the skin's palette.
  *
  * Skin authors: you do NOT need to account for this file.
  */
 
 :root {
-  --bg-page:     #0f1117;               /* slightly darker than standard        */
-  --bg-card:     #1a1d2e;               /* slightly darker card bg              */
-  --accent:      #7c3aed;               /* moderator purple                     */
+  --accent:      #7c3aed;               /* moderator violet                     */
   --accent-dim:  #5b21b6;
   --accent-bg:   rgba(124,58,237,0.08);
   --border-focus:#7c3aed;

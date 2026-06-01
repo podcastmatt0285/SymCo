@@ -747,9 +747,9 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
         <meta name="msapplication-square150x150logo" content="/static/icons/windows/Square150x150Logo.scale-100.png">
         <meta name="msapplication-wide310x150logo"   content="/static/icons/windows/Wide310x150Logo.scale-100.png">
         <meta name="msapplication-square310x310logo" content="/static/icons/windows/LargeTile.scale-100.png">
+        <!-- Preconnect kept for skin-supplied Google Fonts (skins @import their own families) -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&display=swap" rel="stylesheet">
         <style>
             * {{ box-sizing: border-box; }}
             body {{

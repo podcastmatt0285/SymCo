@@ -31,12 +31,62 @@ The settings picker shows a **human-readable display name** like "Polished Cyber
 not the filename `shine_gloss_cyberpunk2`. The display name is parsed from the `Description:`
 comment in the skin file header. The picker reads this line and capitalises the words.
 
+### Where the picker lives
+The skin picker is the **Skins tab of the Settings dashboard** (`settings_ux.py`).
+It is not a standalone page.
+
 ### Subscriber gate UX
-- **All players** can open the skin picker and **preview** any skin live
+- **All players** (web + app) can open the Skins tab and **preview** any skin live
 - Previewing a non-subscribed pro skin temporarily switches it client-side
-- When a non-subscriber **leaves the picker page**, it reverts to their last saved skin
+- When a non-subscriber **leaves the Skins tab**, it reverts to their last saved skin
 - Only **Wadsworth Pro subscribers** can **save** a skin selection permanently
 - Free players can save any `Tier: free` skin
+- **Entitlement check:** `player.subscriber == True OR player.is_admin == True`.
+  Admins are always treated as subscribers (free Pro).
+- Subscription is **Android/Google-Play only** (TWA billing). The `subscriber`
+  flag is stored server-side, so a Play subscriber who logs in on web keeps their
+  saved skin — they just can't buy on web (no buy button outside the TWA).
+- ⚠️ The `subscriber` column does **not exist yet** — Phase 1 adds it (see plan).
+
+### Skins are NOT variables-only — component CSS + effects are allowed
+**(Decision reversed 2026-06-01.)** The earlier "variables only, no component CSS,
+no JS" rule is dropped. A skin may now ship:
+- **Variables** (`<skin>.css` `:root` block) — the colour/font/radius palette
+- **Component CSS** (same `<skin>.css` file, below the `:root` block) — overrides
+  of `wadsworth-base.css` component classes for a distinct look (e.g. rounder
+  corners, glassmorphism, custom button shapes)
+- **Effects JS** (optional sibling `<skin>.js`) — page decorations like particle
+  systems, animated logos, button shimmer
+
+### Effects scope & motion safety
+- **Effects run on every page** (per product decision) — colours and fonts always
+  apply everywhere regardless.
+- **`prefers-reduced-motion: reduce` support is MANDATORY** in every effect.
+  When set, all animations/particles/transforms must be disabled (the kawaii
+  sample already demonstrates the pattern). This is the automatic escape hatch for
+  low-end phones and motion-sensitive players.
+- Effects must be lightweight (cap particle counts, use CSS transforms not layout
+  thrash) since they now run on data-heavy pages too.
+
+### Authorship & security
+- **Skins are dev-authored only.** There is no community-submission pipeline.
+- Because all skin CSS/JS is written by the Wadsworth team and shipped as trusted
+  static files, **effect JS needs no sandboxing**. If community submissions are
+  ever added, that decision must be revisited (arbitrary skin JS = XSS).
+
+### Custom fonts
+A skin loads its own font families via a **CSS `@import` at the very top of its
+`<skin>.css` file**, then points `--font-body` / `--font-serif` / etc. at them:
+```css
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@700&family=Nunito+Sans:wght@400;600;800&display=swap');
+:root {
+  --font-body:  'Nunito Sans', system-ui, sans-serif;
+  --font-serif: 'Quicksand', Georgia, serif;
+}
+```
+The shell already keeps the `fonts.googleapis.com` / `fonts.gstatic.com`
+preconnect tags, so skin `@import`s resolve fast. (The old unused Cinzel `<link>`
+was removed.)
 
 ### Cache busting
 Browser caches save CSS files so players don't re-download them on every page load.
@@ -58,13 +108,22 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 **Head injection pattern — order matters:**
 ```html
-<!-- 1. Component styles (shared, uses CSS variables) -->
+<!-- 1. Component styles (shared baseline, uses CSS variables) -->
 <link rel="stylesheet" href="/static/skins/wadsworth-base.css?v=1">
-<!-- 2. Player's chosen skin (defines all CSS variables) -->
+<!-- 2. Player's chosen skin: :root variables + optional component overrides -->
 <link rel="stylesheet" href="/static/skins/{skin_name}.css?v=1">
 <!-- 3. Module override (page-group-specific accent — only on relevant shells) -->
 <link rel="stylesheet" href="/static/skins/modules/admin.css?v=1">
 ```
+
+**Optional effects JS (loaded at end of `<body>` if the file exists):**
+```html
+<!-- Only injected when /static/skins/{skin_name}.js exists. Effects must
+     self-guard with prefers-reduced-motion. Dev-authored, so trusted. -->
+<script src="/static/skins/{skin_name}.js?v=1" defer></script>
+```
+Phase 1's shell patch checks `os.path.exists(f"static/skins/{skin}.js")` and only
+emits the `<script>` tag when present, so variable-only skins ship no JS.
 
 ---
 
@@ -115,10 +174,55 @@ player's skin file, overriding just the accent-related variables.
 | `modules/admin.css` | `/admin/*` | 🔴 Red `#ef4444` | Staff see red → immediately know they're in admin |
 | `modules/executive.css` | `/executives/*` | 🟣 Purple `#c084fc` | Prestige / power aesthetic for exec management |
 | `modules/memecoins.css` | `/memecoins/*` | 🟠 Orange `#f59e0b` | Chaotic-energy palette matching meme speculation |
-| `modules/mod.css` | `/mod/*` | 🟣 Violet `#7c3aed` | Darker bg + violet accent signals moderation context |
+| `modules/mod.css` | `/mod/*` | 🟣 Violet `#7c3aed` | Subtle violet accent signals moderation context |
+
+**All four overrides change the accent only** — they do NOT touch backgrounds,
+text, or fonts. Mod pages (like every other page group) inherit the player's full
+skin; the override just tints the accent so the context is recognisable. This keeps
+light skins light even on `/admin`, `/mod`, etc.
 
 **Skin authors:** you do not need to account for any of these files.
 They are applied automatically on top of any skin.
+
+---
+
+## Skin Anatomy — Three Optional Layers
+
+A skin is now up to **three files** sharing one base name. Only the first is required.
+
+| File | Required? | Contents | Loaded |
+|------|-----------|----------|--------|
+| `<skin>.css` | ✅ Yes | `@import` fonts → `:root` variables → (optional) component-class overrides | `<head>`, after `wadsworth-base.css` |
+| `<skin>.js` | ⬜ Optional | Page-decoration effects (particles, animated logo, shimmer) | end of `<body>`, `defer`, only if file exists |
+| `modules/<skin>.css` | ⬜ Optional | Per-page-group tweaks unique to this skin (rare; most skins don't need it) | after `<skin>.css` on relevant shells |
+
+### Component CSS rules (now permitted)
+- Put component overrides **below** the `:root` block in the same `<skin>.css`.
+- Override existing `wadsworth-base.css` class selectors (`.card`, `.btn`, `.header`…).
+  Do not invent new class names the HTML doesn't emit.
+- Prefer overriding via variables where a variable exists; only write component CSS
+  for shape/structure changes variables can't express (border-radius pre-Phase-2,
+  glass blur, custom gradients, pseudo-elements).
+- **Component CSS only takes effect after Phase 2** — until `wadsworth-base.css`
+  exists and pages use its classes, there's nothing for these overrides to attach
+  to. A skin written today is effectively variables-only until Phase 2 lands.
+
+### Effects JS rules
+- File name must exactly match the skin: `kawaii_magic.css` → `kawaii_magic.js`.
+- **First line of every effect must short-circuit on reduced motion:**
+  ```js
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  ```
+- Inject your own DOM nodes (overlays, particle containers); never assume markup
+  the page didn't already render.
+- Clean up on navigation where possible; cap particle counts (~40 like the sample).
+- Trusted (dev-authored) — but still: no network calls, no eval, no external script
+  loading. Self-contained vanilla JS only.
+
+### Two-tier hint for skin authors
+- A **simple skin** = `<skin>.css` with just a `:root` block. (Most skins, `Tier: free`.)
+- A **deluxe skin** = `:root` + component CSS + `<skin>.js` effects. (Showcase
+  `Tier: pro` skins like the kawaii concept.)
 
 ---
 
@@ -329,13 +433,18 @@ primary orange (headings, CTAs), secondary yellow (highlights), tertiary blue (b
 
 ---
 
-### WORLD MAP — EXCLUDED FROM SKIN SYSTEM
+### WORLD MAP — TERRAIN CANVAS EXCLUDED (dashboard IS skinned)
 
-The world map renders terrain via canvas and the terrain colours are hardcoded
-in game logic. Skinning the world map terrain is out of scope — the 13 terrain
-colour values (`prairie`, `forest`, `desert`, `marsh`, `mountain`, `tundra`,
-`jungle`, `savanna`, `hills`, `island`, `coastal`, `lake`, `ocean`) are **not**
-CSS variables and do not live in any skin file.
+Only the **terrain canvas itself** is out of scope. The world-map renders terrain
+via canvas with colours hardcoded in game logic — the 13 terrain values
+(`prairie`, `forest`, `desert`, `marsh`, `mountain`, `tundra`, `jungle`,
+`savanna`, `hills`, `island`, `coastal`, `lake`, `ocean`) are **not** CSS
+variables and do not live in any skin file.
+
+**The world-map page's dashboard/chrome IS skinned** — the surrounding panels,
+buttons, headers, plot-info cards, and controls all use normal skin variables and
+component classes like every other page. Only the painted terrain tiles ignore the
+skin.
 
 ---
 
@@ -624,15 +733,27 @@ This makes charts respond to skin changes without a page reload.
 Goal: skin selection works end-to-end. No visual change for players yet.
 
 **Changes:**
-1. `auth.py` — add `skin = Column(String(64), default="default", nullable=False)` to `Player`
-2. Patch all **15 independent shell functions** to inject two (or three) `<link>` tags
+1. `auth.py` — add two columns to `Player`:
+   - `skin = Column(String(64), default="default", nullable=False)`
+   - `subscriber = Column(Boolean, default=False, nullable=False)` — prerequisite
+     for the save-gate (does not exist yet). Billing/`purchaseToken` verification
+     is a separate monetization task; Phase 1 only needs the column + the
+     `subscriber OR is_admin` helper.
+2. Patch all **15 independent shell functions** to inject the skin assets
    - Priority order: `ux.py` → `stats_ux.py` → `admins_ux.py` → `estate_ux.py` → remaining 11
    - Each shell gets a `skin` param (loaded from `player.skin`)
+   - Emit `<link>` for `wadsworth-base.css` + `{skin}.css` in `<head>`
+   - If `static/skins/{skin}.js` exists, emit a deferred `<script>` before `</body>`
    - Admin shell gets third tag: `modules/admin.css`
    - Executive shell gets third tag: `modules/executive.css`
    - Memecoins pages get third tag: `modules/memecoins.css`
-3. `settings_ux.py` — add skin picker tab: `<select>` of available skins (glob `static/skins/*.css`, exclude `wadsworth-base.css` and `modules/`); display names from CSS `Description:` header comment; pro skins shown but disabled for non-subscribers; live preview swaps `<link>` href client-side; save button only available to subscribers
-4. Static files: `default.css` ✅, `modules/admin.css` ✅, `modules/executive.css` ✅, `modules/memecoins.css` ✅
+   - Mod shell gets third tag: `modules/mod.css`
+3. `settings_ux.py` — add **Skins tab** to the Settings dashboard: `<select>` of
+   available skins (glob `static/skins/*.css`, exclude `wadsworth-base.css` and
+   `modules/`); display names from CSS `Description:` header comment; pro skins
+   shown but save-disabled unless `subscriber OR is_admin`; live preview swaps
+   `<link>` href client-side; save persists `player.skin`
+4. Static files: `default.css` ✅, `modules/admin.css` ✅, `modules/executive.css` ✅, `modules/memecoins.css` ✅, `modules/mod.css` ✅
 
 **Verification:** DevTools shows correct `<link>` tags on each page type →
 default.css vars resolve → page looks identical to today.
@@ -670,7 +791,9 @@ Subscriber skins have `Tier: pro` in the comment header.
 
 ## Skin Template
 
-Copy to `static/skins/your_skin_name.css`. Override values only. No component CSS.
+Copy to `static/skins/your_skin_name.css`. Override the variable values; add
+optional component CSS below the `:root` block and an optional `<skin>.js` for
+effects (see Skin Anatomy section).
 
 ```css
 /*
@@ -682,18 +805,28 @@ Copy to `static/skins/your_skin_name.css`. Override values only. No component CS
  * Rules:
  *  - Define all CORE UI variables (79 vars). Specialty theme and semantic data
  *    vars are optional — omit them to inherit defaults from default.css.
- *  - No component CSS. Variables only.
+ *  - Component CSS is ALLOWED: put it BELOW the :root block in this same file,
+ *    overriding wadsworth-base.css classes. (Takes effect once Phase 2 lands.)
+ *  - Custom fonts: @import at the very top of this file (above :root), then point
+ *    --font-* at the families. See example below.
+ *  - Effects (particles/animation): optional sibling file <skin>.js. Every effect
+ *    MUST short-circuit on prefers-reduced-motion. Effects run on all pages.
  *  - Test pages: / · /market · /businesses · /inventory · /stats/leaderboard
- *                /stats/economy · /estate · /admin · /executives · /memecoins
- *                /wiki · /company · /notifications · settings skin picker
- *  - WCAG AA: all text ≥ 4.5:1 against its background.
+ *                /stats/economy · /estate · /admin · /mod · /executives · /memecoins
+ *                /wiki · /company · /notifications · /dm · world-map dashboard
+ *                · Settings → Skins tab (preview + save)
+ *  - WCAG AA: all text ≥ 4.5:1 against its background. (Light pinks on light
+ *    surfaces are the classic failure — check muted/outline text especially.)
  *  - --text-on-accent must be readable on --accent.
- *  - Light themes: override --grad-cert, --grad-delete-zone, --grad-audio-knob
- *    (they contain hardcoded dark hex values). Also override --leather-bg-dark
- *    and --wiki-bg-page (both are very dark by default).
+ *  - Light themes: override --grad-cert, --grad-delete-zone, --grad-audio-knob,
+ *    --grad-kpi (all contain hardcoded DARK hex). Also override --leather-bg-dark
+ *    and --wiki-bg-page/-card (very dark by default). See LIGHT EXAMPLE comments.
  *  - If changing --accent, update --shadow-glow to match its rgba.
  *  - If changing --color-danger, update --shadow-glow-danger to match.
  */
+
+/* Custom fonts (delete if using defaults): */
+/* @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@700&family=Nunito+Sans:wght@400;600;800&display=swap'); */
 
 :root {
 
@@ -796,13 +929,15 @@ Copy to `static/skins/your_skin_name.css`. Override values only. No component CS
   --dur-slow:   2s;
 
   /* ── Gradients ───────────────────────────────────────────── */
+  /* The four marked DARK contain hardcoded dark hex. LIGHT themes MUST replace */
+  /* them — example light values shown in the trailing comments.                */
   --grad-card:        linear-gradient(135deg, var(--bg-card) 0%, var(--bg-card-2) 100%);
   --grad-bar:         linear-gradient(to top, var(--accent), var(--accent-dim));
-  --grad-cert:        linear-gradient(135deg, #0a0a14 0%, #111827 100%);
+  --grad-cert:        linear-gradient(135deg, #0a0a14 0%, #111827 100%);   /* DARK → light e.g. (135deg,#ffffff,#f2ecee) */
   --grad-cert-border: linear-gradient(90deg, var(--border-subtle), var(--border), var(--border-subtle));
-  --grad-delete-zone: linear-gradient(135deg, #0a0a14 0%, #1a0a0a 100%);
-  --grad-audio-knob:  linear-gradient(to bottom, #3d2b1f, #1a0f0a);
-  --grad-kpi:         linear-gradient(135deg, #080f1e 0%, #0d1829 100%);
+  --grad-delete-zone: linear-gradient(135deg, #0a0a14 0%, #1a0a0a 100%);   /* DARK → light e.g. (135deg,#fff5f5,#ffe3e3) */
+  --grad-audio-knob:  linear-gradient(to bottom, #3d2b1f, #1a0f0a);        /* DARK → light e.g. (to bottom,#fbeede,#e9d3b0) */
+  --grad-kpi:         linear-gradient(135deg, #080f1e 0%, #0d1829 100%);   /* DARK → light e.g. (135deg,#ffffff,#f8f2f4) */
 
 
   /* ═══════════════════════════════════════════════════════════
@@ -907,7 +1042,14 @@ Copy to `static/skins/your_skin_name.css`. Override values only. No component CS
 - [ ] Filename: `a-z`, `0-9`, `_` only — no spaces, no uppercase
 - [ ] `Description:` comment line present (shown in picker)
 - [ ] `Tier: free` or `Tier: pro` comment set
-- [ ] No component CSS — variables only
+- [ ] Custom fonts (if any) `@import`-ed at top of file, above `:root`
+
+**If shipping component CSS / effects (deluxe skins):**
+- [ ] Component CSS lives below `:root`, overrides only existing base classes
+- [ ] `<skin>.js` (if present) filename matches the CSS exactly
+- [ ] Every effect short-circuits on `prefers-reduced-motion: reduce`
+- [ ] Effects self-inject their DOM; no network calls / eval / external scripts
+- [ ] Particle counts capped; verified on a low-end phone profile
 
 **Visual QA (test these pages):**
 - [ ] `/` dashboard — cards, header, ticker, balance, nav
@@ -952,7 +1094,7 @@ Copy to `static/skins/your_skin_name.css`. Override values only. No component CS
 ## Files Changed Per Phase
 
 ### Phase 1 (plumbing)
-- `auth.py` — add `skin` column to `Player`
+- `auth.py` — add `skin` + `subscriber` columns to `Player`; add `is_pro(player)` helper (`subscriber or is_admin`)
 - `ux.py` — `shell()` + `<link>` injection
 - `stats_ux.py` — `stats_shell()` + `<link>` injection
 - `admins_ux.py` — `admin_shell()` + 3 `<link>` tags (base + skin + modules/admin.css)
@@ -964,7 +1106,7 @@ Copy to `static/skins/your_skin_name.css`. Override values only. No component CS
 - `counties_ux.py` — all 9 full-page HTML returns
 - `executive_ux.py` — shell + 3 `<link>` tags (base + skin + modules/executive.css)
 - `dm_ux.py` — shell + `<link>` injection
-- `mod_ux.py` — shell + `<link>` injection
+- `mod_ux.py` — shell + 3 `<link>` tags (base + skin + modules/mod.css)
 - `memecoins_ux.py` — all 5 full-page returns + modules/memecoins.css
 - `reserve_banks_ux.py` — shell + `<link>` injection
 - `auth.py` — login/register page + `<link>` injection

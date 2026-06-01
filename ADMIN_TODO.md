@@ -108,6 +108,15 @@ Items are grouped by category and ranked by value/complexity at the bottom.
 - Server verifies the Google Play `purchaseToken` against the Play Developer API
   before flipping a `subscriber` flag on the player account.
 - Price point: **cheapest tier available on Google Play** (basic tier only — no tiered pricing).
+- **Admins are always treated as subscribers** — the entitlement check is
+  `player.subscriber == True OR player.is_admin == True`. Admins get Pro for free.
+- **Entitlement persists cross-platform.** Once the `subscriber` flag is set
+  server-side, it applies whether the player logs in on the app or on web — they
+  simply can't *purchase* on web (no buy button outside the TWA).
+- ⚠️ **NOT YET CODED:** there is no `subscriber` column on the Player model and
+  no `purchaseToken` verification endpoint yet. Both must be added before any
+  subscriber-gated feature (skins included) can ship. The skin system's Phase 1
+  adds the `subscriber` column as its first prerequisite.
 
 ## Recovered features — confirmed from session summaries
 - [ ] **Forex trading floor** — subscriber-only currency-exchange dashboard.
