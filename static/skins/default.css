@@ -1,55 +1,136 @@
 /*
  * Wadsworth Skin: Default Dark
  * Author: Wadsworth Team
- * Description: The original dark navy theme — the reference implementation.
+ * Description: The original dark navy theme. The canonical reference — all other skins
+ *              are diffs against this file. Every variable must be defined here.
  * Tier: free
  *
- * This file is the canonical definition of all 32 CSS variables.
- * All other skins are diffs against this one.
+ * Variable count: 69
+ * Sections: Backgrounds · Borders · Text · Accent/Brand · Semantic · Medals ·
+ *           Fonts · Border-Radius · Z-Index · Shadows · Transitions · Gradients ·
+ *           Audio Player (Mahogany)
+ *
+ * NOTE: Do NOT add component CSS here. Component styles live in wadsworth-base.css.
+ *       This file only defines :root variables.
  */
 
 :root {
 
-  /* ── Backgrounds ───────────────────────────────────────────── */
-  --bg-page:       #020617;
-  --bg-card:       #0f172a;
-  --bg-card-2:     #1e293b;
-  --bg-input:      #1e293b;
-  --bg-header:     #0b1220;
-  --bg-ticker:     #0a1628;
-  --bg-overlay:    rgba(0,0,0,0.6);
+  /* ── Backgrounds ─────────────────────────────────────────────────────────── */
+  --bg-page:         #020617;           /* main page background                 */
+  --bg-card:         #0f172a;           /* card / panel background              */
+  --bg-card-2:       #1e293b;           /* nested containers, alt rows, modals  */
+  --bg-input:        #1e293b;           /* form inputs, selects, textareas      */
+  --bg-header:       #0b1220;           /* fixed top header bar                 */
+  --bg-ticker:       #0a1628;           /* fixed bottom live-price ticker       */
+  --bg-overlay:      rgba(0,0,0,0.6);   /* modal / drawer overlay               */
 
-  /* ── Borders ───────────────────────────────────────────────── */
-  --border:        #1e293b;
-  --border-subtle: #334155;
-  --border-focus:  #38bdf8;
+  /* ── Borders ─────────────────────────────────────────────────────────────── */
+  --border:          #1e293b;           /* primary card / input borders         */
+  --border-subtle:   #334155;           /* dividers, section separators         */
+  --border-focus:    #38bdf8;           /* input focus ring                     */
 
-  /* ── Text ──────────────────────────────────────────────────── */
-  --text-primary:    #e5e7eb;
-  --text-secondary:  #94a3b8;
-  --text-muted:      #64748b;
-  --text-faint:      #475569;
-  --text-on-accent:  #000000;
+  /* ── Text ────────────────────────────────────────────────────────────────── */
+  --text-primary:    #e5e7eb;           /* body text, general content           */
+  --text-bright:     #f1f5f9;           /* emphasized values, stat numbers      */
+  --text-secondary:  #94a3b8;           /* labels, column headers, captions     */
+  --text-muted:      #64748b;           /* disabled, placeholder, de-emphasized */
+  --text-faint:      #475569;           /* metadata, timestamps, very subtle    */
+  --text-on-accent:  #000000;           /* text placed ON an accent background  */
+  --text-on-danger:  #ffffff;           /* text placed ON a danger background   */
 
-  /* ── Accent / Brand ────────────────────────────────────────── */
-  --accent:          #38bdf8;
-  --accent-dim:      #0ea5e9;
-  --accent-bg:       rgba(56,189,248,0.08);
-  --accent-2:        #f59e0b;
-  --accent-2-dim:    #d97706;
-  --accent-3:        #a78bfa;
+  /* ── Accent / Brand ──────────────────────────────────────────────────────── */
+  --accent:          #38bdf8;           /* primary — links, interactive, highlights */
+  --accent-dim:      #0ea5e9;           /* hover / pressed state of accent      */
+  --accent-bg:       rgba(56,189,248,0.08); /* subtle accent tint on cards       */
+  --accent-2:        #f59e0b;           /* secondary — warnings, alt buttons    */
+  --accent-2-dim:    #d97706;           /* hover / pressed of accent-2          */
+  --accent-2-bg:     rgba(245,158,11,0.08); /* subtle accent-2 tint              */
+  --accent-3:        #a78bfa;           /* tertiary — events, trophies, levels  */
+  --accent-3-dim:    #7c3aed;           /* hover / pressed of accent-3          */
+  --accent-3-bg:     rgba(167,139,250,0.08); /* subtle accent-3 tint             */
 
-  /* ── Semantic ──────────────────────────────────────────────── */
-  --color-success:       #22c55e;
-  --color-success-light: #4ade80;
-  --color-success-bg:    rgba(34,197,94,0.08);
-  --color-danger:        #ef4444;
-  --color-danger-light:  #f87171;
-  --color-danger-dark:   #dc2626;
-  --color-danger-bg:     rgba(239,68,68,0.08);
-  --color-warning:       #f59e0b;
-  --color-warning-light: #fbbf24;
-  --color-gold:          #d4af37;
-  --color-orange:        #f97316;
+  /* ── Semantic ────────────────────────────────────────────────────────────── */
+  --color-success:        #22c55e;      /* gains, positive values, online       */
+  --color-success-light:  #4ade80;      /* success highlights                   */
+  --color-success-dark:   #16a34a;      /* success pressed / dark variant       */
+  --color-success-bg:     rgba(34,197,94,0.08);  /* success card tint           */
+  --color-danger:         #ef4444;      /* errors, losses, bans                 */
+  --color-danger-light:   #f87171;      /* error highlights                     */
+  --color-danger-dark:    #dc2626;      /* critical / permanent-action red      */
+  --color-danger-xdark:   #7f1d1d;      /* danger button background             */
+  --color-danger-bg:      rgba(239,68,68,0.08);  /* danger card tint            */
+  --color-warning:        #f59e0b;      /* warnings, alerts (same as accent-2)  */
+  --color-warning-light:  #fbbf24;      /* warning highlights                   */
+  --color-warning-bg:     rgba(245,158,11,0.08); /* warning card tint           */
+  --color-gold:           #d4af37;      /* premium badge, medals, subscriber    */
+  --color-gold-bg:        rgba(212,175,55,0.10); /* gold card tint              */
+  --color-orange:         #f97316;      /* ask prices, orange-coded items       */
+  --color-purple:         #a78bfa;      /* level badges (same as accent-3)      */
+  --color-teal:           #0d9488;      /* teal-coded economy indicators        */
+  --color-pink:           #ec4899;      /* pink accent (some event badges)      */
+
+  /* ── Medals (leaderboard rank badges) ───────────────────────────────────── */
+  --color-rank-1:    #d4af37;           /* gold   — 1st place                   */
+  --color-rank-2:    #c0c0c0;           /* silver — 2nd place                   */
+  --color-rank-3:    #cd7f32;           /* bronze — 3rd place                   */
+
+  /* ── Fonts ───────────────────────────────────────────────────────────────── */
+  --font-body:     'JetBrains Mono', 'Courier New', monospace; /* ALL pages      */
+  --font-serif:    Georgia, serif;      /* audio player, certificate cards      */
+  --font-cursive:  'Caveat', cursive;   /* decorative callouts                  */
+  --font-sans:     'Segoe UI', system-ui, sans-serif; /* fallback sans          */
+
+  /* ── Border Radius ───────────────────────────────────────────────────────── */
+  --radius-sm:     3px;                 /* tight: badges, small tags            */
+  --radius-md:     4px;                 /* standard: buttons, inputs            */
+  --radius-lg:     8px;                 /* cards, panels                        */
+  --radius-xl:     12px;                /* large cards, modals                  */
+  --radius-2xl:    20px;                /* extra-large chips, profile cards     */
+  --radius-pill:   9999px;              /* fully-rounded pill buttons / chips   */
+  --radius-circle: 50%;                 /* avatar circles                       */
+
+  /* ── Z-Index Stacking ────────────────────────────────────────────────────── */
+  --z-below:       -1;                  /* behind normal flow (pseudo-elements) */
+  --z-base:        100;                 /* search bars, filter overlays         */
+  --z-audio:       150;                 /* audio player bar (#gs-bar)           */
+  --z-ticker:      1000;                /* fixed bottom ticker bar              */
+  --z-modal:       9999;                /* modals, drawers, full-screen overlays*/
+
+  /* ── Shadows ─────────────────────────────────────────────────────────────── */
+  --shadow-sm:         0 1px 4px rgba(0,0,0,0.6);        /* small element depth */
+  --shadow-md:         0 4px 20px rgba(0,0,0,0.7);       /* panels, audio player*/
+  --shadow-glow:       0 8px 25px rgba(56,189,248,0.15); /* card hover cyan glow*/
+  --shadow-glow-danger:0 8px 25px rgba(239,68,68,0.15);  /* danger card glow    */
+
+  /* ── Transitions ─────────────────────────────────────────────────────────── */
+  --dur-fast:   0.15s;                  /* micro-interactions (hover flash)     */
+  --dur-normal: 0.2s;                   /* standard hover / focus transitions   */
+  --dur-slow:   2s;                     /* lien-pulse, scroll animations        */
+
+  /* ── Gradients ───────────────────────────────────────────────────────────── */
+  /* Use these in wadsworth-base.css component rules, not in skin overrides.    */
+  /* Skins that want to change gradients should override these variables.        */
+  --grad-card:        linear-gradient(135deg, var(--bg-card) 0%, var(--bg-card-2) 100%);
+  --grad-bar:         linear-gradient(to top, var(--accent), var(--accent-dim));
+  --grad-cert:        linear-gradient(135deg, #0a0a14 0%, #111827 100%);
+  --grad-cert-border: linear-gradient(90deg, var(--border-subtle), var(--border), var(--border-subtle));
+  --grad-delete-zone: linear-gradient(135deg, #0a0a14 0%, #1a0a0a 100%);
+  --grad-audio-knob:  linear-gradient(to bottom, #3d2b1f, #1a0f0a);
+
+  /* ── Audio Player (Mahogany) ─────────────────────────────────────────────── */
+  /* The in-game radio / music player uses a warm mahogany wood theme that is   */
+  /* intentionally distinct from the rest of the UI — like a vintage Hi-Fi.    */
+  /* Override these to re-theme the player while keeping the widget look.       */
+  --audio-bg-dark:    #1a0f0a;          /* tuner body                           */
+  --audio-bg-mid:     #3d2b1f;          /* knob gradient mid                    */
+  --audio-accent:     #b08d57;          /* dial highlights, station name color  */
+  --audio-font:       var(--font-serif);/* station name / tuner readout font    */
+
+  /* Audio player pastel rotation — 15 colors cycled per station visual.        */
+  /* These are consumed by JS (not CSS) but live here so skins can document     */
+  /* a replacement array if desired. Variable cannot be used directly in CSS.   */
+  /* JS reads: getComputedStyle(root).getPropertyValue('--audio-pastels-json')  */
+  --audio-pastels-json: '["#FFB7B2","#FFDAC1","#E2F0CB","#B5EAD7","#C7CEEA","#FF9AA2","#F8BBD0","#E1BEE7","#D1C4E9","#BBDEFB","#C8E6C9","#F0F4C3","#FFF9C4","#FFE0B2","#F5F5DC"]';
 
 }

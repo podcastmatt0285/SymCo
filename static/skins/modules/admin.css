@@ -1,0 +1,17 @@
+/*
+ * Wadsworth Module Override: Admin Panel
+ * Loaded ONLY on /admin/* pages (by admin_shell()), after the player's skin file.
+ * Overrides the accent colour from cyan to red — the admin UI is intentionally
+ * visually distinct so staff know at a glance they are in the admin area.
+ *
+ * Skin authors: you do NOT need to account for this file.
+ * These overrides are applied automatically on top of any chosen skin.
+ */
+
+:root {
+  --accent:      #ef4444;               /* admin primary — danger red           */
+  --accent-dim:  #dc2626;               /* admin hover / pressed                */
+  --accent-bg:   rgba(239,68,68,0.08);  /* admin tint                           */
+  --border-focus:#ef4444;               /* input focus ring matches admin accent*/
+  --shadow-glow: 0 8px 25px rgba(239,68,68,0.15); /* card hover uses red glow  */
+}
