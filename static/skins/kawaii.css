@@ -246,3 +246,376 @@ input, select {
 a:hover {
   color: var(--accent-dim);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PAGE-SPECIFIC OVERRIDES (data-skin="kawaii" prefix — specificity 0,2,0,0)
+   ───────────────────────────────────────────────────────────────────────────
+   Page <style> blocks appear in <body> and load after the skin <link> tags,
+   giving them document-order priority at equal specificity (0,1,0,0).
+   Prefixing with [data-skin="kawaii"] raises our specificity to (0,2,0,0)
+   so these rules reliably win. The attribute is set synchronously by a
+   <script> tag injected alongside the skin <link> tags in skin_utils.py.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Body & Global ───────────────────────────────────────────────────────── */
+[data-skin="kawaii"] body {
+  background: linear-gradient(180deg, #0c0718 0%, #180e2a 55%, #0c0718 100%) fixed;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+}
+[data-skin="kawaii"] a { color: var(--accent); }
+[data-skin="kawaii"] a:hover { color: var(--accent-dim); }
+
+/* ── Universal card — glass morphism ─────────────────────────────────────── */
+[data-skin="kawaii"] .card {
+  background: rgba(24,14,42,0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-color: var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+[data-skin="kawaii"] .card:hover {
+  border-color: var(--border-subtle);
+  box-shadow: var(--shadow-glow);
+}
+
+/* ── Shared shell overrides (stats_ux.py / exec_shell redefine these) ─────── */
+[data-skin="kawaii"] body > .header,
+[data-skin="kawaii"] .container > .header {
+  background: var(--bg-header);
+  border-bottom-color: var(--border);
+}
+[data-skin="kawaii"] .header { background: var(--bg-header); border-bottom-color: var(--border); }
+[data-skin="kawaii"] .brand  { color: var(--accent); }
+[data-skin="kawaii"] .balance { color: var(--color-success); }
+[data-skin="kawaii"] .nav {
+  background: var(--bg-header);
+  border-bottom-color: var(--border);
+}
+[data-skin="kawaii"] .nav a {
+  background: var(--bg-card-2);
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+}
+[data-skin="kawaii"] .nav a:hover,
+[data-skin="kawaii"] .nav a.active {
+  background: var(--accent);
+  color: var(--text-on-accent);
+  text-decoration: none;
+}
+[data-skin="kawaii"] .page-title { color: var(--text-bright); }
+[data-skin="kawaii"] .nav-link {
+  color: var(--accent);
+  border-color: var(--accent);
+  border-radius: var(--radius-sm);
+}
+[data-skin="kawaii"] .nav-link:hover { background: var(--accent-bg); }
+
+/* ── Dashboard cards (.dc) ───────────────────────────────────────────────── */
+[data-skin="kawaii"] .dc {
+  background: linear-gradient(135deg, #100826 0%, #180e2a 100%);
+  border-radius: var(--radius-lg);
+}
+[data-skin="kawaii"] .dc-d { color: #6b4a7e; }
+[data-skin="kawaii"] .dc:hover {
+  box-shadow: 0 10px 36px rgba(0,0,0,0.55), 0 0 28px var(--accent-bg);
+  text-decoration: none;
+}
+[data-skin="kawaii"] .dc-btn { border-radius: var(--radius-md); font-weight: 800; }
+
+/* ── Executive cards & internals ─────────────────────────────────────────── */
+[data-skin="kawaii"] .card-special {
+  background: rgba(24,14,42,0.82);
+  border-color: #d4af37;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 0 18px rgba(212,175,55,0.22);
+}
+[data-skin="kawaii"] .card-quit {
+  background: rgba(24,14,42,0.82);
+  border-color: var(--color-danger);
+  border-radius: var(--radius-lg);
+}
+[data-skin="kawaii"] .exec-name   { color: var(--text-bright); }
+[data-skin="kawaii"] .exec-title  { color: #d4af37; }
+[data-skin="kawaii"] .exec-desc   { color: var(--text-muted); }
+[data-skin="kawaii"] .abilities-section {
+  background: #0c0718;
+  border-color: rgba(61,26,94,0.4);
+  border-radius: var(--radius-sm);
+}
+[data-skin="kawaii"] .abilities-header { color: var(--text-muted); }
+[data-skin="kawaii"] .ability-chip {
+  background: var(--bg-card-2);
+  border-color: var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+[data-skin="kawaii"] .ability-tooltip {
+  background: var(--bg-card);
+  border-color: var(--border);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+}
+[data-skin="kawaii"] .perf-meter {
+  background: var(--bg-card-2);
+  border-radius: var(--radius-sm);
+}
+[data-skin="kawaii"] .perf-label { color: var(--text-muted); }
+[data-skin="kawaii"] .stat-row   { border-bottom-color: rgba(61,26,94,0.3); }
+[data-skin="kawaii"] .stat-label { color: var(--text-secondary); }
+[data-skin="kawaii"] .stat-value { color: var(--text-primary); }
+[data-skin="kawaii"] .stat-value.green  { color: var(--color-success); }
+[data-skin="kawaii"] .stat-value.orange { color: var(--color-warning); }
+[data-skin="kawaii"] .stat-value.red    { color: var(--color-danger); }
+[data-skin="kawaii"] .stat-value.purple { color: var(--accent-2); }
+[data-skin="kawaii"] .exec-special-tag {
+  background: rgba(212,175,55,0.13);
+  color: #d4af37;
+  border-radius: var(--radius-sm);
+}
+[data-skin="kawaii"] .legendary-ability {
+  background: rgba(212,175,55,0.08);
+  border-color: rgba(212,175,55,0.27);
+  border-radius: var(--radius-sm);
+}
+[data-skin="kawaii"] .legendary-ability-name { color: #d4af37; }
+[data-skin="kawaii"] .legendary-ability-desc { color: var(--text-secondary); }
+[data-skin="kawaii"] .nav-row .btn,
+[data-skin="kawaii"] .nav-row a {
+  border-radius: var(--radius-sm);
+}
+
+/* ── Business page (.biz-*) ──────────────────────────────────────────────── */
+[data-skin="kawaii"] .biz-stat {
+  background: var(--bg-card);
+  border-color: var(--border);
+  border-radius: var(--radius-md);
+}
+[data-skin="kawaii"] .biz-stat .lbl  { color: var(--text-muted); }
+[data-skin="kawaii"] .biz-filter-btn {
+  background: var(--bg-card);
+  border-color: var(--border);
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+}
+[data-skin="kawaii"] .biz-filter-btn:hover,
+[data-skin="kawaii"] .biz-filter-btn.active { border-color: var(--accent); color: var(--accent); }
+[data-skin="kawaii"] .biz-sort-btn        { color: var(--text-muted); }
+[data-skin="kawaii"] .biz-sort-btn.active { color: var(--accent); }
+[data-skin="kawaii"] .biz-card {
+  background: var(--bg-card);
+  border-color: var(--border);
+  border-radius: var(--radius-md);
+}
+[data-skin="kawaii"] .biz-card-header,
+[data-skin="kawaii"] .biz-card-body { border-color: var(--border); }
+[data-skin="kawaii"] .btn-sm { border-radius: var(--radius-sm); font-weight: 700; }
+[data-skin="kawaii"] .btn-sm-blue   { background: var(--accent);         color: var(--text-on-accent); }
+[data-skin="kawaii"] .btn-sm-orange { background: var(--color-warning);   color: #1a0c28; }
+[data-skin="kawaii"] .btn-sm-red    { background: var(--color-danger);    color: #fff; }
+[data-skin="kawaii"] .btn-sm-green  { background: var(--color-success);   color: #0a1a0a; }
+[data-skin="kawaii"] .progress-bar-wrap {
+  background: var(--bg-page);
+  border-radius: var(--radius-sm);
+}
+[data-skin="kawaii"] .progress-bar-fill {
+  background: linear-gradient(to right, var(--accent), var(--accent-2));
+  border-radius: var(--radius-sm);
+  position: relative;
+  overflow: hidden;
+}
+[data-skin="kawaii"] .progress-bar-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.35) 50%, transparent 100%);
+  animation: _kw-shimmer 2.2s ease-in-out infinite;
+}
+[data-skin="kawaii"] .line-row {
+  background: var(--bg-page);
+  border-radius: var(--radius-sm);
+}
+[data-skin="kawaii"] .qb-panel {
+  background: #0e0820;
+  border-color: var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+[data-skin="kawaii"] .sp-panel {
+  background: #0e0820;
+  border-color: var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+[data-skin="kawaii"] .qb-input {
+  background: var(--bg-card);
+  border-color: var(--border-subtle);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+}
+[data-skin="kawaii"] .qb-input:focus  { border-color: var(--accent); }
+
+/* ── Inventory page (.inv-*) ─────────────────────────────────────────────── */
+[data-skin="kawaii"] .inv-page-header h1 { color: var(--text-bright); }
+[data-skin="kawaii"] .inv-summary-bar {
+  background: var(--bg-card);
+  border-color: var(--border);
+  border-radius: var(--radius-md);
+}
+[data-skin="kawaii"] .inv-stat-val  { color: var(--text-primary); }
+[data-skin="kawaii"] .inv-stat-lbl  { color: var(--text-muted); }
+[data-skin="kawaii"] .inv-search-wrap {
+  background: var(--bg-page);
+  border-color: var(--border);
+  border-radius: var(--radius-sm);
+}
+[data-skin="kawaii"] .inv-search-wrap:focus-within { border-color: var(--accent); }
+[data-skin="kawaii"] .inv-search-input            { color: var(--text-primary); }
+[data-skin="kawaii"] .inv-search-input::placeholder { color: var(--text-muted); }
+[data-skin="kawaii"] .inv-quick-btn {
+  background: var(--bg-card);
+  border-color: var(--border-subtle);
+  color: var(--accent-2);
+  border-radius: var(--radius-sm);
+}
+[data-skin="kawaii"] .inv-quick-btn:hover { background: var(--bg-card-2); border-color: var(--accent-2); }
+[data-skin="kawaii"] .inv-card {
+  background: rgba(24,14,42,0.82);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-color: var(--border);
+  border-radius: var(--radius-md);
+}
+[data-skin="kawaii"] .inv-card:hover {
+  border-color: var(--border-subtle);
+  box-shadow: 0 4px 18px rgba(244,114,182,0.14);
+}
+[data-skin="kawaii"] .inv-qty-badge     { color: var(--accent); }
+[data-skin="kawaii"] .inv-card-name     { color: var(--text-bright); }
+[data-skin="kawaii"] .inv-card-desc     { color: var(--text-secondary); }
+[data-skin="kawaii"] .inv-card-value    { color: var(--color-success); }
+[data-skin="kawaii"] .inv-card-value--none { color: var(--text-muted); }
+[data-skin="kawaii"] .inv-unit-price    { color: var(--text-muted); }
+[data-skin="kawaii"] .inv-value-bar     { background: var(--bg-page); }
+[data-skin="kawaii"] .inv-list-toggle {
+  border-color: var(--border);
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+}
+[data-skin="kawaii"] .inv-list-toggle:hover { border-color: var(--accent); color: var(--accent); }
+[data-skin="kawaii"] .inv-list-toggle.open  { border-color: rgba(244,114,182,0.3); color: var(--accent); background: var(--accent-bg); }
+[data-skin="kawaii"] .inv-list-form         { border-top-color: var(--border); }
+[data-skin="kawaii"] .inv-input {
+  background: var(--bg-page);
+  border-color: var(--border);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+}
+[data-skin="kawaii"] .inv-input:focus     { border-color: var(--accent); }
+[data-skin="kawaii"] .inv-empty           { color: var(--border-subtle); }
+[data-skin="kawaii"] .inv-mkt-sep         { color: var(--border-subtle); }
+[data-skin="kawaii"] .inv-depth,
+[data-skin="kawaii"] .inv-vol             { color: var(--text-muted); }
+[data-skin="kawaii"] .inv-sort-label      { color: var(--text-muted); }
+[data-skin="kawaii"] .inv-mkt-link {
+  color: var(--text-secondary);
+  border-color: var(--border);
+  border-radius: var(--radius-sm);
+}
+[data-skin="kawaii"] .inv-mkt-link:hover  { color: var(--accent); border-color: var(--accent); }
+[data-skin="kawaii"] .inv-desc-toggle     { color: var(--accent); }
+[data-skin="kawaii"] .inv-biz-prod {
+  background: var(--accent-bg);
+  color: var(--accent);
+  border-color: rgba(244,114,182,0.25);
+  border-radius: 10px;
+}
+[data-skin="kawaii"] .inv-biz-cons {
+  background: var(--accent-2-bg);
+  color: var(--accent-2);
+  border-color: rgba(192,132,252,0.25);
+  border-radius: 10px;
+}
+[data-skin="kawaii"] .inv-quick-bid {
+  color: var(--color-gold);
+  border-color: rgba(120,53,15,0.5);
+  border-radius: var(--radius-sm);
+}
+[data-skin="kawaii"] .inv-quick-bid:hover { background: rgba(120,53,15,0.25); border-color: var(--color-gold); color: #fde68a; }
+[data-skin="kawaii"] .inv-filter-tabs::-webkit-scrollbar-thumb { background: var(--border-subtle); }
+[data-skin="kawaii"] .inv-listed           { color: var(--color-success); }
+[data-skin="kawaii"] .inv-listed a         { color: var(--color-success); }
+[data-skin="kawaii"] .inv-chg-up   { color: var(--color-success); background: var(--color-success-bg); }
+[data-skin="kawaii"] .inv-chg-down { color: var(--color-danger);  background: var(--color-danger-bg); }
+[data-skin="kawaii"] .inv-chg-flat { color: var(--text-muted); }
+[data-skin="kawaii"] .inv-bid  { color: var(--color-success); }
+[data-skin="kawaii"] .inv-ask  { color: var(--color-orange); }
+
+/* ── Trading Dashboard (.td-*) ───────────────────────────────────────────── */
+[data-skin="kawaii"] .td-sidebar,
+[data-skin="kawaii"] .td-panel,
+[data-skin="kawaii"] .td-section {
+  background: var(--bg-card);
+  border-color: var(--border);
+  border-radius: var(--radius-sm);
+}
+[data-skin="kawaii"] .td-label { color: var(--text-muted); }
+[data-skin="kawaii"] .td-input {
+  background: var(--bg-page);
+  border-color: var(--border);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+}
+[data-skin="kawaii"] .td-input:focus { border-color: var(--accent); }
+[data-skin="kawaii"] #td-tab-buy:checked  ~ .td-tab-bar .td-tab-buy  { background: var(--color-success); }
+[data-skin="kawaii"] #td-tab-sell:checked ~ .td-tab-bar .td-tab-sell { background: var(--color-danger); }
+
+/* ── Progress bar (base class shimmer) ───────────────────────────────────── */
+[data-skin="kawaii"] .progress-bar {
+  background: var(--grad-bar);
+  position: relative;
+  overflow: hidden;
+}
+[data-skin="kawaii"] .progress-bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+  animation: _kw-shimmer 2.2s ease-in-out infinite;
+}
+@keyframes _kw-shimmer {
+  0%   { transform: translateX(-200%); }
+  100% { transform: translateX(200%); }
+}
+
+/* ── Admin/Mod shells (.admin-*, filter buttons, table rows) ─────────────── */
+[data-skin="kawaii"] table { border-collapse: collapse; }
+[data-skin="kawaii"] th {
+  background: var(--bg-card-2);
+  color: var(--text-secondary);
+  border-color: var(--border);
+}
+[data-skin="kawaii"] td { border-color: var(--border); }
+[data-skin="kawaii"] tr:hover td { background: var(--accent-bg); }
+
+/* ── Ledger page ─────────────────────────────────────────────────────────── */
+[data-skin="kawaii"] .ledger { background: var(--grad-cert); border-color: var(--border); }
+[data-skin="kawaii"] .ledger-title  { color: var(--accent); }
+[data-skin="kawaii"] .ledger-subtitle { color: var(--text-secondary); }
+
+/* ── Level badge fix (inline style attribute, needs !important) ──────────── */
+[data-skin="kawaii"] [style*="background:#1e1b4b"],
+[data-skin="kawaii"] [style*="background: #1e1b4b"] {
+  background: var(--bg-card-2) !important;
+  border-color: var(--border-subtle) !important;
+}
+
+/* ── Selection highlight ─────────────────────────────────────────────────── */
+[data-skin="kawaii"] ::selection {
+  background: rgba(244,114,182,0.35);
+  color: var(--text-bright);
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────────────── */
+[data-skin="kawaii"] ::-webkit-scrollbar        { width: 6px; height: 6px; }
+[data-skin="kawaii"] ::-webkit-scrollbar-track  { background: var(--bg-page); }
+[data-skin="kawaii"] ::-webkit-scrollbar-thumb  { background: var(--border-subtle); border-radius: 3px; }
+[data-skin="kawaii"] ::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }

@@ -16,7 +16,7 @@ Cache busting: increment _SKIN_V on each deploy so browsers pick up updated file
 
 import os as _os
 
-_SKIN_V = 1  # ← increment on each deploy to bust browser CSS/JS cache
+_SKIN_V = 2  # ← increment on each deploy to bust browser CSS/JS cache
 
 
 def skin_links(player_id: int = None, module: str = None) -> str:
@@ -46,8 +46,12 @@ def skin_links(player_id: int = None, module: str = None) -> str:
                     pass
 
     v = _SKIN_V
+    # Synchronous script sets data-skin on <html> before any page <style>
+    # blocks are parsed. This lets [data-skin="kawaii"] selectors in the
+    # skin CSS win via higher specificity (0,2,0,0 vs page styles' 0,1,0,0).
     tags = (
-        f'<link rel="stylesheet" href="/static/skins/wadsworth-base.css?v={v}">\n'
+        f'<script>document.documentElement.setAttribute("data-skin","{skin}");</script>\n'
+        f'        <link rel="stylesheet" href="/static/skins/wadsworth-base.css?v={v}">\n'
         f'        <link rel="stylesheet" href="/static/skins/{skin}.css?v={v}">'
     )
     if module:
