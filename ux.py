@@ -3923,7 +3923,7 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
 
             stock_btn_html = (
                 f'<button type="button" class="btn-sm btn-sm-blue" onclick="spToggle({biz.id})"'
-                f' style="font-size:0.8rem;">Stock</button>'
+                f' style="font-size:0.8rem;">Restock</button>'
                 if biz_class == "production" else ""
             )
             sp_panel_html = (
@@ -15005,7 +15005,7 @@ async def quick_buy_stock_plan(
     from business import Business, BUSINESS_TYPES, get_district_business_types
     from land import get_db as get_land_db
     from reserve_banks import get_player_display_currency, fmt_usd
-    from inventory import get_inventory
+    from inventory import get_player_inventory
     import json as _json
 
     disp    = get_player_display_currency(player.id)
@@ -15023,7 +15023,7 @@ async def quick_buy_stock_plan(
             return JSONResponse({"error": "Not a production business"})
 
         paused_line_idxs = set(_json.loads(biz.paused_lines or "[]"))
-        inv = get_inventory(player.id)
+        inv = get_player_inventory(player.id)
 
         # Sum inputs × n_cycles across all non-paused lines
         needed: dict = {}
