@@ -13,7 +13,7 @@
 | HTML-generating Python files | 26 |
 | Total lines generating HTML | ~63,000 |
 | Unique hex color values | 601+ |
-| CSS variables in default.css | 112 |
+| CSS variables in default.css | 140 |
 | Independent shell functions | 15 (see full table below) |
 | Delegating shell functions (no changes needed) | 3 |
 | CSS classes across all shells | 170+ |
@@ -106,31 +106,34 @@ automatically once `ux.shell()` is patched.
 
 ## Module Overrides
 
-Three page groups use a different primary accent to signal a distinct context.
+Four page groups use a different primary accent to signal a distinct context.
 Each has a `modules/*.css` file loaded as a third `<link>` tag, **after** the
-player's skin file, overriding just the 5 accent-related variables.
+player's skin file, overriding just the accent-related variables.
 
 | File | Pages | Accent | Rationale |
 |------|-------|--------|-----------|
 | `modules/admin.css` | `/admin/*` | 🔴 Red `#ef4444` | Staff see red → immediately know they're in admin |
 | `modules/executive.css` | `/executives/*` | 🟣 Purple `#c084fc` | Prestige / power aesthetic for exec management |
 | `modules/memecoins.css` | `/memecoins/*` | 🟠 Orange `#f59e0b` | Chaotic-energy palette matching meme speculation |
+| `modules/mod.css` | `/mod/*` | 🟣 Violet `#7c3aed` | Darker bg + violet accent signals moderation context |
 
 **Skin authors:** you do not need to account for any of these files.
 They are applied automatically on top of any skin.
 
 ---
 
-## CSS Variable Taxonomy (112 variables)
+## CSS Variable Taxonomy (140 variables)
 
-All 112 variables are defined in `static/skins/default.css`.
+All 140 variables are defined in `static/skins/default.css`.
 
-Variables are split into two tiers:
-- **Core UI (69 vars)** — every skin MUST define all of these
-- **Semantic data (43 vars)** — game-specific meaning; most skins can leave as-is or
+Variables are split into three tiers:
+- **Core UI (79 vars)** — every skin MUST define all of these
+- **Specialty Themes (22 vars)** — subsystems with their own visual language (loader,
+  audio, leather/company, wiki); most skins define these but can leave them as-is
+- **Semantic data (39 vars)** — game-specific meaning; most skins can leave as-is or
   omit entirely (they fall back to the `default.css` definitions)
 
-### CORE UI
+### CORE UI (79 vars)
 
 #### Backgrounds (7)
 | Variable | Default | Role |
@@ -174,7 +177,7 @@ Variables are split into two tiers:
 | `--accent-3-dim` | `#7c3aed` | Hover / pressed of accent-3 |
 | `--accent-3-bg` | `rgba(167,139,250,0.08)` | Subtle accent-3 tint |
 
-#### Semantic Colors (18)
+#### Semantic Colors (20)
 | Variable | Default | Role |
 |----------|---------|------|
 | `--color-success` | `#22c55e` | Gains, positive values, online |
@@ -194,7 +197,9 @@ Variables are split into two tiers:
 | `--color-orange` | `#f97316` | Ask prices, orange-coded items |
 | `--color-purple` | `#a78bfa` | Level badges |
 | `--color-teal` | `#0d9488` | Teal economy indicators |
-| `--color-pink` | `#ec4899` | Pink event badges |
+| `--color-pink` | `#ec4899` | Pink event / contract badges |
+| `--color-lime` | `#84cc16` | Land transactions, land badges |
+| `--color-sky` | `#60a5fa` | DM / message badges, info tints |
 
 #### Medals (3)
 | Variable | Default | Role |
@@ -246,7 +251,7 @@ Variables are split into two tiers:
 | `--dur-normal` | `0.2s` | Standard hover / focus |
 | `--dur-slow` | `2s` | lien-pulse, scroll title |
 
-#### Gradients (6)
+#### Gradients (7)
 | Variable | Default | Role |
 |----------|---------|------|
 | `--grad-card` | `linear-gradient(135deg, var(--bg-card) 0%, var(--bg-card-2) 100%)` | Stats card backgrounds |
@@ -255,28 +260,32 @@ Variables are split into two tiers:
 | `--grad-cert-border` | `linear-gradient(90deg, var(--border-subtle), var(--border), var(--border-subtle))` | Cert-card top border |
 | `--grad-delete-zone` | `linear-gradient(135deg, #0a0a14 0%, #1a0a0a 100%)` | Estate delete zone |
 | `--grad-audio-knob` | `linear-gradient(to bottom, #3d2b1f, #1a0f0a)` | Audio tuner knob |
+| `--grad-kpi` | `linear-gradient(135deg, #080f1e 0%, #0d1829 100%)` | KPI / stats-page card body |
 
 ---
 
-### SEMANTIC DATA (per-subsystem)
+### SPECIALTY THEMES (22 vars)
+
+Subsystems that have their own visual language distinct from the main game UI.
+Skins that target a different aesthetic should override these too, but they're optional —
+omitting them falls back to the `default.css` mahogany / parchment / wiki values.
 
 #### Nav-Loader / Loading Screen (2)
-The page transition overlay shares the mahogany theme with the audio player.
-Most `--audio-*` variables apply directly. Only two extra vars are unique to the loader.
+The page transition overlay shares the mahogany aesthetic with the audio player.
+The `--audio-*` variables drive most of the loader look; only two are unique.
 
 | Variable | Default | Role |
 |----------|---------|------|
-| `--loader-border` | `#2d1810` | Card outer border |
-| `--loader-bar-start` | `#8b4513` | Progress bar gradient start (sienna) |
+| `--loader-border` | `#2d1810` | Card outer border ring |
+| `--loader-bar-start` | `#8b4513` | Progress bar gradient left (sienna) |
 
 Cross-references to `--audio-*` in the loader:
 - Loader body background → `--audio-bg-dark`
-- Loader card background → `--audio-bg-dark`
-- Loader title / text color → `--audio-accent`
+- Loader text / title colour → `--audio-accent`
 - Loader progress bar mid → `--audio-accent`
 - Loader progress bar end → `#f5f5dc` (cream — fixed, not a variable)
 
-#### Audio Player — Mahogany Theme (5)
+#### Audio Player — Mahogany / Vintage Hi-Fi (5)
 | Variable | Default | Role |
 |----------|---------|------|
 | `--audio-bg-dark` | `#1a0f0a` | Tuner body background |
@@ -287,25 +296,54 @@ Cross-references to `--audio-*` in the loader:
 
 Full pastel array: `#FFB7B2 #FFDAC1 #E2F0CB #B5EAD7 #C7CEEA #FF9AA2 #F8BBD0 #E1BEE7 #D1C4E9 #BBDEFB #C8E6C9 #F0F4C3 #FFF9C4 #FFE0B2 #F5F5DC`
 
-#### Terrain / World Map (13)
-Each terrain type used on the world map has a fixed colour.
-These encode geography — a skin can remap them but must preserve distinguishability.
+#### Company Pages — Leather & Parchment (6)
+Company and ledger pages (`_LEATHER_HEAD` constant in `company_ux.py`) use a handwritten
+journal aesthetic that is completely distinct from the rest of the game: dark walnut sidebar,
+cream parchment main body, tan ink. Also uses `--font-cursive` ('Caveat') for ledger headings.
 
-| Variable | Default | Terrain |
-|----------|---------|---------|
-| `--terrain-prairie` | `#86efac` | 🌾 Prairie |
-| `--terrain-forest` | `#22c55e` | 🌲 Forest |
-| `--terrain-desert` | `#fbbf24` | 🏜️ Desert |
-| `--terrain-marsh` | `#67e8f9` | 🌿 Marsh |
-| `--terrain-mountain` | `#94a3b8` | ⛰️ Mountain |
-| `--terrain-tundra` | `#bae6fd` | ❄️ Tundra |
-| `--terrain-jungle` | `#4ade80` | 🌴 Jungle |
-| `--terrain-savanna` | `#d97706` | 🦁 Savanna |
-| `--terrain-hills` | `#a3e635` | 🏔️ Hills |
-| `--terrain-island` | `#f472b6` | 🏝️ Island |
-| `--terrain-coastal` | `#60a5fa` | 🌊 Coastal |
-| `--terrain-lake` | `#38bdf8` | 💧 Lake |
-| `--terrain-ocean` | `#1e40af` | 🌐 Ocean |
+| Variable | Default | Role |
+|----------|---------|------|
+| `--leather-bg-dark` | `#1a0e06` | Walnut brown — sidebar, dark areas |
+| `--leather-bg-light` | `#f5ead0` | Cream parchment — main content area |
+| `--leather-text` | `#2a1505` | Dark brown ink for body text |
+| `--leather-accent` | `#c9a97a` | Tan — borders, highlights, nav |
+| `--leather-accent-2` | `#6b3a1f` | Dark tan — links, pressed states |
+| `--leather-border` | `#2d1810` | Same dark border as `--loader-border` |
+
+#### WikiWads — Encyclopedia Theme (9)
+The wiki / encyclopedia (`wiki_shell()` in `stats_ux.py`) uses a completely different
+3-colour accent palette from the rest of the game. The palette follows a 10/30/60 rule:
+primary orange (headings, CTAs), secondary yellow (highlights), tertiary blue (body accents).
+
+| Variable | Default | Role |
+|----------|---------|------|
+| `--wiki-bg-page` | `#04070f` | Deeper black than main `--bg-page` |
+| `--wiki-bg-card` | `#090e1c` | Wiki card background |
+| `--wiki-bg-card-2` | `#0c1528` | Wiki nested / alt background |
+| `--wiki-border` | `#1d2f55` | Wiki card and section borders |
+| `--wiki-text` | `#dde8ff` | Wiki body text (cooler white) |
+| `--wiki-text-muted` | `#607098` | Wiki muted text, metadata |
+| `--wiki-accent-1` | `#f5a855` | Primary — orange (10%) headings, CTAs |
+| `--wiki-accent-2` | `#f5d76e` | Secondary — yellow (30%) highlights |
+| `--wiki-accent-3` | `#90c4f0` | Tertiary — blue (60%) body accents |
+
+---
+
+### WORLD MAP — EXCLUDED FROM SKIN SYSTEM
+
+The world map renders terrain via canvas and the terrain colours are hardcoded
+in game logic. Skinning the world map terrain is out of scope — the 13 terrain
+colour values (`prairie`, `forest`, `desert`, `marsh`, `mountain`, `tundra`,
+`jungle`, `savanna`, `hills`, `island`, `coastal`, `lake`, `ocean`) are **not**
+CSS variables and do not live in any skin file.
+
+---
+
+### SEMANTIC DATA (39 vars)
+
+Game-specific meaning. Most skins leave these unchanged — they encode information
+(green = gain, red = loss, etc.). Override only if your skin breaks the visual
+logic they represent.
 
 #### Transaction Ledger Badge Colors (13)
 Each transaction type has a coloured left-bar accent in the ledger rows.
@@ -351,11 +389,33 @@ In Phase 3 these will be read via `getComputedStyle` so charts respond to skin c
 | `--mention-stock` | `#f97316` | Stock mention chip |
 | `--chat-mod-accent` | `#f59e0b` | Moderator message left border |
 
-#### Notification Badge (2)
+#### Notification Badge — Header 📒 Icon (2)
 | Variable | Default | Role |
 |----------|---------|------|
 | `--notif-badge` | `#ef4444` | Unread count text colour |
 | `--notif-badge-bg` | `rgba(239,68,68,0.13)` | Unread count background |
+
+#### Notification Type Badge Colors — Expanded Panel (9)
+Each notification type in the expanded notification panel has a coloured badge.
+Source: notification rendering in `ux.py` ~lines 3726–3872.
+
+| Variable | Default | Notification types covered |
+|----------|---------|---------------------------|
+| `--notif-market` | `#f59e0b` | MARKET — trade alerts |
+| `--notif-corporate` | `#38bdf8` | CORPORATE — acquisition / merger |
+| `--notif-execs` | `#a78bfa` | EXECUTIVES — exec hire / fire / events |
+| `--notif-general` | `#64748b` | NOTICE — general system messages |
+| `--notif-govt` | `#22c55e` | GOVERNMENT — city / county / district |
+| `--notif-business` | `#fb923c` | BUSINESS — production, retail |
+| `--notif-land` | `#84cc16` | LAND — plot purchases, land events |
+| `--notif-contract` | `#f472b6` | CONTRACT — P2P contract alerts |
+| `--notif-dm` | `#60a5fa` | MESSAGE — direct messages |
+
+#### Direct Messages / DM (2)
+| Variable | Default | Role |
+|----------|---------|------|
+| `--dm-own-accent` | `#c084fc` | Own outgoing message bubble / accent |
+| `--dm-unread` | `#c084fc` | Unread conversation badge |
 
 ---
 
@@ -478,8 +538,18 @@ Active states for both use `--accent-3` (indigo) for sort, `--accent` (blue) for
 ### Ticker
 `.ticker` `#tkViewport` `.ticker-controls` `.ticker-btn` `.ticker-btn:hover` `.ticker-btn.active`
 
+### WikiWads Pages
+`.wh` (wiki hero/header) `.wn` (wiki nav) `.wm` (wiki main area)
+`.wpt` (wiki page title) `.ws` (wiki section) `.wg` (wiki grid)
+`.wc` (wiki card) `.wb` (wiki body text) `.wkv` (wiki key-value row) `.whero` (wiki hero image)
+Orange headings use `--wiki-accent-1`; yellow highlights `--wiki-accent-2`; blue links `--wiki-accent-3`
+
+### Company / Ledger (Leather Theme)
+`.ledger` (main company journal page) `.nav-pill` (sidebar nav pills)
+Body background → `--leather-bg-light`; sidebar → `--leather-bg-dark`; ink → `--leather-text`
+
 ### Misc
-`.divider` `.detail-section` `.detail-title` `.recipe-item` `.recipe-arrow` `.terrain-tag`
+`.divider` `.detail-section` `.detail-title` `.recipe-item` `.recipe-arrow`
 
 ### Responsive
 `@media (max-width: 640px)` `@media (max-width: 480px)` `@media (min-width: 640px)`
@@ -610,23 +680,28 @@ Copy to `static/skins/your_skin_name.css`. Override values only. No component CS
  * Tier: free | pro
  *
  * Rules:
- *  - Define all CORE UI variables (69 vars). Semantic data vars are optional —
- *    omit them to inherit defaults from default.css (browsers cascade correctly).
+ *  - Define all CORE UI variables (79 vars). Specialty theme and semantic data
+ *    vars are optional — omit them to inherit defaults from default.css.
  *  - No component CSS. Variables only.
  *  - Test pages: / · /market · /businesses · /inventory · /stats/leaderboard
  *                /stats/economy · /estate · /admin · /executives · /memecoins
- *                settings skin picker (preview + save)
+ *                /wiki · /company · /notifications · settings skin picker
  *  - WCAG AA: all text ≥ 4.5:1 against its background.
  *  - --text-on-accent must be readable on --accent.
  *  - Light themes: override --grad-cert, --grad-delete-zone, --grad-audio-knob
- *    (they contain hardcoded dark hex values).
+ *    (they contain hardcoded dark hex values). Also override --leather-bg-dark
+ *    and --wiki-bg-page (both are very dark by default).
  *  - If changing --accent, update --shadow-glow to match its rgba.
  *  - If changing --color-danger, update --shadow-glow-danger to match.
  */
 
 :root {
 
-  /* ── Backgrounds ─────────────────────────────────────────────────────────── */
+  /* ═══════════════════════════════════════════════════════════
+   * CORE UI — required in every skin (79 vars)
+   * ═══════════════════════════════════════════════════════════ */
+
+  /* ── Backgrounds ─────────────────────────────────────────── */
   --bg-page:         #020617;
   --bg-card:         #0f172a;
   --bg-card-2:       #1e293b;
@@ -635,12 +710,12 @@ Copy to `static/skins/your_skin_name.css`. Override values only. No component CS
   --bg-ticker:       #0a1628;
   --bg-overlay:      rgba(0,0,0,0.6);
 
-  /* ── Borders ─────────────────────────────────────────────────────────────── */
+  /* ── Borders ─────────────────────────────────────────────── */
   --border:          #1e293b;
   --border-subtle:   #334155;
   --border-focus:    #38bdf8;
 
-  /* ── Text ────────────────────────────────────────────────────────────────── */
+  /* ── Text ────────────────────────────────────────────────── */
   --text-primary:    #e5e7eb;
   --text-bright:     #f1f5f9;
   --text-secondary:  #94a3b8;
@@ -649,7 +724,7 @@ Copy to `static/skins/your_skin_name.css`. Override values only. No component CS
   --text-on-accent:  #000000;
   --text-on-danger:  #ffffff;
 
-  /* ── Accent / Brand ──────────────────────────────────────────────────────── */
+  /* ── Accent / Brand ──────────────────────────────────────── */
   --accent:          #38bdf8;
   --accent-dim:      #0ea5e9;
   --accent-bg:       rgba(56,189,248,0.08);
@@ -660,7 +735,7 @@ Copy to `static/skins/your_skin_name.css`. Override values only. No component CS
   --accent-3-dim:    #7c3aed;
   --accent-3-bg:     rgba(167,139,250,0.08);
 
-  /* ── Semantic ────────────────────────────────────────────────────────────── */
+  /* ── Semantic Colors ─────────────────────────────────────── */
   --color-success:        #22c55e;
   --color-success-light:  #4ade80;
   --color-success-dark:   #16a34a;
@@ -679,19 +754,21 @@ Copy to `static/skins/your_skin_name.css`. Override values only. No component CS
   --color-purple:         #a78bfa;
   --color-teal:           #0d9488;
   --color-pink:           #ec4899;
+  --color-lime:           #84cc16;
+  --color-sky:            #60a5fa;
 
-  /* ── Medals ──────────────────────────────────────────────────────────────── */
+  /* ── Medals ──────────────────────────────────────────────── */
   --color-rank-1:    #d4af37;
   --color-rank-2:    #c0c0c0;
   --color-rank-3:    #cd7f32;
 
-  /* ── Fonts ───────────────────────────────────────────────────────────────── */
+  /* ── Fonts ───────────────────────────────────────────────── */
   --font-body:     'JetBrains Mono', 'Courier New', monospace;
   --font-serif:    Georgia, serif;
   --font-cursive:  'Caveat', cursive;
   --font-sans:     'Segoe UI', system-ui, sans-serif;
 
-  /* ── Border Radius ───────────────────────────────────────────────────────── */
+  /* ── Border Radius ───────────────────────────────────────── */
   --radius-sm:     3px;
   --radius-md:     4px;
   --radius-lg:     8px;
@@ -700,35 +777,123 @@ Copy to `static/skins/your_skin_name.css`. Override values only. No component CS
   --radius-pill:   9999px;
   --radius-circle: 50%;
 
-  /* ── Z-Index ─────────────────────────────────────────────────────────────── */
+  /* ── Z-Index ─────────────────────────────────────────────── */
   --z-below:    -1;
   --z-base:     100;
   --z-audio:    150;
   --z-ticker:   1000;
   --z-modal:    9999;
 
-  /* ── Shadows ─────────────────────────────────────────────────────────────── */
+  /* ── Shadows ─────────────────────────────────────────────── */
   --shadow-sm:          0 1px 4px rgba(0,0,0,0.6);
   --shadow-md:          0 4px 20px rgba(0,0,0,0.7);
   --shadow-glow:        0 8px 25px rgba(56,189,248,0.15);
   --shadow-glow-danger: 0 8px 25px rgba(239,68,68,0.15);
 
-  /* ── Transitions ─────────────────────────────────────────────────────────── */
+  /* ── Transitions ─────────────────────────────────────────── */
   --dur-fast:   0.15s;
   --dur-normal: 0.2s;
   --dur-slow:   2s;
 
-  /* ── Gradients ───────────────────────────────────────────────────────────── */
+  /* ── Gradients ───────────────────────────────────────────── */
   --grad-card:        linear-gradient(135deg, var(--bg-card) 0%, var(--bg-card-2) 100%);
   --grad-bar:         linear-gradient(to top, var(--accent), var(--accent-dim));
   --grad-cert:        linear-gradient(135deg, #0a0a14 0%, #111827 100%);
   --grad-cert-border: linear-gradient(90deg, var(--border-subtle), var(--border), var(--border-subtle));
   --grad-delete-zone: linear-gradient(135deg, #0a0a14 0%, #1a0a0a 100%);
   --grad-audio-knob:  linear-gradient(to bottom, #3d2b1f, #1a0f0a);
+  --grad-kpi:         linear-gradient(135deg, #080f1e 0%, #0d1829 100%);
 
-  /* ── Semantic data vars — optional, omit to inherit defaults ─────────────── */
-  /* Terrain, transaction, chart, mention, notification badge, audio, loader    */
-  /* vars are inherited from default.css if not defined here.                  */
+
+  /* ═══════════════════════════════════════════════════════════
+   * SPECIALTY THEMES — optional but recommended (22 vars)
+   * ═══════════════════════════════════════════════════════════ */
+
+  /* ── Nav-Loader / Loading Screen (2) ─────────────────────── */
+  --loader-border:    #2d1810;
+  --loader-bar-start: #8b4513;
+
+  /* ── Audio Player — Mahogany (5) ─────────────────────────── */
+  --audio-bg-dark:    #1a0f0a;
+  --audio-bg-mid:     #3d2b1f;
+  --audio-accent:     #b08d57;
+  --audio-font:       var(--font-serif);
+  --audio-pastels-json: '["#FFB7B2","#FFDAC1","#E2F0CB","#B5EAD7","#C7CEEA","#FF9AA2","#F8BBD0","#E1BEE7","#D1C4E9","#BBDEFB","#C8E6C9","#F0F4C3","#FFF9C4","#FFE0B2","#F5F5DC"]';
+
+  /* ── Company Pages — Leather & Parchment (6) ─────────────── */
+  --leather-bg-dark:  #1a0e06;
+  --leather-bg-light: #f5ead0;
+  --leather-text:     #2a1505;
+  --leather-accent:   #c9a97a;
+  --leather-accent-2: #6b3a1f;
+  --leather-border:   #2d1810;
+
+  /* ── WikiWads Encyclopedia (9) ───────────────────────────── */
+  --wiki-bg-page:    #04070f;
+  --wiki-bg-card:    #090e1c;
+  --wiki-bg-card-2:  #0c1528;
+  --wiki-border:     #1d2f55;
+  --wiki-text:       #dde8ff;
+  --wiki-text-muted: #607098;
+  --wiki-accent-1:   #f5a855;
+  --wiki-accent-2:   #f5d76e;
+  --wiki-accent-3:   #90c4f0;
+
+
+  /* ═══════════════════════════════════════════════════════════
+   * SEMANTIC DATA — omit to inherit defaults (39 vars)
+   * ═══════════════════════════════════════════════════════════ */
+
+  /* ── Transaction Ledger Badges ───────────────────────────── */
+  --tx-market:    #3b82f6;
+  --tx-resource:  #0ea5e9;
+  --tx-cash-in:   #22c55e;
+  --tx-cash-out:  #ef4444;
+  --tx-business:  #8b5cf6;
+  --tx-land:      #84cc16;
+  --tx-district:  #f59e0b;
+  --tx-crypto:    #f59e0b;
+  --tx-bonds:     #0891b2;
+  --tx-shares:    #3b82f6;
+  --tx-dividend:  #22c55e;
+  --tx-tax:       #f97316;
+  --tx-p2p:       #6366f1;
+
+  /* ── Chart.js Colors ─────────────────────────────────────── */
+  --chart-income:         rgba(34,197,94,0.7);
+  --chart-expense:        rgba(239,68,68,0.65);
+  --chart-line:           #38bdf8;
+  --chart-line-fill:      rgba(56,189,248,0.07);
+  --chart-tooltip-bg:     #0f172a;
+  --chart-tooltip-border: #334155;
+  --chart-grid:           #111827;
+  --chart-tick:           #475569;
+
+  /* ── Chat Mentions ───────────────────────────────────────── */
+  --mention-player:  #22c55e;
+  --mention-item:    #38bdf8;
+  --mention-crypto:  #fbbf24;
+  --mention-stock:   #f97316;
+  --chat-mod-accent: #f59e0b;
+
+  /* ── Notification Badge ──────────────────────────────────── */
+  --notif-badge:     #ef4444;
+  --notif-badge-bg:  rgba(239,68,68,0.13);
+
+  /* ── Notification Type Badge Colors ─────────────────────── */
+  --notif-market:    #f59e0b;
+  --notif-corporate: #38bdf8;
+  --notif-execs:     #a78bfa;
+  --notif-general:   #64748b;
+  --notif-govt:      #22c55e;
+  --notif-business:  #fb923c;
+  --notif-land:      #84cc16;
+  --notif-contract:  #f472b6;
+  --notif-dm:        #60a5fa;
+
+  /* ── Direct Messages ─────────────────────────────────────── */
+  --dm-own-accent:   #c084fc;
+  --dm-unread:       #c084fc;
 
 }
 ```
@@ -737,8 +902,8 @@ Copy to `static/skins/your_skin_name.css`. Override values only. No component CS
 
 ## Skin Author Checklist
 
-**Required (core UI — 69 vars):**
-- [ ] All 69 core UI variables defined
+**Required (core UI — 79 vars):**
+- [ ] All 79 core UI variables defined
 - [ ] Filename: `a-z`, `0-9`, `_` only — no spaces, no uppercase
 - [ ] `Description:` comment line present (shown in picker)
 - [ ] `Tier: free` or `Tier: pro` comment set
@@ -750,14 +915,18 @@ Copy to `static/skins/your_skin_name.css`. Override values only. No component CS
 - [ ] `/businesses` — retail price forms, progress bars
 - [ ] `/inventory` — category pills, value bars, list form
 - [ ] `/stats/leaderboard` — rank badges (gold/silver/bronze), trophy column
-- [ ] `/stats/economy` — charts, transaction ledger, tax section
+- [ ] `/stats/economy` — charts, transaction ledger (tx badge colours), tax section
 - [ ] `/estate` — cert-card gradient, delete zone
 - [ ] `/admin` — red accent override visible, table rows, danger buttons
 - [ ] `/executives` — purple accent override, gold card-special border
 - [ ] `/memecoins` — orange accent override, buy/sell badge colours
+- [ ] `/mod/*` — violet accent override, darker card bg
+- [ ] `/wiki` / WikiWads — orange/yellow/blue triple-accent, distinct bg/card
+- [ ] `/company` — leather parchment bg, walnut sidebar, tan ink, Caveat font
+- [ ] `/notifications` — 9 type-badge colours visible, header badge colour
+- [ ] `/dm` — own-message accent (purple), unread badge
 - [ ] Settings skin picker — preview works, save disabled for non-subscribers
 - [ ] Chat room — mention chips (4 colours), mod message border
-- [ ] World map — terrain colours distinguishable
 
 **Contrast & accessibility:**
 - [ ] All text ≥ 4.5:1 against background (WCAG AA)
@@ -769,7 +938,10 @@ Copy to `static/skins/your_skin_name.css`. Override values only. No component CS
 - [ ] Override `--grad-cert` (hardcoded dark hex)
 - [ ] Override `--grad-delete-zone` (hardcoded dark hex)
 - [ ] Override `--grad-audio-knob` (hardcoded dark hex)
-- [ ] Consider overriding `--audio-*` (mahogany theme looks odd on light bg)
+- [ ] Override `--grad-kpi` (hardcoded very dark hex)
+- [ ] Override `--audio-*` (mahogany theme looks odd on a light background)
+- [ ] Override `--leather-bg-dark` (very dark by default — invert for light themes)
+- [ ] Override `--wiki-bg-page` and `--wiki-bg-card*` (nearly black by default)
 
 **Shadow consistency:**
 - [ ] `--shadow-glow` rgba matches `--accent` hue
@@ -797,10 +969,11 @@ Copy to `static/skins/your_skin_name.css`. Override values only. No component CS
 - `reserve_banks_ux.py` — shell + `<link>` injection
 - `auth.py` — login/register page + `<link>` injection
 - `settings_ux.py` — skin picker tab UI + save endpoint
-- `static/skins/default.css` ✅ done (112 vars)
+- `static/skins/default.css` ✅ done (140 vars)
 - `static/skins/modules/admin.css` ✅ done
 - `static/skins/modules/executive.css` ✅ done
 - `static/skins/modules/memecoins.css` ✅ done
+- `static/skins/modules/mod.css` ✅ done
 
 ### Phase 2 (CSS consolidation)
 - `static/skins/wadsworth-base.css` ← NEW
