@@ -1,0 +1,55 @@
+/*
+ * Wadsworth Skin: Default Dark
+ * Author: Wadsworth Team
+ * Description: The original dark navy theme — the reference implementation.
+ * Tier: free
+ *
+ * This file is the canonical definition of all 32 CSS variables.
+ * All other skins are diffs against this one.
+ */
+
+:root {
+
+  /* ── Backgrounds ───────────────────────────────────────────── */
+  --bg-page:       #020617;
+  --bg-card:       #0f172a;
+  --bg-card-2:     #1e293b;
+  --bg-input:      #1e293b;
+  --bg-header:     #0b1220;
+  --bg-ticker:     #0a1628;
+  --bg-overlay:    rgba(0,0,0,0.6);
+
+  /* ── Borders ───────────────────────────────────────────────── */
+  --border:        #1e293b;
+  --border-subtle: #334155;
+  --border-focus:  #38bdf8;
+
+  /* ── Text ──────────────────────────────────────────────────── */
+  --text-primary:    #e5e7eb;
+  --text-secondary:  #94a3b8;
+  --text-muted:      #64748b;
+  --text-faint:      #475569;
+  --text-on-accent:  #000000;
+
+  /* ── Accent / Brand ────────────────────────────────────────── */
+  --accent:          #38bdf8;
+  --accent-dim:      #0ea5e9;
+  --accent-bg:       rgba(56,189,248,0.08);
+  --accent-2:        #f59e0b;
+  --accent-2-dim:    #d97706;
+  --accent-3:        #a78bfa;
+
+  /* ── Semantic ──────────────────────────────────────────────── */
+  --color-success:       #22c55e;
+  --color-success-light: #4ade80;
+  --color-success-bg:    rgba(34,197,94,0.08);
+  --color-danger:        #ef4444;
+  --color-danger-light:  #f87171;
+  --color-danger-dark:   #dc2626;
+  --color-danger-bg:     rgba(239,68,68,0.08);
+  --color-warning:       #f59e0b;
+  --color-warning-light: #fbbf24;
+  --color-gold:          #d4af37;
+  --color-orange:        #f97316;
+
+}
