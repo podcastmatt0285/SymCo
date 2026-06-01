@@ -2870,7 +2870,7 @@ async def stats_business_detail(
     except Exception:
         pass
 
-    return HTMLResponse(wiki_shell(name, tut_overlay + body, player.business_name, "businesses"))
+    return HTMLResponse(wiki_shell(name, tut_overlay + body, player.business_name, "businesses", player.id))
 
 
 @router.get("/stats/items", response_class=HTMLResponse)
@@ -3491,8 +3491,12 @@ def _wiki_debuff(key: str, val: float) -> str:
     return f'<span class="debuff">{lbl} {v}</span>'
 
 
-def wiki_shell(title: str, body: str, player_name: str = "", active: str = "") -> str:
-    """Beautiful wiki wrapper — 10/30/60 pastel orange/yellow/blue palette."""
+def wiki_shell(title: str, body: str, player_name: str = "", active: str = "", player_id: int = None) -> str:
+    """Beautiful wiki wrapper — 10/30/60 pastel orange/yellow/blue palette.
+
+    Injects the player's chosen skin so [data-skin="..."] rules (e.g. kawaii)
+    can theme the wiki's .w* classes. Default skin leaves the orange/blue look.
+    """
     _NAV_ITEMS = [
         ("hub",           "/stats/wiki",               "◈ Home"),
         ("businesses",    "/stats/wiki/businesses",    "🏭 Businesses"),
@@ -3608,6 +3612,7 @@ a{color:#90c4f0;text-decoration:none;}a:hover{color:#f5d76e;}
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{title} · Wadsworth Wiki</title>
+{_skin_links(player_id)}
 <style>{css}</style>
 </head>
 <body>
@@ -3858,7 +3863,7 @@ function hubSearch(q){{
 }}
 </script>
 """
-    return HTMLResponse(wiki_shell("Wiki Home", body, player.business_name, "hub"))
+    return HTMLResponse(wiki_shell("Wiki Home", body, player.business_name, "hub", player.id))
 
 
 # ── Wiki: Businesses ─────────────────────────────────────────
@@ -4002,7 +4007,7 @@ function bizSearch(q){{
 {pre_search}
 </script>
 """
-    return HTMLResponse(wiki_shell("Businesses", body, player.business_name, "businesses"))
+    return HTMLResponse(wiki_shell("Businesses", body, player.business_name, "businesses", player.id))
 
 
 # ── Wiki: Districts ──────────────────────────────────────────
@@ -4119,7 +4124,7 @@ monthly tax revenue, and grants production bonuses to city residents.</p>
 <h2 class="wpt" style="font-size:1.1rem;margin-bottom:12px;">District Types</h2>
 <div class="wg">{cards if cards else '<div class="wnone">District data unavailable.</div>'}</div>
 """
-    return HTMLResponse(wiki_shell("Districts", body, player.business_name, "districts"))
+    return HTMLResponse(wiki_shell("Districts", body, player.business_name, "districts", player.id))
 
 
 # ── Wiki: Items ──────────────────────────────────────────────
@@ -4273,7 +4278,7 @@ function itemSearch(q){{
 }}
 </script>
 """
-    return HTMLResponse(wiki_shell("Items", body, player.business_name, "items"))
+    return HTMLResponse(wiki_shell("Items", body, player.business_name, "items", player.id))
 
 
 # ── Wiki: City Projects ──────────────────────────────────────
@@ -4297,7 +4302,7 @@ async def wiki_city_projects(
         from city_projects import CITY_PROJECT_TYPES, SPECIAL_KEYS
     except Exception:
         err = '<div class="wnone">City project data unavailable.</div>'
-        return HTMLResponse(wiki_shell("City Projects", err, player.business_name, "city_projects"))
+        return HTMLResponse(wiki_shell("City Projects", err, player.business_name, "city_projects", player.id))
 
     _CAT = {
         "foundation":    ("🏛️", "Foundation"),
@@ -4394,7 +4399,7 @@ function projSearch(q){{
 }}
 </script>
 """
-    return HTMLResponse(wiki_shell("City Projects", body, player.business_name, "city_projects"))
+    return HTMLResponse(wiki_shell("City Projects", body, player.business_name, "city_projects", player.id))
 
 
 # ── Wiki: Executives ─────────────────────────────────────────
@@ -4415,7 +4420,7 @@ async def wiki_executives(
         from executive import EXECUTIVE_JOBS, EXECUTIVE_CATEGORIES, EXEC_ABILITIES, JOB_ABILITY_POOLS
     except Exception:
         err = '<div class="wnone">Executive data unavailable.</div>'
-        return HTMLResponse(wiki_shell("Executives", err, player.business_name, "executives"))
+        return HTMLResponse(wiki_shell("Executives", err, player.business_name, "executives", player.id))
 
     pool = {k: v for k, v in EXECUTIVE_JOBS.items()
             if category == "all" or v["category"] == category}
@@ -4601,7 +4606,7 @@ function execSearch(q){{
 }}
 </script>
 """
-    return HTMLResponse(wiki_shell("Executives", body, player.business_name, "executives"))
+    return HTMLResponse(wiki_shell("Executives", body, player.business_name, "executives", player.id))
 
 
 # ── Wiki: Banks ──────────────────────────────────────────────
@@ -5083,7 +5088,7 @@ function rbToggle(code) {{
 }}
 </script>
 """
-    return HTMLResponse(wiki_shell("Banks", body, player.business_name, "banks"))
+    return HTMLResponse(wiki_shell("Banks", body, player.business_name, "banks", player.id))
 
 
 # ── Wiki: Counties ────────────────────────────────────────────
@@ -5233,7 +5238,7 @@ async def wiki_counties(session_token: Optional[str] = Cookie(None)):
 
 {counties_html}
 """
-    return HTMLResponse(wiki_shell("Counties", body, player.business_name, "counties"))
+    return HTMLResponse(wiki_shell("Counties", body, player.business_name, "counties", player.id))
 
 
 # ── Wiki: Crypto ──────────────────────────────────────────────
@@ -5442,7 +5447,7 @@ async def wiki_crypto(session_token: Optional[str] = Cookie(None)):
   <div class="wc-meme-grid">{meme_html}</div>
 </div>
 """
-    return HTMLResponse(wiki_shell("Crypto", body, player.business_name, "crypto"))
+    return HTMLResponse(wiki_shell("Crypto", body, player.business_name, "crypto", player.id))
 
 
 # ==========================

@@ -1153,3 +1153,112 @@ a:hover {
   border-radius: var(--radius-md) var(--radius-md) 0 0;
   box-shadow: 0 -8px 30px rgba(255,133,179,0.18);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   WADSWORTH WIKI (.w* namespace — stats_ux.py wiki_shell)
+   The wiki ships its own orange/yellow/blue palette baked into an inline
+   <style> block. These [data-skin="kawaii"] rules (specificity 0,2,0) recolor
+   it to the kawaii pink/lavender theme using the --wiki-* variables.
+   ═══════════════════════════════════════════════════════════════════════════ */
+/* Header */
+[data-skin="kawaii"] .wh {
+  background: var(--bg-header);
+  border-image: linear-gradient(90deg, var(--accent), var(--accent-2) 50%, var(--accent-3)) 1;
+  box-shadow: 0 4px 20px rgba(253,181,204,0.20);
+}
+[data-skin="kawaii"] .wh-logo {
+  background: linear-gradient(90deg, var(--accent), var(--accent-2) 60%, var(--accent-3));
+  -webkit-background-clip: text; background-clip: text;
+}
+[data-skin="kawaii"] .wh-player { color: var(--text-muted); }
+[data-skin="kawaii"] .wh-btn {
+  border-color: var(--border); color: var(--text-secondary); border-radius: var(--radius-md);
+}
+[data-skin="kawaii"] .wh-btn:hover { color: var(--accent); border-color: var(--accent); }
+/* Nav */
+[data-skin="kawaii"] .wn { background: var(--bg-header); border-bottom-color: var(--border); }
+[data-skin="kawaii"] .wn a { color: var(--text-secondary); }
+[data-skin="kawaii"] .wn a:hover { color: var(--accent); border-bottom-color: var(--accent-2); }
+[data-skin="kawaii"] .wn a.active { color: var(--accent); border-bottom-color: var(--accent); }
+/* Page title + description */
+[data-skin="kawaii"] .wpt,
+[data-skin="kawaii"] .whero-title {
+  background: linear-gradient(100deg, var(--accent), var(--accent-2) 55%, var(--accent-3));
+  -webkit-background-clip: text; background-clip: text;
+}
+[data-skin="kawaii"] .wpd,
+[data-skin="kawaii"] .whero-sub { color: var(--text-secondary); }
+/* Section divider */
+[data-skin="kawaii"] .ws-t { color: var(--accent); }
+[data-skin="kawaii"] .ws-l { background: linear-gradient(90deg, var(--border-subtle), transparent); }
+/* Cards (glass morphism) */
+[data-skin="kawaii"] .wc {
+  background: rgba(24,14,42,0.82);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255,255,255,0.10);
+  border-radius: var(--radius-lg);
+}
+[data-skin="kawaii"] .wc::after { background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+[data-skin="kawaii"] .wc:hover {
+  border-color: var(--accent);
+  box-shadow: 0 8px 28px rgba(253,181,204,0.24), 0 2px 8px rgba(0,0,0,0.4);
+}
+[data-skin="kawaii"] .wcs:hover { border-color: rgba(255,255,255,0.10); }
+[data-skin="kawaii"] .wc-title { color: var(--text-bright); }
+[data-skin="kawaii"] .wc-desc { color: var(--text-secondary); }
+[data-skin="kawaii"] .wc-meta { border-top-color: var(--border); }
+/* Key-value rows */
+[data-skin="kawaii"] .wkv { border-bottom-color: var(--border); }
+[data-skin="kawaii"] .wk { color: var(--text-muted); }
+[data-skin="kawaii"] .wv { color: var(--text-bright); }
+[data-skin="kawaii"] .wv.ora { color: var(--accent); }
+[data-skin="kawaii"] .wv.yel { color: var(--color-gold); }
+[data-skin="kawaii"] .wv.blu { color: var(--accent-3); }
+[data-skin="kawaii"] .wv.dim { color: var(--text-muted); }
+/* Badges */
+[data-skin="kawaii"] .wb-o { background: var(--accent-bg);   color: var(--accent);   border-color: rgba(244,114,182,0.3); }
+[data-skin="kawaii"] .wb-y { background: var(--color-gold-bg); color: var(--color-gold); border-color: rgba(252,211,77,0.25); }
+[data-skin="kawaii"] .wb-b { background: var(--accent-3-bg); color: var(--accent-3); border-color: rgba(103,232,249,0.25); }
+[data-skin="kawaii"] .wb-g { background: var(--bg-card-2);   color: var(--text-secondary); border-color: var(--border); }
+/* Search & filters */
+[data-skin="kawaii"] .wsbox,
+[data-skin="kawaii"] .whero-sw input {
+  background: var(--bg-card); border-color: var(--border); color: var(--text-primary);
+  border-radius: var(--radius-md);
+}
+[data-skin="kawaii"] .wsbox:focus,
+[data-skin="kawaii"] .whero-sw input:focus {
+  border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg);
+}
+[data-skin="kawaii"] .wsw-ico,
+[data-skin="kawaii"] .whero-sw-ico { color: var(--text-muted); }
+[data-skin="kawaii"] .wft {
+  color: var(--text-secondary); background: var(--bg-card); border-color: var(--border);
+}
+[data-skin="kawaii"] .wft:hover { color: var(--accent); border-color: var(--accent); }
+[data-skin="kawaii"] .wft.active { color: var(--accent); background: var(--accent-bg); border-color: var(--accent); }
+[data-skin="kawaii"] .wnone { color: var(--text-muted); }
+/* Video / audio / material cards */
+[data-skin="kawaii"] .wvc,
+[data-skin="kawaii"] .wac {
+  background: rgba(24,14,42,0.82); border: 1.5px solid rgba(255,255,255,0.10);
+  border-radius: var(--radius-lg);
+}
+[data-skin="kawaii"] .wvc-title,
+[data-skin="kawaii"] .wac-title { color: var(--text-bright); }
+[data-skin="kawaii"] .wvc-desc,
+[data-skin="kawaii"] .wac-lbl { color: var(--text-muted); }
+[data-skin="kawaii"] .wac-ico {
+  background: linear-gradient(135deg, var(--accent-bg), var(--accent-2-bg));
+  border-color: rgba(244,114,182,0.28);
+}
+[data-skin="kawaii"] .wac-soon { color: var(--color-gold); }
+[data-skin="kawaii"] .mat { background: var(--bg-card-2); border-color: var(--border); color: var(--text-secondary); }
+/* Hero */
+[data-skin="kawaii"] .whero {
+  background: radial-gradient(ellipse at 50% -20%, rgba(244,114,182,0.12) 0%, transparent 65%);
+  border-bottom-color: var(--border);
+}
+[data-skin="kawaii"] .whero-tag {
+  color: var(--accent); background: var(--accent-bg); border-color: rgba(244,114,182,0.25);
+}

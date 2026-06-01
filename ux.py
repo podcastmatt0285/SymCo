@@ -27,7 +27,21 @@ router = APIRouter()
 # PRIVACY POLICY
 # ==========================
 @router.get("/privacy-policy", response_class=HTMLResponse)
-def privacy_policy():
+def privacy_policy(session_token: Optional[str] = Cookie(None)):
+    # Public page (reachable logged-out for Play Store). Logged-in players get
+    # their chosen skin so [data-skin] rules can theme the .ledger parchment.
+    _pid = None
+    if session_token:
+        try:
+            import auth as _auth
+            _db = _auth.get_db()
+            try:
+                _p = _auth.get_player_from_session(_db, session_token)
+                _pid = _p.id if _p else None
+            finally:
+                _db.close()
+        except Exception:
+            _pid = None
     html = """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -37,6 +51,7 @@ def privacy_policy():
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&display=swap" rel="stylesheet">
+""" + _skin_links(_pid) + """
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 

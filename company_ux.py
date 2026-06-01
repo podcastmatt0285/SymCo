@@ -336,7 +336,28 @@ _LEATHER_FOOT = """
 </html>"""
 
 
-def _page(title, subtitle, back_href, back_label, active_nav, body_html):
+def _skin_player_id(session_token):
+    """Resolve the logged-in player's id from a session cookie, or None.
+
+    These company/marketing pages are reachable both logged-out (from the
+    login screen) and logged-in. Logged-in players get their chosen skin;
+    logged-out visitors fall back to the default skin.
+    """
+    if not session_token:
+        return None
+    try:
+        from auth import get_player_from_session
+        db = SessionLocal()
+        try:
+            p = get_player_from_session(db, session_token)
+            return p.id if p else None
+        finally:
+            db.close()
+    except Exception:
+        return None
+
+
+def _page(title, subtitle, back_href, back_label, active_nav, body_html, player_id=None):
     nav = ""
     pages = [
         ("/sitemap",           "Sitemap"),
@@ -348,7 +369,7 @@ def _page(title, subtitle, back_href, back_label, active_nav, body_html):
     for href, label in pages:
         cls = "nav-pill active" if href == active_nav else "nav-pill"
         nav += f'<a href="{href}" class="{cls}">{label}</a>'
-    return f"""{_leather_head(None)}
+    return f"""{_leather_head(player_id)}
 <title>{title} — Wadsworth</title>
 </head>
 <body>
@@ -461,7 +482,7 @@ SITEMAP_ENTRIES = [
 
 
 @router.get("/sitemap", response_class=HTMLResponse)
-def player_sitemap():
+def player_sitemap(session_token: Optional[str] = Cookie(None)):
     cards = ""
     for href, title, desc in SITEMAP_ENTRIES:
         cards += f"""<a href="{href}" class="sitemap-card" data-title="{title.lower()}" data-desc="{desc.lower()}">
@@ -494,14 +515,14 @@ function filterSitemap(q) {{
     return HTMLResponse(_page(
         "Sitemap", "Every page in Wadsworth",
         "/login", "← Back to login",
-        "/sitemap", body
+        "/sitemap", body, player_id=_skin_player_id(session_token)
     ))
 
 
 # ── /company/whitepaper ───────────────────────────────────────────────────────
 
 @router.get("/company/whitepaper", response_class=HTMLResponse)
-def whitepaper():
+def whitepaper(session_token: Optional[str] = Cookie(None)):
     body = """
 <h2>I. Abstract</h2>
 <p>Wadsworth Economic Tycoon Simulator is a persistent, real-time multiplayer economic strategy game
@@ -596,14 +617,14 @@ prevent double-spend under concurrent load.</p>
     return HTMLResponse(_page(
         "Whitepaper", "Wadsworth Economic Tycoon Simulator — Design Document",
         "/login", "← Back to login",
-        "/company/whitepaper", body
+        "/company/whitepaper", body, player_id=_skin_player_id(session_token)
     ))
 
 
 # ── /company/careers ──────────────────────────────────────────────────────────
 
 @router.get("/company/careers", response_class=HTMLResponse)
-def careers_page(msg: str = "", err: str = ""):
+def careers_page(msg: str = "", err: str = "", session_token: Optional[str] = Cookie(None)):
     notice = ""
     if msg:
         notice = f'<div class="msg-ok">✦ {msg}</div>'
@@ -641,7 +662,7 @@ we want to hear from you. Tell us what you do and how it fits.</p>
     return HTMLResponse(_page(
         "Careers", "Come build with us",
         "/login", "← Back to login",
-        "/company/careers", body
+        "/company/careers", body, player_id=_skin_player_id(session_token)
     ))
 
 
@@ -677,7 +698,7 @@ def careers_apply(
 # ── /company/press-kit ────────────────────────────────────────────────────────
 
 @router.get("/company/press-kit", response_class=HTMLResponse)
-def press_kit():
+def press_kit(session_token: Optional[str] = Cookie(None)):
     icons = [
         ("/static/logo.png",                                   "Logo",          "logo.png",        "auto", 80),
         ("/static/icons/icon-512.png",                         "Icon 512×512",  "icon-512.png",    512, 80),
@@ -741,5 +762,5 @@ financial leaderboard.</p>
     return HTMLResponse(_page(
         "Press Kit", "Media assets & game information",
         "/login", "← Back to login",
-        "/company/press-kit", body
+        "/company/press-kit", body, player_id=_skin_player_id(session_token)
     ))
