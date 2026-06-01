@@ -1262,3 +1262,28 @@ a:hover {
 [data-skin="kawaii"] .whero-tag {
   color: var(--accent); background: var(--accent-bg); border-color: rgba(244,114,182,0.25);
 }
+/* WikiWads article cards (.ww-* namespace) */
+[data-skin="kawaii"] .ww-article {
+  background: rgba(24,14,42,0.82); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255,255,255,0.10); border-radius: var(--radius-lg);
+}
+[data-skin="kawaii"] .ww-article-header { border-bottom-color: var(--border); }
+[data-skin="kawaii"] .ww-article-title  { color: var(--text-bright); }
+[data-skin="kawaii"] .ww-article-summary { color: var(--text-secondary); }
+[data-skin="kawaii"] .ww-result-card {
+  background: var(--bg-card-2); border-color: var(--border); color: inherit;
+  border-radius: var(--radius-md);
+}
+[data-skin="kawaii"] .ww-result-card:hover { border-color: var(--accent); }
+[data-skin="kawaii"] .ww-rc-title { color: var(--text-bright); }
+[data-skin="kawaii"] .ww-rc-sum  { color: var(--text-muted); }
+[data-skin="kawaii"] .ww-search-info { color: var(--text-muted); }
+[data-skin="kawaii"] .ww-index-card {
+  background: rgba(24,14,42,0.82); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255,255,255,0.10); border-radius: var(--radius-lg);
+}
+[data-skin="kawaii"] .ww-index-card:hover {
+  border-color: var(--accent); box-shadow: 0 8px 24px rgba(253,181,204,0.20);
+}
+[data-skin="kawaii"] .ww-ic-title { color: var(--text-bright); }
+[data-skin="kawaii"] .ww-ic-sum  { color: var(--text-muted); }

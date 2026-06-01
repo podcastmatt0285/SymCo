@@ -5488,6 +5488,476 @@ async def wiki_production_costs_redirect(session_token: Optional[str] = Cookie(N
     return _RR2("/stats/production-costs", status_code=302)
 
 
+# ── WikiWads: in-game encyclopedia ───────────────────────────────────────────
+_WIKIWADS_ARTICLES = [
+    {
+        "slug": "income-categories",
+        "title": "Income Categories",
+        "icon": "💰",
+        "keywords": ["income categories", "income", "categories", "revenue types", "earnings"],
+        "summary": "How Wadsworth classifies every credit to your account across nine income streams.",
+        "sections": [
+            ("Overview", """Your transaction ledger groups every incoming credit into one of nine categories.
+Understanding them helps you read your financial statement and optimise your income mix."""),
+            ("The Nine Categories", """
+<table style="width:100%;border-collapse:collapse;font-size:0.83rem;">
+<tr style="border-bottom:1px solid #1d2f55;"><th style="text-align:left;padding:6px 8px;color:#f5a855;">Category</th><th style="text-align:left;padding:6px 8px;color:#f5a855;">Source</th></tr>
+<tr style="border-bottom:1px solid #0f1a30;"><td style="padding:6px 8px;color:#86efac;">production</td><td style="padding:6px 8px;color:#607098;">Revenue from production businesses selling output (auto-posted at each cycle)</td></tr>
+<tr style="border-bottom:1px solid #0f1a30;"><td style="padding:6px 8px;color:#86efac;">retail_sale</td><td style="padding:6px 8px;color:#607098;">Revenue when a retail business sells a product at your set retail price</td></tr>
+<tr style="border-bottom:1px solid #0f1a30;"><td style="padding:6px 8px;color:#86efac;">market_sale</td><td style="padding:6px 8px;color:#607098;">Proceeds from selling items or filling a buy order on the commodity market</td></tr>
+<tr style="border-bottom:1px solid #0f1a30;"><td style="padding:6px 8px;color:#86efac;">dividend</td><td style="padding:6px 8px;color:#607098;">Dividend payments received from stock holdings (WPE-listed companies &amp; ETFs)</td></tr>
+<tr style="border-bottom:1px solid #0f1a30;"><td style="padding:6px 8px;color:#86efac;">salary</td><td style="padding:6px 8px;color:#607098;">Executive salary payments, government grants, and tutorial rewards</td></tr>
+<tr style="border-bottom:1px solid #0f1a30;"><td style="padding:6px 8px;color:#86efac;">banking</td><td style="padding:6px 8px;color:#607098;">Interest income from reserve bank deposits, bond maturities, and lending returns</td></tr>
+<tr style="border-bottom:1px solid #0f1a30;"><td style="padding:6px 8px;color:#86efac;">land</td><td style="padding:6px 8px;color:#607098;">Proceeds from selling land plots on the land market</td></tr>
+<tr style="border-bottom:1px solid #0f1a30;"><td style="padding:6px 8px;color:#86efac;">p2p</td><td style="padding:6px 8px;color:#607098;">Peer-to-peer transfers received from other players (trusted trade, gifts)</td></tr>
+<tr><td style="padding:6px 8px;color:#86efac;">other</td><td style="padding:6px 8px;color:#607098;">Refunds, corrections, event prizes, and miscellaneous credits</td></tr>
+</table>"""),
+            ("Reading the Chart", """The income breakdown pie/bar on your financial statement shows each category as a percentage
+of total credits over your selected period. A healthy income mix typically spans multiple
+categories — heavy reliance on a single stream increases volatility."""),
+        ],
+    },
+    {
+        "slug": "transaction-ledger",
+        "title": "Transaction Ledger",
+        "icon": "📒",
+        "keywords": ["transaction ledger", "transaction log", "ledger", "transaction history", "logged here", "what is logged"],
+        "summary": "Every financial event in Wadsworth is recorded in your personal transaction ledger.",
+        "sections": [
+            ("What Is the Ledger?", """The transaction ledger is a permanent, append-only record of every credit and debit to
+your Wadsworth cash balance. It is the authoritative source of truth for your financial
+history — disputes, audits, and financial statement calculations all derive from it."""),
+            ("What Gets Logged", """
+<ul style="padding-left:16px;color:#607098;font-size:0.83rem;line-height:1.9;">
+<li><b style="color:#dde8ff;">Market trades</b> — every buy/sell fill, with price, quantity, and counterparty</li>
+<li><b style="color:#dde8ff;">Production cycles</b> — output sold by your businesses each cycle</li>
+<li><b style="color:#dde8ff;">Retail sales</b> — each retail transaction at your set price</li>
+<li><b style="color:#dde8ff;">Tax payments</b> — property tax, income tax, district tax, deducted automatically</li>
+<li><b style="color:#dde8ff;">Tax voucher applications</b> — when a voucher offsets a tax charge</li>
+<li><b style="color:#dde8ff;">Dividends received</b> — from all stock and ETF holdings</li>
+<li><b style="color:#dde8ff;">Salary &amp; grants</b> — executive salary, government development grants</li>
+<li><b style="color:#dde8ff;">Banking</b> — deposit interest, bond coupon, bond maturity, loan repayments</li>
+<li><b style="color:#dde8ff;">Land market</b> — land plot purchases and sales</li>
+<li><b style="color:#dde8ff;">P2P transfers</b> — trusted trade and player gifts</li>
+<li><b style="color:#dde8ff;">Forex conversions</b> — when switching display currency</li>
+</ul>"""),
+            ("Viewing the Ledger", """Navigate to <b>Stats → Financial Statement</b> and scroll to the Recent Transactions section.
+The ledger shows the last 50 entries with amount, category, description, and timestamp.
+Full history export is available via the Player API (Wadsworth Pro feature)."""),
+            ("Data Retention", """Transaction records are retained indefinitely. The financial statement UI shows the last 50
+transactions; the complete history is always available via API. Nothing is ever deleted."""),
+        ],
+    },
+    {
+        "slug": "taxes",
+        "title": "Taxes",
+        "icon": "🧾",
+        "keywords": ["taxes", "tax", "taxation", "property tax", "income tax", "district tax", "business tax"],
+        "summary": "Wadsworth has three automatic tax systems: property tax, income tax, and district tax.",
+        "sections": [
+            ("Overview", """Taxes are deducted automatically from your cash balance. They fund city projects,
+county services, and the government treasury. You can reduce your tax burden with
+Tax Vouchers from Corporate Actions."""),
+            ("Property Tax", """Charged monthly per land plot you own. The rate is set by the county government
+and varies by terrain type and city proximity. Tutorial-reward plots are permanently
+tax-free. Tax rate is visible on each plot card in the Land dashboard."""),
+            ("Income Tax", """A percentage of your gross income (credits from all categories) deducted each month.
+The base rate is set nationally; city buffs and executive perks can reduce it.
+Tax vouchers can offset income tax charges."""),
+            ("District Tax", """Levied on revenue generated by district businesses. The rate is set by the district
+type and modified by the managing county. District businesses appear as a separate
+line item on your tax summary."""),
+            ("Tax Vouchers", """Tax vouchers are credit instruments earned through Corporate Actions (expense
+reimbursements, R&amp;D credits). They offset future tax charges dollar-for-dollar.
+See the <a href="/wiki?search=tax+voucher" style="color:#90c4f0;">Tax Voucher</a> article for details."""),
+            ("Viewing Your Taxes", """Your tax summary is on the Financial Statement page under the Tax section.
+It breaks down charges by type and shows your tax voucher balance available for offset."""),
+        ],
+    },
+    {
+        "slug": "tax-voucher",
+        "title": "Tax Vouchers",
+        "icon": "🎫",
+        "keywords": ["tax voucher", "voucher", "tax credit", "tax offset", "corporate actions"],
+        "summary": "Tax vouchers are dollar-denominated credits that offset future tax charges.",
+        "sections": [
+            ("What Is a Tax Voucher?", """A tax voucher is a credit instrument issued through Corporate Actions that offsets
+future tax liabilities dollar-for-dollar. Unlike cash, vouchers can only be used
+against tax charges — they cannot be spent or transferred."""),
+            ("How to Earn Vouchers", """Vouchers are issued via Corporate Actions on your company:
+<ul style="padding-left:16px;color:#607098;font-size:0.83rem;line-height:1.9;margin-top:6px;">
+<li><b style="color:#dde8ff;">R&amp;D Expense</b> — file an R&amp;D expenditure claim; generates a partial voucher equal to the tax credit rate × spend</li>
+<li><b style="color:#dde8ff;">Charitable Deduction</b> — donate cash from your company treasury to unlock a deduction voucher</li>
+<li><b style="color:#dde8ff;">Government Grants</b> — some development grants include a voucher component</li>
+</ul>"""),
+            ("How Vouchers Are Applied", """Vouchers are applied automatically when the tax collection system runs.
+Your available voucher balance is deducted from the tax charge before any cash debit.
+The remaining cash charge (if any) comes from your cash balance. You are never charged
+more than your available cash + voucher balance combined."""),
+            ("Viewing Your Balance", """Your current voucher balance appears on the Financial Statement page and in the
+tax expansion accordion on the Stats Overview. Vouchers do not expire."""),
+        ],
+    },
+    {
+        "slug": "multi-currency",
+        "title": "Multi-Currency Portfolio",
+        "icon": "💱",
+        "keywords": ["multi currency", "multi-currency", "currency", "display currency", "reserve currency", "forex", "foreign exchange"],
+        "summary": "Hold assets denominated in multiple reserve currencies and switch your display currency at any time.",
+        "sections": [
+            ("Overview", """Wadsworth supports multiple in-game reserve currencies alongside the default
+Wadsworth Dollar (USD). Players can hold balances in any supported currency and
+choose which currency their prices and balances are displayed in."""),
+            ("Reserve Currencies", """Reserve currencies are issued by Reserve Banks — player-run central banks with
+special privileges. Each reserve bank sets its own exchange rate relative to USD.
+Currencies include: WD (Wadsworth Dollar, base), and any currencies issued by
+active reserve banks in your game world."""),
+            ("Display Currency", """Your display currency controls how prices and balances are shown throughout the
+game. Switching display currency does not move your cash — it only changes the
+unit of display. You can switch at any time from the Reserve Banks page."""),
+            ("Multi-Currency Net Worth", """When you hold balances in multiple currencies, your net worth panel on the
+Stats Overview shows each currency separately with its USD equivalent. The total
+net worth is always expressed in your display currency at current exchange rates."""),
+            ("Forex Trading", """The Forex trading floor (Wadsworth Pro feature) lets you exchange between currencies
+at live reserve bank rates. Forex trades are settled immediately and logged in your
+transaction ledger as a forex_conversion entry."""),
+        ],
+    },
+    {
+        "slug": "financial-statement",
+        "title": "Financial Statement",
+        "icon": "📊",
+        "keywords": ["financial statement", "financial overview", "income statement", "balance sheet", "net worth", "kpi"],
+        "summary": "Your personal financial statement gives a real-time snapshot of wealth, income, and costs.",
+        "sections": [
+            ("What It Shows", """The Financial Statement (Stats → Financial Statement) is your personal P&amp;L and
+balance sheet combined. It shows:
+<ul style="padding-left:16px;color:#607098;font-size:0.83rem;line-height:1.9;margin-top:6px;">
+<li>Net worth breakdown (cash + inventory value + land value + equity)</li>
+<li>Income by category for the selected period</li>
+<li>Tax summary (property, income, district)</li>
+<li>Cost averages for items you frequently trade</li>
+<li>Recent transaction ledger (last 50 entries)</li>
+</ul>"""),
+            ("KPI Cards", """Six headline metrics appear at the top: Total Net Worth, Cash Balance,
+Inventory Value, Land Value, Equity Holdings, and Monthly Income. Each card
+links to the relevant detail section below."""),
+            ("Income Period", """Use the period selector to view income data for the last 7 days, 30 days,
+or 90 days. All income totals and category breakdowns update accordingly."""),
+            ("Cost Averages", """The cost averages section shows your volume-weighted average purchase price for
+each item. This helps you assess whether your current market position is profitable
+relative to your entry price."""),
+        ],
+    },
+    {
+        "slug": "executives",
+        "title": "Executives",
+        "icon": "👔",
+        "keywords": ["executives", "executive", "exec", "executive perk", "ceo", "cfo", "cmo"],
+        "summary": "Hire executives to apply permanent passive buffs to your businesses, taxes, and production.",
+        "sections": [
+            ("What Are Executives?", """Executives are named roles (CEO, CFO, CMO, CTO, COO, etc.) that you assign to your
+player account. Each executive tier provides a different passive bonus that applies
+globally across your empire."""),
+            ("Executive Salaries", """Executives draw a monthly salary from your cash balance, logged as a salary debit
+in your transaction ledger. Higher-tier executives cost more but provide stronger
+buffs. You can view and manage executives from the Executives page."""),
+            ("Available Bonuses", """
+<ul style="padding-left:16px;color:#607098;font-size:0.83rem;line-height:1.9;">
+<li><b style="color:#dde8ff;">CEO</b> — boosts production cycle speed and output quantity</li>
+<li><b style="color:#dde8ff;">CFO</b> — reduces tax rate, improves banking interest yield</li>
+<li><b style="color:#dde8ff;">CMO</b> — increases retail sale prices and market order priority</li>
+<li><b style="color:#dde8ff;">CTO</b> — reduces input consumption per cycle, boosts R&amp;D credits</li>
+<li><b style="color:#dde8ff;">COO</b> — lowers wage costs across all businesses</li>
+</ul>
+See the <a href="/stats/wiki/executives" style="color:#90c4f0;">Executives Wiki</a> for full tier tables."""),
+            ("Hiring &amp; Firing", """Hire executives from the Executives page. Firing an executive is immediate and
+incurs a severance charge. You can replace an executive at any time but there is
+a 7-day cooldown before rehiring the same role."""),
+        ],
+    },
+    {
+        "slug": "market",
+        "title": "The Commodity Market",
+        "icon": "🏪",
+        "keywords": ["market", "commodity market", "buy order", "sell order", "order book", "bid", "ask", "quick buy"],
+        "summary": "The player-driven order book where all commodities, raw materials, and finished goods trade.",
+        "sections": [
+            ("Overview", """The commodity market is a central limit order book (CLOB) where players post
+buy and sell orders for any game item. Orders are matched by price-time priority —
+best price wins; ties go to the earliest order."""),
+            ("Order Types", """
+<b style="color:#dde8ff;">Limit orders</b> — you specify a price and quantity. The order sits in the book until
+filled or cancelled. Partial fills are possible.<br><br>
+<b style="color:#dde8ff;">Quick Buy</b> — enters your desired quantity and a cap price, and immediately sweeps
+the best available sell orders up to your cap. Unfilled quantity becomes a limit buy."""),
+            ("Price Discovery", """Market prices emerge from the intersection of supply and demand. There is no
+admin-set price. Watch the bid/ask spread — a tight spread indicates a liquid market;
+a wide spread means thin liquidity and higher price impact for large orders."""),
+            ("Fees", """Market trades incur a small transaction fee (percentage of trade value).
+The fee rate is visible on the trade confirmation screen and in your ledger."""),
+        ],
+    },
+    {
+        "slug": "land",
+        "title": "Land &amp; Plots",
+        "icon": "🌿",
+        "keywords": ["land", "plots", "terrain", "land plot", "property", "land tax"],
+        "summary": "Land plots are the foundation of all production — every business needs a plot to operate.",
+        "sections": [
+            ("Plot Basics", """Each plot has a terrain type (prairie, forest, coastal, mountain, volcanic, etc.)
+that determines which businesses can be built on it. Plot size, efficiency, and
+county determine its tax rate and production bonuses."""),
+            ("Buying Land", """Purchase land from the Land Market (player listings), government auctions, or
+through the Federal Development Grant event. Tutorial land is free and tax-exempt."""),
+            ("Land Tax", """Monthly property tax is deducted automatically based on the plot's county tax
+rate. Tax-exempt plots (tutorial rewards) show FREE in the tax column."""),
+            ("Districts", """Merge adjacent plots of the same terrain into a district for bonus production,
+shared workers, and access to district-exclusive business types."""),
+        ],
+    },
+    {
+        "slug": "reserve-banks",
+        "title": "Reserve Banks",
+        "icon": "🏦",
+        "keywords": ["reserve banks", "reserve bank", "central bank", "deposit", "bond", "interest", "forex"],
+        "summary": "Player-run central banks that issue currencies, take deposits, and sell government bonds.",
+        "sections": [
+            ("What Is a Reserve Bank?", """Reserve banks are special player-operated institutions with central-bank
+privileges: they can issue their own currency, set deposit interest rates,
+and sell government bonds to the public."""),
+            ("Deposits", """Deposit cash into a reserve bank to earn interest. Interest accrues each
+game tick and is credited to your balance. Withdraw at any time with no penalty."""),
+            ("Bonds", """Reserve banks issue bonds at a fixed coupon rate. Buy bonds to lock in a yield.
+Bonds mature after a set number of ticks; at maturity you receive face value + accrued interest."""),
+            ("Forex", """Reserve bank currencies trade against the Wadsworth Dollar (USD) at rates set
+by the reserve bank operator. Use the Forex trading floor (Wadsworth Pro) to
+exchange currencies at live rates."""),
+        ],
+    },
+    {
+        "slug": "leaderboard",
+        "title": "Leaderboard",
+        "icon": "🏆",
+        "keywords": ["leaderboard", "rankings", "rank", "top players", "net worth rank"],
+        "summary": "Real-time player rankings across five wealth categories.",
+        "sections": [
+            ("Categories", """The leaderboard ranks all players across five metrics:
+<ul style="padding-left:16px;color:#607098;font-size:0.83rem;line-height:1.9;margin-top:6px;">
+<li><b style="color:#dde8ff;">Total Net Worth</b> — cash + inventory + land + equity</li>
+<li><b style="color:#dde8ff;">Cash</b> — liquid cash balance only</li>
+<li><b style="color:#dde8ff;">Inventory</b> — estimated market value of all held items</li>
+<li><b style="color:#dde8ff;">Land</b> — estimated value of all owned plots</li>
+<li><b style="color:#dde8ff;">Equity</b> — market value of stock holdings</li>
+</ul>"""),
+            ("Update Frequency", """Leaderboard rankings update every game tick (~5 minutes). Your position may
+lag slightly behind your actual balance during periods of rapid change."""),
+        ],
+    },
+    {
+        "slug": "wbc50",
+        "title": "WBC-50 Index",
+        "icon": "📈",
+        "keywords": ["wbc50", "wbc 50", "index", "index fund", "top 50", "constituents"],
+        "summary": "The WBC-50 tracks the 50 most valuable player companies by market capitalisation.",
+        "sections": [
+            ("Overview", """The Wadsworth Blue Chip 50 (WBC-50) is a market-capitalisation-weighted index
+of the 50 largest listed companies. It serves as the benchmark for the overall
+equity market and is rebalanced periodically."""),
+            ("Index Fund", """Players can invest in the WBC-50 ETF — a fund that holds all 50 constituents
+in proportion to their market cap. The ETF automatically rebalances when constituents
+change and pays out dividends proportionally."""),
+            ("Index Challenge", """A monthly event where players outside the index earn trophies by entering the
+Top 50, and players inside the index earn trophies by exiting it. Asymmetric
+competitive pressure that rewards active portfolio management."""),
+        ],
+    },
+    {
+        "slug": "city-projects",
+        "title": "City Projects",
+        "icon": "🏗️",
+        "keywords": ["city projects", "city", "urban", "infrastructure", "development"],
+        "summary": "Collaborative infrastructure investments that unlock city-wide buffs for all players.",
+        "sections": [
+            ("Overview", """City projects are large collaborative investments that any player can contribute to.
+When a project reaches its funding target, it is built and provides a permanent buff
+to all players operating in that city."""),
+            ("Project Types", """Infrastructure, public services, research facilities, transport hubs, and entertainment
+districts each provide different city-wide buffs — from reduced property tax to
+faster production cycles and higher retail demand."""),
+            ("Contributing", """Navigate to Cities → [City Name] → Projects to see active projects and
+contribute cash. Your contribution is non-refundable; the reward applies to all
+players equally once the project completes."""),
+        ],
+    },
+]
+
+# Build a flat keyword index for search
+_WIKI_SEARCH_INDEX: list[tuple[list[str], dict]] = [
+    (art["keywords"], art) for art in _WIKIWADS_ARTICLES
+]
+
+
+def _ww_search(q: str) -> list[dict]:
+    """Return articles matching query q (case-insensitive substring match)."""
+    if not q:
+        return _WIKIWADS_ARTICLES
+    ql = q.lower().strip()
+    out, seen = [], set()
+    # Exact keyword match first
+    for kws, art in _WIKI_SEARCH_INDEX:
+        for kw in kws:
+            if ql in kw or kw in ql:
+                if art["slug"] not in seen:
+                    out.append(art)
+                    seen.add(art["slug"])
+                break
+    # Fallback: substring in title, summary, or any section text
+    if not out:
+        for art in _WIKIWADS_ARTICLES:
+            if art["slug"] in seen:
+                continue
+            blob = (art["title"] + " " + art["summary"] + " ".join(
+                s + t for s, t in art["sections"]
+            )).lower()
+            if ql in blob:
+                out.append(art)
+                seen.add(art["slug"])
+    return out
+
+
+def _render_ww_article(art: dict) -> str:
+    sections_html = ""
+    for heading, content in art["sections"]:
+        sections_html += f"""
+<div style="margin-bottom:18px;">
+  <div style="font-size:0.75rem;font-weight:700;color:#f5a855;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">{heading}</div>
+  <div style="font-size:0.84rem;color:#94a3b8;line-height:1.7;">{content}</div>
+</div>"""
+    return f"""<div class="ww-article">
+  <div class="ww-article-header">
+    <span style="font-size:2rem;">{art["icon"]}</span>
+    <div>
+      <div class="ww-article-title">{art["title"]}</div>
+      <div class="ww-article-summary">{art["summary"]}</div>
+    </div>
+  </div>
+  <div class="ww-article-body">{sections_html}</div>
+</div>"""
+
+
+@router.get("/wiki", response_class=HTMLResponse)
+async def wikiwads(
+    search: str = Query(""),
+    session_token: Optional[str] = Cookie(None),
+):
+    """WikiWads — in-game encyclopedia. Accepts ?search= for article lookup."""
+    from auth import get_player_from_session
+    db = get_db()
+    player = get_player_from_session(db, session_token)
+    db.close()
+    player_name = player.username if player else ""
+    player_id   = player.id if player else None
+
+    q = search.strip()
+    results = _ww_search(q)
+
+    if q and len(results) == 1:
+        # Single article — render full article view
+        body_html = _render_ww_article(results[0])
+        page_title = results[0]["title"]
+        page_desc  = results[0]["summary"]
+    elif q and results:
+        # Multiple matches — show list + first article expanded
+        cards = "".join(
+            f'<a href="/wiki?search={art["slug"]}" class="ww-result-card">'
+            f'<span style="font-size:1.4rem;">{art["icon"]}</span>'
+            f'<div><div class="ww-rc-title">{art["title"]}</div>'
+            f'<div class="ww-rc-sum">{art["summary"]}</div></div></a>'
+            for art in results
+        )
+        body_html = (
+            f'<div class="ww-search-info">Found {len(results)} articles for "<b style="color:#f5d76e;">{q}</b>"</div>'
+            f'<div class="ww-result-list">{cards}</div>'
+            + _render_ww_article(results[0])
+        )
+        page_title = f'Search: {q}'
+        page_desc  = f'{len(results)} articles matched your search.'
+    elif q:
+        # No results
+        body_html = f"""<div class="ww-no-results">
+  <div style="font-size:2.5rem;margin-bottom:12px;">🔍</div>
+  <div style="font-size:1.1rem;font-weight:700;color:#dde8ff;margin-bottom:6px;">No articles found</div>
+  <div style="font-size:0.88rem;color:#607098;">No WikiWads article matches "<b style="color:#f5d76e;">{q}</b>". Try a different term or browse all articles below.</div>
+</div>
+<div class="ww-all-grid">{''.join(
+    f'<a href="/wiki?search={art["slug"]}" class="ww-index-card">'
+    f'<span class="ww-ic-icon">{art["icon"]}</span>'
+    f'<div class="ww-ic-title">{art["title"]}</div>'
+    f'<div class="ww-ic-sum">{art["summary"][:72]}…</div>'
+    f'</a>' for art in _WIKIWADS_ARTICLES
+)}</div>"""
+        page_title = "WikiWads"
+        page_desc  = "In-game encyclopedia"
+    else:
+        # Index page — show all articles as a grid
+        body_html = f"""<div class="whero" style="margin:-36px -24px 36px;padding:48px 24px 40px;">
+  <div class="whero-tag">WikiWads</div>
+  <div class="whero-title" style="font-size:2.2rem;">In-Game Encyclopedia</div>
+  <div class="whero-sub">Wikipedia-style articles explaining every Wadsworth concept — economies, taxes, markets, and more.</div>
+  <div class="whero-sw">
+    <span class="whero-sw-ico">🔍</span>
+    <form method="get" action="/wiki" style="width:100%;">
+      <input name="search" placeholder="Search articles…" autocomplete="off" value="{q}"
+             style="width:100%;padding:15px 20px 15px 50px;background:#111c35;border:1px solid #1d2f55;border-radius:12px;color:#dde8ff;font-size:0.95rem;outline:none;font-family:inherit;"
+             onfocus="this.style.borderColor='#f5a855';this.style.boxShadow='0 0 0 4px rgba(245,168,85,0.1)'"
+             onblur="this.style.borderColor='#1d2f55';this.style.boxShadow=''">
+    </form>
+  </div>
+</div>
+<div class="ww-all-grid">{''.join(
+    f'<a href="/wiki?search={art["slug"]}" class="ww-index-card">'
+    f'<span class="ww-ic-icon">{art["icon"]}</span>'
+    f'<div class="ww-ic-title">{art["title"]}</div>'
+    f'<div class="ww-ic-sum">{art["summary"][:85]}…</div>'
+    f'</a>' for art in _WIKIWADS_ARTICLES
+)}</div>"""
+        page_title = "WikiWads"
+        page_desc  = "In-game encyclopedia"
+
+    extra_css = """
+.ww-article{background:#111c35;border:1px solid #1d2f55;border-radius:14px;padding:28px;margin-bottom:20px;}
+.ww-article-header{display:flex;gap:16px;align-items:flex-start;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid #1d2f55;}
+.ww-article-title{font-size:1.35rem;font-weight:800;color:#dde8ff;margin-bottom:5px;}
+.ww-article-summary{font-size:0.85rem;color:#607098;line-height:1.6;}
+.ww-article-body{font-size:0.84rem;}
+.ww-result-card{display:flex;gap:12px;align-items:flex-start;padding:14px;background:#0c1528;border:1px solid #1d2f55;border-radius:10px;margin-bottom:8px;color:inherit;transition:border-color .15s;}
+.ww-result-card:hover{border-color:#f5a855;color:inherit;}
+.ww-rc-title{font-weight:700;color:#dde8ff;font-size:0.9rem;margin-bottom:3px;}
+.ww-rc-sum{font-size:0.78rem;color:#607098;}
+.ww-result-list{margin-bottom:24px;}
+.ww-search-info{font-size:0.82rem;color:#607098;margin-bottom:16px;}
+.ww-no-results{text-align:center;padding:40px 20px;margin-bottom:32px;}
+.ww-all-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
+.ww-index-card{background:#111c35;border:1px solid #1d2f55;border-radius:12px;padding:20px;display:block;color:inherit;transition:border-color .2s,transform .2s;}
+.ww-index-card:hover{border-color:#f5a855;transform:translateY(-2px);color:inherit;}
+.ww-ic-icon{font-size:1.9rem;display:block;margin-bottom:10px;}
+.ww-ic-title{font-weight:700;color:#dde8ff;font-size:0.9rem;margin-bottom:5px;}
+.ww-ic-sum{font-size:0.76rem;color:#607098;line-height:1.5;}
+table{width:100%;}
+"""
+
+    full_body = f"<style>{extra_css}</style>" + body_html
+
+    return HTMLResponse(wiki_shell(
+        title=page_title,
+        body=full_body,
+        player_name=player_name,
+        active="",
+        player_id=player_id,
+    ))
+
+
 # ==========================
 # PUBLIC API
 # ==========================
