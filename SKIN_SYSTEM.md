@@ -1,6 +1,6 @@
 # Wadsworth Skin System — Design Document
 
-> **Last updated:** 2026-06-01  
+> **Last updated:** 2026-06-02  
 > Any future Claude session implementing or extending skins should start here.
 > This document is the single source of truth — no re-audit of the codebase needed.
 
@@ -201,11 +201,26 @@ A skin is now up to **three files** sharing one base name. Only the first is req
 - Override existing `wadsworth-base.css` class selectors (`.card`, `.btn`, `.header`…).
   Do not invent new class names the HTML doesn't emit.
 - Prefer overriding via variables where a variable exists; only write component CSS
-  for shape/structure changes variables can't express (border-radius pre-Phase-2,
-  glass blur, custom gradients, pseudo-elements).
-- **Component CSS only takes effect after Phase 2** — until `wadsworth-base.css`
-  exists and pages use its classes, there's nothing for these overrides to attach
-  to. A skin written today is effectively variables-only until Phase 2 lands.
+  for shape/structure changes variables can't express (glass blur, custom gradients,
+  pseudo-elements, per-skin animations).
+
+**Specificity battle — why `[data-skin="X"]` is needed:**
+Page `<style>` blocks are in the `<body>` and load **after** the skin `<link>` tag in
+`<head>`. Both produce class rules at specificity `0,1,0,0`. Because the page style block
+appears later in the document, it wins by document order.
+
+Wrapping skin overrides with `[data-skin="kawaii"]` or `[data-skin="expressive_nature"]`
+lifts specificity to `0,2,0,0`, which beats the page block's `0,1,0,0` unconditionally.
+
+The `data-skin` attribute is set by a small inline `<script>` injected immediately after
+the skin `<link>` tag in `skin_utils.py`, so it is present synchronously before any
+`<style>` block fires:
+```html
+<script>document.documentElement.setAttribute('data-skin','kawaii')</script>
+```
+
+This means `[data-skin="X"] .card { … }` in the skin file always wins over `.card { … }`
+in a page `<style>` block. Use this pattern freely in skin files.
 
 ### Effects JS rules
 - File name must exactly match the skin: `kawaii_magic.css` → `kawaii_magic.js`.
@@ -388,6 +403,46 @@ Cross-references to `--audio-*` in the loader:
 - Loader text / title colour → `--audio-accent`
 - Loader progress bar mid → `--audio-accent`
 - Loader progress bar end → `#f5f5dc` (cream — fixed, not a variable)
+
+**Nav-Loader DOM IDs (used for full reskins):**
+The nav-loader overlay is rendered by `_nav_loader_html()` in `ux.py` and uses these IDs:
+
+| ID | Element | Notes |
+|----|---------|-------|
+| `#nav-loader` | Full-screen overlay `<div>` | Background colour / blur |
+| `#nl-card` | Centred loading card | Border, shadow, background |
+| `#nl-bar` | Progress bar `<div>` | Background gradient |
+| `#nl-pct` | Percentage text `<span>` | Colour |
+| `#nl-msgs` | Tips message container | — |
+| `#nl-bar-co` | Company-shell progress bar | Separate shell (`company_ux.py`) |
+| `#nl-bar-login` | Auth-shell progress bar | Separate shell (`auth.py`) |
+
+To fully reskin the loader use `[data-skin="X"] #nav-loader` selectors with `!important`
+(the inline JS that drives the bar writes directly to style, so only `!important` wins).
+See `kawaii.css` lines 310–329 for the reference implementation.
+
+**`nl-logo` class — nav-loader logo swap:**
+Every `<img>` inside the nav-loader card has `class="nl-logo"`. The brand logo in the
+header has `class="brand img"` (via the `<img>` inside `.brand`). Both are targeted by
+the same CSS `content: url()` rule so the logo is consistent in the header *and* in
+the loading overlay:
+
+```css
+[data-skin="kawaii"] .brand img,
+[data-skin="kawaii"] .nl-logo {
+  content: url('/static/logo-kawaii.png');   /* Chromium / WebKit only */
+  filter: drop-shadow(…);
+}
+[data-skin="kawaii"] .brand img {
+  height: 28px;   /* sizing override — nl-logo keeps its natural dimensions */
+  width: auto;
+}
+```
+
+`content: url()` on `<img>` is a Chromium/WebKit feature (Android TWA is Chrome).
+It does **not** work in Firefox. This is acceptable since the game targets Android TWA.
+The `nl-logo` class is added by `_nav_loader_html()` in `ux.py`; also in the separate
+nav-loaders in `auth.py` and `company_ux.py`.
 
 #### Audio Player — Mahogany / Vintage Hi-Fi (5)
 | Variable | Default | Role |
@@ -760,16 +815,17 @@ default.css vars resolve → page looks identical to today.
 
 ---
 
-### Phase 2 — CSS Consolidation (2–3 sessions)
+### Phase 2 — CSS Consolidation ✅ COMPLETE (2026-06-01)
 Goal: extract ~1,200 lines of duplicated shell CSS into `wadsworth-base.css`.
 
-1. Diff all 15 shell `<style>` blocks to find shared vs. unique classes
-2. Shared classes → `wadsworth-base.css` with `var()` colours
-3. Shell-specific classes → `modules/{module}.css`
-4. Delete `<style>` block from each shell function after extraction
-5. All gradients use gradient variables; all animations use `--dur-*`
+**Status: `static/skins/wadsworth-base.css` is live.** It contains the shared
+component classes (`.card`, `.btn`, `.header`, `.ticker`, etc.) all using `var()`.
+Shell `<style>` blocks still exist in the Python files for page-specific rules, but
+the base component layer now lives in the external file.
 
-**New files:** `wadsworth-base.css` (~1,400 lines), `modules/estate.css`, `modules/stats.css`, `modules/chat.css`
+Note: Individual shell `<style>` blocks were NOT fully deleted — only the shared
+component styles were extracted. Shell-specific classes remain inline. Phase 3 will
+continue converting inline `style=""` attributes to classes.
 
 ---
 
@@ -786,6 +842,19 @@ Also: Python status-color dicts → CSS classes; SVG fills → CSS classes; Char
 ### Phase 4 — Skin Creation (ongoing)
 One skin = one file in `static/skins/`. See template section.
 Subscriber skins have `Tier: pro` in the comment header.
+
+**Current skins:**
+
+| File | Display Name | Tier | Logo | Status |
+|------|-------------|------|------|--------|
+| `default.css` | Default (Dark Terminal) | free | `logo.png` | ✅ Live |
+| `kawaii.css` + `kawaii.js` | Kawaii Night | pro | `logo-kawaii.png` (crown, RGBA) | ✅ Live |
+| `expressive_nature.css` | Expressive Nature | pro | `logo-nature.png` (tree, RGBA) | ✅ Created 2026-06-02 |
+
+**Logo files:**
+- `/static/logo.png` — default Wadsworth badge (512×512 RGBA)
+- `/static/logo-kawaii.png` — pink crown logo (512×512 RGBA, background removed)
+- `/static/logo-nature.png` — illustrated tree with globe and gears (512×512 RGBA, background removed from Google Stitch render)
 
 ---
 
