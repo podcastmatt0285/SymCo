@@ -651,7 +651,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             pass
 
     # Unread in-game notification link (sits with Logout in the header-right)
-    _notif_count_html = '<a href="/notifications" style="color:#475569;font-size:0.82rem;text-decoration:none;" title="Notifications">📒</a>'
+    _notif_count_html = '<a href="/notifications" style="color:var(--text-muted,#475569);font-size:0.82rem;text-decoration:none;" title="Notifications">📒</a>'
     if player_id:
         try:
             from push_ux import get_unread_game_notification_count as _gunc
@@ -660,13 +660,13 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 _nc_str = str(_nc) if _nc < 100 else "99+"
                 _nt = f"{_nc} unread notification{'s' if _nc != 1 else ''}"
                 _notif_count_html = (
-                    f'<a href="/notifications" style="color:#94a3b8;font-size:0.82rem;'
+                    f'<a href="/notifications" style="color:var(--text-secondary,#94a3b8);font-size:0.82rem;'
                     f'text-decoration:none;" title="{_nt}">'
-                    f'📒<span style="color:#ef4444;font-size:0.68rem;'
+                    f'📒<span style="color:var(--notif-badge,#ef4444);font-size:0.68rem;'
                     f'font-weight:700;margin-left:2px;">{_nc_str}</span></a>'
                 )
             else:
-                _notif_count_html = '<a href="/notifications" style="color:#475569;font-size:0.82rem;text-decoration:none;" title="Notifications">📒</a>'
+                _notif_count_html = '<a href="/notifications" style="color:var(--text-muted,#475569);font-size:0.82rem;text-decoration:none;" title="Notifications">📒</a>'
         except Exception:
             pass
 
@@ -3513,17 +3513,20 @@ def notifications_page(session_token: Optional[str] = Cookie(None)):
     unread_count = sum(1 for n in notifs if not n["is_seen"])
     mark_game_notifications_seen(player.id)
 
+    # Each entry: (hex_fallback, css_var, label, icon)
+    # hex_fallback used only for the unread glow (box-shadow can't use var() + hex concat)
+    # css_var used for badge background and checkbox accent — valid as inline CSS value
     _type_meta = {
-        "trades":       ("#f59e0b", "MARKET",      "📊"),
-        "corporate":    ("#38bdf8", "CORPORATE",   "🏢"),
-        "execs":        ("#a78bfa", "EXECUTIVES",  "👔"),
-        "general":      ("#64748b", "NOTICE",      "📌"),
-        "govt":         ("#22c55e", "GOVERNMENT",  "🏛️"),
-        "business":     ("#fb923c", "BUSINESS",    "🏭"),
-        "land":         ("#84cc16", "LAND",        "🗺️"),
-        "contract":     ("#f472b6", "CONTRACT",    "📄"),
-        "dm":           ("#60a5fa", "MESSAGE",     "💬"),
-        "tasks_events": ("#a78bfa", "EVENTS",      "🏆"),
+        "trades":       ("#f59e0b", "var(--notif-market,#f59e0b)",    "MARKET",      "📊"),
+        "corporate":    ("#38bdf8", "var(--notif-corporate,#38bdf8)", "CORPORATE",   "🏢"),
+        "execs":        ("#a78bfa", "var(--notif-execs,#a78bfa)",     "EXECUTIVES",  "👔"),
+        "general":      ("#64748b", "var(--notif-general,#64748b)",   "NOTICE",      "📌"),
+        "govt":         ("#22c55e", "var(--notif-govt,#22c55e)",      "GOVERNMENT",  "🏛️"),
+        "business":     ("#fb923c", "var(--notif-business,#fb923c)",  "BUSINESS",    "🏭"),
+        "land":         ("#84cc16", "var(--notif-land,#84cc16)",      "LAND",        "🗺️"),
+        "contract":     ("#f472b6", "var(--notif-contract,#f472b6)",  "CONTRACT",    "📄"),
+        "dm":           ("#60a5fa", "var(--notif-dm,#60a5fa)",        "MESSAGE",     "💬"),
+        "tasks_events": ("#a78bfa", "var(--notif-execs,#a78bfa)",     "EVENTS",      "🏆"),
     }
 
     def _rel_time(dt):
@@ -3550,32 +3553,36 @@ def notifications_page(session_token: Optional[str] = Cookie(None)):
     if notifs:
         rows_html = ""
         for n in notifs:
-            _meta = _type_meta.get(n["notif_type"], ("#64748b", "NOTICE", "📌"))
-            _color, _label, _icon = _meta
+            _meta = _type_meta.get(n["notif_type"], ("#64748b", "var(--notif-general,#64748b)", "NOTICE", "📌"))
+            _hex, _css_color, _label, _icon = _meta
             _safe_url = _html.escape(n["url"] or "", quote=True)
-            _view = (f'<a href="{_safe_url}" style="color:#38bdf8;font-size:0.78rem;">View →</a>'
+            _view = (f'<a href="{_safe_url}" style="color:var(--accent,#38bdf8);font-size:0.78rem;">View →</a>'
                      if n["url"] and n["url"] != "/" else "")
             _abs_ts = n["created_at"].strftime("%b %d, %Y %H:%M UTC") if n.get("created_at") else ""
             _rel_ts = _rel_time(n.get("created_at"))
-            _ts_html = (f'<span title="{_abs_ts}" style="color:#475569;font-size:0.72rem;'
+            _ts_html = (f'<span title="{_abs_ts}" style="color:var(--text-muted,#475569);font-size:0.72rem;'
                         f'margin-left:auto;white-space:nowrap;cursor:default;">{_rel_ts}</span>'
                         if _rel_ts else "")
-            _glow = f'box-shadow:0 0 0 1px {_color}33;' if not n["is_seen"] else ""
+            # Glow uses hex (box-shadow can't use var() + hex opacity suffix)
+            _glow = f'box-shadow:0 0 0 1px {_hex}33;' if not n["is_seen"] else ""
             _unread_attr = ' data-unread="1"' if not n["is_seen"] else ""
             _safe_title = _html.escape(n["title"])
             _safe_body = _html.escape(n["body"])
             rows_html += f"""
-            <div style="display:flex;align-items:flex-start;gap:12px;background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:14px 16px;margin-bottom:8px;{_glow}">
+            <div class="notif-card" style="display:flex;align-items:flex-start;gap:12px;
+                background:var(--bg-card,#0f172a);border:1px solid var(--border,#1e293b);
+                border-radius:6px;padding:14px 16px;margin-bottom:8px;{_glow}">
                 <input type="checkbox" name="id" value="{n['id']}" class="notif-cb"{_unread_attr}
                     onchange="updateClearBtn()"
-                    style="margin-top:3px;accent-color:{_color};width:16px;height:16px;cursor:pointer;flex-shrink:0;">
+                    style="margin-top:3px;accent-color:{_css_color};width:16px;height:16px;cursor:pointer;flex-shrink:0;">
                 <div style="flex:1;min-width:0;">
                     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
-                        <span style="background:{_color};color:#020617;padding:1px 8px;border-radius:8px;font-size:0.67rem;font-weight:bold;white-space:nowrap;">{_icon} {_label}</span>
-                        <span style="color:#e2e8f0;font-size:0.88rem;font-weight:600;">{_safe_title}</span>
+                        <span class="notif-tag" style="background:{_css_color};color:var(--text-on-accent,#020617);
+                            padding:1px 8px;border-radius:8px;font-size:0.67rem;font-weight:bold;white-space:nowrap;">{_icon} {_label}</span>
+                        <span style="color:var(--text-bright,#e2e8f0);font-size:0.88rem;font-weight:600;">{_safe_title}</span>
                         {_ts_html}
                     </div>
-                    <p style="color:#94a3b8;margin:0 0 6px 0;font-size:0.85rem;line-height:1.45;">{_safe_body}</p>
+                    <p style="color:var(--text-secondary,#94a3b8);margin:0 0 6px 0;font-size:0.85rem;line-height:1.45;">{_safe_body}</p>
                     {('<div>' + _view + '</div>') if _view else ""}
                 </div>
             </div>"""
@@ -3588,18 +3595,18 @@ def notifications_page(session_token: Optional[str] = Cookie(None)):
         notif_body = f"""
         <form method="post" action="/api/notifications/clear" id="notifForm">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-                <span style="color:#64748b;font-size:0.8rem;">{_count_detail}</span>
+                <span style="color:var(--text-muted,#64748b);font-size:0.8rem;">{_count_detail}</span>
                 <button type="button" onclick="selectAll(true)"
-                    style="background:#1e293b;color:#94a3b8;border:1px solid #334155;padding:5px 12px;border-radius:4px;font-size:0.78rem;cursor:pointer;">Select All</button>
+                    style="background:var(--bg-card-2,#1e293b);color:var(--text-muted,#94a3b8);border:1px solid var(--border-subtle,#334155);padding:5px 12px;border-radius:4px;font-size:0.78rem;cursor:pointer;">Select All</button>
                 <button type="button" onclick="selectAll(false)"
-                    style="background:#1e293b;color:#94a3b8;border:1px solid #334155;padding:5px 12px;border-radius:4px;font-size:0.78rem;cursor:pointer;">Deselect All</button>
+                    style="background:var(--bg-card-2,#1e293b);color:var(--text-muted,#94a3b8);border:1px solid var(--border-subtle,#334155);padding:5px 12px;border-radius:4px;font-size:0.78rem;cursor:pointer;">Deselect All</button>
                 <button type="button" onclick="selectUnread()"
-                    style="background:#1e293b;color:#94a3b8;border:1px solid #334155;padding:5px 12px;border-radius:4px;font-size:0.78rem;cursor:pointer;">Select New</button>
+                    style="background:var(--bg-card-2,#1e293b);color:var(--text-muted,#94a3b8);border:1px solid var(--border-subtle,#334155);padding:5px 12px;border-radius:4px;font-size:0.78rem;cursor:pointer;">Select New</button>
                 <button type="submit" name="action" value="selected" id="clearSelBtn" disabled
-                    style="background:#1e293b;color:#e2e8f0;border:1px solid #334155;padding:5px 14px;border-radius:4px;font-size:0.78rem;cursor:pointer;font-weight:500;opacity:0.5;">Clear Selected</button>
+                    style="background:var(--bg-card-2,#1e293b);color:var(--text-bright,#e2e8f0);border:1px solid var(--border-subtle,#334155);padding:5px 14px;border-radius:4px;font-size:0.78rem;cursor:pointer;font-weight:500;opacity:0.5;">Clear Selected</button>
                 <button type="submit" name="action" value="all"
                     onclick="return confirm('{_confirm_msg}');"
-                    style="background:#7f1d1d;color:#fca5a5;border:1px solid #991b1b;padding:5px 14px;border-radius:4px;font-size:0.78rem;cursor:pointer;font-weight:500;">Clear All</button>
+                    style="background:var(--color-danger-xdark,#7f1d1d);color:var(--color-danger-light,#fca5a5);border:1px solid var(--color-danger-dark,#991b1b);padding:5px 14px;border-radius:4px;font-size:0.78rem;cursor:pointer;font-weight:500;">Clear All</button>
             </div>
             {rows_html}
         </form>
@@ -3624,23 +3631,23 @@ def notifications_page(session_token: Optional[str] = Cookie(None)):
         </script>"""
     else:
         notif_body = """
-        <div style="text-align:center;padding:60px 20px;color:#475569;">
+        <div style="text-align:center;padding:60px 20px;color:var(--text-muted,#475569);">
             <div style="font-size:2.5rem;margin-bottom:12px;">✅</div>
-            <div style="font-size:1rem;font-weight:600;color:#64748b;">You're all caught up!</div>
+            <div style="font-size:1rem;font-weight:600;color:var(--text-muted,#64748b);">You're all caught up!</div>
             <div style="font-size:0.85rem;margin-top:6px;">No notifications to display.</div>
         </div>"""
 
     _new_badge = (
-        f'<span style="background:#ef4444;color:#fff;border-radius:10px;'
+        f'<span style="background:var(--notif-badge,#ef4444);color:#fff;border-radius:10px;'
         f'padding:2px 8px;font-size:0.72rem;font-weight:bold;">{unread_count} new</span>'
     ) if unread_count > 0 else ""
 
     body = f"""
     <div style="max-width:820px;margin:0 auto;">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
-            <h2 style="margin:0;font-size:1.3rem;color:#e2e8f0;">📒 Notifications</h2>
+            <h2 style="margin:0;font-size:1.3rem;color:var(--text-bright,#e2e8f0);">📒 Notifications</h2>
             {_new_badge}
-            <a href="/" style="color:#64748b;font-size:0.8rem;margin-left:auto;text-decoration:none;">← Dashboard</a>
+            <a href="/" style="color:var(--text-muted,#64748b);font-size:0.8rem;margin-left:auto;text-decoration:none;">← Dashboard</a>
         </div>
         {notif_body}
     </div>"""

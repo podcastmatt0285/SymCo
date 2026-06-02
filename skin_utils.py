@@ -21,7 +21,7 @@ import time as _time
 _SKIN_V = 7  # ← increment on each deploy to bust browser CSS/JS cache
 
 # Only allow safe filesystem-compatible skin names — prevents XSS and path traversal
-_SAFE_SKIN_RE = _re.compile(r'^[a-z][a-z0-9_-]*$')
+_SAFE_SKIN_RE = _re.compile(r'^[a-z][a-z0-9_-]*\Z')  # \Z not $ to reject trailing newlines
 
 # Cache which skins have a companion .js effects file (avoids os.path.exists on hot path)
 _js_skins: set = set()
@@ -33,7 +33,7 @@ def _get_js_skins() -> set:
     """Return the set of skin names that have a companion .js effects file."""
     global _js_skins, _js_skins_ts
     now = _time.monotonic()
-    if not _js_skins or (now - _js_skins_ts) > _JS_SKINS_TTL:
+    if (now - _js_skins_ts) > _JS_SKINS_TTL:
         import glob as _glob
         _js_skins = {
             _os.path.basename(p)[:-3]
@@ -73,6 +73,11 @@ def skin_links(player_id: int = None, module: str = None) -> str:
                 except Exception:
                     pass
 
+    # Guard: if the skin CSS file has been deleted since it was saved to the DB,
+    # fall back to default so the page never emits a 404 <link>.
+    if skin != "default" and not _os.path.exists(f"static/skins/{skin}.css"):
+        skin = "default"
+
     v = _SKIN_V
     # Synchronous script sets data-skin on <html> before any page <style>
     # blocks are parsed. This lets [data-skin="kawaii"] selectors in the
@@ -80,7 +85,7 @@ def skin_links(player_id: int = None, module: str = None) -> str:
     tags = (
         f'<script>document.documentElement.setAttribute("data-skin","{skin}");</script>\n'
         f'        <link rel="stylesheet" href="/static/skins/wadsworth-base.css?v={v}">\n'
-        f'        <link rel="stylesheet" href="/static/skins/{skin}.css?v={v}">'
+        f'        <link rel="stylesheet" href="/static/skins/{skin}.css?v={v}" id="skin-link">'
     )
     if module:
         tags += (

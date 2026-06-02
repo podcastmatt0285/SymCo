@@ -2799,12 +2799,17 @@ def _scan_skins() -> list:
         return _scan_skins_cache
 
     import glob, re
+    from skin_utils import _SAFE_SKIN_RE as _safe_re
     skins = []
     for path in sorted(glob.glob("static/skins/*.css")):
         fname = os.path.basename(path)
         if fname == "wadsworth-base.css":
             continue
         key = fname[:-4]
+        # Skip files whose names aren't safe identifiers — they can't be injected
+        # into JS event-handler attributes without escaping.
+        if not _safe_re.match(key):
+            continue
         name = key.replace("-", " ").replace("_", " ").title()
         description = ""
         tier = "free"
@@ -2823,10 +2828,15 @@ def _scan_skins() -> list:
             m = re.search(r"Tier:\s*(\w+)", header)
             if m:
                 tier = m.group(1).strip().lower()
-            # Extract primary/secondary/tertiary accent colors for the preview swatch row
+            # Extract primary/secondary/tertiary accent colors for the preview swatch row.
+            # Matches #hex, rgb(...), hsl(...), oklch(...) — any valid CSS color function.
             accents = []
             for var in ("--accent", "--accent-2", "--accent-3", "--bg-page"):
-                m2 = re.search(rf"{re.escape(var)}\s*:\s*(#[0-9a-fA-F]{{3,8}})", content)
+                m2 = re.search(
+                    rf"{re.escape(var)}\s*:\s*"
+                    r"(#[0-9a-fA-F]{3,8}|(?:rgb|hsl|oklch|color)a?\([^)]+\))",
+                    content,
+                )
                 if m2:
                     accents.append(m2.group(1).strip())
             accent = "|".join(accents[:4])  # pipe-separated list of up to 4 colors
@@ -2839,7 +2849,7 @@ def _scan_skins() -> list:
 
 
 def _skins_tab(player) -> str:
-    from skin_utils import is_pro as _is_pro
+    from skin_utils import is_pro as _is_pro, _SKIN_V as _skin_v
 
     is_pro_user = _is_pro(player)
     current_skin = getattr(player, "skin", "default") or "default"
@@ -2941,37 +2951,17 @@ def _skins_tab(player) -> str:
 </div>
 <script>
 var _origSkin = document.documentElement.getAttribute('data-skin') || 'default';
-var _skinV = {{}};  /* version handled server-side */
+var _skinVer = {_skin_v};  /* injected by server so preview URL matches the live cache-bust version */
 var _previewActive = false;
+var _previewTimer = null;
 
+/* Use the id="skin-link" we stamp on the skin <link> tag — O(1), unambiguous. */
 function _getSkinLink() {{
-    var links = document.querySelectorAll('link[rel="stylesheet"]');
-    for (var i = 0; i < links.length; i++) {{
-        var h = links[i].href;
-        if (h.indexOf('/static/skins/') !== -1 &&
-            h.indexOf('wadsworth-base') === -1 &&
-            h.indexOf('/modules/') === -1) {{
-            return links[i];
-        }}
-    }}
-    return null;
+    return document.getElementById('skin-link');
 }}
 
-function previewSkin(key) {{
-    _previewActive = true;
-    document.documentElement.setAttribute('data-skin', key);
-    var link = _getSkinLink();
-    if (link) {{
-        if (!link.dataset.origHref) link.dataset.origHref = link.href;
-        link.href = '/static/skins/' + key + '.css?preview=1';
-    }}
-    var notice = document.getElementById('skin-preview-notice');
-    if (notice) notice.style.display = 'block';
-}}
-
-function revertPreview() {{
-    if (!_previewActive) return;
-    _previewActive = false;
+/* Shared revert logic used by both revertPreview() and saveSkin() error path. */
+function _doRevert() {{
     document.documentElement.setAttribute('data-skin', _origSkin);
     var link = _getSkinLink();
     if (link && link.dataset.origHref) {{
@@ -2982,8 +2972,32 @@ function revertPreview() {{
     if (notice) notice.style.display = 'none';
 }}
 
+function previewSkin(key) {{
+    /* Debounce: only fire the CSS swap after the cursor settles for 120 ms */
+    clearTimeout(_previewTimer);
+    _previewTimer = setTimeout(function() {{
+        _previewActive = true;
+        document.documentElement.setAttribute('data-skin', key);
+        var link = _getSkinLink();
+        if (link) {{
+            if (!link.dataset.origHref) link.dataset.origHref = link.href;
+            link.href = '/static/skins/' + key + '.css?v=' + _skinVer;
+        }}
+        var notice = document.getElementById('skin-preview-notice');
+        if (notice) notice.style.display = 'block';
+    }}, 120);
+}}
+
+function revertPreview() {{
+    clearTimeout(_previewTimer);
+    if (!_previewActive) return;
+    _previewActive = false;
+    _doRevert();
+}}
+
 function saveSkin(key, btn) {{
-    _previewActive = false;  /* prevent revert on mouseLeave after click */
+    clearTimeout(_previewTimer);
+    _previewActive = false;  /* prevent mouseLeave from reverting during the save */
     var orig = btn.textContent;
     btn.textContent = '…';
     btn.disabled = true;
@@ -2993,8 +3007,8 @@ function saveSkin(key, btn) {{
         body: 'skin=' + encodeURIComponent(key)
     }}).then(function(r) {{ return r.json(); }}).then(function(d) {{
         if (d.ok) {{ location.reload(); }}
-        else {{ btn.textContent = d.error || 'Error'; btn.disabled = false; }}
-    }}).catch(function() {{ btn.textContent = orig; btn.disabled = false; }});
+        else {{ _doRevert(); btn.textContent = d.error || 'Error'; btn.disabled = false; }}
+    }}).catch(function() {{ _doRevert(); btn.textContent = orig; btn.disabled = false; }});
 }}
 </script>
 """
@@ -3082,6 +3096,9 @@ def api_save_skin(
     player = _require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return JSONResponse({"ok": False, "error": "Not authenticated"}, status_code=403)
+    from skin_utils import _SAFE_SKIN_RE as _safe_re
+    if not _safe_re.match(skin):
+        return JSONResponse({"ok": False, "error": "Invalid skin name"})
     valid = {row[0]: row[3] for row in _scan_skins()}
     if skin not in valid:
         return JSONResponse({"ok": False, "error": "Unknown skin"})
@@ -3091,9 +3108,10 @@ def api_save_skin(
     try:
         db = _auth.get_db()
         p = db.query(_auth.Player).filter(_auth.Player.id == player.id).first()
-        if p:
-            p.skin = skin
-            db.commit()
+        if not p:
+            return JSONResponse({"ok": False, "error": "Player not found"})
+        p.skin = skin
+        db.commit()
         return JSONResponse({"ok": True})
     except Exception as e:
         return JSONResponse({"ok": False, "error": str(e)})

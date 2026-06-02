@@ -1000,3 +1000,26 @@
 [data-skin="expressive_nature"] .dc {
   transition: transform 0.15s ease, box-shadow 0.2s ease;
 }
+
+/* ── Notification cards — light mode ─────────────────────────────────────── */
+[data-skin="expressive_nature"] .notif-card {
+  background: var(--bg-card);
+  border-color: var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: none;
+}
+[data-skin="expressive_nature"] .notif-card[data-unread="1"] {
+  border-color: var(--accent);
+}
+[data-skin="expressive_nature"] .notif-tag {
+  border-radius: var(--radius-pill);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+/* Clear All danger button — readable on light background */
+[data-skin="expressive_nature"] button[name="action"][value="all"] {
+  background: var(--color-danger-xdark) !important;
+  color: #fff !important;
+  border-color: var(--color-danger-dark) !important;
+}
