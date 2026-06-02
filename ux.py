@@ -409,7 +409,17 @@ def _nav_loader_html() -> str:
             "Deploying Asset Containers...",
             "Scanning Crisis Intelligence Feeds...",
             "Cross-referencing Supply Chain Alerts...",
-            "Finalizing Handshake..."
+            "Finalizing Handshake...",
+            "Tip: ETF shares trade on the open market — sell via Brokerage → ETF Trading Floor.",
+            "Tip: Each ETF bank maintains a standing buyback order at ~92% of NAV.",
+            "Tip: CFO executives with Dividend Booster skills earn more from ETF dividends.",
+            "Tip: Check the bottom ticker for live ETF fund prices and NAV premium/discount.",
+            "Tip: Tax vouchers from events can offset your market taxes — redeem via Corporate Actions.",
+            "Tip: The WBC-50 Index Fund tracks 50 blue-chip companies — good for passive exposure.",
+            "Tip: Set retail prices without a page reload — type a price and click Set.",
+            "Tip: Check WikiWads for guides on ETFs, taxes, and advanced investing strategies.",
+            "Tip: Executives with banking bonuses boost ETF dividends — hire a CFO to start.",
+            "Tip: Land plots near water or mountains yield more resources per tick."
           ];
           var overlay = document.getElementById('nav-loader');
           var bar     = document.getElementById('nl-bar');
