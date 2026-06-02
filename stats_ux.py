@@ -5846,6 +5846,7 @@ players equally once the project completes."""),
             "etf", "exchange traded fund", "fund", "shares", "index fund",
             "apple seeds etf", "energy etf", "city nav etf", "land bank", "wbc50 fund",
             "buy etf", "sell etf", "etf shares", "trading floor", "brokerage",
+            "dividend", "executive", "banking bonus", "nav", "premium", "discount",
         ],
         "summary": "ETFs and index funds let you invest in baskets of assets with a single share purchase.",
         "sections": [
@@ -5853,27 +5854,59 @@ players equally once the project completes."""),
 just like any other item. Each ETF holds an underlying basket of assets.
 The share price tracks the fund's Net Asset Value (NAV = cash reserves + asset value)
 divided by total shares issued."""),
-            ("Available Funds", """Apple Seeds ETF: holds apple_seeds commodity.
-Energy ETF: holds energy commodity.
-City NAV ETF: holds city land plots.
-Land Bank: provides land mortgage financing.
-WBC-50 Index Fund: holds equity in all 50 WBC-50 constituents."""),
-            ("How to Buy", """1. Go to Brokerage -> ETF Trading Floor.
+            ("Available Funds", """Apple Seeds ETF (🍎 SEED): holds apple_seeds commodity — tracks food commodity prices.
+Energy ETF (⚡ ENRG): holds energy commodity — tied to industrial energy prices.
+City NAV ETF (🏙️ CNAV): holds city land plots — appreciates as cities grow.
+Land Bank (🏦 LAND): provides land mortgage financing — earns interest income.
+WBC-50 Index Fund (📈 WBC50): holds equity in all 50 WBC-50 blue-chip constituents."""),
+            ("How to Buy", """1. Go to Brokerage → ETF Trading Floor (or Brokerage Firm → ETF floor).
 2. Select a fund from the left sidebar.
-3. Switch to the Buy tab, enter quantity and limit price, click Buy.
-4. Your limit order sits in the order book until a seller matches."""),
-            ("How to Sell", """1. Go to Brokerage -> ETF Trading Floor.
-2. Select the fund whose shares you hold.
+3. Switch to the Buy tab, enter quantity and limit price in your display currency, click Buy.
+4. Your limit order sits in the open order book until a seller matches at your price.
+5. You'll receive a push notification when your order fills."""),
+            ("How to Sell", """1. Go to Brokerage → ETF Trading Floor.
+2. Select the fund whose shares you hold (your balance shows under the fund icon).
 3. Switch to the Sell tab, enter quantity and limit price, click Sell.
-4. Each ETF bank maintains a standing buy order at ~92% of share price, giving
-   you a guaranteed exit at a slight discount. Open orders appear under
-   Open Orders on the right panel. Click X to cancel an order."""),
-            ("NAV vs Market Price", """NAV/share = (cash + assets) / total shares. A premium means market price is
-above NAV. A discount means below NAV. The bank's standing bid at 92% of share
-price prevents extreme discounts."""),
-            ("Fees & Taxes", """Holder fee: annual fee deducted from NAV. Federal sales tax: 2.02% on every
-trade (charged to buyer). City sales tax: variable rate on seller proceeds.
-Solvency levy: charged to shareholders if the fund becomes insolvent."""),
+4. Each ETF bank maintains a standing buy order at ~92% of share price —
+   this guarantees you can always exit at a slight discount to NAV.
+5. Open orders appear in the right panel; click the X button to cancel.
+6. After a fill you receive a push notification with the proceeds amount."""),
+            ("NAV vs Market Price", """NAV/share = (cash reserves + asset value) / total shares issued.
+A premium (market price > NAV) means buyers are willing to pay over asset value.
+A discount (market price < NAV) means you can buy assets below their intrinsic value.
+The bank's standing buyback bid at 92% of NAV sets a hard floor on discounts."""),
+            ("Dividends & Income", """ETF banks periodically distribute income from their underlying assets to shareholders
+as dividends, credited directly to your cash balance. Dividend amounts vary by fund:
+  · Apple Seeds and Energy ETFs pay commodity sale proceeds
+  · City NAV ETF pays municipal rent income
+  · Land Bank pays mortgage interest income
+  · WBC-50 Fund distributes index rebalancing profits
+Dividends are automatically sent when the fund generates surplus cash reserves."""),
+            ("Executive Perks (Banking Bonus)", """Several executive skills boost ETF dividend income through the 'banking' bonus:
+  · CFO: Interest Arbitrage +15%, Dividend Booster +12%, Portfolio Hedge +20%,
+    Investment Grade +15%, Debt Restructuring +10%, Banking Synergy +5%
+  · CAO / CDO: investment_grade, interest_arb, banking_synergy, dividend_boost
+  · First Lady: Bank President perk +15% ETF dividends
+Each exec with active banking-bonus skills multiplies every dividend payment you receive.
+Stacking multiple executives with banking perks compounds the effect."""),
+            ("Fees & Taxes", """Holder fee: an annual fee is silently deducted from the fund's NAV each tick.
+Federal sales tax: 2.02% charged to the buyer on every ETF share trade.
+City sales tax: variable rate deducted from the seller's proceeds (shown in push notification).
+Solvency levy: if the fund becomes insolvent (cash reserves < 0), a levy is charged
+to all shareholders proportional to their holding to restore the fund."""),
+            ("Multi-Currency Trading", """All ETF prices are displayed in your chosen display currency
+(Settings → Currency). The order form shows prices in your currency; the server
+converts them to USD for order matching. Your dashboard balance reflects your legal
+tender. Dividends are credited in USD and automatically converted to your legal tender."""),
+            ("Ticker & Widget", """All 5 ETF funds appear in the bottom price ticker bar on every page,
+labelled 🍎SEED, ⚡ENRG, 🏙️CNAV, 🏦LAND, and 📈WBC50.
+Each shows market price and the premium/discount vs NAV (e.g. +1.2% NAV).
+The Android home-screen widget also includes ETF fund prices in its data feed."""),
+            ("Index Challenge Event", """The monthly Index Challenge event is directly tied to the WBC-50 Index Fund.
+Players whose company is outside the WBC-50 earn trophies by entering the Top 50.
+Players whose company is already inside earn trophies by exiting the Top 50.
+The WBC-50 Index Fund automatically tracks these entries and exits during its
+monthly rebalance. See Events for active index_challenge events."""),
         ],
     },
 ]
