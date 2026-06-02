@@ -437,7 +437,7 @@
 [data-skin="expressive_nature"] .btn-buy       { background: var(--color-success);  color: #fff;                  border-radius: var(--radius-md); }
 [data-skin="expressive_nature"] .btn-sell      { background: var(--color-danger);   color: #fff;                  border-radius: var(--radius-md); }
 [data-skin="expressive_nature"] .btn-cancel    { background: var(--bg-card-2);      color: var(--text-secondary); border-radius: var(--radius-md); border: 1px solid var(--border); }
-[data-skin="expressive_nature"] .btn-crypto    { background: var(--accent-2);       color: #fff;                  border-radius: var(--radius-md); }
+[data-skin="expressive_nature"] .btn-crypto    { background: var(--accent-2);       color: var(--text-bright);    border-radius: var(--radius-md); }
 [data-skin="expressive_nature"] .btn-governance { background: var(--color-gold);   color: #fff;                  border-radius: var(--radius-md); }
 [data-skin="expressive_nature"] .btn-vote-yes  { background: var(--color-success);  color: #fff;                  border-radius: var(--radius-md); }
 [data-skin="expressive_nature"] .btn-vote-no   { background: var(--color-danger);   color: #fff;                  border-radius: var(--radius-md); }

@@ -38,7 +38,7 @@
   --text-muted:      #a78b7c;
   --text-faint:      #584235;
   --text-on-accent:  #522300;
-  --text-on-danger:  #ffffff;
+  --text-on-danger:  #450a0a;  /* dark maroon — contrast on light coral #f87171 (5.8:1) */
 
   /* ── Accent / Brand ──────────────────────────────────────── */
   --accent:          #ffb68b;
@@ -345,14 +345,14 @@
 /* ── Buttons — spec: disco-orange fill, deep-groove text ─────────────────── */
 [data-skin="soul_vinyl_dark"] .btn-primary   { background: var(--accent-dim); color: var(--text-on-accent); border-radius: var(--radius-md); border-top: 1px solid rgba(255,255,255,0.18); }
 [data-skin="soul_vinyl_dark"] .btn-secondary { background: var(--bg-card-2); color: var(--text-primary); border-radius: var(--radius-md); border: 2px solid var(--border); }
-[data-skin="soul_vinyl_dark"] .btn-danger    { background: var(--color-danger); color: #fff; border-radius: var(--radius-md); }
+[data-skin="soul_vinyl_dark"] .btn-danger    { background: var(--color-danger); color: var(--text-on-danger); border-radius: var(--radius-md); }
 [data-skin="soul_vinyl_dark"] .btn-buy       { background: var(--color-success); color: #001207; border-radius: var(--radius-md); }
-[data-skin="soul_vinyl_dark"] .btn-sell      { background: var(--color-danger); color: #fff; border-radius: var(--radius-md); }
+[data-skin="soul_vinyl_dark"] .btn-sell      { background: var(--color-danger); color: var(--text-on-danger); border-radius: var(--radius-md); }
 [data-skin="soul_vinyl_dark"] .btn-cancel    { background: var(--bg-card-2); color: var(--text-secondary); border-radius: var(--radius-md); border: 2px solid var(--border); }
 [data-skin="soul_vinyl_dark"] .btn-crypto    { background: var(--accent-2-dim); color: var(--text-on-accent); border-radius: var(--radius-md); }
-[data-skin="soul_vinyl_dark"] .btn-governance { background: var(--color-gold); color: var(--text-on-accent); border-radius: var(--radius-md); }
+[data-skin="soul_vinyl_dark"] .btn-governance { background: var(--color-gold); color: #1c110c; border-radius: var(--radius-md); }
 [data-skin="soul_vinyl_dark"] .btn-vote-yes  { background: var(--color-success); color: #001207; border-radius: var(--radius-md); }
-[data-skin="soul_vinyl_dark"] .btn-vote-no   { background: var(--color-danger); color: #fff; border-radius: var(--radius-md); }
+[data-skin="soul_vinyl_dark"] .btn-vote-no   { background: var(--color-danger); color: var(--text-on-danger); border-radius: var(--radius-md); }
 [data-skin="soul_vinyl_dark"] .btn-meme      { background: var(--color-warning); color: #1c110c; border-radius: var(--radius-md); }
 
 /* ── Inputs — spec: deep-groove bg, record-gold bottom border ─────────────── */
@@ -550,7 +550,7 @@
 [data-skin="soul_vinyl_dark"] .conv-avatar  { background: var(--bg-card-2); color: var(--accent); border-radius: 50%; }
 [data-skin="soul_vinyl_dark"] .sidebar-btn  { background: var(--bg-card); border: 2px solid var(--border); color: var(--text-secondary); border-radius: var(--radius-md); }
 [data-skin="soul_vinyl_dark"] .sidebar-btn:hover { border-color: var(--accent-dim); color: var(--accent); }
-[data-skin="soul_vinyl_dark"] .unread-badge  { background: var(--color-danger); color: #fff; border-radius: var(--radius-pill); }
+[data-skin="soul_vinyl_dark"] .unread-badge  { background: var(--color-danger); color: var(--text-on-danger); border-radius: var(--radius-pill); }
 [data-skin="soul_vinyl_dark"] .online-status { background: var(--color-success); border-radius: 50%; }
 [data-skin="soul_vinyl_dark"] .mention-player { color: var(--mention-player); }
 [data-skin="soul_vinyl_dark"] .mention-item   { color: var(--mention-item); }
@@ -613,7 +613,7 @@
 [data-skin="soul_vinyl_dark"] .modal-btn     { border-radius: var(--radius-md); }
 [data-skin="soul_vinyl_dark"] .modal-btn-blue { background: var(--accent-dim); color: var(--text-on-accent); }
 [data-skin="soul_vinyl_dark"] .modal-btn-gray { background: var(--bg-card-2); color: var(--text-secondary); }
-[data-skin="soul_vinyl_dark"] .modal-btn-red  { background: var(--color-danger); color: #fff; }
+[data-skin="soul_vinyl_dark"] .modal-btn-red  { background: var(--color-danger); color: var(--text-on-danger); }
 
 /* ── WikiWads ────────────────────────────────────────────────────────────── */
 [data-skin="soul_vinyl_dark"] .wh { background: var(--bg-header); border-bottom: 2px solid var(--border); box-shadow: 0 2px 0 #40322c; }

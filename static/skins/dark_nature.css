@@ -44,7 +44,7 @@
   --text-muted:      #4d9b6a;  /* muted sage                        */
   --text-faint:      #2d5c3e;  /* faint green                       */
   --text-on-accent:  #001207;  /* on bright green                   */
-  --text-on-danger:  #ffffff;
+  --text-on-danger:  #450a0a;  /* dark maroon — contrast on light coral #f87171 (5.8:1) */
 
   /* ── Accent / Brand ──────────────────────────────────────── */
   --accent:          #4ade80;  /* primary — glowing leaf green      */
@@ -433,14 +433,14 @@
 /* ── Buttons ─────────────────────────────────────────────────────────────── */
 [data-skin="dark_nature"] .btn-primary   { background: var(--accent);         color: var(--text-on-accent); border-radius: var(--radius-md); }
 [data-skin="dark_nature"] .btn-secondary { background: var(--bg-card-2);      color: var(--text-primary);   border-radius: var(--radius-md); border: 1px solid var(--border); }
-[data-skin="dark_nature"] .btn-danger    { background: var(--color-danger);   color: #fff;                  border-radius: var(--radius-md); }
+[data-skin="dark_nature"] .btn-danger    { background: var(--color-danger);   color: var(--text-on-danger);  border-radius: var(--radius-md); }
 [data-skin="dark_nature"] .btn-buy       { background: var(--color-success);  color: var(--text-on-accent); border-radius: var(--radius-md); }
-[data-skin="dark_nature"] .btn-sell      { background: var(--color-danger);   color: #fff;                  border-radius: var(--radius-md); }
+[data-skin="dark_nature"] .btn-sell      { background: var(--color-danger);   color: var(--text-on-danger);  border-radius: var(--radius-md); }
 [data-skin="dark_nature"] .btn-cancel    { background: var(--bg-card-2);      color: var(--text-secondary); border-radius: var(--radius-md); border: 1px solid var(--border); }
-[data-skin="dark_nature"] .btn-crypto    { background: var(--accent-2);       color: #fff;                  border-radius: var(--radius-md); }
-[data-skin="dark_nature"] .btn-governance { background: var(--color-gold);   color: #fff;                  border-radius: var(--radius-md); }
+[data-skin="dark_nature"] .btn-crypto    { background: var(--accent-2);       color: #001207;               border-radius: var(--radius-md); }
+[data-skin="dark_nature"] .btn-governance { background: var(--color-gold);   color: #001207;               border-radius: var(--radius-md); }
 [data-skin="dark_nature"] .btn-vote-yes  { background: var(--color-success);  color: var(--text-on-accent); border-radius: var(--radius-md); }
-[data-skin="dark_nature"] .btn-vote-no   { background: var(--color-danger);   color: #fff;                  border-radius: var(--radius-md); }
+[data-skin="dark_nature"] .btn-vote-no   { background: var(--color-danger);   color: var(--text-on-danger);  border-radius: var(--radius-md); }
 [data-skin="dark_nature"] .btn-meme      { background: var(--color-warning);  color: #001207;               border-radius: var(--radius-md); }
 
 /* ── Inputs & Selects ────────────────────────────────────────────────────── */
@@ -759,7 +759,7 @@
   border-radius: var(--radius-sm);
 }
 [data-skin="dark_nature"] .sidebar-btn:hover { border-color: var(--accent); color: var(--accent); }
-[data-skin="dark_nature"] .unread-badge   { background: var(--color-danger); color: #fff; border-radius: var(--radius-pill); }
+[data-skin="dark_nature"] .unread-badge   { background: var(--color-danger); color: var(--text-on-danger); border-radius: var(--radius-pill); }
 [data-skin="dark_nature"] .online-status  { background: var(--color-success); border-radius: 50%; }
 [data-skin="dark_nature"] .mention-player { color: var(--mention-player); }
 [data-skin="dark_nature"] .mention-item   { color: var(--mention-item); }
@@ -871,7 +871,7 @@
 [data-skin="dark_nature"] .modal-btn { border-radius: var(--radius-sm); }
 [data-skin="dark_nature"] .modal-btn-blue { background: var(--accent); color: var(--text-on-accent); }
 [data-skin="dark_nature"] .modal-btn-gray { background: var(--bg-card-2); color: var(--text-secondary); }
-[data-skin="dark_nature"] .modal-btn-red  { background: var(--color-danger); color: #fff; }
+[data-skin="dark_nature"] .modal-btn-red  { background: var(--color-danger); color: var(--text-on-danger); }
 
 /* ── WikiWads ────────────────────────────────────────────────────────────── */
 [data-skin="dark_nature"] .wh {
