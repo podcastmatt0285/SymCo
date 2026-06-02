@@ -13885,6 +13885,37 @@ def api_widget_data(request: Request, session_token: Optional[str] = Cookie(None
                 result["stocks"].append(entry)
                 result["tickers"].append(entry)
 
+            # ── ETF fund shares ───────────────────────────────────────────────
+            _etf_widget_cfgs = [
+                ("apple_seeds_etf",  "🍎SEED",  "apple_seeds_etf_shares"),
+                ("energy_etf",       "⚡ENRG",  "energy_etf_shares"),
+                ("city_nav_etf",     "🏙️CNAV",  "city_nav_etf_shares"),
+                ("land_bank",        "🏦LAND",  "land_bank_shares"),
+                ("wbc50_index_fund", "📈WBC50", "wbc50_index_fund_shares"),
+            ]
+            import market as _mkt_w
+            for _bank_id, _label, _share_item in _etf_widget_cfgs:
+                try:
+                    import banks as _bw
+                    _be = _bw.get_bank_entity(_bank_id)
+                    if not _be:
+                        continue
+                    _nav = (_be.share_price or 0.0)
+                    _mkt = _mkt_w.get_market_price(_share_item) or 0.0
+                    _price = _mkt if _mkt > 0 else _nav
+                    if _price <= 0:
+                        continue
+                    _prem = ((_price - _nav) / _nav * 100) if _nav > 0 else 0.0
+                    entry = {
+                        "label": _label,
+                        "value": fmt_usd(_price, _disp, precision=4),
+                        "change": f"{'+'if _prem>=0 else ''}{_prem:.2f}% NAV",
+                        "up": _prem >= 0, "type": "etf",
+                    }
+                    result["tickers"].append(entry)
+                except Exception:
+                    pass
+
             # ── Memecoins ─────────────────────────────────────────────────────
             for m in (db.query(MemeCoin)
                         .filter(MemeCoin.is_active == True, MemeCoin.last_price > 0)
