@@ -6,7 +6,7 @@ Returns the <link> (and optional <script defer>) HTML tags that load the
 skin CSS cascade for a given player.
 
 Injection order (always this way):
-  1. wadsworth-base.css   — shared component styles (Phase 2 extracts these)
+  1. wadsworth-base.css   — shared component styles
   2. {skin}.css           — player's chosen skin (variables + optional component overrides)
   3. modules/{mod}.css    — page-group accent override (admin, executive, memecoins, mod)
   4. {skin}.js (deferred) — optional effects (particles, animations) if file exists
@@ -15,8 +15,32 @@ Cache busting: increment _SKIN_V on each deploy so browsers pick up updated file
 """
 
 import os as _os
+import re as _re
+import time as _time
 
-_SKIN_V = 6  # ← increment on each deploy to bust browser CSS/JS cache
+_SKIN_V = 7  # ← increment on each deploy to bust browser CSS/JS cache
+
+# Only allow safe filesystem-compatible skin names — prevents XSS and path traversal
+_SAFE_SKIN_RE = _re.compile(r'^[a-z][a-z0-9_-]*$')
+
+# Cache which skins have a companion .js effects file (avoids os.path.exists on hot path)
+_js_skins: set = set()
+_js_skins_ts: float = 0.0
+_JS_SKINS_TTL: float = 60.0  # refresh once per minute
+
+
+def _get_js_skins() -> set:
+    """Return the set of skin names that have a companion .js effects file."""
+    global _js_skins, _js_skins_ts
+    now = _time.monotonic()
+    if not _js_skins or (now - _js_skins_ts) > _JS_SKINS_TTL:
+        import glob as _glob
+        _js_skins = {
+            _os.path.basename(p)[:-3]
+            for p in _glob.glob("static/skins/*.js")
+        }
+        _js_skins_ts = now
+    return _js_skins
 
 
 def skin_links(player_id: int = None, module: str = None) -> str:
@@ -35,7 +59,11 @@ def skin_links(player_id: int = None, module: str = None) -> str:
             db = get_db()
             p = db.query(_Player).filter(_Player.id == player_id).first()
             if p and getattr(p, "skin", None):
-                skin = p.skin
+                raw = p.skin
+                # Sanitise: only accept names matching [a-z][a-z0-9_-]* to prevent
+                # XSS (value in a <script> setAttribute call) and path traversal.
+                if _SAFE_SKIN_RE.match(raw):
+                    skin = raw
         except Exception:
             pass
         finally:
@@ -59,7 +87,7 @@ def skin_links(player_id: int = None, module: str = None) -> str:
             f'\n        <link rel="stylesheet"'
             f' href="/static/skins/modules/{module}.css?v={v}">'
         )
-    if _os.path.exists(f"static/skins/{skin}.js"):
+    if skin in _get_js_skins():
         tags += (
             f'\n        <script src="/static/skins/{skin}.js?v={v}"'
             f' defer></script>'

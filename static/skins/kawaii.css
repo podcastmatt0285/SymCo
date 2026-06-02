@@ -309,7 +309,7 @@ a:hover {
 /* Nav-loader overlay — reskin from leather brown to kawaii soft purple */
 [data-skin="kawaii"] #nav-loader {
   background: rgba(18, 10, 30, 0.97) !important;
-  font-family: var(--font) !important;
+  font-family: var(--font-body) !important;
 }
 [data-skin="kawaii"] #nl-card {
   background: rgba(24, 14, 42, 0.99) !important;

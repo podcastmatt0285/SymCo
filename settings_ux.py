@@ -2782,8 +2782,22 @@ def _widgets_tab(player) -> str:
 """
 
 
+_scan_skins_cache: list | None = None
+_scan_skins_ts: float = 0.0
+_SCAN_SKINS_TTL: float = 60.0  # re-read disk at most once per minute
+
+
 def _scan_skins() -> list:
-    """Return list of (key, name, description, tier) for every skin CSS file."""
+    """Return list of (key, name, description, tier, accent) for every skin CSS file.
+    Result is cached for _SCAN_SKINS_TTL seconds to avoid re-reading files on every
+    settings page load and every skin save.
+    """
+    global _scan_skins_cache, _scan_skins_ts
+    import time as _t
+    now = _t.monotonic()
+    if _scan_skins_cache is not None and (now - _scan_skins_ts) < _SCAN_SKINS_TTL:
+        return _scan_skins_cache
+
     import glob, re
     skins = []
     for path in sorted(glob.glob("static/skins/*.css")):
@@ -2794,14 +2808,14 @@ def _scan_skins() -> list:
         name = key.replace("-", " ").replace("_", " ").title()
         description = ""
         tier = "free"
+        accent = ""
         try:
             with open(path, encoding="utf-8") as f:
-                header = f.read(1500)
+                content = f.read(8000)  # enough for header comments + :root accent vars
+            header = content[:2000]
             m = re.search(r"Wadsworth Skin:\s*(.+)", header)
             if m:
                 name = m.group(1).strip()
-            # Capture description up to the next metadata field (e.g. "* Author:"),
-            # joining continuation lines (lines that start with " * ").
             m = re.search(r"Description:\s*(.*?)(?=\n\s*\*\s*\w+:|$)", header, re.DOTALL)
             if m:
                 raw = m.group(1)
@@ -2809,9 +2823,18 @@ def _scan_skins() -> list:
             m = re.search(r"Tier:\s*(\w+)", header)
             if m:
                 tier = m.group(1).strip().lower()
+            # Extract primary/secondary/tertiary accent colors for the preview swatch row
+            accents = []
+            for var in ("--accent", "--accent-2", "--accent-3", "--bg-page"):
+                m2 = re.search(rf"{re.escape(var)}\s*:\s*(#[0-9a-fA-F]{{3,8}})", content)
+                if m2:
+                    accents.append(m2.group(1).strip())
+            accent = "|".join(accents[:4])  # pipe-separated list of up to 4 colors
         except Exception:
             pass
-        skins.append((key, name, description, tier))
+        skins.append((key, name, description, tier, accent))
+    _scan_skins_cache = skins
+    _scan_skins_ts = now
     return skins
 
 
@@ -2824,59 +2847,143 @@ def _skins_tab(player) -> str:
     skins = _scan_skins()
 
     cards = ""
-    for key, name, description, tier in skins:
+    for row in skins:
+        key, name, description, tier = row[0], row[1], row[2], row[3]
+        accent = row[4] if len(row) > 4 else ""
         is_current = key == current_skin
         locked = tier == "pro" and not is_pro_user
 
-        border = "#818cf8" if is_current else "#1e293b"
-        pro_badge = ('<span style="font-size:0.6rem;background:#818cf8;color:#fff;'
-                     'padding:1px 6px;border-radius:8px;font-weight:700;margin-left:6px;">PRO</span>'
-                     if tier == "pro" else "")
+        border_style = "border:2px solid var(--accent)" if is_current else "border:2px solid var(--border)"
+        active_indicator = (
+            '<span style="display:inline-block;width:7px;height:7px;background:var(--accent);'
+            'border-radius:50%;margin-right:5px;"></span>' if is_current else ""
+        )
+        pro_badge = (
+            '<span style="font-size:0.6rem;background:var(--accent-3);color:var(--text-on-danger);'
+            'padding:1px 6px;border-radius:8px;font-weight:700;margin-left:5px;">PRO</span>'
+            if tier == "pro" else ""
+        )
+
+        # Color swatch row — up to 4 dots showing accent/secondary/tertiary/bg
+        swatch = ""
+        if accent:
+            colors = accent.split("|")
+            dots = "".join(
+                f'<div style="width:14px;height:14px;border-radius:50%;flex-shrink:0;'
+                f'background:{c};border:1px solid rgba(0,0,0,0.15);"></div>'
+                for c in colors if c
+            )
+            swatch = f'<div style="display:flex;gap:3px;align-items:center;">{dots}</div>'
 
         if is_current:
-            btn = '<button disabled style="width:100%;padding:8px;background:#818cf8;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:default;">✓ Active</button>'
+            action_btns = (
+                '<button disabled style="flex:1;padding:7px;background:var(--accent);'
+                'color:var(--text-on-accent);border:none;border-radius:var(--radius-sm);'
+                'font-size:0.8rem;font-weight:700;cursor:default;">✓ Active</button>'
+            )
         elif locked:
-            btn = '<button disabled style="width:100%;padding:8px;background:#1e293b;color:#64748b;border:1px solid #2d3748;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:not-allowed;">🔒 Pro Only</button>'
+            action_btns = (
+                '<button disabled style="flex:1;padding:7px;background:var(--bg-card-2);'
+                'color:var(--text-muted);border:1px solid var(--border);border-radius:var(--radius-sm);'
+                'font-size:0.8rem;font-weight:700;cursor:not-allowed;">🔒 Pro Only</button>'
+            )
         else:
-            btn = (f'<button onclick="saveSkin(\'{key}\', this)" '
-                   f'style="width:100%;padding:8px;background:#1e293b;color:#38bdf8;border:1px solid #38bdf8;'
-                   f'border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;transition:background 0.15s;">Apply</button>')
+            action_btns = (
+                f'<button onmouseenter="previewSkin(\'{key}\')" onmouseleave="revertPreview()" '
+                f'onclick="saveSkin(\'{key}\', this)" '
+                f'style="flex:1;padding:7px;background:var(--bg-card-2);color:var(--accent);'
+                f'border:1px solid var(--accent);border-radius:var(--radius-sm);'
+                f'font-size:0.8rem;font-weight:700;cursor:pointer;transition:background 0.15s;">Apply</button>'
+            )
 
         cards += f"""
-        <div style="background:#1a1d2e;border:2px solid {border};border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:10px;">
-            <div style="display:flex;align-items:center;gap:6px;">
-                <span style="font-size:0.9rem;font-weight:700;color:#e2e8f0;">{name}</span>
+        <div class="skin-card" data-key="{key}" style="background:var(--bg-card);{border_style};
+            border-radius:var(--radius-lg);padding:14px;display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
+                {active_indicator}
+                <span style="font-size:0.88rem;font-weight:700;color:var(--text-bright);">{name}</span>
                 {pro_badge}
             </div>
-            <p style="font-size:0.78rem;color:#64748b;margin:0;min-height:36px;">{description or "No description."}</p>
-            {btn}
+            {swatch}
+            <p style="font-size:0.75rem;color:var(--text-muted);margin:0;
+                min-height:28px;line-height:1.4;">{description or "No description."}</p>
+            <div style="display:flex;gap:6px;">{action_btns}</div>
         </div>"""
 
     if not skins:
-        cards = '<p style="color:#64748b;">No skins available.</p>'
+        cards = '<p style="color:var(--text-muted);">No skins available.</p>'
 
     pro_notice = ""
     if not is_pro_user:
         pro_notice = """
-        <div style="background:#1e293b;border:1px solid #818cf8;border-radius:8px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;gap:12px;">
+        <div style="background:var(--accent-3-bg);border:1px solid var(--accent-3);
+            border-radius:var(--radius-md);padding:12px 16px;margin-bottom:18px;
+            display:flex;align-items:center;gap:12px;">
             <span style="font-size:1.3rem;">🌟</span>
             <div>
-                <strong style="color:#818cf8;font-size:0.85rem;">Wadsworth Pro</strong>
-                <p style="color:#64748b;font-size:0.78rem;margin:2px 0 0;">Subscribe via the Android app to unlock Pro skins and other exclusive features.</p>
+                <strong style="color:var(--accent-3);font-size:0.85rem;">Wadsworth Pro</strong>
+                <p style="color:var(--text-muted);font-size:0.78rem;margin:2px 0 0;">
+                    Subscribe via the Android app to unlock Pro skins and exclusive features.</p>
             </div>
         </div>"""
 
     return f"""
-<div style="max-width:700px;">
-    <h3 style="margin:0 0 4px;color:#94a3b8;">Skins</h3>
-    <p style="color:#64748b;font-size:0.82rem;margin:0 0 18px;">Choose a visual theme. Your selection is saved to your account and applies on all devices.</p>
+<div style="max-width:680px;">
+    <h3 style="margin:0 0 4px;color:var(--text-secondary);font-family:var(--font-serif);">Skins</h3>
+    <p style="color:var(--text-muted);font-size:0.82rem;margin:0 0 16px;">
+        Choose a visual theme. Hover any skin to preview it. Changes apply on all devices.</p>
     {pro_notice}
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;">
         {cards}
     </div>
+    <p id="skin-preview-notice" style="color:var(--text-muted);font-size:0.74rem;
+        margin:12px 0 0;display:none;">Previewing — hover away or click Apply to confirm.</p>
 </div>
 <script>
+var _origSkin = document.documentElement.getAttribute('data-skin') || 'default';
+var _skinV = {{}};  /* version handled server-side */
+var _previewActive = false;
+
+function _getSkinLink() {{
+    var links = document.querySelectorAll('link[rel="stylesheet"]');
+    for (var i = 0; i < links.length; i++) {{
+        var h = links[i].href;
+        if (h.indexOf('/static/skins/') !== -1 &&
+            h.indexOf('wadsworth-base') === -1 &&
+            h.indexOf('/modules/') === -1) {{
+            return links[i];
+        }}
+    }}
+    return null;
+}}
+
+function previewSkin(key) {{
+    _previewActive = true;
+    document.documentElement.setAttribute('data-skin', key);
+    var link = _getSkinLink();
+    if (link) {{
+        if (!link.dataset.origHref) link.dataset.origHref = link.href;
+        link.href = '/static/skins/' + key + '.css?preview=1';
+    }}
+    var notice = document.getElementById('skin-preview-notice');
+    if (notice) notice.style.display = 'block';
+}}
+
+function revertPreview() {{
+    if (!_previewActive) return;
+    _previewActive = false;
+    document.documentElement.setAttribute('data-skin', _origSkin);
+    var link = _getSkinLink();
+    if (link && link.dataset.origHref) {{
+        link.href = link.dataset.origHref;
+        delete link.dataset.origHref;
+    }}
+    var notice = document.getElementById('skin-preview-notice');
+    if (notice) notice.style.display = 'none';
+}}
+
 function saveSkin(key, btn) {{
+    _previewActive = false;  /* prevent revert on mouseLeave after click */
     var orig = btn.textContent;
     btn.textContent = '…';
     btn.disabled = true;
@@ -2975,7 +3082,7 @@ def api_save_skin(
     player = _require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return JSONResponse({"ok": False, "error": "Not authenticated"}, status_code=403)
-    valid = {key: tier for key, _name, _desc, tier in _scan_skins()}
+    valid = {row[0]: row[3] for row in _scan_skins()}
     if skin not in valid:
         return JSONResponse({"ok": False, "error": "Unknown skin"})
     if valid[skin] == "pro" and not _is_pro(player):
