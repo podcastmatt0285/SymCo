@@ -1088,6 +1088,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             var wcprTracks = [];
             var wcprIdx = -1;
             var wcprAudio = document.getElementById('wcpr-shell-audio');
+            var WCPR_KEY = 'wadsCPR';
 
             // -- Petal cycle ----------------------------------------------
             function randP() {{ return PASTELS[Math.floor(Math.random() * PASTELS.length)]; }}
@@ -1214,6 +1215,17 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 }}
             }};
 
+            // -- WCPR persistence -----------------------------------------
+            function wcprSaveSt() {{
+                try {{
+                    localStorage.setItem(WCPR_KEY, JSON.stringify({{
+                        idx:     wcprIdx,
+                        time:    (wcprAudio && wcprAudio.duration > 0) ? wcprAudio.currentTime : 0,
+                        playing: wcprAudio ? !wcprAudio.paused : false
+                    }}));
+                }} catch(e) {{}}
+            }}
+
             // -- WCPR audio -----------------------------------------------
             function wcprLoad(idx) {{
                 if (!wcprTracks.length || idx < 0 || idx >= wcprTracks.length) return;
@@ -1228,6 +1240,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 if (titleEl) titleEl.textContent = t.title;
                 var ppBtn = document.getElementById('gs-pp');
                 if (ppBtn) ppBtn.innerHTML = '&#9646;&#9646;';
+                wcprSaveSt();
             }}
             function wcprStart() {{
                 if (wcprTracks.length) {{
@@ -1247,6 +1260,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 wcprAudio.addEventListener('ended', function() {{
                     if (wcprTracks.length) wcprLoad((wcprIdx+1) % wcprTracks.length);
                 }});
+                wcprAudio.addEventListener('pause', wcprSaveSt);
             }}
 
             // -- Volume passthrough ---------------------------------------
@@ -1257,12 +1271,53 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 if (gbStation === 'wcpr' && wcprAudio) wcprAudio.volume = gbMuted ? 0 : gbVol;
             }};
 
+            // -- Periodic WCPR state save (mirrors WLOL's 5s timer) -------
+            setInterval(function() {{
+                if (gbStation === 'wcpr' && wcprAudio && !wcprAudio.paused) wcprSaveSt();
+            }}, 5000);
+            window.addEventListener('pagehide',     function() {{ if (gbStation === 'wcpr') wcprSaveSt(); }});
+            window.addEventListener('beforeunload', function() {{ if (gbStation === 'wcpr') wcprSaveSt(); }});
+
             // -- Init: restore station ------------------------------------
             if (gbStation === 'wcpr') {{
                 updateStationLabel();
-                // Don't autostart WCPR on page load -- wait for user interaction
+                var _wcprSaved = null;
+                try {{ _wcprSaved = JSON.parse(localStorage.getItem(WCPR_KEY) || 'null'); }} catch(e) {{}}
                 fetch('/wcpr/list').then(function(r){{return r.json();}}).then(function(tr){{
                     wcprTracks = tr || [];
+                    if (!wcprTracks.length) {{
+                        var t = document.getElementById('gs-title');
+                        if (t) t.textContent = 'No WCPR episodes yet';
+                        return;
+                    }}
+                    var idx      = (_wcprSaved && _wcprSaved.idx >= 0 && _wcprSaved.idx < wcprTracks.length) ? _wcprSaved.idx : 0;
+                    var seekTo   = (_wcprSaved && _wcprSaved.time > 0) ? _wcprSaved.time : 0;
+                    var autoplay = _wcprSaved && _wcprSaved.playing;
+                    wcprIdx = idx;
+                    var trk = wcprTracks[idx];
+                    var titleEl = document.getElementById('gs-title');
+                    if (titleEl) titleEl.textContent = trk.title;
+                    if (wcprAudio) {{
+                        wcprAudio.src    = trk.url;
+                        wcprAudio.volume = gbMuted ? 0 : gbVol;
+                        if (autoplay) {{
+                            wcprAudio.addEventListener('canplay', function onCP() {{
+                                wcprAudio.removeEventListener('canplay', onCP);
+                                if (seekTo > 0) wcprAudio.currentTime = seekTo;
+                                wcprAudio.play().catch(function(){{}});
+                                var ppBtn = document.getElementById('gs-pp');
+                                if (ppBtn) ppBtn.innerHTML = '&#9646;&#9646;';
+                            }}, {{once: true}});
+                            wcprAudio.load();
+                        }} else if (seekTo > 0) {{
+                            // Not playing but restore position so progress bar shows correctly
+                            wcprAudio.addEventListener('loadedmetadata', function onLM() {{
+                                wcprAudio.removeEventListener('loadedmetadata', onLM);
+                                wcprAudio.currentTime = seekTo;
+                            }}, {{once: true}});
+                            wcprAudio.load();
+                        }}
+                    }}
                 }}).catch(function(){{}});
             }}
         }})();
