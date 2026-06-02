@@ -61,7 +61,7 @@ a:hover { text-decoration: underline; }
     align-items: center;
     gap: 8px;
 }
-.brand img { height: 28px; width: auto; }
+.brand img { height: 34px; width: auto; }
 
 /* ── Header Right ─────────────────────────────────────────────────────────── */
 .header-right {

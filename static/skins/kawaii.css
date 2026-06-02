@@ -295,14 +295,37 @@ a:hover {
   -webkit-backdrop-filter: blur(12px);
 }
 [data-skin="kawaii"] .brand  { color: var(--accent); }
-/* Swap the default Wadsworth mark for the kawaii crown logo (transparent PNG).
-   `content` on a replaced <img> element re-points the rendered image in
-   Chromium/Firefox/WebKit; the .brand img height rule keeps it sized. */
-[data-skin="kawaii"] .brand img {
+/* Swap the Wadsworth badge for the kawaii crown logo everywhere it appears.
+   CSS content: on <img> re-points the src in Chromium/WebKit (Android TWA). */
+[data-skin="kawaii"] .brand img,
+[data-skin="kawaii"] .nl-logo {
   content: url('/static/logo-kawaii.png');
-  height: 30px;
+  filter: drop-shadow(0 2px 8px rgba(253,181,204,0.5));
+}
+[data-skin="kawaii"] .brand img {
+  height: 34px;
   width: auto;
-  filter: drop-shadow(0 2px 6px rgba(253,181,204,0.45));
+}
+/* Nav-loader overlay — reskin from leather brown to kawaii soft purple */
+[data-skin="kawaii"] #nav-loader {
+  background: rgba(18, 10, 30, 0.97) !important;
+  font-family: var(--font) !important;
+}
+[data-skin="kawaii"] #nl-card {
+  background: rgba(24, 14, 42, 0.99) !important;
+  border-color: rgba(253,181,204,0.35) !important;
+  box-shadow: 0 20px 60px rgba(253,181,204,0.12), 0 0 0 1px rgba(253,181,204,0.1) !important;
+}
+[data-skin="kawaii"] #nl-bar {
+  background: linear-gradient(to right, var(--accent), var(--accent-2), var(--accent-3)) !important;
+  box-shadow: 0 0 10px rgba(253,181,204,0.4) !important;
+}
+[data-skin="kawaii"] #nl-pct { color: var(--accent) !important; }
+[data-skin="kawaii"] #nl-msgs p { color: var(--text-secondary) !important; }
+/* Company + auth nav-loader card (different bar id) */
+[data-skin="kawaii"] #nl-bar-co,
+[data-skin="kawaii"] #nl-bar-login {
+  background: linear-gradient(to right, var(--accent), var(--accent-2)) !important;
 }
 [data-skin="kawaii"] .balance {
   color: var(--color-success);

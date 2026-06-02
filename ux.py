@@ -365,29 +365,9 @@ def _nav_loader_html() -> str:
             <div style="position:absolute;top:8px;right:8px;width:16px;height:16px;border-top:1px solid rgba(176,141,87,.4);border-right:1px solid rgba(176,141,87,.4);"></div>
             <div style="position:absolute;bottom:8px;left:8px;width:16px;height:16px;border-bottom:1px solid rgba(176,141,87,.4);border-left:1px solid rgba(176,141,87,.4);"></div>
             <div style="position:absolute;bottom:8px;right:8px;width:16px;height:16px;border-bottom:1px solid rgba(176,141,87,.4);border-right:1px solid rgba(176,141,87,.4);"></div>
-            <!-- apple SVG -->
+            <!-- brand logo (skin-swappable via .nl-logo) -->
             <div style="width:min(110px,28vw);height:min(110px,28vw);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-              <svg viewBox="0 0 201.5 207.54" style="width:100%;height:100%;filter:drop-shadow(0 0 20px rgba(229,0,0,0.4));" class="nl-pulse">
-                <defs>
-                  <linearGradient id="nl-lg"><stop style="stop-color:#e50000" offset="0"/><stop style="stop-color:#ff5555;stop-opacity:0" offset="1"/></linearGradient>
-                  <radialGradient id="nl-rg" cy="172.36" cx="342.86" gradientTransform="matrix(1 0 0 1.0417 0 -7.1934)" r="193.09" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color:#e50000"/><stop offset="1" style="stop-color:#ff5555;stop-opacity:0"/></radialGradient>
-                </defs>
-                <g transform="matrix(.15791 0 0 .15791 16.376 41.416)">
-                  <path style="fill-rule:evenodd;fill:#008000" d="m470.03 168.72c-34.81 0.55-75.98 25.14-120.23 80.45 287.24-187.49 318.09 308.34-234.97 802.83h105.53c11.37-10.2 22.06-19.9 30.58-28.8 404.11-366.71 376.62-856.94 219.09-854.48z"/>
-                  <path style="fill-rule:evenodd;fill:#008000" d="m834.13 625.57c77.98-166.27-189.49-144.42-409.81 189.81l-7.81-53.51c195.76-321.73 564.68-292.21 417.62-136.3z"/>
-                  <path style="fill-rule:evenodd;fill:#008000" d="m44.425 533.84c57.285-180.94 245.14 23.08 178.28 431.36l43.44-35.18c76.75-381.56-224.17-617.67-221.72-396.18z"/>
-                  <g transform="translate(17.143 -148.57)">
-                    <path style="fill-rule:evenodd;fill:#ff8e8e" d="m357.14 205.1c0.02 71.81-65.23 130.02-145.71 130.02-80.49 0-145.73-58.21-145.72-130.02-0.009-71.81 65.23-130.02 145.72-130.02 80.48-0.002 145.73 58.21 145.71 130.02z" transform="translate(219.15 -163.07)"/>
-                    <path style="fill-rule:evenodd;fill:#ff8e8e" d="m357.14 205.1c0.02 71.81-65.23 130.02-145.71 130.02-80.49 0-145.73-58.21-145.72-130.02-0.009-71.81 65.23-130.02 145.72-130.02 80.48-0.002 145.73 58.21 145.71 130.02z" transform="translate(27.721 -188.78)"/>
-                    <path style="fill-rule:evenodd;fill:#ff8e8e" d="m357.14 205.1c0.02 71.81-65.23 130.02-145.71 130.02-80.49 0-145.73-58.21-145.72-130.02-0.009-71.81 65.23-130.02 145.72-130.02 80.48-0.002 145.73 58.21 145.71 130.02z" transform="translate(-86.565 -45.925)"/>
-                    <path style="fill-rule:evenodd;fill:#ff8e8e" d="m357.14 205.1c0.02 71.81-65.23 130.02-145.71 130.02-80.49 0-145.73-58.21-145.72-130.02-0.009-71.81 65.23-130.02 145.72-130.02 80.48-0.002 145.73 58.21 145.71 130.02z" transform="translate(256.29 14.075)"/>
-                    <path style="fill-rule:evenodd;fill:#ff8e8e" d="m357.14 205.1c0.02 71.81-65.23 130.02-145.71 130.02-80.49 0-145.73-58.21-145.72-130.02-0.009-71.81 65.23-130.02 145.72-130.02 80.48-0.002 145.73 58.21 145.71 130.02z" transform="translate(150.58 151.22)"/>
-                    <path style="fill-rule:evenodd;fill:#ff8e8e" d="m357.14 205.1c0.02 71.81-65.23 130.02-145.71 130.02-80.49 0-145.73-58.21-145.72-130.02-0.009-71.81 65.23-130.02 145.72-130.02 80.48-0.002 145.73 58.21 145.71 130.02z" transform="translate(-12.279 128.36)"/>
-                    <path style="fill-rule:evenodd;fill:url(#nl-rg)" d="m500 300.93c-39.84 48.69-62.4-55.86-121.24-33.61s-6.6 115.57-68.68 105.42c-62.08-10.16 17.18-81.97-31.51-121.81-48.69-39.83-103.38 52.08-125.63-6.76-22.25-58.85 79.57-26.11 89.73-88.2 10.15-62.077-96.79-63.492-56.96-112.18 39.84-48.687 62.4 55.86 121.25 33.613 58.84-22.247 6.59-115.57 68.67-105.42 62.08 10.158-17.17 81.973 31.51 121.81 48.69 39.837 103.39-52.077 125.63 6.767 22.25 58.84-79.57 26.11-89.73 88.19-10.15 62.08 96.8 63.5 56.96 112.18z" transform="matrix(1.2126 0 0 1.2126 -107.6 -19.596)"/>
-                    <path style="fill-rule:evenodd;fill:#ffd5d5" d="m514.29 249.39c0.01 44.19-33.25 80.02-74.29 80.02s-74.3-35.83-74.29-80.02c-0.01-44.2 33.25-80.03 74.29-80.03s74.3 35.83 74.29 80.03z" transform="translate(-131.87 -59.983)"/>
-                  </g>
-                </g>
-              </svg>
+              <img src="/static/logo.png" alt="" class="nl-logo nl-pulse" style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 18px rgba(176,141,87,0.55));">
             </div>
             <!-- title + messages -->
             <div style="margin-top:20px;width:100%;text-align:center;">
