@@ -2856,8 +2856,7 @@ def _skins_tab(player) -> str:
 
     skins = _scan_skins()
 
-    cards = ""
-    for row in skins:
+    def _build_card(row):
         key, name, description, tier = row[0], row[1], row[2], row[3]
         accent = row[4] if len(row) > 4 else ""
         is_current = key == current_skin
@@ -2874,7 +2873,6 @@ def _skins_tab(player) -> str:
             if tier == "pro" else ""
         )
 
-        # Color swatch row — up to 4 dots showing accent/secondary/tertiary/bg
         swatch = ""
         if accent:
             colors = accent.split("|")
@@ -2906,7 +2904,7 @@ def _skins_tab(player) -> str:
                 f'font-size:0.8rem;font-weight:700;cursor:pointer;transition:background 0.15s;">Apply</button>'
             )
 
-        cards += f"""
+        return f"""
         <div class="skin-card" data-key="{key}" style="background:var(--bg-card);{border_style};
             border-radius:var(--radius-lg);padding:14px;display:flex;flex-direction:column;gap:8px;">
             <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
@@ -2920,8 +2918,23 @@ def _skins_tab(player) -> str:
             <div style="display:flex;gap:6px;">{action_btns}</div>
         </div>"""
 
-    if not skins:
-        cards = '<p style="color:var(--text-muted);">No skins available.</p>'
+    free_skins = sorted([r for r in skins if r[3] != "pro"], key=lambda r: r[1].lower())
+    pro_skins  = sorted([r for r in skins if r[3] == "pro"],  key=lambda r: r[1].lower())
+
+    free_cards = "".join(_build_card(r) for r in free_skins) or '<p style="color:var(--text-muted);">None available.</p>'
+    pro_cards  = "".join(_build_card(r) for r in pro_skins)  or '<p style="color:var(--text-muted);">None available.</p>'
+
+    cards = f"""
+    <h4 style="margin:0 0 10px;color:var(--text-secondary);font-size:0.8rem;
+        text-transform:uppercase;letter-spacing:0.08em;">Free</h4>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin-bottom:24px;">
+        {free_cards}
+    </div>
+    <h4 style="margin:0 0 10px;color:var(--accent-3);font-size:0.8rem;
+        text-transform:uppercase;letter-spacing:0.08em;">🌟 Pro Subscribers</h4>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;">
+        {pro_cards}
+    </div>"""
 
     pro_notice = ""
     if not is_pro_user:
@@ -2943,9 +2956,7 @@ def _skins_tab(player) -> str:
     <p style="color:var(--text-muted);font-size:0.82rem;margin:0 0 16px;">
         Choose a visual theme. Hover any skin to preview it. Changes apply on all devices.</p>
     {pro_notice}
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;">
-        {cards}
-    </div>
+    {cards}
     <p id="skin-preview-notice" style="color:var(--text-muted);font-size:0.74rem;
         margin:12px 0 0;display:none;">Previewing — hover away or click Apply to confirm.</p>
 </div>
