@@ -303,7 +303,7 @@ a:hover {
   filter: drop-shadow(0 2px 8px rgba(253,181,204,0.5));
 }
 [data-skin="kawaii"] .brand img {
-  height: 34px;
+  height: 28px;
   width: auto;
 }
 /* Nav-loader overlay — reskin from leather brown to kawaii soft purple */
