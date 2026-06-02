@@ -464,7 +464,7 @@ a:hover {
 [data-skin="kawaii"] .btn-sm { border-radius: var(--radius-sm); font-weight: 700; }
 [data-skin="kawaii"] .btn-sm-blue   { background: var(--accent);         color: var(--text-on-accent); }
 [data-skin="kawaii"] .btn-sm-orange { background: var(--color-warning);   color: #1a0c28; }
-[data-skin="kawaii"] .btn-sm-red    { background: var(--color-danger);    color: #fff; }
+[data-skin="kawaii"] .btn-sm-red    { background: var(--color-danger);    color: var(--text-on-accent); }
 [data-skin="kawaii"] .btn-sm-green  { background: var(--color-success);   color: #0a1a0a; }
 [data-skin="kawaii"] .progress-bar-wrap {
   background: var(--bg-page);
@@ -687,15 +687,15 @@ a:hover {
 /* ── Common buttons ──────────────────────────────────────────────────────── */
 [data-skin="kawaii"] .btn-primary  { background: var(--accent);         color: var(--text-on-accent); border-radius: var(--radius-md); font-weight: 800; }
 [data-skin="kawaii"] .btn-secondary { background: var(--bg-card-2);    color: var(--text-secondary);  border-radius: var(--radius-md); }
-[data-skin="kawaii"] .btn-danger   { background: var(--color-danger);   color: #fff;                   border-radius: var(--radius-md); }
+[data-skin="kawaii"] .btn-danger   { background: var(--color-danger);   color: var(--text-on-accent);  border-radius: var(--radius-md); }
 [data-skin="kawaii"] .btn-crypto   { background: var(--accent-2);       color: var(--text-on-accent);  border-radius: var(--radius-md); }
 [data-skin="kawaii"] .btn-governance { background: var(--color-gold);   color: #1a0c28;                border-radius: var(--radius-md); }
 [data-skin="kawaii"] .btn-buy      { background: var(--color-success);  color: #0a1a0a;                border-radius: var(--radius-md); font-weight: 800; }
-[data-skin="kawaii"] .btn-sell     { background: var(--color-danger);   color: #fff;                   border-radius: var(--radius-md); font-weight: 800; }
+[data-skin="kawaii"] .btn-sell     { background: var(--color-danger);   color: var(--text-on-accent);  border-radius: var(--radius-md); font-weight: 800; }
 [data-skin="kawaii"] .btn-meme     { background: var(--color-warning);  color: #1a0c28;                border-radius: var(--radius-md); }
 [data-skin="kawaii"] .btn-cancel   { background: var(--bg-card-2);      color: var(--text-secondary);  border-radius: var(--radius-md); }
 [data-skin="kawaii"] .btn-vote-yes { background: var(--color-success);  color: #0a1a0a;                border-radius: var(--radius-md); }
-[data-skin="kawaii"] .btn-vote-no  { background: var(--color-danger);   color: #fff;                   border-radius: var(--radius-md); }
+[data-skin="kawaii"] .btn-vote-no  { background: var(--color-danger);   color: var(--text-on-accent);  border-radius: var(--radius-md); }
 
 /* ── Common stat cells ───────────────────────────────────────────────────── */
 [data-skin="kawaii"] .stat         { background: var(--bg-card); border-color: var(--border); border-radius: var(--radius-sm); }
@@ -1006,7 +1006,7 @@ a:hover {
 [data-skin="kawaii"] .modal-btn     { border-radius: var(--radius-sm); font-weight: 700; }
 [data-skin="kawaii"] .modal-btn-blue { background: var(--accent); color: var(--text-on-accent); }
 [data-skin="kawaii"] .modal-btn-gray { background: var(--bg-card-2); color: var(--text-secondary); }
-[data-skin="kawaii"] .modal-btn-red  { background: var(--color-danger); color: #fff; }
+[data-skin="kawaii"] .modal-btn-red  { background: var(--color-danger); color: var(--text-on-accent); }
 [data-skin="kawaii"] .profile-name  { color: var(--text-bright); }
 [data-skin="kawaii"] .profile-stat  { color: var(--text-muted); }
 [data-skin="kawaii"] .online-count  { color: var(--color-success); }
