@@ -26,14 +26,20 @@ from stats_ux import log_transaction
 from database import engine, SessionLocal
 
 
-def _push_market(player_id: int, title: str, body: str):
+_ETF_SHARE_ITEMS = frozenset({
+    "apple_seeds_etf_shares", "energy_etf_shares", "city_nav_etf_shares",
+    "land_bank_shares", "wbc50_index_fund_shares",
+})
+
+def _push_market(player_id: int, title: str, body: str, item_type: str = ""):
     """Fire a market push notification in a background thread."""
     import threading
+    _url = "/brokerage/trading?mode=etf" if item_type in _ETF_SHARE_ITEMS else "/market"
     def _send():
         try:
             from push_ux import send_push_notification
             send_push_notification(player_id, title, body,
-                                   url="/market", notif_type="trades",
+                                   url=_url, notif_type="trades",
                                    tag=f"market-{player_id}-{title[:20]}")
         except Exception as _e:
             print(f"[Market] Push error: {_e}")
@@ -799,7 +805,7 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
             _total_b = f"${total_cost:,.2f}"
         _push_market(buy_order.player_id, "Trade Executed",
                      f"Bought {quantity:,.4g}× {_item_disp} @ {_price_b} — "
-                     f"total {_total_b}.")
+                     f"total {_total_b}.", item_type=buy_order.item_type)
     if not is_bank_ipo and sell_order.player_id > 0:
         _seller_net = total_cost - _notif_tax
         try:
@@ -814,7 +820,7 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
             _tax_note = f" (${_notif_tax:.2f} city tax deducted)" if _notif_tax > 0 else ""
         _push_market(sell_order.player_id, "Trade Executed",
                      f"Sold {quantity:,.4g}× {_item_disp} @ {_price_s} — "
-                     f"proceeds {_net_s}{_tax_note}.")
+                     f"proceeds {_net_s}{_tax_note}.", item_type=buy_order.item_type)
 
 # ==========================
 # MARKET DATA FUNCTIONS
