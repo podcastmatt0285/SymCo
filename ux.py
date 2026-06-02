@@ -367,7 +367,7 @@ def _nav_loader_html() -> str:
             <div style="position:absolute;bottom:8px;right:8px;width:16px;height:16px;border-bottom:1px solid rgba(176,141,87,.4);border-right:1px solid rgba(176,141,87,.4);"></div>
             <!-- brand logo (skin-swappable via .nl-logo) -->
             <div style="width:min(110px,28vw);height:min(110px,28vw);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-              <img src="/static/logo.png" alt="" class="nl-logo nl-pulse" style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 18px rgba(176,141,87,0.55));">
+              <img src="/static/logo.png?v=3" alt="" class="nl-logo nl-pulse" style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 18px rgba(176,141,87,0.55));">
             </div>
             <!-- title + messages -->
             <div style="margin-top:20px;width:100%;text-align:center;">
@@ -764,7 +764,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
     </head>
     <body>
         <div class="header">
-            <div class="brand"><img src="/static/logo.png" alt="Wadsworth"> Wadsworth</div>
+            <div class="brand"><img src="/static/logo.png?v=3" alt="Wadsworth"> Wadsworth</div>
             <div class="header-right">
                 {lien_html}
                 {_level_html}

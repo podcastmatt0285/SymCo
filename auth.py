@@ -873,7 +873,7 @@ def login_page(session_token: Optional[str] = Cookie(None)):
 
 <body>
     <div class="splash">
-        <div class="logo"><img src="/static/logo.png" alt="Wadsworth"></div>
+        <div class="logo"><img src="/static/logo.png?v=3" alt="Wadsworth"></div>
 
         <div class="panel">
             <div class="tabs">
@@ -1095,7 +1095,7 @@ def login_page(session_token: Optional[str] = Cookie(None)):
     <div id="nav-loader" style="display:none;position:fixed;inset:0;z-index:9999;background:#0D0806;color:#F5F5DC;font-family:Georgia,serif;align-items:center;justify-content:center;padding:12px;">
       <div style="position:relative;width:100%;max-width:420px;padding:clamp(16px,5vw,40px);background:#1A0F0A;border:4px solid #2D1810;box-shadow:0 25px 50px rgba(0,0,0,.8);display:flex;flex-direction:column;align-items:center;box-sizing:border-box;max-height:92vh;overflow-y:auto;">
         <div style="width:min(90px,22vw);height:min(90px,22vw);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <img src="/static/logo.png" alt="" class="nl-logo" style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 12px rgba(176,141,87,0.5));">
+          <img src="/static/logo.png?v=3" alt="" class="nl-logo" style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 12px rgba(176,141,87,0.5));">
         </div>
         <p style="font-size:13px;font-style:italic;color:#B08D57;margin:12px 0 6px;text-align:center;">Loading&hellip;</p>
         <div style="width:100%;height:3px;background:#2D1810;border-radius:2px;overflow:hidden;margin-top:4px;">
