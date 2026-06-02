@@ -9016,6 +9016,11 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
             disp_sym = disp["symbol"]
             disp_code = disp["code"]
             default_price = round(sel_price / disp["usd_per_unit"], 6)
+            try:
+                from reserve_banks import get_usd_balance as _get_etf_bal
+                _etf_cash_usd = _get_etf_bal(player.id)
+            except Exception:
+                _etf_cash_usd = player.cash_balance or 0.0
             sell_disabled_attr = "disabled" if sel_your_shares <= 0 else ""
             total_shares_issued = sel_be.total_shares_issued or 1
             nav_per_share = sel_nav / total_shares_issued
@@ -9324,7 +9329,7 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
                                     <label style="display:block;margin-bottom:4px;color:#94a3b8;font-size:0.8rem;">Limit Price ({disp_sym} {disp_code})</label>
                                     <input type="number" name="price" min="0.000001" step="0.000001" value="{default_price}" class="td-input">
                                 </div>
-                                <div style="font-size:0.7rem;color:#475569;margin-bottom:10px;">Cash: {_abbr(player.cash_balance, disp)}</div>
+                                <div style="font-size:0.7rem;color:#475569;margin-bottom:10px;">Cash: {_abbr(_etf_cash_usd, disp)}</div>
                                 <button type="submit" style="width:100%;padding:10px;background:#16a34a;color:#fff;border:none;font-size:0.85rem;font-weight:600;cursor:pointer;">
                                     Buy {sel_icon} {sel_name_short}
                                 </button>
