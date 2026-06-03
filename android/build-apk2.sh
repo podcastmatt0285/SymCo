@@ -262,7 +262,7 @@ cp "${WIDGET_DIR}/res/xml/bonds_widget_info.xml"          app/src/main/res/xml/
 cp "${WIDGET_DIR}/res/xml/forex_widget_info.xml"          app/src/main/res/xml/
 cp "${WIDGET_DIR}/res/xml/p2p_widget_info.xml"            app/src/main/res/xml/
 cp "${WIDGET_DIR}/res/layout/widget_p2p_layout.xml"       app/src/main/res/layout/
-cp "${WIDGET_DIR}/res/drawable/widget_background.xml"     app/src/main/res/drawable/
+cp "${WIDGET_DIR}/res/drawable/"*.xml                     app/src/main/res/drawable/
 echo "  Copied widget layout, xml, drawable resources"
 
 # Reduce Gradle JVM heap — default 1.5 GB kills the daemon on low-RAM machines.
