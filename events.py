@@ -541,9 +541,16 @@ def get_active_production_factor() -> float:
 
     effect_data field checked: {"production_factor": <float>}
     Returns 1.0 if no active production-altering events.
+
+    NOTE: item_crisis events are intentionally excluded here — their per-item
+    production_factor is applied separately via get_active_item_crisis_factors()
+    in the production tick. Including them here would double-penalize the crisis
+    item and incorrectly penalize *all* items for a single-item crisis.
     """
     factor = 1.0
     for eff in get_active_effects():
+        if eff.get("event_type") == "item_crisis":
+            continue  # handled per-item by get_active_item_crisis_factors()
         ed = eff.get("effect_data", {})
         pf = ed.get("production_factor")
         if isinstance(pf, (int, float)) and pf > 0:
@@ -610,12 +617,14 @@ def get_active_item_crisis_summary() -> list:
                     ed = {}
                 item_type = ed.get("item_type", "")
                 pf = ed.get("production_factor", 1.0)
-                drop_pct = round((1.0 - pf) * 100, 1) if pf < 1.0 else 0
+                drop_pct = round((1.0 - pf) * 100) if pf < 1.0 else 0
                 crises.append({
-                    "item_type": item_type,
-                    "drop_pct": drop_pct,
-                    "title": ev.title,
-                    "ends_at": ev.ends_at,
+                    "item_type":  item_type,
+                    "item_name":  _get_item_display_name(item_type) if item_type else "",
+                    "drop_pct":   drop_pct,
+                    "production_factor": pf,
+                    "title":      ev.title,
+                    "ends_at":    ev.ends_at,
                 })
         finally:
             db.close()

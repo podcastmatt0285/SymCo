@@ -14076,9 +14076,10 @@ def api_widget_data(request: Request, session_token: Optional[str] = Cookie(None
             result["active_crises"] = [
                 {
                     "item_type": c["item_type"],
-                    "title": c["title"],
-                    "drop_pct": c["drop_pct"],
-                    "ends_in": _rel(c["ends_at"]),
+                    "item_name": c.get("item_name", c["item_type"].replace("_", " ").title()),
+                    "title":     c["title"],
+                    "drop_pct":  c["drop_pct"],
+                    "ends_in":   _rel(c["ends_at"]),
                 }
                 for c in _crises
             ]
