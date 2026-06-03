@@ -5463,6 +5463,43 @@
     ],
     "startup_cost": 75000
   },
+  "coal_power_plant": {
+    "allowed_proximity": [
+      "road",
+      "coastal",
+      "lakeside",
+      "riverside",
+      "urban"
+    ],
+    "allowed_terrain": [
+      "coastal",
+      "lake",
+      "island",
+      "urban"
+    ],
+    "base_wage_cost": 250,
+    "class": "production",
+    "cycles_to_complete": 140,
+    "description": "Burns coal to generate dispatchable power. Unlike solar, it runs anywhere with cooling water, but it consumes coal and water as fuel. (Does not require paper as it is intangible energy).",
+    "name": "Coal Power Plant",
+    "production_lines": [
+      {
+        "inputs": [
+          {
+            "item": "coal",
+            "quantity": 40
+          },
+          {
+            "item": "water",
+            "quantity": 30
+          }
+        ],
+        "output_item": "energy",
+        "output_qty": 2000
+      }
+    ],
+    "startup_cost": 120000
+  },
   "cocoa_plantation": {
     "allowed_proximity": [
       "riverside",

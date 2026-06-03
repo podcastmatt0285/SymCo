@@ -1,0 +1,71 @@
+{
+  "player_id": -2086,
+  "business_name": "Blackseam Collieries Co.",
+  "description": "Large-scale coal mining conglomerate running ten deep-seam collieries across the hill and mountain country. Built to keep the market supplied with coal for steel mills, cement kilns, smelting furnaces, and the new wave of coal-fired power plants.",
+  "cash_caps": {
+    "hard_high": 50000000,
+    "soft_high": 20000000,
+    "soft_low": 5000000,
+    "hard_low": 1500000
+  },
+  "seed": {
+    "starting_cash": 10000000,
+    "land_plots": [
+      { "terrain_type": "hills", "proximity_features": ["road"], "size": 1 },
+      { "terrain_type": "hills", "proximity_features": ["road"], "size": 1 },
+      { "terrain_type": "hills", "proximity_features": ["road"], "size": 1 },
+      { "terrain_type": "hills", "proximity_features": ["road"], "size": 1 },
+      { "terrain_type": "hills", "proximity_features": ["road"], "size": 1 },
+      { "terrain_type": "mountain", "proximity_features": ["road"], "size": 1 },
+      { "terrain_type": "mountain", "proximity_features": ["road"], "size": 1 },
+      { "terrain_type": "mountain", "proximity_features": ["road"], "size": 1 },
+      { "terrain_type": "mountain", "proximity_features": ["road"], "size": 1 },
+      { "terrain_type": "mountain", "proximity_features": ["road"], "size": 1 }
+    ],
+    "districts": []
+  },
+  "businesses": [
+    { "business_type": "coal_mine", "district_id": null, "active_lines": [] },
+    { "business_type": "coal_mine", "district_id": null, "active_lines": [] },
+    { "business_type": "coal_mine", "district_id": null, "active_lines": [] },
+    { "business_type": "coal_mine", "district_id": null, "active_lines": [] },
+    { "business_type": "coal_mine", "district_id": null, "active_lines": [] },
+    { "business_type": "coal_mine", "district_id": null, "active_lines": [] },
+    { "business_type": "coal_mine", "district_id": null, "active_lines": [] },
+    { "business_type": "coal_mine", "district_id": null, "active_lines": [] },
+    { "business_type": "coal_mine", "district_id": null, "active_lines": [] },
+    { "business_type": "coal_mine", "district_id": null, "active_lines": [] }
+  ],
+  "buy_items": {
+    "energy": {
+      "target_inventory": 150000,
+      "reorder_at": 30000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "water": {
+      "target_inventory": 50000,
+      "reorder_at": 10000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 7500,
+      "reorder_at": 1500,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    }
+  },
+  "sell_items": {
+    "coal": {
+      "min_inventory_to_keep": 1000,
+      "max_order_quantity": 10000,
+      "market": "regular"
+    }
+  },
+  "ipo": {
+    "ticker": "BSEM",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
+  }
+}
