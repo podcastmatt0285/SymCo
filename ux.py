@@ -5749,11 +5749,19 @@ def _land_market_page_impl(session_token: Optional[str] = None, sort: str = "pri
 
     try:
         from land_market import (get_active_auctions, get_active_listings, get_land_bank_plots,
-                                  get_recent_sales, get_player_buy_orders, get_all_active_buy_orders)
+                                  get_recent_sales, get_player_buy_orders, get_all_active_buy_orders,
+                                  count_active_auctions, count_active_listings)
         from land import LandPlot, get_db as land_get_db, TERRAIN_TYPES, PROXIMITY_FEATURES
 
-        auctions = get_active_auctions()
-        listings = get_active_listings()
+        # Hard cap on rows fetched/rendered so the page can never hang on a huge
+        # auction/listing table (the cause of the Cloudflare 5xx timeouts).
+        LM_RENDER_CAP = 75
+
+        auctions = get_active_auctions(limit=LM_RENDER_CAP)
+        listings = get_active_listings(limit=LM_RENDER_CAP)
+        # True totals shown in stats/tabs (cheap COUNT, no hydration)
+        total_auction_count = count_active_auctions()
+        total_listing_count = count_active_listings()
         bank_plots = get_land_bank_plots()
         recent_sales = get_recent_sales(limit=8)
         my_buy_orders = get_player_buy_orders(player.id)
@@ -5799,13 +5807,17 @@ def _land_market_page_impl(session_token: Optional[str] = None, sort: str = "pri
                 listing_plots[l.id] = p
                 all_terrains.add(p.terrain_type)
 
-        # Market stats — use only entries where the land plot was found,
-        # so the displayed count matches the number of cards rendered.
-        total_auctions = len(auction_plots)
-        total_listings = len(listing_plots)
+        # Stat/tab counts reflect the TRUE totals in the DB (cheap COUNT),
+        # while only LM_RENDER_CAP rows are actually rendered below.
+        _rendered_auctions = len(auction_plots)
+        _rendered_listings = len(listing_plots)
+        total_auctions = total_auction_count
+        total_listings = total_listing_count
         total_available = total_auctions + total_listings
-        avg_auction_price = (sum(a.current_price for a in auctions) / total_auctions) if total_auctions else 0
-        avg_listing_price = (sum(l.asking_price for l in listings) / total_listings) if total_listings else 0
+        avg_auction_price = (sum(a.current_price for a in auctions) / _rendered_auctions) if _rendered_auctions else 0
+        avg_listing_price = (sum(l.asking_price for l in listings) / _rendered_listings) if _rendered_listings else 0
+        _auctions_capped = total_auction_count > _rendered_auctions
+        _listings_capped = total_listing_count > _rendered_listings
 
         market_html = '''<style>
         @media (max-width: 600px) {
@@ -5933,6 +5945,8 @@ def _land_market_page_impl(session_token: Optional[str] = None, sort: str = "pri
 
         # ===== AUCTIONS TAB =====
         if tab == "auctions":
+            if _auctions_capped:
+                market_html += f'<div style="padding:8px 14px;background:#0f172a;border-left:3px solid #f59e0b;margin-bottom:12px;font-size:0.8rem;color:#94a3b8;">Showing the {_rendered_auctions} soonest-ending of {total_auction_count:,} active auctions. Use the terrain filter to narrow results.</div>'
             if not auctions:
                 market_html += '''
                 <div class="card" style="text-align: center; padding: 30px;">
@@ -6054,6 +6068,8 @@ def _land_market_page_impl(session_token: Optional[str] = None, sort: str = "pri
 
         # ===== PLAYER LISTINGS TAB =====
         elif tab == "listings":
+            if _listings_capped:
+                market_html += f'<div style="padding:8px 14px;background:#0f172a;border-left:3px solid #a855f7;margin-bottom:12px;font-size:0.8rem;color:#94a3b8;">Showing the {_rendered_listings} most recent of {total_listing_count:,} active listings. Use the terrain filter to narrow results.</div>'
             if not listings:
                 market_html += '''
                 <div class="card" style="text-align: center; padding: 30px;">
@@ -6088,11 +6104,19 @@ def _land_market_page_impl(session_token: Optional[str] = None, sort: str = "pri
                 if not listing_data:
                     market_html += f'<p style="color: #64748b;">No listings match the "{terrain}" terrain filter.</p>'
 
-                for listing, plot in listing_data:
+                # Batch-load all seller names in one query (was N+1 per listing)
+                _seller_ids = {l.seller_id for l, _ in listing_data}
+                _seller_names = {}
+                if _seller_ids:
                     auth_db = get_auth_db()
-                    seller = auth_db.query(AuthPlayer).filter(AuthPlayer.id == listing.seller_id).first()
-                    auth_db.close()
-                    seller_name = seller.business_name if seller else f"Player {listing.seller_id}"
+                    try:
+                        for _sp in auth_db.query(AuthPlayer).filter(AuthPlayer.id.in_(_seller_ids)).all():
+                            _seller_names[_sp.id] = _sp.business_name
+                    finally:
+                        auth_db.close()
+
+                for listing, plot in listing_data:
+                    seller_name = _seller_names.get(listing.seller_id, f"Player {listing.seller_id}")
                     is_own_listing = (listing.seller_id == player.id)
 
                     terrain_color = terrain_colors.get(plot.terrain_type, "#64748b")

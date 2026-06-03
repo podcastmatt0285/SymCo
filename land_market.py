@@ -509,23 +509,44 @@ def get_player_buy_orders(player_id: int) -> List[LandBuyOrder]:
         db.close()
 
 
-def get_all_active_buy_orders() -> List[LandBuyOrder]:
-    """Get all active buy orders (for market display)."""
+def get_all_active_buy_orders(limit: Optional[int] = 200) -> List[LandBuyOrder]:
+    """Get active buy orders for market display (highest bid first, bounded)."""
     db = get_db()
     try:
-        return db.query(LandBuyOrder).filter(
+        q = db.query(LandBuyOrder).filter(
             LandBuyOrder.is_active == True,
-        ).order_by(LandBuyOrder.max_price.desc()).all()
+        ).order_by(LandBuyOrder.max_price.desc())
+        if limit is not None:
+            q = q.limit(limit)
+        return q.all()
     finally:
         db.close()
 
 
-def get_active_listings() -> List[LandListing]:
-    """Get all active land listings."""
+def get_active_listings(limit: Optional[int] = None) -> List[LandListing]:
+    """Get active land listings (newest first).
+
+    `limit` bounds the work done by the land-market page (see get_active_auctions).
+    """
     db = get_db()
     try:
-        listings = db.query(LandListing).filter(LandListing.is_active == True).all()
-        return listings
+        q = db.query(LandListing).filter(
+            LandListing.is_active == True
+        ).order_by(LandListing.listed_at.desc())
+        if limit is not None:
+            q = q.limit(limit)
+        return q.all()
+    finally:
+        db.close()
+
+
+def count_active_listings() -> int:
+    """Cheap COUNT of active land listings (no row hydration)."""
+    db = get_db()
+    try:
+        return db.query(LandListing).filter(
+            LandListing.is_active == True
+        ).count()
     finally:
         db.close()
 
@@ -982,14 +1003,32 @@ def buy_auction_land(buyer_id: int, auction_id: int) -> bool:
         db.close()
 
 
-def get_active_auctions() -> List[GovernmentAuction]:
-    """Get all active government auctions."""
+def get_active_auctions(limit: Optional[int] = None) -> List[GovernmentAuction]:
+    """Get active government auctions (soonest-expiring first).
+
+    `limit` caps the number of rows returned so the land-market page can never
+    hydrate/render an unbounded list (which previously hung the request and
+    exhausted the sync threadpool, surfacing as Cloudflare 5xx errors).
+    """
     db = get_db()
     try:
-        auctions = db.query(GovernmentAuction).filter(
+        q = db.query(GovernmentAuction).filter(
             GovernmentAuction.is_active == True
-        ).order_by(GovernmentAuction.end_time.asc()).all()
-        return auctions
+        ).order_by(GovernmentAuction.end_time.asc())
+        if limit is not None:
+            q = q.limit(limit)
+        return q.all()
+    finally:
+        db.close()
+
+
+def count_active_auctions() -> int:
+    """Cheap COUNT of active government auctions (no row hydration)."""
+    db = get_db()
+    try:
+        return db.query(GovernmentAuction).filter(
+            GovernmentAuction.is_active == True
+        ).count()
     finally:
         db.close()
 
