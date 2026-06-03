@@ -5745,7 +5745,7 @@ def _land_market_page_impl(session_token: Optional[str] = None, sort: str = "pri
     try:
         from land_market import (get_active_auctions, get_active_listings, get_land_bank_plots,
                                   get_recent_sales, get_player_buy_orders, get_all_active_buy_orders)
-        from land import get_land_plot, TERRAIN_TYPES, PROXIMITY_FEATURES
+        from land import LandPlot, get_db as land_get_db, TERRAIN_TYPES, PROXIMITY_FEATURES
 
         auctions = get_active_auctions()
         listings = get_active_listings()
@@ -5753,6 +5753,23 @@ def _land_market_page_impl(session_token: Optional[str] = None, sort: str = "pri
         recent_sales = get_recent_sales(limit=8)
         my_buy_orders = get_player_buy_orders(player.id)
         all_buy_orders = get_all_active_buy_orders()
+
+        # Batch-load all needed land plots in a single query
+        _needed_plot_ids = set()
+        for a in auctions:
+            _needed_plot_ids.add(a.land_plot_id)
+        for l in listings:
+            _needed_plot_ids.add(l.land_plot_id)
+        for s in recent_sales:
+            _needed_plot_ids.add(s.land_plot_id)
+        _land_db = land_get_db()
+        try:
+            _plots_by_id = {
+                p.id: p
+                for p in _land_db.query(LandPlot).filter(LandPlot.id.in_(_needed_plot_ids)).all()
+            } if _needed_plot_ids else {}
+        finally:
+            _land_db.close()
 
         # Terrain colors
         terrain_colors = {
@@ -5766,13 +5783,13 @@ def _land_market_page_impl(session_token: Optional[str] = None, sort: str = "pri
         all_terrains = set()
         auction_plots = {}
         for a in auctions:
-            p = get_land_plot(a.land_plot_id)
+            p = _plots_by_id.get(a.land_plot_id)
             if p:
                 auction_plots[a.id] = p
                 all_terrains.add(p.terrain_type)
         listing_plots = {}
         for l in listings:
-            p = get_land_plot(l.land_plot_id)
+            p = _plots_by_id.get(l.land_plot_id)
             if p:
                 listing_plots[l.id] = p
                 all_terrains.add(p.terrain_type)
@@ -6268,7 +6285,7 @@ def _land_market_page_impl(session_token: Optional[str] = None, sort: str = "pri
 
                 from auth import get_db as get_auth_db, Player as AuthPlayer
                 for sale in recent_sales:
-                    plot = get_land_plot(sale.land_plot_id)
+                    plot = _plots_by_id.get(sale.land_plot_id)
                     terrain_name = plot.terrain_type.replace("_", " ").title() if plot else "Unknown"
                     t_color = terrain_colors.get(plot.terrain_type, "#64748b") if plot else "#64748b"
                     sale_type_badge = '<span style="color: #f59e0b;">Auction</span>' if sale.sale_type == "government" else '<span style="color: #a855f7;">Player</span>'
