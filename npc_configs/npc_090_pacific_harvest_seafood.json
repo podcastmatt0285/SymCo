@@ -1,0 +1,104 @@
+{
+  "player_id": -2090,
+  "business_name": "Pacific Harvest Seafood",
+  "description": "Coastal seafood processor and smokehouse supplying premium sashimi-grade fish and smoked seafood to sushi bars and fish cart operators. Produces bluefin tuna sashimi, tuna steaks, calamari, octopus, and salmon roe from two processing plants, plus dried squid, smoked eel, and unagi kabayaki from two smokehouses.",
+  "cash_caps": {
+    "hard_high": 40000000,
+    "soft_high": 16000000,
+    "soft_low": 4000000,
+    "hard_low": 1200000
+  },
+  "seed": {
+    "starting_cash": 8000000,
+    "land_plots": [
+      { "terrain_type": "coastal", "proximity_features": ["coastal"], "size": 1 },
+      { "terrain_type": "coastal", "proximity_features": ["coastal"], "size": 1 },
+      { "terrain_type": "coastal", "proximity_features": ["coastal"], "size": 1 },
+      { "terrain_type": "coastal", "proximity_features": ["coastal"], "size": 1 }
+    ],
+    "districts": []
+  },
+  "businesses": [
+    { "business_type": "fish_processing_plant", "district_id": null, "active_lines": ["bluefin_tuna_sashimi", "tuna_steak", "calamari", "octopus_cleaned", "salmon_roe"] },
+    { "business_type": "fish_processing_plant", "district_id": null, "active_lines": ["bluefin_tuna_sashimi", "tuna_steak", "calamari", "octopus_cleaned", "salmon_roe"] },
+    { "business_type": "seafood_smokehouse",    "district_id": null, "active_lines": ["dried_squid", "smoked_eel", "unagi_kabayaki"] },
+    { "business_type": "seafood_smokehouse",    "district_id": null, "active_lines": ["dried_squid", "smoked_eel", "unagi_kabayaki"] }
+  ],
+  "buy_items": {
+    "bluefin_tuna": {
+      "target_inventory": 5000,
+      "reorder_at": 1200,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "yellowfin_tuna": {
+      "target_inventory": 8000,
+      "reorder_at": 2000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "squid": {
+      "target_inventory": 30000,
+      "reorder_at": 8000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "octopus": {
+      "target_inventory": 6000,
+      "reorder_at": 1500,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "salmon": {
+      "target_inventory": 10000,
+      "reorder_at": 2500,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "eel": {
+      "target_inventory": 10000,
+      "reorder_at": 2500,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "salt": {
+      "target_inventory": 8000,
+      "reorder_at": 2000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "lumber": {
+      "target_inventory": 4000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "sugar": {
+      "target_inventory": 3000,
+      "reorder_at": 800,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 80000,
+      "reorder_at": 20000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    }
+  },
+  "sell_items": {
+    "bluefin_tuna_sashimi": { "min_inventory_to_keep": 100, "max_order_quantity": 1000, "market": "regular" },
+    "tuna_steak":           { "min_inventory_to_keep": 200, "max_order_quantity": 3000, "market": "regular" },
+    "calamari":             { "min_inventory_to_keep": 300, "max_order_quantity": 5000, "market": "regular" },
+    "octopus_cleaned":      { "min_inventory_to_keep": 150, "max_order_quantity": 2000, "market": "regular" },
+    "salmon_roe":           { "min_inventory_to_keep": 100, "max_order_quantity": 1000, "market": "regular" },
+    "dried_squid":          { "min_inventory_to_keep": 200, "max_order_quantity": 3000, "market": "regular" },
+    "smoked_eel":           { "min_inventory_to_keep": 100, "max_order_quantity": 1500, "market": "regular" },
+    "unagi_kabayaki":       { "min_inventory_to_keep": 100, "max_order_quantity": 1500, "market": "regular" }
+  },
+  "ipo": {
+    "ticker": "PHSF",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
+  }
+}
