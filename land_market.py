@@ -871,31 +871,34 @@ def update_auction_prices(current_tick: int):
         auctions = db.query(GovernmentAuction).filter(
             GovernmentAuction.is_active == True
         ).all()
-        
+
         for auction in auctions:
             # Check if expired
             if datetime.utcnow() >= auction.end_time:
                 auction.is_active = False
-                
-                # Move to land bank
-                add_to_land_bank(
-                    auction.land_plot_id,
-                    auction.id,
-                    auction.current_price
-                )
-                
-                print(f"[LandMarket] Auction {auction.id} expired unsold -> moved to land bank")
+                db.commit()   # commit expiry immediately so it's never rolled back
+
+                # Move to land bank (isolated — failure here must NOT un-expire the auction)
+                try:
+                    add_to_land_bank(
+                        auction.land_plot_id,
+                        auction.id,
+                        auction.current_price
+                    )
+                    print(f"[LandMarket] Auction {auction.id} expired unsold -> moved to land bank")
+                except Exception as e:
+                    print(f"[LandMarket] Auction {auction.id} expired but land-bank move failed: {e}")
                 continue
-            
+
             # Drop price every hour (3600 ticks)
             if current_tick % 3600 == 0:
                 new_price = auction.current_price * PRICE_DROP_RATE
-                
+
                 # Don't go below minimum
                 auction.current_price = max(new_price, auction.minimum_price)
-                
+
                 print(f"[LandMarket] Auction {auction.id} price dropped to ${auction.current_price:,.2f}")
-        
+
         db.commit()
     finally:
         db.close()
