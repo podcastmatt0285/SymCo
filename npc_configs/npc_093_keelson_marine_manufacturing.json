@@ -1,0 +1,91 @@
+{
+  "player_id": -2093,
+  "business_name": "Keelson Marine Manufacturing",
+  "description": "Marine parts manufacturer running three coastal plants that turn out boat hulls, outboard motors, and propellers. Built as a second source alongside Blue Horizon so the boat yards never run dry. Hoards nothing — every hull, motor, and propeller goes straight to market.",
+  "cash_caps": {
+    "hard_high": 50000000,
+    "soft_high": 20000000,
+    "soft_low": 5000000,
+    "hard_low": 1500000
+  },
+  "seed": {
+    "starting_cash": 12000000,
+    "land_plots": [
+      { "terrain_type": "marsh",  "proximity_features": ["coastal"],   "size": 1 },
+      { "terrain_type": "island", "proximity_features": ["coastal"],   "size": 1 },
+      { "terrain_type": "island", "proximity_features": ["riverside"], "size": 1 }
+    ],
+    "districts": []
+  },
+  "businesses": [
+    { "business_type": "marine_factory", "district_id": null, "active_lines": ["hull", "outboard_motor", "propeller"] },
+    { "business_type": "marine_factory", "district_id": null, "active_lines": ["hull", "outboard_motor", "propeller"] },
+    { "business_type": "marine_factory", "district_id": null, "active_lines": ["hull", "outboard_motor", "propeller"] }
+  ],
+  "buy_items": {
+    "fiberglass": {
+      "target_inventory": 12000,
+      "reorder_at": 3000,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "lumber": {
+      "target_inventory": 8000,
+      "reorder_at": 2000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "engine_block": {
+      "target_inventory": 3000,
+      "reorder_at": 800,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "bronze": {
+      "target_inventory": 40000,
+      "reorder_at": 10000,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "iron": {
+      "target_inventory": 40000,
+      "reorder_at": 10000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "copper": {
+      "target_inventory": 8000,
+      "reorder_at": 2000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "rubber": {
+      "target_inventory": 8000,
+      "reorder_at": 2000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 1500000,
+      "reorder_at": 350000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 10000,
+      "reorder_at": 2500,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    }
+  },
+  "sell_items": {
+    "hull":           { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
+    "outboard_motor": { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
+    "propeller":      { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" }
+  },
+  "ipo": {
+    "ticker": "KELS",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
+  }
+}

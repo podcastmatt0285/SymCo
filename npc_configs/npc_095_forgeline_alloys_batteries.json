@@ -1,0 +1,81 @@
+{
+  "player_id": -2095,
+  "business_name": "Forgeline Alloys & Batteries",
+  "description": "Heavy industrial district producer that fills two items no other NPC supplies: bronze (from an alloy forge) and lead-acid batteries (from a battery gigafactory). Bronze feeds propeller casting; lead-acid batteries feed car-battery assembly. Without these the entire marine drivetrain chain stalls. Hoards nothing.",
+  "cash_caps": {
+    "hard_high": 80000000,
+    "soft_high": 35000000,
+    "soft_low": 10000000,
+    "hard_low": 3000000
+  },
+  "seed": {
+    "starting_cash": 25000000,
+    "land_plots": [],
+    "districts": [
+      { "district_type": "industrial", "size": 4, "plots_merged": 4 }
+    ]
+  },
+  "businesses": [
+    { "business_type": "alloy_forge",          "district_seed_index": 0, "active_lines": ["bronze"] },
+    { "business_type": "battery_gigafactory",   "district_seed_index": 0, "active_lines": ["lead_acid_battery"] }
+  ],
+  "buy_items": {
+    "copper": {
+      "target_inventory": 60000,
+      "reorder_at": 15000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "tin": {
+      "target_inventory": 30000,
+      "reorder_at": 7500,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "lead": {
+      "target_inventory": 40000,
+      "reorder_at": 10000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "antimony": {
+      "target_inventory": 5000,
+      "reorder_at": 1200,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "sulfuric_acid": {
+      "target_inventory": 40000,
+      "reorder_at": 10000,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "plastic": {
+      "target_inventory": 25000,
+      "reorder_at": 6000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 3000000,
+      "reorder_at": 700000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 15000,
+      "reorder_at": 4000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    }
+  },
+  "sell_items": {
+    "bronze":            { "min_inventory_to_keep": 0, "max_order_quantity": 8000, "market": "regular" },
+    "lead_acid_battery": { "min_inventory_to_keep": 0, "max_order_quantity": 6000, "market": "regular" }
+  },
+  "ipo": {
+    "ticker": "FRGL",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
+  }
+}
