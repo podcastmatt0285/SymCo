@@ -5739,8 +5739,13 @@ def _land_market_page_impl(session_token: Optional[str] = None, sort: str = "pri
     """Land market view - government auctions and player listings with search, sort, and filter."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
-    from reserve_banks import get_player_display_currency, fmt_usd
-    disp = get_player_display_currency(player.id)
+    try:
+        from reserve_banks import get_player_display_currency, fmt_usd
+        disp = get_player_display_currency(player.id)
+    except Exception as _disp_err:
+        import traceback; traceback.print_exc()
+        disp = {"code": "USD", "symbol": "$", "usd_per_unit": 1.0, "flag": "🇺🇸"}
+        fmt_usd = lambda amt, d, **kw: f"${amt:,.2f}" if amt else "$0.00"
 
     try:
         from land_market import (get_active_auctions, get_active_listings, get_land_bank_plots,
@@ -6327,7 +6332,11 @@ def _land_market_page_impl(session_token: Optional[str] = None, sort: str = "pri
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return shell("Land Market", f"Error loading land market: {e}", player.cash_balance, player.id)
+        try:
+            return shell("Land Market", f'<div class="card" style="border:1px solid #dc2626;padding:16px;color:#f87171;">Land market temporarily unavailable. ({type(e).__name__}: {e})</div>', player.cash_balance, player.id)
+        except Exception:
+            from fastapi.responses import HTMLResponse
+            return HTMLResponse(f"<h1>Land Market Error</h1><pre>{type(e).__name__}: {e}</pre>", status_code=500)
 
 def _build_currency_legend_panel(banks_data: list) -> str:
     """Sidebar card: flag, code, and exchange rate for every active reserve bank."""
