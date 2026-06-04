@@ -361,6 +361,9 @@ def create_district_page(session_token: Optional[str] = Cookie(None)):
         html += '</div></div>'
         
         # Show plot selection by terrain
+        # Determine whether any terrain group meets the required plot count
+        has_eligible_terrain = any(len(tp) >= plots_required for tp in plots_by_terrain.values())
+
         if not occupied_plots:
             html += '''
             <div class="card" style="text-align: center; background: #0f172a;">
@@ -369,31 +372,45 @@ def create_district_page(session_token: Optional[str] = Cookie(None)):
                 <a href="/land" class="btn-blue" style="display: inline-block; padding: 8px 16px; margin-top: 12px;">Go to Land Portfolio</a>
             </div>
             '''
+        elif not has_eligible_terrain:
+            html += f'''
+            <div class="card" style="text-align: center; background: #0f172a; border-left: 4px solid #ef4444;">
+                <h3 style="color: #ef4444;">❌ Not Enough Plots on Any Terrain</h3>
+                <p style="color: #64748b;">You need at least <strong style="color:#38bdf8;">{plots_required}</strong> occupied plots of the same terrain type to create a district.</p>
+                <p style="color: #64748b; font-size: 0.85rem;">Your current eligible terrain groups:</p>
+            '''
+            for terrain, terrain_plots in plots_by_terrain.items():
+                shortfall = plots_required - len(terrain_plots)
+                html += f'<div style="color:#64748b;font-size:0.82rem;margin:2px 0;">{terrain.title()}: {len(terrain_plots)} plots &nbsp;·&nbsp; need {shortfall} more</div>'
+            html += '''
+                <a href="/land" class="btn-blue" style="display: inline-block; padding: 8px 16px; margin-top: 16px;">Buy More Land</a>
+            </div>
+            '''
         else:
             html += f'''
-            <form action="/api/districts/create" method="post">
+            <form action="/api/districts/create" method="post" onsubmit="return validateDistrictForm(this, {plots_required})">
                 <div class="card">
                     <h2 style="margin-top: 0; color: #38bdf8;">📍 Select Plots ({plots_required} Required)</h2>
-                    
+
                     <div style="margin-bottom: 16px;">
                         <label style="display: block; margin-bottom: 8px; color: #64748b; font-size: 0.9rem;">District Type:</label>
                         <select name="district_type" required style="width: 100%; max-width: 400px; padding: 8px; font-size: 1rem;">
                             <option value="">Select District Type...</option>
             '''
-            
+
             for dtype, config in DISTRICT_TYPES.items():
                 html += f'<option value="{dtype}">{config["name"]}</option>'
-            
+
             html += '''
                         </select>
                     </div>
-                    
+
                     <div style="margin-top: 20px;">
                         <div style="color: #64748b; font-size: 0.9rem; margin-bottom: 12px;">
                             Select plots (all must be same terrain):
                         </div>
             '''
-            
+
             # Show plots grouped by terrain
             for terrain, terrain_plots in plots_by_terrain.items():
                 if len(terrain_plots) >= plots_required:
@@ -404,7 +421,7 @@ def create_district_page(session_token: Optional[str] = Cookie(None)):
                         </div>
                         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px;">
                     '''
-                    
+
                     for plot in terrain_plots:
                         html += f'''
                         <label style="display: flex; align-items: center; gap: 8px; padding: 8px; background: #0f172a; cursor: pointer; border: 1px solid #1e293b;">
@@ -415,7 +432,7 @@ def create_district_page(session_token: Optional[str] = Cookie(None)):
                             </div>
                         </label>
                         '''
-                    
+
                     html += '</div></div>'
                 else:
                     html += f'''
@@ -428,12 +445,13 @@ def create_district_page(session_token: Optional[str] = Cookie(None)):
                         </div>
                     </div>
                     '''
-            
-            html += '''
+
+            html += f'''
                     </div>
                 </div>
-                
+
                 <div class="card" style="background: #0f172a; text-align: center;">
+                    <div id="district-form-msg" style="color:#ef4444;font-size:0.85rem;margin-bottom:8px;display:none;"></div>
                     <button type="submit" class="btn-blue" style="padding: 12px 32px; font-size: 1.1rem;">
                         🏛️ Create District
                     </button>
@@ -442,6 +460,24 @@ def create_district_page(session_token: Optional[str] = Cookie(None)):
                     </div>
                 </div>
             </form>
+            <script>
+            function validateDistrictForm(form, required) {{
+                var checked = form.querySelectorAll('input[name="plot_ids"]:checked').length;
+                var msg = document.getElementById('district-form-msg');
+                if (checked === 0) {{
+                    msg.textContent = 'Please select at least ' + required + ' plot(s) of the same terrain type.';
+                    msg.style.display = 'block';
+                    return false;
+                }}
+                if (checked < required) {{
+                    msg.textContent = 'You selected ' + checked + ' plot(s) but ' + required + ' are required.';
+                    msg.style.display = 'block';
+                    return false;
+                }}
+                msg.style.display = 'none';
+                return true;
+            }}
+            </script>
             '''
         
         return shell("Create District", html, player.cash_balance, player.id)
@@ -714,7 +750,7 @@ async def api_create_district_business(
 @router.post("/api/districts/create")
 async def api_create_district(
         district_type: str = Form(...),
-        plot_ids: list[str] = Form(...),
+        plot_ids: Optional[List[str]] = Form(default=None),
         session_token: Optional[str] = Cookie(None)
     ):
     """API endpoint to create a district."""
@@ -723,10 +759,13 @@ async def api_create_district(
         return player
     from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
-    
+
+    if not plot_ids:
+        return RedirectResponse(url="/districts/create?error=Please+select+plots+to+merge+into+the+district", status_code=303)
+
     try:
         from districts import create_district
-        
+
         # Convert plot_ids to integers
         plot_id_list = [int(pid) for pid in plot_ids]
         
