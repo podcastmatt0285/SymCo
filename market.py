@@ -1036,13 +1036,31 @@ def initialize():
     ])
     print("[Market] Module initialized")
 
+_MATCH_PER_TICK = 200   # max orders to attempt matching per 5-second tick
+
 def tick(current_tick: int, now: datetime):
     db = get_db()
-    active_orders = db.query(MarketOrder).filter(MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED])).order_by(MarketOrder.created_at.asc()).all()
-    for order in active_orders:
-        match_order(db, order)
-    if current_tick % 3600 == 0:
-        print(f"[Market] Hourly Stats: {get_market_stats()}")
-    db.close()
+    try:
+        # Process at most _MATCH_PER_TICK orders per tick to prevent the loop
+        # from freezing when the order book is large (O(n²) naively).
+        # Orders cycle through in FIFO order so older orders get priority.
+        active_orders = (
+            db.query(MarketOrder)
+            .filter(MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED]))
+            .order_by(MarketOrder.created_at.asc())
+            .limit(_MATCH_PER_TICK)
+            .all()
+        )
+        for order in active_orders:
+            match_order(db, order)
+        if current_tick % 3600 == 0:
+            total = db.query(MarketOrder).filter(
+                MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED])
+            ).count()
+            print(f"[Market] Hourly Stats: {get_market_stats()} | Open orders: {total}")
+    except Exception as e:
+        print(f"[Market] Tick error: {e}")
+    finally:
+        db.close()
 
 __all__ = ['create_order', 'cancel_order', 'get_order_book', 'get_market_price', 'get_market_stats', 'give_starter_inventory']

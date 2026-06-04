@@ -713,20 +713,27 @@ def initialize():
     load_district_items()
     print("[DistrictMarket] Module initialized")
 
+_MATCH_PER_TICK = 100  # cap per tick to prevent tick freeze with large order books
+
 def tick(current_tick: int, now: datetime):
     """Tick handler - match pending orders."""
     db = get_db()
-    active_orders = db.query(DistrictMarketOrder).filter(
-        DistrictMarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED])
-    ).order_by(DistrictMarketOrder.created_at.asc()).all()
-    
-    for order in active_orders:
-        match_order(db, order)
-    
-    if current_tick % 3600 == 0:
-        print(f"[DistrictMarket] Hourly Stats: {get_market_stats()}")
-    
-    db.close()
+    try:
+        active_orders = (
+            db.query(DistrictMarketOrder)
+            .filter(DistrictMarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED]))
+            .order_by(DistrictMarketOrder.created_at.asc())
+            .limit(_MATCH_PER_TICK)
+            .all()
+        )
+        for order in active_orders:
+            match_order(db, order)
+        if current_tick % 3600 == 0:
+            print(f"[DistrictMarket] Hourly Stats: {get_market_stats()}")
+    except Exception as e:
+        print(f"[DistrictMarket] Tick error: {e}")
+    finally:
+        db.close()
 
 __all__ = [
     'create_order', 
