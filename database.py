@@ -28,6 +28,29 @@ def _int_env(name: str, default: int) -> int:
         return default
 
 
+def _resolve_db_url(name: str, default: str) -> str:
+    """Read a DB connection URL from the environment.
+
+    If the variable is unset (e.g. .env was deleted or never created), fall
+    back to the SAME default the rest of the stack uses — the `symco` app role
+    documented in .env.example, setup.sh, and app.py's bootstrap — NOT a
+    `postgres:postgres` superuser guess that doesn't actually exist. Mismatched
+    defaults previously turned a missing .env into a confusing
+    "password authentication failed for user postgres" crash-loop. Warn loudly
+    so the real problem (missing .env) is obvious instead of silent.
+    """
+    val = os.environ.get(name)
+    if val:
+        return val
+    _user = default.split("://")[1].split(":")[0]
+    _loc = default.split("@")[-1]
+    print(
+        f"[database] WARNING: {name} is not set — is .env present in the "
+        f"project root? Falling back to built-in default (user '{_user}' @ {_loc})."
+    )
+    return default
+
+
 # ---------------------------------------------------------------------------
 # Connection-pool settings (shared by every module that imports these engines)
 # ---------------------------------------------------------------------------
@@ -54,9 +77,9 @@ _POOL_KW = dict(
 # ---------------------------------------------------------------------------
 # Main game database  (wadsworth)
 # ---------------------------------------------------------------------------
-DATABASE_URL = os.environ.get(
+DATABASE_URL = _resolve_db_url(
     "DATABASE_URL",
-    "postgresql://postgres:postgres@localhost:5432/wadsworth",
+    "postgresql://symco:symco@localhost:5432/wadsworth",
 )
 engine = create_engine(
     DATABASE_URL,
@@ -69,9 +92,9 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # ---------------------------------------------------------------------------
 # Federal-reserve banks database  (reserve_banks)
 # ---------------------------------------------------------------------------
-RESERVE_DATABASE_URL = os.environ.get(
+RESERVE_DATABASE_URL = _resolve_db_url(
     "RESERVE_DATABASE_URL",
-    "postgresql://postgres:postgres@localhost:5432/reserve_banks",
+    "postgresql://symco:symco@localhost:5432/reserve_banks",
 )
 reserve_engine = create_engine(
     RESERVE_DATABASE_URL,
