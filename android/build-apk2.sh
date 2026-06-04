@@ -336,6 +336,20 @@ sed -i '/<uses-permission android:name="android\.permission\.INTERNET"/d' "$MANI
 sed -i 's|</manifest>|    <uses-permission android:name="android.permission.INTERNET"/>\n</manifest>|' "$MANIFEST"
 echo "  Ensured INTERNET permission in AndroidManifest.xml"
 
+# 0b. Maximize Play Store device reach. By default Android implicitly treats
+#     android.hardware.touchscreen as required="true", so the Play Store hides
+#     the listing from every device that reports no real touchscreen — Android TV,
+#     many Chromebooks, desktop-mode / foldable devices, and budget tablets that
+#     report "faketouch". Declaring these features required="false" keeps the app
+#     installable on all of them. Remove-then-reinsert so it stays idempotent.
+sed -i '/<uses-feature android:name="android\.hardware\.touchscreen"/d'      "$MANIFEST"
+sed -i '/<uses-feature android:name="android\.hardware\.faketouch"/d'        "$MANIFEST"
+sed -i '/<uses-feature android:name="android\.hardware\.screen\.portrait"/d' "$MANIFEST"
+sed -i '/<uses-feature android:name="android\.hardware\.screen\.landscape"/d' "$MANIFEST"
+sed -i '/<uses-feature android:name="android\.software\.leanback"/d'         "$MANIFEST"
+sed -i 's|</manifest>|    <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>\n    <uses-feature android:name="android.hardware.faketouch" android:required="false"/>\n    <uses-feature android:name="android.hardware.screen.portrait" android:required="false"/>\n    <uses-feature android:name="android.hardware.screen.landscape" android:required="false"/>\n    <uses-feature android:name="android.software.leanback" android:required="false"/>\n</manifest>|' "$MANIFEST"
+echo "  Injected uses-feature required=false (touchscreen/faketouch/screen/leanback) for max device reach"
+
 # 1. Point <application> at our custom Application subclass so channels are
 #    seeded with the custom notification sound on every app launch.
 #    Bubblewrap generates android:name="Application" — replace it rather than
