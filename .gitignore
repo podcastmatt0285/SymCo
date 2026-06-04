@@ -22,6 +22,9 @@ cheat.txt
 # Claude helper session files — never commit these
 claudeHelper/
 
+# Runtime secrets — never commit
+.env
+
 # Google Play service account key — lives at /etc/wadsworth/play-service-account.json
 # NEVER commit service account JSON keys
 *service-account*.json
