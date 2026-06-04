@@ -3885,7 +3885,7 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
                     <div class="biz-card-progress">
                         <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:#94a3b8;margin-bottom:2px;">
                             <span>Refund Progress</span>
-                            <span>{ds["ticks_remaining"]}/{DISMANTLING_TICKS} ticks · {fmt_usd(ds["paid_so_far"], disp)} of {fmt_usd(ds["total_refund"], disp)}</span>
+                            <span>{ds["ticks_total"] - ds["ticks_remaining"]}/{ds["ticks_total"]} ticks · {fmt_usd(ds["paid_so_far"], disp)} of {fmt_usd(ds["total_refund"], disp)}</span>
                         </div>
                         <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:{prog:.1f}%;background:#ef4444;"></div></div>
                     </div>
