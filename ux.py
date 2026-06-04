@@ -531,6 +531,170 @@ def _nav_loader_html() -> str:
         </script>"""
 
 
+def _tv_dpad_html() -> str:
+    """D-pad / remote-control navigation for Android TV & Google TV.
+
+    The app is a TWA wrapping a touch/mouse web UI. On a TV there is no cursor —
+    only a D-pad (arrow keys + OK/Enter). Browsers do not reliably move focus
+    spatially on their own, and clickable <div>s aren't focusable at all, so the
+    remote has nothing to land on. This module:
+
+      • activates only on TV-class devices, or the moment a user presses an arrow
+        key (so desktop mouse/touch users are never affected);
+      • makes onclick/role=button/clickable elements focusable (tabindex);
+      • implements spatial navigation — arrow keys move focus to the nearest
+        focusable element in that direction and scroll it to center;
+      • activates focused <div> handlers on OK/Enter;
+      • draws a high-visibility focus ring so you can see where you are from
+        across the room.
+    """
+    return """
+        <style>
+        /* High-visibility focus ring — only while D-pad mode is on. */
+        html.wds-dpad :focus {
+            outline: 3px solid #38bdf8 !important;
+            outline-offset: 2px !important;
+            box-shadow: 0 0 0 4px rgba(56,189,248,0.30), 0 0 16px rgba(56,189,248,0.65) !important;
+            border-radius: 4px;
+            scroll-margin: 90px 24px;  /* keep clear of sticky header / bottom ticker */
+        }
+        /* On TV the focus ring must persist even for elements the browser would
+           normally only highlight on :focus-visible. */
+        html.wds-dpad a:focus, html.wds-dpad button:focus,
+        html.wds-dpad [tabindex]:focus { outline-color: #38bdf8 !important; }
+        </style>
+        <script>
+        (function() {
+          'use strict';
+          var ua = navigator.userAgent || '';
+          // TV / leanback device fingerprints (Android TV, Google TV, Fire TV,
+          // BRAVIA, webOS, Tizen, Chromecast, generic "SMART-TV").
+          var IS_TV = /Android\\s*TV|GoogleTV|SMART[-\\s]?TV|SmartTV|AFT[A-Z]|BRAVIA|Web0S|WebOS|Tizen|CrKey|Leanback|\\bTV\\b/i.test(ua);
+          var active = false;
+
+          var NATIVE = 'a[href],button,input,select,textarea,[tabindex]';
+
+          function isVisible(el) {
+            if (!el || el.disabled) return false;
+            var r = el.getBoundingClientRect();
+            if (r.width <= 0 || r.height <= 0) return false;
+            var s = getComputedStyle(el);
+            return !(s.visibility === 'hidden' || s.display === 'none' || s.opacity === '0');
+          }
+          function isFocusable(el) {
+            return !!(el && el !== document.body && el.matches &&
+                      el.matches(NATIVE) && el.tabIndex >= 0 && isVisible(el));
+          }
+          // Make clickable-but-not-natively-focusable elements reachable.
+          function tagFocusables() {
+            var sel = '[onclick],[role="button"],summary,label[for],.btn,.btn-sm,.card,.clickable';
+            var els = document.querySelectorAll(sel);
+            for (var i = 0; i < els.length; i++) {
+              var el = els[i];
+              if (!el.hasAttribute('tabindex') &&
+                  !el.matches('a[href],button,input,select,textarea')) {
+                el.setAttribute('tabindex', '0');
+              }
+            }
+          }
+          function allFocusable() {
+            var list = document.querySelectorAll(NATIVE), out = [];
+            for (var i = 0; i < list.length; i++) {
+              if (list[i].tabIndex >= 0 && isVisible(list[i])) out.push(list[i]);
+            }
+            return out;
+          }
+          function focusEl(el) {
+            try { el.focus({preventScroll: true}); } catch (e) { el.focus(); }
+            try { el.scrollIntoView({block: 'center', inline: 'center', behavior: 'smooth'}); } catch (e) {}
+          }
+          function focusFirst() {
+            var scope = document.querySelector('.container') || document;
+            var els = scope.querySelectorAll(NATIVE);
+            for (var i = 0; i < els.length; i++) {
+              if (els[i].tabIndex >= 0 && isVisible(els[i])) { focusEl(els[i]); return; }
+            }
+            var all = allFocusable();
+            if (all.length) focusEl(all[0]);
+          }
+
+          function enable() {
+            if (active) return;
+            active = true;
+            document.documentElement.classList.add('wds-dpad');
+            tagFocusables();
+            if (window.MutationObserver) {
+              var mo = new MutationObserver(function() { tagFocusables(); });
+              mo.observe(document.body, {childList: true, subtree: true});
+            }
+          }
+
+          function center(r) { return {x: r.left + r.width / 2, y: r.top + r.height / 2}; }
+
+          // Pick the best focusable element in a given direction from the current one.
+          function pick(dir) {
+            var cur = document.activeElement;
+            var cr = isFocusable(cur) ? cur.getBoundingClientRect()
+                   : {left: innerWidth/2, top: innerHeight/2, width: 0, height: 0};
+            var c0 = center(cr), best = null, bestScore = Infinity;
+            var els = allFocusable();
+            for (var i = 0; i < els.length; i++) {
+              var el = els[i];
+              if (el === cur) continue;
+              var c = center(el.getBoundingClientRect());
+              var dx = c.x - c0.x, dy = c.y - c0.y;
+              var inDir = (dir === 'right' && dx > 1) || (dir === 'left' && dx < -1) ||
+                          (dir === 'down'  && dy > 1) || (dir === 'up'   && dy < -1);
+              if (!inDir) continue;
+              var along, cross;
+              if (dir === 'left' || dir === 'right') { along = Math.abs(dx); cross = Math.abs(dy); }
+              else { along = Math.abs(dy); cross = Math.abs(dx); }
+              // Distance along the travel axis, with a heavy penalty for drifting
+              // off-axis — keeps focus moving in a straight, predictable line.
+              var score = along + cross * 3;
+              if (score < bestScore) { bestScore = score; best = el; }
+            }
+            return best;
+          }
+
+          function isTextEntry(el) {
+            return el && el.matches && el.matches(
+              'input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]):not([type=reset]),textarea,select');
+          }
+
+          document.addEventListener('keydown', function(e) {
+            var dir = e.key === 'ArrowRight' ? 'right' : e.key === 'ArrowLeft' ? 'left'
+                    : e.key === 'ArrowDown'  ? 'down'  : e.key === 'ArrowUp'   ? 'up' : null;
+            if (dir) {
+              // Never hijack arrows used to edit text or move within a select.
+              if (isTextEntry(document.activeElement)) return;
+              if (!active) { enable(); e.preventDefault(); focusFirst(); return; }
+              var next = pick(dir);
+              if (next) { e.preventDefault(); focusEl(next); }
+              else if (!isFocusable(document.activeElement)) { e.preventDefault(); focusFirst(); }
+              return;
+            }
+            if ((e.key === 'Enter' || e.key === ' ') && active) {
+              var el = document.activeElement;
+              // Native links/buttons handle OK themselves; only synthesize a
+              // click for tabindex <div>/<span> clickables.
+              if (el && el.hasAttribute('tabindex') &&
+                  !el.matches('a[href],button,input,select,textarea')) {
+                e.preventDefault();
+                el.click();
+              }
+            }
+          }, true);
+
+          // Real TVs: turn on immediately so the first OK press has a target.
+          if (IS_TV) {
+            if (document.readyState !== 'loading') { enable(); focusFirst(); }
+            else document.addEventListener('DOMContentLoaded', function() { enable(); focusFirst(); });
+          }
+        })();
+        </script>"""
+
+
 # ==========================
 # HTML SHELL
 # ==========================
@@ -1748,6 +1912,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             }}
         }})();
         </script>
+        {_tv_dpad_html()}
     </body>
     </html>
     """
