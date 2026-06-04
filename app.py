@@ -961,6 +961,10 @@ try:
     print("Play Billing routes registered")
 except ModuleNotFoundError:
     pass
+except Exception as _pb_err:
+    # Billing is non-critical — never let a billing/init failure crash startup
+    # (which would take the whole game down, tick loop included).
+    print(f"[PlayBilling] disabled — init failed: {_pb_err}")
 
 if __name__ == "__main__":
     import uvicorn

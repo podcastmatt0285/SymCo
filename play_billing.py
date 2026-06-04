@@ -42,11 +42,9 @@ _KEY_FILE  = os.environ.get("GOOGLE_PLAY_SERVICE_ACCOUNT",
 
 def _ensure_table():
     """Create play_subscriptions table if it doesn't exist."""
-    from auth import get_db
-    db = get_db()
-    try:
-        db.execute("""
-            CREATE TABLE IF NOT EXISTS play_subscriptions (
+    from database import engine, run_ddl_migration
+    run_ddl_migration(engine, [
+        """CREATE TABLE IF NOT EXISTS play_subscriptions (
                 id              SERIAL PRIMARY KEY,
                 player_id       INTEGER NOT NULL,
                 purchase_token  TEXT    NOT NULL UNIQUE,
@@ -56,23 +54,19 @@ def _ensure_table():
                 expiry_time     TIMESTAMPTZ,
                 linked_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 last_verified   TIMESTAMPTZ NOT NULL DEFAULT NOW()
-            )
-        """)
-        db.execute(
-            "CREATE INDEX IF NOT EXISTS ix_play_sub_player ON play_subscriptions(player_id)"
-        )
-        db.commit()
-    finally:
-        db.close()
+            )""",
+        "CREATE INDEX IF NOT EXISTS ix_play_sub_player ON play_subscriptions(player_id)",
+    ])
 
 
 def _upsert_subscription(player_id: int, token: str, product_id: str,
                          order_id: str | None, state: str,
                          expiry: datetime | None):
     from auth import get_db
+    from sqlalchemy import text
     db = get_db()
     try:
-        db.execute("""
+        db.execute(text("""
             INSERT INTO play_subscriptions
                 (player_id, purchase_token, product_id, order_id, sub_state, expiry_time, last_verified)
             VALUES (:pid, :tok, :prod, :oid, :state, :exp, NOW())
@@ -81,8 +75,8 @@ def _upsert_subscription(player_id: int, token: str, product_id: str,
                 order_id      = EXCLUDED.order_id,
                 expiry_time   = EXCLUDED.expiry_time,
                 last_verified = NOW()
-        """, dict(pid=player_id, tok=token, prod=product_id,
-                  oid=order_id, state=state, exp=expiry))
+        """), dict(pid=player_id, tok=token, prod=product_id,
+                   oid=order_id, state=state, exp=expiry))
         db.commit()
     finally:
         db.close()
@@ -90,10 +84,11 @@ def _upsert_subscription(player_id: int, token: str, product_id: str,
 
 def _set_subscriber(player_id: int, value: bool):
     from auth import get_db
+    from sqlalchemy import text
     db = get_db()
     try:
         db.execute(
-            "UPDATE players SET subscriber = :v WHERE id = :pid",
+            text("UPDATE players SET subscriber = :v WHERE id = :pid"),
             dict(v=value, pid=player_id)
         )
         db.commit()
@@ -104,10 +99,11 @@ def _set_subscriber(player_id: int, value: bool):
 def _player_id_for_token(token: str) -> int | None:
     """Reverse-lookup player from a purchase token (used by RTDN)."""
     from auth import get_db
+    from sqlalchemy import text
     db = get_db()
     try:
         row = db.execute(
-            "SELECT player_id FROM play_subscriptions WHERE purchase_token = :tok",
+            text("SELECT player_id FROM play_subscriptions WHERE purchase_token = :tok"),
             dict(tok=token)
         ).fetchone()
         return row[0] if row else None
