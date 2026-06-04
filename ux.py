@@ -2751,25 +2751,27 @@ def government_dashboard(
             StateReserveBank as _SRB,
         )
         _db = _rdb()
-        _bmap = {b.currency_code: b for b in _db.query(_SRB).all()}
-        for bal in _db.query(_PCB).filter(_PCB.player_id == 0).all():
-            if bal.balance <= 0:
-                continue
-            bk = _bmap.get(bal.currency_code)
-            rate = bk.usd_per_unit if bk else 1.0
-            usd_val = bal.balance * rate
-            if bal.currency_code == "USD":
-                gov_usd_reserve = bal.balance
-            gov_currencies.append({
-                "code": bal.currency_code,
-                "symbol": bk.currency_symbol if bk else "$",
-                "flag": bk.flag_emoji if bk else "",
-                "balance": bal.balance,
-                "rate": rate,
-                "usd_value": usd_val,
-                "total_earned": bal.total_earned,
-            })
-        _db.close()
+        try:
+            _bmap = {b.currency_code: b for b in _db.query(_SRB).all()}
+            for bal in _db.query(_PCB).filter(_PCB.player_id == 0).all():
+                if bal.balance <= 0:
+                    continue
+                bk = _bmap.get(bal.currency_code)
+                rate = bk.usd_per_unit if bk else 1.0
+                usd_val = bal.balance * rate
+                if bal.currency_code == "USD":
+                    gov_usd_reserve = bal.balance
+                gov_currencies.append({
+                    "code": bal.currency_code,
+                    "symbol": bk.currency_symbol if bk else "$",
+                    "flag": bk.flag_emoji if bk else "",
+                    "balance": bal.balance,
+                    "rate": rate,
+                    "usd_value": usd_val,
+                    "total_earned": bal.total_earned,
+                })
+        finally:
+            _db.close()
         gov_currencies.sort(key=lambda x: x["usd_value"], reverse=True)
     except Exception:
         pass
@@ -2782,22 +2784,24 @@ def government_dashboard(
     try:
         from reserve_banks import get_db as _rdb, ReserveBankBond as _RBB, StateReserveBank as _SRB
         _db = _rdb()
-        _bmap = {b.id: b for b in _db.query(_SRB).all()}
-        for bond in _db.query(_RBB).filter(_RBB.holder_player_id == 0, _RBB.status == "active").all():
-            bk = _bmap.get(bond.bank_id)
-            days_left = max(0, (bond.matures_at - _dt.utcnow()).days) if bond.matures_at else 0
-            gov_bonds.append({
-                "id": bond.id,
-                "currency": bk.currency_code if bk else "?",
-                "symbol": bk.currency_symbol if bk else "$",
-                "flag": bk.flag_emoji if bk else "",
-                "face_value": bond.face_value_wsc,
-                "yield_rate": bond.purchase_yield,
-                "interest_accrued": bond.interest_accrued or 0.0,
-                "matures_at": bond.matures_at,
-                "days_left": days_left,
-            })
-        _db.close()
+        try:
+            _bmap = {b.id: b for b in _db.query(_SRB).all()}
+            for bond in _db.query(_RBB).filter(_RBB.holder_player_id == 0, _RBB.status == "active").all():
+                bk = _bmap.get(bond.bank_id)
+                days_left = max(0, (bond.matures_at - _dt.utcnow()).days) if bond.matures_at else 0
+                gov_bonds.append({
+                    "id": bond.id,
+                    "currency": bk.currency_code if bk else "?",
+                    "symbol": bk.currency_symbol if bk else "$",
+                    "flag": bk.flag_emoji if bk else "",
+                    "face_value": bond.face_value_wsc,
+                    "yield_rate": bond.purchase_yield,
+                    "interest_accrued": bond.interest_accrued or 0.0,
+                    "matures_at": bond.matures_at,
+                    "days_left": days_left,
+                })
+        finally:
+            _db.close()
         gov_bonds.sort(key=lambda x: x["face_value"], reverse=True)
     except Exception:
         pass
@@ -2814,21 +2818,23 @@ def government_dashboard(
         from land import LandPlot as _LP, get_db as _ldb
         from sqlalchemy import func as _func
         _db = _ldb()
-        for row in (_db.query(
-                _LP.terrain_type,
-                _func.count(_LP.id).label("cnt"),
-                _func.sum(_LP.monthly_tax).label("tax_sum"),
-            )
-            .filter(_LP.is_government_owned == True)
-            .group_by(_LP.terrain_type)
-            .all()
-        ):
-            t = row.terrain_type
-            gov_land_by_terrain[t] = row.cnt
-            gov_land_tax_by_terrain[t] = float(row.tax_sum or 0)
-            gov_land_total += row.cnt
-            gov_land_value_est += float(row.tax_sum or 0) * 12 * 10
-        _db.close()
+        try:
+            for row in (_db.query(
+                    _LP.terrain_type,
+                    _func.count(_LP.id).label("cnt"),
+                    _func.sum(_LP.monthly_tax).label("tax_sum"),
+                )
+                .filter(_LP.is_government_owned == True)
+                .group_by(_LP.terrain_type)
+                .all()
+            ):
+                t = row.terrain_type
+                gov_land_by_terrain[t] = row.cnt
+                gov_land_tax_by_terrain[t] = float(row.tax_sum or 0)
+                gov_land_total += row.cnt
+                gov_land_value_est += float(row.tax_sum or 0) * 12 * 10
+        finally:
+            _db.close()
     except Exception:
         pass
 
@@ -2837,22 +2843,24 @@ def government_dashboard(
     try:
         from cities import get_db as _cdb, CityBankLoan as _CBL, CityBank as _CB, City as _City
         _db = _cdb()
-        _banks  = {b.id: b for b in _db.query(_CB).all()}
-        _cities = {c.id: c for c in _db.query(_City).all()}
-        for loan in _db.query(_CBL).filter(_CBL.is_active == True).all():
-            bk   = _banks.get(loan.city_bank_id)
-            city = _cities.get(bk.city_id) if bk else None
-            gov_loans.append({
-                "city_name": city.name if city else f"Bank #{loan.city_bank_id}",
-                "principal": loan.principal,
-                "total_owed": loan.total_owed,
-                "amount_paid": loan.amount_paid,
-                "remaining": loan.total_owed - loan.amount_paid,
-                "installments_remaining": loan.installments_remaining,
-                "installment_amount": loan.installment_amount,
-                "created_at": loan.created_at,
-            })
-        _db.close()
+        try:
+            _banks  = {b.id: b for b in _db.query(_CB).all()}
+            _cities = {c.id: c for c in _db.query(_City).all()}
+            for loan in _db.query(_CBL).filter(_CBL.is_active == True).all():
+                bk   = _banks.get(loan.city_bank_id)
+                city = _cities.get(bk.city_id) if bk else None
+                gov_loans.append({
+                    "city_name": city.name if city else f"Bank #{loan.city_bank_id}",
+                    "principal": loan.principal,
+                    "total_owed": loan.total_owed,
+                    "amount_paid": loan.amount_paid,
+                    "remaining": loan.total_owed - loan.amount_paid,
+                    "installments_remaining": loan.installments_remaining,
+                    "installment_amount": loan.installment_amount,
+                    "created_at": loan.created_at,
+                })
+        finally:
+            _db.close()
         gov_loans.sort(key=lambda x: x["remaining"], reverse=True)
     except Exception:
         pass
@@ -2897,67 +2905,64 @@ def government_dashboard(
         from cities import get_db as _cdb, City as _City, CityBank as _CB, CityMember as _CM, CityBankLoan as _CBL
         from sqlalchemy import func as _func6
         _db = _cdb()
-        _banks   = {b.city_id: b for b in _db.query(_CB).all()}
-        # Member counts in one grouped query.
-        _members = {
-            cid: cnt for cid, cnt in
-            _db.query(_CM.city_id, _func6.count(_CM.id)).group_by(_CM.city_id).all()
-        }
-        # All active loans in one query, aggregated per city bank (was an N+1:
-        # one loan query per city).
-        _loans_by_bank = {}
-        for bank_id, cnt, owed, paid in (
-            _db.query(
-                _CBL.city_bank_id,
-                _func6.count(_CBL.id),
-                _func6.sum(_CBL.total_owed),
-                _func6.sum(_CBL.amount_paid),
-            )
-            .filter(_CBL.is_active == True)
-            .group_by(_CBL.city_bank_id)
-            .all()
-        ):
-            _loans_by_bank[bank_id] = (cnt, float(owed or 0) - float(paid or 0))
-        # Sales-tax rates for every city in one batched query, replacing a
-        # per-city get_city_sales_tax_rate() that opened its own DB session.
-        _tax_by_city = {}
         try:
-            from city_projects import (
-                CityProjectInstance as _CPI, STATUS_ACTIVE as _CP_ACTIVE,
-                CITY_PROJECT_TYPES as _CPT, get_db as _cpdb,
-            )
-            _pdb = _cpdb()
+            _banks   = {b.city_id: b for b in _db.query(_CB).all()}
+            _members = {
+                cid: cnt for cid, cnt in
+                _db.query(_CM.city_id, _func6.count(_CM.id)).group_by(_CM.city_id).all()
+            }
+            _loans_by_bank = {}
+            for bank_id, cnt, owed, paid in (
+                _db.query(
+                    _CBL.city_bank_id,
+                    _func6.count(_CBL.id),
+                    _func6.sum(_CBL.total_owed),
+                    _func6.sum(_CBL.amount_paid),
+                )
+                .filter(_CBL.is_active == True)
+                .group_by(_CBL.city_bank_id)
+                .all()
+            ):
+                _loans_by_bank[bank_id] = (cnt, float(owed or 0) - float(paid or 0))
+            _tax_by_city = {}
             try:
-                for _inst in (_pdb.query(_CPI)
-                                  .filter(_CPI.status == _CP_ACTIVE, _CPI.level > 0)
-                                  .all()):
-                    _rate = (_CPT.get(_inst.project_type, {})
-                                 .get("debuffs", {}).get("sales_tax", 0.0)) * _inst.level
-                    if _rate:
-                        _tax_by_city[_inst.city_id] = min(0.50, _tax_by_city.get(_inst.city_id, 0.0) + _rate)
-            finally:
-                _pdb.close()
-        except Exception:
-            pass
-        for city in _db.query(_City).order_by(_City.name).all():
-            bk = _banks.get(city.id)
-            loan_count, loan_total = _loans_by_bank.get(bk.id, (0, 0.0)) if bk else (0, 0.0)
-            sales_tax_rate = _tax_by_city.get(city.id, 0.0)
-            all_cities.append({
-                "id": city.id,
-                "name": city.name,
-                "mayor_id": city.mayor_id,
-                "currency": city.currency_type or "—",
-                "app_fee": city.application_fee or 50000.0,
-                "reloc_fee": city.relocation_fee or 10000.0,
-                "members": _members.get(city.id, 0),
-                "bank_reserves": bk.cash_reserves if bk else 0.0,
-                "bank_licenses": bk.city_licenses if bk else 0.0,
-                "sales_tax_pct": sales_tax_rate * 100,
-                "loans": loan_count,
-                "loan_debt": loan_total,
-            })
-        _db.close()
+                from city_projects import (
+                    CityProjectInstance as _CPI, STATUS_ACTIVE as _CP_ACTIVE,
+                    CITY_PROJECT_TYPES as _CPT, get_db as _cpdb,
+                )
+                _pdb = _cpdb()
+                try:
+                    for _inst in (_pdb.query(_CPI)
+                                      .filter(_CPI.status == _CP_ACTIVE, _CPI.level > 0)
+                                      .all()):
+                        _rate = (_CPT.get(_inst.project_type, {})
+                                     .get("debuffs", {}).get("sales_tax", 0.0)) * _inst.level
+                        if _rate:
+                            _tax_by_city[_inst.city_id] = min(0.50, _tax_by_city.get(_inst.city_id, 0.0) + _rate)
+                finally:
+                    _pdb.close()
+            except Exception:
+                pass
+            for city in _db.query(_City).order_by(_City.name).all():
+                bk = _banks.get(city.id)
+                loan_count, loan_total = _loans_by_bank.get(bk.id, (0, 0.0)) if bk else (0, 0.0)
+                sales_tax_rate = _tax_by_city.get(city.id, 0.0)
+                all_cities.append({
+                    "id": city.id,
+                    "name": city.name,
+                    "mayor_id": city.mayor_id,
+                    "currency": city.currency_type or "—",
+                    "app_fee": city.application_fee or 50000.0,
+                    "reloc_fee": city.relocation_fee or 10000.0,
+                    "members": _members.get(city.id, 0),
+                    "bank_reserves": bk.cash_reserves if bk else 0.0,
+                    "bank_licenses": bk.city_licenses if bk else 0.0,
+                    "sales_tax_pct": sales_tax_rate * 100,
+                    "loans": loan_count,
+                    "loan_debt": loan_total,
+                })
+        finally:
+            _db.close()
     except Exception:
         pass
 
@@ -2966,21 +2971,23 @@ def government_dashboard(
     try:
         from counties import get_db as _kydb, County as _County
         _db = _kydb()
-        for c in _db.query(_County).order_by(_County.name).all():
-            circulating = c.total_crypto_minted - c.total_crypto_burned
-            all_counties.append({
-                "name": c.name,
-                "symbol": c.crypto_symbol,
-                "token": c.crypto_name,
-                "treasury": c.treasury_balance,
-                "exchange_fee_pct": (c.transaction_fee_percent or 0.0) * 100,
-                "mining_pool": c.mining_energy_pool,
-                "minted": c.total_crypto_minted,
-                "burned": c.total_crypto_burned,
-                "circulating": circulating,
-                "gas_price": c.gas_price,
-            })
-        _db.close()
+        try:
+            for c in _db.query(_County).order_by(_County.name).all():
+                circulating = c.total_crypto_minted - c.total_crypto_burned
+                all_counties.append({
+                    "name": c.name,
+                    "symbol": c.crypto_symbol,
+                    "token": c.crypto_name,
+                    "treasury": c.treasury_balance,
+                    "exchange_fee_pct": (c.transaction_fee_percent or 0.0) * 100,
+                    "mining_pool": c.mining_energy_pool,
+                    "minted": c.total_crypto_minted,
+                    "burned": c.total_crypto_burned,
+                    "circulating": circulating,
+                    "gas_price": c.gas_price,
+                })
+        finally:
+            _db.close()
     except Exception:
         pass
 
@@ -2993,15 +3000,17 @@ def government_dashboard(
         from inventory import get_db as _idb, InventoryItem as _II
         from sqlalchemy import func as _func8
         _db = _idb()
-        for item_type, qty in (
-            _db.query(_II.item_type, _func8.sum(_II.quantity))
-               .filter(_II.player_id == 0)
-               .group_by(_II.item_type)
-               .all()
-        ):
-            if qty and qty > 0:
-                gov_commodities[item_type] = float(qty)
-        _db.close()
+        try:
+            for item_type, qty in (
+                _db.query(_II.item_type, _func8.sum(_II.quantity))
+                   .filter(_II.player_id == 0)
+                   .group_by(_II.item_type)
+                   .all()
+            ):
+                if qty and qty > 0:
+                    gov_commodities[item_type] = float(qty)
+        finally:
+            _db.close()
     except Exception:
         pass
 
@@ -3010,22 +3019,24 @@ def government_dashboard(
     try:
         from banks.brokerage_firm import get_db as _brdb, ShareholderPosition as _SP, CompanyShares as _CS
         _db = _brdb()
-        _cos = {c.id: c for c in _db.query(_CS).all()}
-        for pos in _db.query(_SP).filter(_SP.player_id == 0, _SP.shares_owned > 0).all():
-            co = _cos.get(pos.company_shares_id)
-            if not co:
-                continue
-            mkt_val = (pos.shares_owned or 0) * (co.current_price or 0.0)
-            gov_equity.append({
-                "ticker": co.ticker_symbol,
-                "name": co.company_name,
-                "shares": pos.shares_owned,
-                "price": co.current_price or 0.0,
-                "mkt_val": mkt_val,
-                "cost_basis": (pos.average_cost_basis or 0.0) * (pos.shares_owned or 0),
-                "pnl": mkt_val - (pos.average_cost_basis or 0.0) * (pos.shares_owned or 0),
-            })
-        _db.close()
+        try:
+            _cos = {c.id: c for c in _db.query(_CS).all()}
+            for pos in _db.query(_SP).filter(_SP.player_id == 0, _SP.shares_owned > 0).all():
+                co = _cos.get(pos.company_shares_id)
+                if not co:
+                    continue
+                mkt_val = (pos.shares_owned or 0) * (co.current_price or 0.0)
+                gov_equity.append({
+                    "ticker": co.ticker_symbol,
+                    "name": co.company_name,
+                    "shares": pos.shares_owned,
+                    "price": co.current_price or 0.0,
+                    "mkt_val": mkt_val,
+                    "cost_basis": (pos.average_cost_basis or 0.0) * (pos.shares_owned or 0),
+                    "pnl": mkt_val - (pos.average_cost_basis or 0.0) * (pos.shares_owned or 0),
+                })
+        finally:
+            _db.close()
         gov_equity.sort(key=lambda x: x["mkt_val"], reverse=True)
     except Exception:
         pass
@@ -3035,14 +3046,16 @@ def government_dashboard(
     try:
         from banks import get_db as _bkdb, BankShareholding as _BSH
         _db = _bkdb()
-        for sh in _db.query(_BSH).filter(_BSH.player_id == 0, _BSH.shares_owned > 0).all():
-            gov_bank_shares.append({
-                "bank_id": sh.bank_id,
-                "shares": sh.shares_owned,
-                "invested": sh.total_invested,
-                "dividends": sh.total_dividends_received,
-            })
-        _db.close()
+        try:
+            for sh in _db.query(_BSH).filter(_BSH.player_id == 0, _BSH.shares_owned > 0).all():
+                gov_bank_shares.append({
+                    "bank_id": sh.bank_id,
+                    "shares": sh.shares_owned,
+                    "invested": sh.total_invested,
+                    "dividends": sh.total_dividends_received,
+                })
+        finally:
+            _db.close()
         gov_bank_shares.sort(key=lambda x: x["invested"], reverse=True)
     except Exception:
         pass
@@ -3054,66 +3067,69 @@ def government_dashboard(
     try:
         from counties import get_db as _crydb, CryptoWallet as _CW, County as _Cty
         _db = _crydb()
-        _cty_map = {c.crypto_symbol: c for c in _db.query(_Cty).all()}
-        for w in _db.query(_CW).filter(_CW.player_id == 0, _CW.balance > 0).all():
-            cty = _cty_map.get(w.crypto_symbol)
-            # Derive price from treasury backing ratio — avoids the expensive
-            # calculate_crypto_price() cascade that queries every city member's
-            # total net worth (N×M DB sessions, catastrophically slow).
-            price_usd = 0.0
-            if cty:
-                _circ = cty.total_crypto_minted - cty.total_crypto_burned
-                if _circ > 0:
-                    price_usd = cty.treasury_balance / _circ
-            gov_county_crypto.append({
-                "symbol":    w.crypto_symbol,
-                "name":      cty.crypto_name if cty else w.crypto_symbol,
-                "county":    cty.name if cty else "—",
-                "balance":   w.balance,
-                "price_usd": price_usd,
-                "usd_val":   w.balance * price_usd,
-                "bought":    w.total_bought,
-                "mined":     w.total_mined,
-            })
-        _db.close()
+        try:
+            _cty_map = {c.crypto_symbol: c for c in _db.query(_Cty).all()}
+            for w in _db.query(_CW).filter(_CW.player_id == 0, _CW.balance > 0).all():
+                cty = _cty_map.get(w.crypto_symbol)
+                price_usd = 0.0
+                if cty:
+                    _circ = cty.total_crypto_minted - cty.total_crypto_burned
+                    if _circ > 0:
+                        price_usd = cty.treasury_balance / _circ
+                gov_county_crypto.append({
+                    "symbol":    w.crypto_symbol,
+                    "name":      cty.crypto_name if cty else w.crypto_symbol,
+                    "county":    cty.name if cty else "—",
+                    "balance":   w.balance,
+                    "price_usd": price_usd,
+                    "usd_val":   w.balance * price_usd,
+                    "bought":    w.total_bought,
+                    "mined":     w.total_mined,
+                })
+        finally:
+            _db.close()
         gov_county_crypto.sort(key=lambda x: x["usd_val"], reverse=True)
     except Exception:
         pass
     try:
         from wallet import get_db as _wdb, WSCWallet as _WSCW
         _db = _wdb()
-        _wsc = _db.query(_WSCW).filter(_WSCW.player_id == 0).first()
-        gov_wsc_balance = float(_wsc.balance or 0) if _wsc else 0.0
-        _db.close()
+        try:
+            _wsc = _db.query(_WSCW).filter(_WSCW.player_id == 0).first()
+            gov_wsc_balance = float(_wsc.balance or 0) if _wsc else 0.0
+        finally:
+            _db.close()
     except Exception:
         pass
     try:
         from memecoins import get_db as _mdb, MemeCoinWallet as _MCW, MemeCoin as _MC
         _db = _mdb()
-        _mc_map = {m.symbol: m for m in _db.query(_MC).all()}
-        _county_sym_prices = {c["symbol"]: c["price_usd"] for c in gov_county_crypto}
         try:
-            from counties import get_db as _crydb2, County as _Cty2
-            _cdb2 = _crydb2()
+            _mc_map = {m.symbol: m for m in _db.query(_MC).all()}
+            _county_sym_prices = {c["symbol"]: c["price_usd"] for c in gov_county_crypto}
             try:
-                _county_id_to_sym = {c.id: c.crypto_symbol for c in _cdb2.query(_Cty2).all()}
-            finally:
-                _cdb2.close()
-        except Exception:
-            _county_id_to_sym = {}
-        for w in _db.query(_MCW).filter(_MCW.player_id == 0, _MCW.balance > 0).all():
-            mc = _mc_map.get(w.meme_symbol)
-            meme_price = mc.last_price if mc else 0.0
-            county_sym = _county_id_to_sym.get(mc.county_id if mc else 0, "")
-            native_usd = _county_sym_prices.get(county_sym, 0.0)
-            gov_meme_coins.append({
-                "symbol":  w.meme_symbol,
-                "name":    mc.name if mc else w.meme_symbol,
-                "balance": w.balance,
-                "price":   meme_price,
-                "usd_val": w.balance * meme_price * native_usd,
-            })
-        _db.close()
+                from counties import get_db as _crydb2, County as _Cty2
+                _cdb2 = _crydb2()
+                try:
+                    _county_id_to_sym = {c.id: c.crypto_symbol for c in _cdb2.query(_Cty2).all()}
+                finally:
+                    _cdb2.close()
+            except Exception:
+                _county_id_to_sym = {}
+            for w in _db.query(_MCW).filter(_MCW.player_id == 0, _MCW.balance > 0).all():
+                mc = _mc_map.get(w.meme_symbol)
+                meme_price = mc.last_price if mc else 0.0
+                county_sym = _county_id_to_sym.get(mc.county_id if mc else 0, "")
+                native_usd = _county_sym_prices.get(county_sym, 0.0)
+                gov_meme_coins.append({
+                    "symbol":  w.meme_symbol,
+                    "name":    mc.name if mc else w.meme_symbol,
+                    "balance": w.balance,
+                    "price":   meme_price,
+                    "usd_val": w.balance * meme_price * native_usd,
+                })
+        finally:
+            _db.close()
         gov_meme_coins.sort(key=lambda x: x["usd_val"], reverse=True)
     except Exception:
         pass
@@ -3123,17 +3139,19 @@ def government_dashboard(
     try:
         from estate import get_db as _estdb, GovernmentEstateListing as _GEL
         _db = _estdb()
-        for lst in _db.query(_GEL).filter(_GEL.sold == False).order_by(_GEL.listed_at.desc()).all():
-            gov_estate.append({
-                "id":          lst.id,
-                "item_type":   lst.item_type,
-                "quantity":    lst.quantity,
-                "price":       lst.listed_price,
-                "total_val":   lst.listed_price * lst.quantity,
-                "deceased_id": lst.deceased_player_id,
-                "listed_at":   lst.listed_at,
-            })
-        _db.close()
+        try:
+            for lst in _db.query(_GEL).filter(_GEL.sold == False).order_by(_GEL.listed_at.desc()).all():
+                gov_estate.append({
+                    "id":          lst.id,
+                    "item_type":   lst.item_type,
+                    "quantity":    lst.quantity,
+                    "price":       lst.listed_price,
+                    "total_val":   lst.listed_price * lst.quantity,
+                    "deceased_id": lst.deceased_player_id,
+                    "listed_at":   lst.listed_at,
+                })
+        finally:
+            _db.close()
     except Exception:
         pass
 
