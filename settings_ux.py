@@ -2939,15 +2939,130 @@ def _skins_tab(player) -> str:
     pro_notice = ""
     if not is_pro_user:
         pro_notice = """
-        <div style="background:var(--accent-3-bg);border:1px solid var(--accent-3);
+        <div id="wds-pro-banner" style="background:var(--accent-3-bg);border:1px solid var(--accent-3);
             border-radius:var(--radius-md);padding:12px 16px;margin-bottom:18px;
             display:flex;align-items:center;gap:12px;">
             <span style="font-size:1.3rem;">🌟</span>
-            <div>
+            <div style="flex:1;">
                 <strong style="color:var(--accent-3);font-size:0.85rem;">Wadsworth Pro</strong>
                 <p style="color:var(--text-muted);font-size:0.78rem;margin:2px 0 0;">
-                    Subscribe via the Android app to unlock Pro skins and exclusive features.</p>
+                    Unlock Pro skins and exclusive features.</p>
             </div>
+            <button id="wds-sub-btn" onclick="wdsSubscribe()"
+                style="background:var(--accent-3);color:#000;border:none;border-radius:6px;
+                padding:7px 16px;font-size:0.8rem;font-weight:700;cursor:pointer;
+                white-space:nowrap;display:none;">Subscribe</button>
+            <span id="wds-sub-status" style="font-size:0.75rem;color:var(--text-muted);"></span>
+        </div>
+        <script>
+        (function() {
+          var SUB_ID = 'wads_basic';
+          var _service = null;
+
+          async function _getService() {
+            if (!('getDigitalGoodsService' in window)) return null;
+            try {
+              var svc = await window.getDigitalGoodsService('https://play.google.com/billing');
+              return svc;
+            } catch(e) { return null; }
+          }
+
+          async function _verifyToken(token) {
+            var r = await fetch('/api/play/verify-subscription', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              credentials: 'same-origin',
+              body: JSON.stringify({purchase_token: token})
+            });
+            return r.ok ? await r.json() : null;
+          }
+
+          function _setStatus(msg) {
+            var el = document.getElementById('wds-sub-status');
+            if (el) el.textContent = msg;
+          }
+
+          // On page load: try to restore entitlement from any existing purchase
+          // (covers reinstalls, account switches, and cross-device restores).
+          async function _tryRestore() {
+            var svc = await _getService();
+            if (!svc) return;
+            _service = svc;
+            // Show the subscribe button now that we know billing is available
+            var btn = document.getElementById('wds-sub-btn');
+            if (btn) btn.style.display = '';
+
+            try {
+              var existing = await svc.listPurchases();
+              for (var i = 0; i < existing.length; i++) {
+                if (existing[i].itemId === SUB_ID) {
+                  _setStatus('Restoring…');
+                  var result = await _verifyToken(existing[i].purchaseToken);
+                  if (result && result.active) {
+                    _setStatus('');
+                    // Hide banner — subscriber state will show on next full page load
+                    var banner = document.getElementById('wds-pro-banner');
+                    if (banner) banner.innerHTML =
+                      '<span style="font-size:1.3rem;">🌟</span>' +
+                      '<strong style="color:var(--accent-3);font-size:0.85rem;margin-left:10px;">' +
+                      'Wadsworth Pro Active</strong>';
+                    return;
+                  }
+                }
+              }
+            } catch(e) {}
+          }
+
+          window.wdsSubscribe = async function() {
+            var btn = document.getElementById('wds-sub-btn');
+            if (btn) btn.disabled = true;
+            _setStatus('Opening…');
+            try {
+              var svc = _service || await _getService();
+              if (!svc) {
+                _setStatus('Billing not available on this device.');
+                if (btn) btn.disabled = false;
+                return;
+              }
+              var req = new PaymentRequest(
+                [{ supportedMethods: 'https://play.google.com/billing',
+                   data: { sku: SUB_ID } }],
+                { total: { label: 'Wadsworth Pro', amount: { currency: 'USD', value: '0' } } }
+              );
+              var response = await req.show();
+              var token = response.details.purchaseToken;
+              _setStatus('Verifying…');
+              var result = await _verifyToken(token);
+              await response.complete('success');
+              if (result && result.active) {
+                _setStatus('');
+                var banner = document.getElementById('wds-pro-banner');
+                if (banner) banner.innerHTML =
+                  '<span style="font-size:1.3rem;">🌟</span>' +
+                  '<strong style="color:var(--accent-3);font-size:0.85rem;margin-left:10px;">' +
+                  'Wadsworth Pro Active — refresh to apply Pro skins!</strong>';
+              } else {
+                _setStatus('Verification failed — please try again.');
+                if (btn) btn.disabled = false;
+              }
+            } catch(e) {
+              // User cancelled or billing error
+              _setStatus(e.name === 'AbortError' ? '' : 'Error: ' + e.message);
+              if (btn) btn.disabled = false;
+            }
+          };
+
+          // Kick off restore attempt silently in background
+          _tryRestore();
+        })();
+        </script>"""
+    else:
+        pro_notice = """
+        <div style="background:var(--accent-3-bg);border:1px solid var(--accent-3);
+            border-radius:var(--radius-md);padding:12px 16px;margin-bottom:18px;
+            display:flex;align-items:center;gap:10px;">
+            <span style="font-size:1.3rem;">🌟</span>
+            <strong style="color:var(--accent-3);font-size:0.85rem;">Wadsworth Pro — Active</strong>
         </div>"""
 
     return f"""

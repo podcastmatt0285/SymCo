@@ -145,7 +145,7 @@ cat > twa-manifest.json << TWAMF
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://${DOMAIN}/manifest.json",
   "fallbackType": "customtabs",
-  "features": { "playBilling": { "enabled": false } },
+  "features": { "playBilling": { "enabled": true } },
   "alphaDependencies": { "enabled": false },
   "enableSiteSettingsShortcut": true,
   "isChromeOSOnly": false,

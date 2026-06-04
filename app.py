@@ -954,6 +954,14 @@ try:
 except ModuleNotFoundError:
     pass
 
+try:
+    from play_billing import router as play_billing_router, init as play_billing_init
+    play_billing_init()
+    app.include_router(play_billing_router)
+    print("Play Billing routes registered")
+except ModuleNotFoundError:
+    pass
+
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
