@@ -2611,24 +2611,54 @@ def government_dashboard(
     all_cities = []
     try:
         from cities import get_db as _cdb, City as _City, CityBank as _CB, CityMember as _CM, CityBankLoan as _CBL
-        from city_projects import get_city_sales_tax_rate
+        from sqlalchemy import func as _func6
         _db = _cdb()
         _banks   = {b.city_id: b for b in _db.query(_CB).all()}
-        _members = {}
-        for m in _db.query(_CM).all():
-            _members[m.city_id] = _members.get(m.city_id, 0) + 1
+        # Member counts in one grouped query.
+        _members = {
+            cid: cnt for cid, cnt in
+            _db.query(_CM.city_id, _func6.count(_CM.id)).group_by(_CM.city_id).all()
+        }
+        # All active loans in one query, aggregated per city bank (was an N+1:
+        # one loan query per city).
+        _loans_by_bank = {}
+        for bank_id, cnt, owed, paid in (
+            _db.query(
+                _CBL.city_bank_id,
+                _func6.count(_CBL.id),
+                _func6.sum(_CBL.total_owed),
+                _func6.sum(_CBL.amount_paid),
+            )
+            .filter(_CBL.is_active == True)
+            .group_by(_CBL.city_bank_id)
+            .all()
+        ):
+            _loans_by_bank[bank_id] = (cnt, float(owed or 0) - float(paid or 0))
+        # Sales-tax rates for every city in one batched query, replacing a
+        # per-city get_city_sales_tax_rate() that opened its own DB session.
+        _tax_by_city = {}
+        try:
+            from city_projects import (
+                CityProjectInstance as _CPI, STATUS_ACTIVE as _CP_ACTIVE,
+                CITY_PROJECT_TYPES as _CPT, get_db as _cpdb,
+            )
+            _pdb = _cpdb()
+            try:
+                for _inst in (_pdb.query(_CPI)
+                                  .filter(_CPI.status == _CP_ACTIVE, _CPI.level > 0)
+                                  .all()):
+                    _rate = (_CPT.get(_inst.project_type, {})
+                                 .get("debuffs", {}).get("sales_tax", 0.0)) * _inst.level
+                    if _rate:
+                        _tax_by_city[_inst.city_id] = min(0.50, _tax_by_city.get(_inst.city_id, 0.0) + _rate)
+            finally:
+                _pdb.close()
+        except Exception:
+            pass
         for city in _db.query(_City).order_by(_City.name).all():
             bk = _banks.get(city.id)
-            loan_total = 0.0
-            loan_count = 0
-            if bk:
-                for ln in _db.query(_CBL).filter(_CBL.city_bank_id == bk.id, _CBL.is_active == True).all():
-                    loan_count += 1
-                    loan_total += (ln.total_owed - ln.amount_paid)
-            try:
-                sales_tax_rate = get_city_sales_tax_rate(city.id)
-            except Exception:
-                sales_tax_rate = 0.0
+            loan_count, loan_total = _loans_by_bank.get(bk.id, (0, 0.0)) if bk else (0, 0.0)
+            sales_tax_rate = _tax_by_city.get(city.id, 0.0)
             all_cities.append({
                 "id": city.id,
                 "name": city.name,
@@ -2671,13 +2701,22 @@ def government_dashboard(
         pass
 
     # ── 8. Commodity inventory ────────────────────────────────────────────────
+    # Aggregate in SQL — government (player 0) accumulates inventory from every
+    # death tax and estate seizure, so this table can hold a very large number
+    # of rows. GROUP BY avoids hydrating them all into Python ORM objects.
     gov_commodities = {}
     try:
         from inventory import get_db as _idb, InventoryItem as _II
+        from sqlalchemy import func as _func8
         _db = _idb()
-        for item in _db.query(_II).filter(_II.player_id == 0).all():
-            if item.quantity > 0:
-                gov_commodities[item.item_type] = gov_commodities.get(item.item_type, 0.0) + item.quantity
+        for item_type, qty in (
+            _db.query(_II.item_type, _func8.sum(_II.quantity))
+               .filter(_II.player_id == 0)
+               .group_by(_II.item_type)
+               .all()
+        ):
+            if qty and qty > 0:
+                gov_commodities[item_type] = float(qty)
         _db.close()
     except Exception:
         pass
