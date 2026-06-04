@@ -110,8 +110,26 @@ def initialize():
 def tick(current_tick: int, now: datetime):
     db = SessionLocal()
     try:
-        process_business_tick(db)
-        process_dismantling_tick(db)
+        # Run the two phases independently so a failure in production can never
+        # block dismantling refunds (or vice versa). Previously a single raised
+        # exception in process_business_tick aborted the whole tick, leaving
+        # dismantling permanently stuck and no business producing.
+        try:
+            process_business_tick(db)
+        except Exception as e:
+            print(f"[Business] process_business_tick failed: {e}")
+            try:
+                db.rollback()
+            except Exception:
+                pass
+        try:
+            process_dismantling_tick(db)
+        except Exception as e:
+            print(f"[Business] process_dismantling_tick failed: {e}")
+            try:
+                db.rollback()
+            except Exception:
+                pass
     finally:
         db.close()
 
@@ -127,44 +145,61 @@ def process_dismantling_tick(db):
     for sale in active_sales:
         if sale.ticks_remaining <= 0:
             continue
-        
-        # Pay the owner this tick's refund, auto-converting to their legal tender.
-        player = db.query(Player).filter(Player.id == sale.owner_id).first()
-        if player:
-            try:
-                from reserve_banks import convert_to_legal_tender
-                convert_to_legal_tender(player.id, sale.refund_per_tick)
-            except Exception:
-                from reserve_banks import credit_usd
-                credit_usd(player.id, sale.refund_per_tick)
-            sale.ticks_remaining -= 1
-        
-        # If dismantling is complete
-        if sale.ticks_remaining <= 0:
-            # Delete the business
-            biz = db.query(Business).filter(Business.id == sale.business_id).first()
-            if biz:
-                # Notify owner before deleting
+
+        # Isolate each sale and commit it independently, so a single failing
+        # refund can never block (or roll back) progress on every other
+        # dismantling. Previously one raised exception aborted the whole pass
+        # with no commit, freezing all dismantling indefinitely.
+        try:
+            # Pay the owner this tick's refund, auto-converting to legal tender.
+            player = db.query(Player).filter(Player.id == sale.owner_id).first()
+            if player:
                 try:
-                    if biz.district_id or getattr(biz, 'is_tutorial_reward', False):
-                        _cfg = get_district_business_types().get(biz.business_type, {})
-                    else:
-                        _cfg = BUSINESS_TYPES.get(biz.business_type, {})
-                    _biz_name = _cfg.get("name", biz.business_type)
-                    _fire_business_push(sale.owner_id, biz.id, "dismantled",
-                        _biz_name, f"Dismantling complete — full refund of ${sale.total_refund:,.0f} has been paid")
+                    from reserve_banks import convert_to_legal_tender
+                    convert_to_legal_tender(player.id, sale.refund_per_tick)
                 except Exception:
-                    pass
-                # Free up the land
-                plot = db.query(LandPlot).filter(LandPlot.id == biz.land_plot_id).first()
-                if plot:
-                    plot.occupied_by_business_id = None
-                db.delete(biz)
-                print(f"[Business] Dismantling complete for business {sale.business_id}")
-            
-            # Delete the sale record
-            db.delete(sale)
-    db.commit()
+                    try:
+                        from reserve_banks import credit_usd
+                        credit_usd(player.id, sale.refund_per_tick)
+                    except Exception as _pay_e:
+                        # Could not pay this tick — log and still advance the
+                        # counter so dismantling cannot wedge on a payout error.
+                        print(f"[Business] dismantling payout error sale {sale.id}: {_pay_e}")
+                sale.ticks_remaining -= 1
+
+            # If dismantling is complete
+            if sale.ticks_remaining <= 0:
+                # Delete the business
+                biz = db.query(Business).filter(Business.id == sale.business_id).first()
+                if biz:
+                    # Notify owner before deleting
+                    try:
+                        if biz.district_id or getattr(biz, 'is_tutorial_reward', False):
+                            _cfg = get_district_business_types().get(biz.business_type, {})
+                        else:
+                            _cfg = BUSINESS_TYPES.get(biz.business_type, {})
+                        _biz_name = _cfg.get("name", biz.business_type)
+                        _fire_business_push(sale.owner_id, biz.id, "dismantled",
+                            _biz_name, f"Dismantling complete — full refund of ${sale.total_refund:,.0f} has been paid")
+                    except Exception:
+                        pass
+                    # Free up the land
+                    plot = db.query(LandPlot).filter(LandPlot.id == biz.land_plot_id).first()
+                    if plot:
+                        plot.occupied_by_business_id = None
+                    db.delete(biz)
+                    print(f"[Business] Dismantling complete for business {sale.business_id}")
+
+                # Delete the sale record
+                db.delete(sale)
+
+            db.commit()
+        except Exception as _sale_e:
+            print(f"[Business] dismantling tick error sale {getattr(sale, 'id', '?')}: {_sale_e}")
+            try:
+                db.rollback()
+            except Exception:
+                pass
 
 def start_business_dismantling(player_id: int, business_id: int) -> bool:
     """
@@ -270,333 +305,343 @@ def process_business_tick(db):
     
     active_biz = db.query(Business).filter(Business.is_active == True).all()
     for biz in active_biz:
-        sale = db.query(BusinessSale).filter(BusinessSale.business_id == biz.id).first()
-        if sale:
-            continue
-        
-        # Check if this is a district business and load appropriate config.
-        # Tutorial-reward businesses live on a land plot (not a District object) but
-        # use district business types, so they also load from district_businesses.json.
-        if biz.district_id or getattr(biz, 'is_tutorial_reward', False):
-            district_business_types = get_district_business_types()
-            config = district_business_types.get(biz.business_type, {})
-        else:
-            config = BUSINESS_TYPES.get(biz.business_type, {})
-        
-        cycles = config.get("cycles_to_complete", 1)
-        # Apply city cycle-speed buff (reduces effective cycles_to_complete)
         try:
-            from city_projects import get_city_production_buffs as _gcpb
-            _cs_mult = _gcpb(biz.owner_id).get("cycle_speed_multiplier", 1.0)
-            cycles = max(1, int(cycles * _cs_mult))
-        except Exception:
-            pass
-        if biz.progress_ticks < cycles:
-            biz.progress_ticks += 1
-
-        if biz.progress_ticks < cycles:
-            continue
-            
-        player = db.query(Player).filter(Player.id == biz.owner_id).first()
-        
-        # FIXED: For district businesses, skip plot lookup
-        if biz.district_id:
-            # District businesses don't have plots, use default efficiency
-            eff_multiplier = 1.0
-        else:
-            plot = db.query(LandPlot).filter(LandPlot.id == biz.land_plot_id).first()
-            if not plot:
+            sale = db.query(BusinessSale).filter(BusinessSale.business_id == biz.id).first()
+            if sale:
                 continue
-            eff_multiplier = max(0.005, min(1.0, plot.efficiency / 100.0))
         
-        if not player:
-            continue
+            # Check if this is a district business and load appropriate config.
+            # Tutorial-reward businesses live on a land plot (not a District object) but
+            # use district business types, so they also load from district_businesses.json.
+            if biz.district_id or getattr(biz, 'is_tutorial_reward', False):
+                district_business_types = get_district_business_types()
+                config = district_business_types.get(biz.business_type, {})
+            else:
+                config = BUSINESS_TYPES.get(biz.business_type, {})
         
-        base_wage = config.get("base_wage_cost", 0.0)
-        # Tutorial-reward businesses are permanently wage-free
-        if getattr(biz, 'is_tutorial_reward', False):
-            wage_cost = 0.0
-        else:
-            # Parse paused sets here (needed for per-line wage count)
-            paused_line_idxs = set(json.loads(biz.paused_lines or "[]"))
-            paused_product_keys = set(json.loads(biz.paused_products or "[]"))
-            _n_active_lines = sum(
-                1 for i in range(len(config.get("production_lines", [])))
-                if i not in paused_line_idxs
-            )
-            _n_active_products = sum(
-                1 for pk in config.get("products", {})
-                if pk not in paused_product_keys
-            )
-            _active_count = _n_active_lines + _n_active_products
-            wage_cost = base_wage * _active_count / eff_multiplier
-
-        # Apply city project production buffs (if player is a city member)
-        _city_output_mult = 1.0
-        _city_wage_mult = 1.0
-        _city_input_mult = 1.0
-        try:
-            from city_projects import get_city_production_buffs
-            _city_buffs = get_city_production_buffs(biz.owner_id)
-            _city_output_mult = _city_buffs.get("output_multiplier", 1.0)
-            _city_wage_mult   = _city_buffs.get("wage_multiplier",   1.0)
-            _city_input_mult  = _city_buffs.get("input_multiplier",  1.0)
-        except Exception:
-            pass
-
-        # Executive production bonus — applied once per business cycle
-        _exec_prod_mult = 1.0
-        try:
-            from executive import get_player_job_bonus as _exec_gjb2
-            _ep = _exec_gjb2(db, biz.owner_id, "production")
-            if _ep > 0:
-                _exec_prod_mult = 1.0 + _ep
-        except Exception:
-            pass
-
-        if wage_cost > 0:
-            wage_cost *= _city_wage_mult
-            from reserve_banks import can_afford_usd
-            if not can_afford_usd(player.id, wage_cost):
-                biz_name = config.get("name", biz.business_type)
-                _fire_business_push(player.id, biz.id, "wages",
-                    biz_name, f"Can't afford wages — ${wage_cost:,.0f} needed to keep running")
-                continue
-
-        player_inv = get_player_inventory(player.id)
-        lines_successfully_produced = 0
-        total_revenue = 0.0
-        has_retail = bool(config.get("products"))
-        production_lines = config.get("production_lines", [])
-
-        # paused_line_idxs and paused_product_keys already parsed above for wage calc
-        # (tutorial-reward path skips the parse, so ensure they exist here)
-        if getattr(biz, 'is_tutorial_reward', False):
-            paused_line_idxs = set(json.loads(biz.paused_lines or "[]"))
-            paused_product_keys = set(json.loads(biz.paused_products or "[]"))
-
-        # ===== RETAIL PROCESSING =====
-        if has_retail:
-            for item, rule in config.get("products", {}).items():
-                if item in paused_product_keys:
-                    continue
-                qty = player_inv.get(item, 0)
-                if qty <= 0:
-                    biz_name = config.get("name", biz.business_type)
-                    _fire_business_push(player.id, biz.id, f"stock-{item}",
-                        biz_name, f"{_fmt_item(item)} is out of stock — restock to keep selling")
-                    continue
-
-                price_entry = db.query(RetailPrice).filter(
-                    RetailPrice.player_id == player.id,
-                    RetailPrice.item_type == item
-                ).first()
-
-                mkt_p = market.get_market_price(item) or 10.0
-                current_p = price_entry.price if price_entry else mkt_p
-
-                try:
-                    multiplier = SupplyDemandEngine.get_sales_multiplier(
-                        current_p, mkt_p, rule.get("elasticity", 1.0)
-                    )
-                    chance = SupplyDemandEngine.calculate_chance_per_tick(
-                        rule.get("base_sale_chance", 0.05), multiplier
-                    )
-                except (ValueError, ZeroDivisionError) as e:
-                    print(f"[Business] Skipping retail item {item} for biz {biz.id}: {e}")
-                    continue
-
-                sold = sum(1 for _ in range(int(qty)) if random.random() < chance)
-                if sold > 0:
-                    remove_item(player.id, item, sold)
-                    total_revenue += sold * current_p
-                    lines_successfully_produced += 1
-
-        # ===== PRODUCTION PROCESSING =====
-        for line_idx, line in enumerate(production_lines):
-            if line_idx in paused_line_idxs:
-                continue
-            line_can_run = True
-            # Apply city project input multiplier (reduces qty needed).
-            # round() is used instead of int() so that savings apply correctly
-            # to larger quantities (e.g. 4.9 → 5 not 4).  Quantities of exactly
-            # 1 are unaffected by savings below 50% — a known integer-rounding
-            # limitation of discrete inventory items.
-            effective_inputs = [
-                {**req, "quantity": max(1, round(req["quantity"] * _city_input_mult))}
-                for req in line.get("inputs", [])
-            ]
-            for req in effective_inputs:
-                if player_inv.get(req["item"], 0) < req["quantity"]:
-                    line_can_run = False
-                    biz_name = config.get("name", biz.business_type)
-                    _fire_business_push(player.id, biz.id, f"input-{req['item']}",
-                        biz_name,
-                        f"Out of {_fmt_item(req['item'])} — need {req['quantity']} to produce")
-                    break
-
-            if line_can_run:
-                for req in effective_inputs:
-                    remove_item(player.id, req["item"], req["quantity"])
-                    # Log resource consumption
-                    log_transaction(
-                        biz.owner_id,
-                        "resource_use",
-                        "resource",
-                        -req["quantity"],  # negative because consumed
-                        f"Used {req['quantity']} {req['item']} in production",
-                        str(biz.id)
-                    )
-                    player_inv[req["item"]] -= req["quantity"]
-                    # Reduce WMA qty_basis for consumed inputs
-                    try:
-                        from wma import consume_wma
-                        consume_wma(player.id, req["item"], req["quantity"])
-                    except Exception:
-                        pass
-                # Apply city project output multiplier + global event bonus + per-item crisis reduction
-                _item_crisis_f = _crisis_factors.get(line.get("output_item", ""), 1.0)
-                effective_output_qty = max(1, round(
-                    line["output_qty"] * _city_output_mult * _ev_prod_factor
-                    * _item_crisis_f * _exec_prod_mult
-                ))
-                add_item(player.id, line["output_item"], effective_output_qty)
-                # Update WMA cost basis for the newly produced output
-                try:
-                    from wma import compute_production_cost_basis, update_wma
-                    _cb = compute_production_cost_basis(player.id, config, line)
-                    if _cb["unit_cost"] > 0:
-                        update_wma(player.id, line["output_item"],
-                                   effective_output_qty, _cb["unit_cost"])
-                except Exception as _wma_e:
-                    print(f"[Business] WMA update error: {_wma_e}")
-                # Log resource production — tag crisis in description when active
-                _prod_log_desc = f"Produced {effective_output_qty} {line['output_item']}"
-                if _item_crisis_f < 1.0:
-                    _crisis_drop_pct = round((1.0 - _item_crisis_f) * 100)
-                    _prod_log_desc += f" ⚠ crisis −{_crisis_drop_pct}%"
-                log_transaction(
-                    biz.owner_id,
-                    "resource_gain",
-                    "resource",
-                    effective_output_qty,
-                    _prod_log_desc,
-                    str(biz.id)
-                )
-                lines_successfully_produced += 1
-
-        # ===== FINALIZE: pay wages once, reset progress, commit =====
-        # Retail finalizes only when at least one product is active (not all paused).
-        # Pure-production only finalizes when something was produced.
-        _active_prod_set = set(config.get("products", {}).keys()) - paused_product_keys
-        should_finalize = (has_retail and bool(_active_prod_set)) or lines_successfully_produced > 0
-        if should_finalize:
-            # Pay city production subsidy on any production that ran
-            if production_lines and lines_successfully_produced > 0:
-                try:
-                    from cities import pay_production_subsidy
-                    production_cost = 0.0
-                    for line in production_lines:
-                        for req in line.get("inputs", []):
-                            item_price = market.get_market_price(req["item"]) or 1.0
-                            production_cost += item_price * req["quantity"]
-
-                    subsidy = pay_production_subsidy(player.id, biz.id, production_cost)
-                    if subsidy > 0:
-                        print(f"[Business] City subsidy: ${subsidy:.2f} to player {player.id}")
-                        total_revenue += subsidy
-                except ImportError:
-                    pass
-                except Exception as e:
-                    print(f"[Business] Subsidy error: {e}")
-
-            # Apply executive sales bonus to retail revenue
-            if has_retail and total_revenue > 0:
-                try:
-                    from executive import get_player_job_bonus as _exec_gjb
-                    _sales_bonus = _exec_gjb(db, player.id, "sales")
-                    if _sales_bonus > 0:
-                        total_revenue = round(total_revenue * (1.0 + _sales_bonus), 2)
-                except Exception:
-                    pass
-
-            # ── Retail sales tax: 5% of gross retail revenue → federal government ──
-            _retail_tax = 0.0
-            if has_retail and total_revenue > 0:
-                _retail_tax = round(total_revenue * 0.05, 2)
-                try:
-                    from reserve_banks import GOVERNMENT_PLAYER_ID as _RTGOV, credit_usd as _rt_credit
-                    _rt_credit(_RTGOV, _retail_tax)
-                    from govt_ledger import log_gov_event as _rt_lge
-                    _rt_lge("retail_sales_tax", "in", _retail_tax, "USD",
-                            f"Retail sales tax: {config.get('name', biz.business_type)} (biz {biz.id})")
-                except Exception as _rt_e:
-                    print(f"[Business] Retail tax routing error biz {biz.id}: {_rt_e}")
-
-            net_revenue = total_revenue - wage_cost - _retail_tax
-
-            # ── Profit siphon: divert a % into the company's dividend escrow ──
-            siphon_amount = 0.0
+            cycles = config.get("cycles_to_complete", 1)
+            # Apply city cycle-speed buff (reduces effective cycles_to_complete)
             try:
-                from banks.brokerage_firm import SessionLocal as _BrokDB, CompanyShares as _CS
-                _bdb = _BrokDB()
-                try:
-                    _cs = _bdb.query(_CS).filter(
-                        _CS.founder_id == player.id,
-                        _CS.is_delisted == False,
-                        _CS.profit_siphon_rate > 0,
-                        _CS.share_class_label == "main",
-                    ).first()
-                    if _cs and _cs.profit_siphon_rate and net_revenue > 0:
-                        siphon_amount = net_revenue * _cs.profit_siphon_rate
-                        _cs.dividend_escrow_balance = (_cs.dividend_escrow_balance or 0.0) + siphon_amount
-                        _cs.revenue_7d  = (_cs.revenue_7d  or 0.0) + net_revenue
-                        _cs.revenue_30d = (_cs.revenue_30d or 0.0) + net_revenue
-                        _bdb.commit()
-                    elif _cs:
-                        _cs.revenue_7d  = (_cs.revenue_7d  or 0.0) + net_revenue
-                        _cs.revenue_30d = (_cs.revenue_30d or 0.0) + net_revenue
-                        _bdb.commit()
-                finally:
-                    _bdb.close()
+                from city_projects import get_city_production_buffs as _gcpb
+                _cs_mult = _gcpb(biz.owner_id).get("cycle_speed_multiplier", 1.0)
+                cycles = max(1, int(cycles * _cs_mult))
+            except Exception:
+                pass
+            if biz.progress_ticks < cycles:
+                biz.progress_ticks += 1
+
+            if biz.progress_ticks < cycles:
+                continue
+            
+            player = db.query(Player).filter(Player.id == biz.owner_id).first()
+        
+            # FIXED: For district businesses, skip plot lookup
+            if biz.district_id:
+                # District businesses don't have plots, use default efficiency
+                eff_multiplier = 1.0
+            else:
+                plot = db.query(LandPlot).filter(LandPlot.id == biz.land_plot_id).first()
+                if not plot:
+                    continue
+                eff_multiplier = max(0.005, min(1.0, plot.efficiency / 100.0))
+        
+            if not player:
+                continue
+        
+            base_wage = config.get("base_wage_cost", 0.0)
+            # Tutorial-reward businesses are permanently wage-free
+            if getattr(biz, 'is_tutorial_reward', False):
+                wage_cost = 0.0
+            else:
+                # Parse paused sets here (needed for per-line wage count)
+                paused_line_idxs = set(json.loads(biz.paused_lines or "[]"))
+                paused_product_keys = set(json.loads(biz.paused_products or "[]"))
+                _n_active_lines = sum(
+                    1 for i in range(len(config.get("production_lines", [])))
+                    if i not in paused_line_idxs
+                )
+                _n_active_products = sum(
+                    1 for pk in config.get("products", {})
+                    if pk not in paused_product_keys
+                )
+                _active_count = _n_active_lines + _n_active_products
+                wage_cost = base_wage * _active_count / eff_multiplier
+
+            # Apply city project production buffs (if player is a city member)
+            _city_output_mult = 1.0
+            _city_wage_mult = 1.0
+            _city_input_mult = 1.0
+            try:
+                from city_projects import get_city_production_buffs
+                _city_buffs = get_city_production_buffs(biz.owner_id)
+                _city_output_mult = _city_buffs.get("output_multiplier", 1.0)
+                _city_wage_mult   = _city_buffs.get("wage_multiplier",   1.0)
+                _city_input_mult  = _city_buffs.get("input_multiplier",  1.0)
             except Exception:
                 pass
 
-            founder_credit = net_revenue - siphon_amount
-            # Route income through the reserve bank so JPY (and other legal-
-            # tender) players receive their earnings in their chosen currency.
+            # Executive production bonus — applied once per business cycle
+            _exec_prod_mult = 1.0
             try:
-                from reserve_banks import convert_to_legal_tender
-                convert_to_legal_tender(player.id, founder_credit)
+                from executive import get_player_job_bonus as _exec_gjb2
+                _ep = _exec_gjb2(db, biz.owner_id, "production")
+                if _ep > 0:
+                    _exec_prod_mult = 1.0 + _ep
             except Exception:
-                from reserve_banks import credit_usd
-                credit_usd(player.id, founder_credit)
-            biz.progress_ticks = 0
-            db.commit()
+                pass
+
             if wage_cost > 0:
-                try:
+                wage_cost *= _city_wage_mult
+                from reserve_banks import can_afford_usd
+                if not can_afford_usd(player.id, wage_cost):
+                    biz_name = config.get("name", biz.business_type)
+                    _fire_business_push(player.id, biz.id, "wages",
+                        biz_name, f"Can't afford wages — ${wage_cost:,.0f} needed to keep running")
+                    continue
+
+            player_inv = get_player_inventory(player.id)
+            lines_successfully_produced = 0
+            total_revenue = 0.0
+            has_retail = bool(config.get("products"))
+            production_lines = config.get("production_lines", [])
+
+            # paused_line_idxs and paused_product_keys already parsed above for wage calc
+            # (tutorial-reward path skips the parse, so ensure they exist here)
+            if getattr(biz, 'is_tutorial_reward', False):
+                paused_line_idxs = set(json.loads(biz.paused_lines or "[]"))
+                paused_product_keys = set(json.loads(biz.paused_products or "[]"))
+
+            # ===== RETAIL PROCESSING =====
+            if has_retail:
+                for item, rule in config.get("products", {}).items():
+                    if item in paused_product_keys:
+                        continue
+                    qty = player_inv.get(item, 0)
+                    if qty <= 0:
+                        biz_name = config.get("name", biz.business_type)
+                        _fire_business_push(player.id, biz.id, f"stock-{item}",
+                            biz_name, f"{_fmt_item(item)} is out of stock — restock to keep selling")
+                        continue
+
+                    price_entry = db.query(RetailPrice).filter(
+                        RetailPrice.player_id == player.id,
+                        RetailPrice.item_type == item
+                    ).first()
+
+                    mkt_p = market.get_market_price(item) or 10.0
+                    current_p = price_entry.price if price_entry else mkt_p
+
+                    try:
+                        multiplier = SupplyDemandEngine.get_sales_multiplier(
+                            current_p, mkt_p, rule.get("elasticity", 1.0)
+                        )
+                        chance = SupplyDemandEngine.calculate_chance_per_tick(
+                            rule.get("base_sale_chance", 0.05), multiplier
+                        )
+                    except (ValueError, ZeroDivisionError) as e:
+                        print(f"[Business] Skipping retail item {item} for biz {biz.id}: {e}")
+                        continue
+
+                    sold = sum(1 for _ in range(int(qty)) if random.random() < chance)
+                    if sold > 0:
+                        remove_item(player.id, item, sold)
+                        total_revenue += sold * current_p
+                        lines_successfully_produced += 1
+
+            # ===== PRODUCTION PROCESSING =====
+            for line_idx, line in enumerate(production_lines):
+                if line_idx in paused_line_idxs:
+                    continue
+                line_can_run = True
+                # Apply city project input multiplier (reduces qty needed).
+                # round() is used instead of int() so that savings apply correctly
+                # to larger quantities (e.g. 4.9 → 5 not 4).  Quantities of exactly
+                # 1 are unaffected by savings below 50% — a known integer-rounding
+                # limitation of discrete inventory items.
+                effective_inputs = [
+                    {**req, "quantity": max(1, round(req["quantity"] * _city_input_mult))}
+                    for req in line.get("inputs", [])
+                ]
+                for req in effective_inputs:
+                    if player_inv.get(req["item"], 0) < req["quantity"]:
+                        line_can_run = False
+                        biz_name = config.get("name", biz.business_type)
+                        _fire_business_push(player.id, biz.id, f"input-{req['item']}",
+                            biz_name,
+                            f"Out of {_fmt_item(req['item'])} — need {req['quantity']} to produce")
+                        break
+
+                if line_can_run:
+                    for req in effective_inputs:
+                        remove_item(player.id, req["item"], req["quantity"])
+                        # Log resource consumption
+                        log_transaction(
+                            biz.owner_id,
+                            "resource_use",
+                            "resource",
+                            -req["quantity"],  # negative because consumed
+                            f"Used {req['quantity']} {req['item']} in production",
+                            str(biz.id)
+                        )
+                        player_inv[req["item"]] -= req["quantity"]
+                        # Reduce WMA qty_basis for consumed inputs
+                        try:
+                            from wma import consume_wma
+                            consume_wma(player.id, req["item"], req["quantity"])
+                        except Exception:
+                            pass
+                    # Apply city project output multiplier + global event bonus + per-item crisis reduction
+                    _item_crisis_f = _crisis_factors.get(line.get("output_item", ""), 1.0)
+                    effective_output_qty = max(1, round(
+                        line["output_qty"] * _city_output_mult * _ev_prod_factor
+                        * _item_crisis_f * _exec_prod_mult
+                    ))
+                    add_item(player.id, line["output_item"], effective_output_qty)
+                    # Update WMA cost basis for the newly produced output
+                    try:
+                        from wma import compute_production_cost_basis, update_wma
+                        _cb = compute_production_cost_basis(player.id, config, line)
+                        if _cb["unit_cost"] > 0:
+                            update_wma(player.id, line["output_item"],
+                                       effective_output_qty, _cb["unit_cost"])
+                    except Exception as _wma_e:
+                        print(f"[Business] WMA update error: {_wma_e}")
+                    # Log resource production — tag crisis in description when active
+                    _prod_log_desc = f"Produced {effective_output_qty} {line['output_item']}"
+                    if _item_crisis_f < 1.0:
+                        _crisis_drop_pct = round((1.0 - _item_crisis_f) * 100)
+                        _prod_log_desc += f" ⚠ crisis −{_crisis_drop_pct}%"
                     log_transaction(
                         biz.owner_id,
-                        "wage_payment",
-                        "money",
-                        -wage_cost,
-                        f"Wages: {config.get('name', biz.business_type)}",
+                        "resource_gain",
+                        "resource",
+                        effective_output_qty,
+                        _prod_log_desc,
                         str(biz.id)
                     )
-                except Exception as _lt_e:
-                    print(f"[Business] wage log error biz {biz.id}: {_lt_e}")
-            if net_revenue > 0:
+                    lines_successfully_produced += 1
+
+            # ===== FINALIZE: pay wages once, reset progress, commit =====
+            # Retail finalizes only when at least one product is active (not all paused).
+            # Pure-production only finalizes when something was produced.
+            _active_prod_set = set(config.get("products", {}).keys()) - paused_product_keys
+            should_finalize = (has_retail and bool(_active_prod_set)) or lines_successfully_produced > 0
+            if should_finalize:
+                # Pay city production subsidy on any production that ran
+                if production_lines and lines_successfully_produced > 0:
+                    try:
+                        from cities import pay_production_subsidy
+                        production_cost = 0.0
+                        for line in production_lines:
+                            for req in line.get("inputs", []):
+                                item_price = market.get_market_price(req["item"]) or 1.0
+                                production_cost += item_price * req["quantity"]
+
+                        subsidy = pay_production_subsidy(player.id, biz.id, production_cost)
+                        if subsidy > 0:
+                            print(f"[Business] City subsidy: ${subsidy:.2f} to player {player.id}")
+                            total_revenue += subsidy
+                    except ImportError:
+                        pass
+                    except Exception as e:
+                        print(f"[Business] Subsidy error: {e}")
+
+                # Apply executive sales bonus to retail revenue
+                if has_retail and total_revenue > 0:
+                    try:
+                        from executive import get_player_job_bonus as _exec_gjb
+                        _sales_bonus = _exec_gjb(db, player.id, "sales")
+                        if _sales_bonus > 0:
+                            total_revenue = round(total_revenue * (1.0 + _sales_bonus), 2)
+                    except Exception:
+                        pass
+
+                # ── Retail sales tax: 5% of gross retail revenue → federal government ──
+                _retail_tax = 0.0
+                if has_retail and total_revenue > 0:
+                    _retail_tax = round(total_revenue * 0.05, 2)
+                    try:
+                        from reserve_banks import GOVERNMENT_PLAYER_ID as _RTGOV, credit_usd as _rt_credit
+                        _rt_credit(_RTGOV, _retail_tax)
+                        from govt_ledger import log_gov_event as _rt_lge
+                        _rt_lge("retail_sales_tax", "in", _retail_tax, "USD",
+                                f"Retail sales tax: {config.get('name', biz.business_type)} (biz {biz.id})")
+                    except Exception as _rt_e:
+                        print(f"[Business] Retail tax routing error biz {biz.id}: {_rt_e}")
+
+                net_revenue = total_revenue - wage_cost - _retail_tax
+
+                # ── Profit siphon: divert a % into the company's dividend escrow ──
+                siphon_amount = 0.0
                 try:
-                    log_transaction(
-                        biz.owner_id,
-                        "retail_sale",
-                        "money",
-                        founder_credit,
-                        f"Retail revenue: {biz.business_type}",
-                        str(biz.id)
-                    )
-                except Exception as _lt_e:
-                    print(f"[Business] retail log error biz {biz.id}: {_lt_e}")
+                    from banks.brokerage_firm import SessionLocal as _BrokDB, CompanyShares as _CS
+                    _bdb = _BrokDB()
+                    try:
+                        _cs = _bdb.query(_CS).filter(
+                            _CS.founder_id == player.id,
+                            _CS.is_delisted == False,
+                            _CS.profit_siphon_rate > 0,
+                            _CS.share_class_label == "main",
+                        ).first()
+                        if _cs and _cs.profit_siphon_rate and net_revenue > 0:
+                            siphon_amount = net_revenue * _cs.profit_siphon_rate
+                            _cs.dividend_escrow_balance = (_cs.dividend_escrow_balance or 0.0) + siphon_amount
+                            _cs.revenue_7d  = (_cs.revenue_7d  or 0.0) + net_revenue
+                            _cs.revenue_30d = (_cs.revenue_30d or 0.0) + net_revenue
+                            _bdb.commit()
+                        elif _cs:
+                            _cs.revenue_7d  = (_cs.revenue_7d  or 0.0) + net_revenue
+                            _cs.revenue_30d = (_cs.revenue_30d or 0.0) + net_revenue
+                            _bdb.commit()
+                    finally:
+                        _bdb.close()
+                except Exception:
+                    pass
+
+                founder_credit = net_revenue - siphon_amount
+                # Route income through the reserve bank so JPY (and other legal-
+                # tender) players receive their earnings in their chosen currency.
+                try:
+                    from reserve_banks import convert_to_legal_tender
+                    convert_to_legal_tender(player.id, founder_credit)
+                except Exception:
+                    from reserve_banks import credit_usd
+                    credit_usd(player.id, founder_credit)
+                biz.progress_ticks = 0
+                db.commit()
+                if wage_cost > 0:
+                    try:
+                        log_transaction(
+                            biz.owner_id,
+                            "wage_payment",
+                            "money",
+                            -wage_cost,
+                            f"Wages: {config.get('name', biz.business_type)}",
+                            str(biz.id)
+                        )
+                    except Exception as _lt_e:
+                        print(f"[Business] wage log error biz {biz.id}: {_lt_e}")
+                if net_revenue > 0:
+                    try:
+                        log_transaction(
+                            biz.owner_id,
+                            "retail_sale",
+                            "money",
+                            founder_credit,
+                            f"Retail revenue: {biz.business_type}",
+                            str(biz.id)
+                        )
+                    except Exception as _lt_e:
+                        print(f"[Business] retail log error biz {biz.id}: {_lt_e}")
+        except Exception as _biz_tick_e:
+            # Isolate each business: one bad row must never abort the whole
+            # production pass (which would also block dismantling downstream).
+            print(f"[Business] tick error for biz {getattr(biz, 'id', '?')} "
+                  f"({getattr(biz, 'business_type', '?')}): {_biz_tick_e}")
+            try:
+                db.rollback()
+            except Exception:
+                pass
 
 def create_business(player_id: int, plot_id: int, business_type_key: str):
     """Create a business on a vacant land plot owned by the player."""
