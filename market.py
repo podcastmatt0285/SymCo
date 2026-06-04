@@ -971,10 +971,15 @@ def get_market_price(item_type: str) -> Optional[float]:
 
         if best_bid and best_ask:
             price = (best_bid.price + best_ask.price) / 2
-        elif best_bid or best_ask:
-            price = best_bid.price if best_bid else best_ask.price
         else:
-            # No live orders — fall back to a recent trade
+            # Only one side (or neither) of the book is populated. A lone
+            # resting order is NOT a reliable market price — a lone bid in
+            # particular ratchets upward without bound when NPCs (or anyone)
+            # bid above "market", since their new bid becomes the next
+            # "market price". Prefer a recent executed trade, which only moves
+            # when a real trade clears. Fall back to a lone ask (sellers anchor
+            # the price downward, which is safe), and only use a lone bid as a
+            # last resort when there is no trade history at all.
             cutoff = datetime.utcnow() - timedelta(days=_PRICE_STALENESS_DAYS)
             last_trade = (
                 db.query(Trade)
@@ -982,7 +987,14 @@ def get_market_price(item_type: str) -> Optional[float]:
                 .order_by(Trade.executed_at.desc())
                 .first()
             )
-            price = last_trade.price if last_trade else None
+            if last_trade:
+                price = last_trade.price
+            elif best_ask:
+                price = best_ask.price
+            elif best_bid:
+                price = best_bid.price
+            else:
+                price = None
     finally:
         db.close()
     if price is not None:

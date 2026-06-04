@@ -470,6 +470,17 @@ def _manage_buy_orders(player_id: int, cfg: dict, state: str):
             # --- Step 4: place the buy order ---
             buy_price = round(market_price * max_mult, 4)
 
+            # Sanity cap (defense-in-depth): never bid more than 5× the rolling
+            # trade average. Without this, any price-source that reflects resting
+            # bids can ratchet upward every cycle (NPC bids above "market" →
+            # becomes new "market" → next NPC bids higher), exploding into a
+            # runaway that floods the order book and overloads the database.
+            _ref = _rolling_avg(item_type, market_key)
+            if _ref and _ref > 0 and buy_price > _ref * 5:
+                buy_price = round(_ref * 5, 4)
+                print(f"[NPC] Capped {item_type} bid to 5× rolling avg "
+                      f"(${_ref:.4f}) — runaway guard")
+
             if market_key == "district":
                 from district_market import create_order, OrderType, OrderMode
             else:
