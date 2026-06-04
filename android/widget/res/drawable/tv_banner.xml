@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android TV / Google TV home-screen banner (xhdpi 320x180dp).
+  Required by Google Play for any app that exposes a LEANBACK_LAUNCHER
+  activity; without android:banner the TV listing is rejected/hidden.
+  API 21 safe: solid brand background + inset launcher icon (no gravity /
+  width-height item attributes, which need API 23).
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#020617"/>
+        </shape>
+    </item>
+    <item
+        android:left="110dp"
+        android:right="110dp"
+        android:top="40dp"
+        android:bottom="40dp"
+        android:drawable="@mipmap/ic_launcher"/>
+</layer-list>

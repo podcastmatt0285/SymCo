@@ -350,6 +350,24 @@ sed -i '/<uses-feature android:name="android\.software\.leanback"/d'         "$M
 sed -i 's|</manifest>|    <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>\n    <uses-feature android:name="android.hardware.faketouch" android:required="false"/>\n    <uses-feature android:name="android.hardware.screen.portrait" android:required="false"/>\n    <uses-feature android:name="android.hardware.screen.landscape" android:required="false"/>\n    <uses-feature android:name="android.software.leanback" android:required="false"/>\n</manifest>|' "$MANIFEST"
 echo "  Injected uses-feature required=false (touchscreen/faketouch/screen/leanback) for max device reach"
 
+# 0c. Android TV support. For the app to appear in the *TV* Play Store and get a
+#     home-screen tile, Google Play requires (a) a LEANBACK_LAUNCHER activity and
+#     (b) an android:banner on <application>. The bubblewrap template ships
+#     neither. Add the leanback category to the launcher activity's MAIN filter,
+#     and point android:banner at the @drawable/tv_banner copied in from widget/.
+if grep -q "LEANBACK_LAUNCHER" "$MANIFEST"; then
+    echo "  LEANBACK_LAUNCHER already in AndroidManifest.xml — skipping"
+else
+    sed -i 's|<category android:name="android.intent.category.LAUNCHER" />|<category android:name="android.intent.category.LAUNCHER" />\n                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />|' "$MANIFEST"
+    echo "  Added LEANBACK_LAUNCHER category to launcher activity (Android TV)"
+fi
+if grep -q 'android:banner=' "$MANIFEST"; then
+    echo "  android:banner already in AndroidManifest.xml — skipping"
+else
+    sed -i 's|<application|<application\n        android:banner="@drawable/tv_banner"|' "$MANIFEST"
+    echo "  Added android:banner=@drawable/tv_banner to <application> (Android TV)"
+fi
+
 # 1. Point <application> at our custom Application subclass so channels are
 #    seeded with the custom notification sound on every app launch.
 #    Bubblewrap generates android:name="Application" — replace it rather than
