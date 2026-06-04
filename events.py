@@ -1316,6 +1316,13 @@ def _on_event_live(event_id: int):
                 except Exception as _fls_e:
                     print(f"[Events] foreign_land_sale error: {_fls_e}")
                     body = "The government has concluded a foreign land treaty."
+                # One-shot event: deactivate immediately so it never lingers as
+                # "live" and can't re-fire on a server-restart rearm.
+                ev.is_active = False
+                ev.ends_at   = datetime.utcnow()
+                db.commit()
+                invalidate_effects_cache()
+                cancel_event_timers(event_id)
     except Exception as e:
         print(f"[Events] _on_event_live DB error: {e}")
     finally:
