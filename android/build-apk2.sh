@@ -20,8 +20,13 @@ DOMAIN="wadsworth.notifly.cc"
 APP_NAME="Wadsworth"
 PACKAGE="cc.notifly.wadsworth"           # ← change if yours differs
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 VERSION_CODE=26
 VERSION_NAME="2.04"
+=======
+VERSION_CODE=30
+VERSION_NAME="3.00"
+>>>>>>> Stashed changes
 =======
 VERSION_CODE=30
 VERSION_NAME="3.00"
