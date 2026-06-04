@@ -78,7 +78,29 @@ fi
 FINGERPRINT=$(keytool -list -v -keystore "${KEYSTORE_ABS}" -alias android \
     -storepass "${KEY_PASS}" 2>/dev/null | grep "SHA256:" | awk '{print $2}')
 echo "  SHA-256: ${FINGERPRINT}"
-echo "  (must match assetlinks.json in app.py — update it if this is a new keystore)"
+
+# Preflight: the directly-distributed APK is signed with THIS keystore, so its
+# fingerprint MUST be listed in the assetlinks.json the server serves or the TWA
+# fails Digital Asset Links verification (browser URL bar, broken push delegation
+# and login-cred sharing). Catch a mismatch here instead of discovering it on the
+# device. (Play-delivered installs additionally need Google's app-signing key,
+# which we can't read locally — that one is verified in the Play Console.)
+ASSETLINKS_SRC="${SCRIPT_DIR}/../app.py"
+if [ -f "${ASSETLINKS_SRC}" ]; then
+    if grep -q "${FINGERPRINT}" "${ASSETLINKS_SRC}"; then
+        echo "  ✓ Keystore fingerprint found in app.py assetlinks — TWA will verify for sideloaded APK."
+    else
+        echo ""
+        echo "  ⚠️  WARNING: this keystore's SHA-256 is NOT in app.py's assetlinks.json."
+        echo "      The directly-installed APK will fail TWA verification (URL bar shows,"
+        echo "      push delegation/login-creds break). Add this line to the"
+        echo "      sha256_cert_fingerprints array in app.py and redeploy the server:"
+        echo "          \"${FINGERPRINT}\","
+        echo ""
+    fi
+else
+    echo "  (could not locate app.py to verify assetlinks — skipping preflight check)"
+fi
 
 echo "=== Step 3: Generate TWA project (no prompts — write twa-manifest.json directly) ==="
 rm -rf twa-project && mkdir twa-project && cd twa-project
@@ -502,6 +524,49 @@ cp app/build/outputs/apk/release/app-release.apk "../wadsworth-signed.apk"
 
 # Copy the generated AAB
 cp app/build/outputs/bundle/release/app-release.aab "../wadsworth-signed.aab"
+
+echo ""
+echo "=== Step 5: Post-build verification — confirm native features are bundled ==="
+# Inspect the merged manifest + packaged APK so a silently-dropped receiver,
+# permission, or asset fails the build loudly instead of shipping broken.
+MERGED=$(find app/build/intermediates -name AndroidManifest.xml -path "*merged*release*" 2>/dev/null | head -1)
+VERIFY_FAIL=0
+check() {
+    if grep -q "$1" "$MERGED" 2>/dev/null; then
+        echo "  ✓ $2"
+    else
+        echo "  ✗ MISSING: $2"; VERIFY_FAIL=1
+    fi
+}
+if [ -n "$MERGED" ] && [ -f "$MERGED" ]; then
+    check "LEANBACK_LAUNCHER"               "Android TV launcher (LEANBACK_LAUNCHER)"
+    check "android:banner"                  "Android TV home-screen banner"
+    check "android.hardware.touchscreen"    "touchscreen uses-feature (broad device reach)"
+    check "POST_NOTIFICATIONS"              "Push-notification permission"
+    check "DelegationService"               "Notification delegation service (Android push)"
+    check "android.permission.INTERNET"     "INTERNET permission"
+    for w in WadsworthWidget WBCWidget GlobalChatWidget TradeChatWidget BondsWidget ForexWidget P2PWidget; do
+        check "$w"                          "Home-screen widget: $w"
+    done
+    check "WadsworthTokenActivity"          "Widget auth token activity"
+    check "WadsworthApplication"            "Custom Application (seeds notification-sound channels)"
+else
+    echo "  ✗ Could not locate merged manifest to verify — check the build output."; VERIFY_FAIL=1
+fi
+# Notification sound must be packaged in the APK for Android push to use it.
+if unzip -l "../wadsworth-signed.apk" 2>/dev/null | grep -q "res/raw/notification"; then
+    echo "  ✓ Notification sound bundled (res/raw/notification.*)"
+else
+    echo "  ✗ MISSING: notification sound (res/raw/notification.*) in APK"; VERIFY_FAIL=1
+fi
+if [ "$VERIFY_FAIL" -ne 0 ]; then
+    echo ""
+    echo "  ⚠️  One or more expected components are missing from the build above."
+    echo "      The APK/AAB were still produced — inspect before publishing."
+else
+    echo "  All native components present and accounted for."
+fi
+
 cd ..
 
 echo ""

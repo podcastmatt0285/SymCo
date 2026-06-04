@@ -596,8 +596,19 @@ async def assetlinks():
         "target": {
             "namespace": "android_app",
             "package_name": "cc.notifly.wadsworth.twa",
+            # List EVERY key that signs a copy of the app users may install, or the
+            # TWA fails Digital Asset Links verification (browser URL bar appears,
+            # push delegation + get_login_creds break). Two are needed:
+            #   1) Google Play App Signing key — Google re-signs the uploaded AAB,
+            #      so Play-Store installs present THIS fingerprint.
+            #   2) Local upload/release keystore (android/wadsworth-signing.jks) —
+            #      signs the directly-distributed wadsworth-signed.apk; without it,
+            #      sideloaded / direct-download installs fail verification.
             "sha256_cert_fingerprints": [
+                # 1) Google Play App Signing key
                 "A7:21:91:A3:04:C4:5A:A2:C8:69:76:EF:7C:C6:3D:56:2D:77:57:94:38:1B:C5:F1:A8:8A:73:6A:B7:D9:DF:03",
+                # 2) Local release keystore (android/wadsworth-signing.jks, alias "android")
+                "73:E0:0D:08:1F:93:32:4D:A0:59:19:C6:AC:73:9E:F0:C8:4F:BB:C3:11:5D:A3:43:10:46:0B:A6:E0:DF:C7:1D",
             ],
         },
     }])
