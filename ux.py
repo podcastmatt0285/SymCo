@@ -770,6 +770,10 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 {_level_html}
                 <span class="balance" id="player-balance">{disp_sym}{disp_balance:,.2f}{disp_usd_note}</span>
                 {_notif_count_html}
+                <button id="wds-install-btn" onclick="wdsInstall()" title="Install Wadsworth as an app"
+                    style="display:none;background:none;border:1px solid var(--border-subtle,#334155);
+                    color:var(--text-muted,#94a3b8);font-size:0.75rem;padding:3px 9px;border-radius:4px;
+                    cursor:pointer;white-space:nowrap;">⬇ App</button>
                 <a href="/api/logout" style="color: #ef4444; font-size: 0.85rem;">Logout</a>
             </div>
         </div>
@@ -1549,6 +1553,121 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 navigator.serviceWorker.register('/sw.js').catch(() => {{}});
             }});
         }}
+        </script>
+        <!-- PWA Install modal (hidden by default) -->
+        <div id="wds-install-modal" style="display:none;position:fixed;inset:0;z-index:99999;
+            background:rgba(2,6,23,0.85);align-items:center;justify-content:center;">
+          <div style="background:#0f172a;border:1px solid #334155;border-radius:10px;
+              max-width:340px;width:90%;padding:24px;position:relative;">
+            <button onclick="wdsCloseModal()" style="position:absolute;top:10px;right:14px;
+                background:none;border:none;color:#64748b;font-size:1.2rem;cursor:pointer;">✕</button>
+            <div style="font-size:1.4rem;margin-bottom:8px;">📲 Install Wadsworth</div>
+            <div id="wds-install-steps" style="color:#94a3b8;font-size:0.88rem;line-height:1.6;"></div>
+            <div style="margin-top:18px;text-align:right;">
+              <button onclick="wdsCloseModal()" style="background:#1e293b;border:1px solid #334155;
+                  color:#e2e8f0;padding:7px 18px;border-radius:5px;cursor:pointer;font-size:0.85rem;">
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+        <script>
+        (function() {{
+          var _deferredPrompt = null;
+          var _btn = document.getElementById('wds-install-btn');
+
+          // Already running as installed app — hide button forever
+          var _isApp = window.matchMedia('(display-mode: standalone)').matches
+                    || window.matchMedia('(display-mode: fullscreen)').matches
+                    || window.navigator.standalone === true;
+          if (_isApp) return;
+
+          // Chrome/Edge/Android: native install prompt available
+          window.addEventListener('beforeinstallprompt', function(e) {{
+            e.preventDefault();
+            _deferredPrompt = e;
+            if (_btn) _btn.style.display = '';
+          }});
+
+          // After installation via OS, hide button
+          window.addEventListener('appinstalled', function() {{
+            _deferredPrompt = null;
+            if (_btn) _btn.style.display = 'none';
+          }});
+
+          // Detect device/browser for fallback instructions
+          function _getInstructions() {{
+            var ua = navigator.userAgent || '';
+            var isFireOS = /Silk|Kindle|KFJWI|KFJWA|KFOT|KFTHWI|KFTHWA|KFSOWI|KFTBWI|KFD|KFP|KFASWI|KFARWI|KFAUWI/i.test(ua);
+            var isSamsungBrowser = /SamsungBrowser/i.test(ua);
+            var isFirefox = /Firefox/i.test(ua) && !/Chrome/i.test(ua);
+            var isSafariIOS = /iP(hone|ad|od)/i.test(ua) && /Safari/i.test(ua) && !/Chrome/i.test(ua);
+            var isChrome = /Chrome/i.test(ua) && !/Edg/i.test(ua);
+            var isEdge = /Edg/i.test(ua);
+            if (isFireOS) return [
+              '1. Open the <strong>Silk browser menu</strong> (⋮ top right)',
+              '2. Tap <strong>"Add to Home Screen"</strong>',
+              '3. Confirm — Wadsworth appears on your tablet home screen'
+            ];
+            if (isSafariIOS) return [
+              '1. Tap the <strong>Share button</strong> (box with arrow) in Safari',
+              '2. Scroll down and tap <strong>"Add to Home Screen"</strong>',
+              '3. Tap <strong>Add</strong> — Wadsworth appears as a full-screen app'
+            ];
+            if (isSamsungBrowser) return [
+              '1. Tap the <strong>menu icon</strong> (☰) in Samsung Internet',
+              '2. Tap <strong>"Add page to"</strong> → <strong>"Home screen"</strong>',
+              '3. Tap <strong>Add</strong> to install'
+            ];
+            if (isFirefox) return [
+              '1. Tap the <strong>⋮ menu</strong> in Firefox',
+              '2. Tap <strong>"Install"</strong> or <strong>"Add to Home Screen"</strong>',
+              '3. Confirm the install prompt'
+            ];
+            // Chrome, Edge, desktop
+            if (isEdge) return [
+              '1. Click the <strong>install icon</strong> (⊕) in the Edge address bar, or',
+              '2. Open the <strong>Edge menu</strong> (⋯) → <strong>"Apps"</strong> → <strong>"Install this site as an app"</strong>'
+            ];
+            return [
+              '1. Click the <strong>install icon</strong> (⊕) in the Chrome address bar, or',
+              '2. Open <strong>Chrome menu</strong> (⋮) → <strong>"Install Wadsworth"</strong>'
+            ];
+          }}
+
+          window.wdsInstall = function() {{
+            if (_deferredPrompt) {{
+              _deferredPrompt.prompt();
+              _deferredPrompt.userChoice.then(function(r) {{
+                if (r.outcome === 'accepted') {{
+                  _deferredPrompt = null;
+                  if (_btn) _btn.style.display = 'none';
+                }}
+              }}).catch(function() {{}});
+            }} else {{
+              // Show manual instructions modal
+              var steps = _getInstructions();
+              var el = document.getElementById('wds-install-steps');
+              if (el) el.innerHTML = steps.map(function(s) {{
+                return '<div style="margin-bottom:8px;">'+s+'</div>';
+              }}).join('');
+              var modal = document.getElementById('wds-install-modal');
+              if (modal) modal.style.display = 'flex';
+            }}
+          }};
+
+          window.wdsCloseModal = function() {{
+            var modal = document.getElementById('wds-install-modal');
+            if (modal) modal.style.display = 'none';
+          }};
+
+          // On browsers that never fire beforeinstallprompt (Silk, Firefox, Samsung, Safari)
+          // show the button so users can still get to the instructions
+          var _noPromptBrowsers = /Silk|SamsungBrowser|Firefox|iP(hone|ad|od)/i;
+          if (_noPromptBrowsers.test(navigator.userAgent || '') && _btn) {{
+            _btn.style.display = '';
+          }}
+        }})();
         </script>
 
         {_nav_loader_html()}
