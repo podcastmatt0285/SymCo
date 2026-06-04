@@ -20,6 +20,37 @@ try:
 except ImportError:
     pass
 
+
+def _int_env(name: str, default: int) -> int:
+    try:
+        return int(os.environ.get(name, default))
+    except (TypeError, ValueError):
+        return default
+
+
+# ---------------------------------------------------------------------------
+# Connection-pool settings (shared by every module that imports these engines)
+# ---------------------------------------------------------------------------
+# SQLAlchemy's defaults (pool_size=5, max_overflow=10) cap the WHOLE app at 15
+# concurrent connections — shared by every web request AND the 5-second tick
+# loop that opens sessions across ~30 modules. That is far too small: under
+# load the pool exhausts, every extra checkout blocks for `pool_timeout`
+# seconds and then 5xxs (the /government page, which opens ~12 sessions per
+# request, starves first). We also enable pre-ping so a connection Postgres
+# dropped while idle is transparently replaced instead of handed out dead
+# (the cause of pages that "hang every time" after the server has been up a
+# while), and recycle connections periodically to avoid staleness.
+#
+# Sizes are env-overridable so they can be raised toward Postgres'
+# max_connections (default 100) — or pointed at a pooler like PgBouncer —
+# without code changes. Defaults below keep main+reserve worst-case well under
+# 100: main 20+40 = 60, reserve 10+20 = 30.
+_POOL_KW = dict(
+    pool_pre_ping=True,
+    pool_recycle=_int_env("DB_POOL_RECYCLE", 1800),
+    pool_timeout=_int_env("DB_POOL_TIMEOUT", 30),
+)
+
 # ---------------------------------------------------------------------------
 # Main game database  (wadsworth)
 # ---------------------------------------------------------------------------
@@ -27,7 +58,12 @@ DATABASE_URL = os.environ.get(
     "DATABASE_URL",
     "postgresql://postgres:postgres@localhost:5432/wadsworth",
 )
-engine = create_engine(DATABASE_URL)
+engine = create_engine(
+    DATABASE_URL,
+    pool_size=_int_env("DB_POOL_SIZE", 20),
+    max_overflow=_int_env("DB_MAX_OVERFLOW", 40),
+    **_POOL_KW,
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # ---------------------------------------------------------------------------
@@ -37,7 +73,12 @@ RESERVE_DATABASE_URL = os.environ.get(
     "RESERVE_DATABASE_URL",
     "postgresql://postgres:postgres@localhost:5432/reserve_banks",
 )
-reserve_engine = create_engine(RESERVE_DATABASE_URL)
+reserve_engine = create_engine(
+    RESERVE_DATABASE_URL,
+    pool_size=_int_env("RESERVE_DB_POOL_SIZE", 10),
+    max_overflow=_int_env("RESERVE_DB_MAX_OVERFLOW", 20),
+    **_POOL_KW,
+)
 ReserveSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=reserve_engine)
 
 
