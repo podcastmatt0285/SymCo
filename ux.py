@@ -3032,6 +3032,7 @@ def government_dashboard(
         _row("Estate / Death Tax",           "15% of inheritance",          "Deducted from estates before heir payout — kept by federal government", "#f472b6"),
         _row("Forex Transaction Fee",        "3% per party per swap",       "Each reserve bank in an interbank currency swap pays 3% of swap value in USD to federal gov; reserves may go negative", "#38bdf8"),
         _row("Petrodollar Customs Share",    "50% of customs fee",          "Credited to government operating cash when outsiders trade in city currencies", "#4ade80"),
+        _row("Foreign Land Sale (special)",  "10% of estimated land value", "One-time admin event: government sells its entire land reserve to a foreign power, receiving 10% of estimated value in the highest-value foreign reserve currency. All government plots, auctions, and land-bank entries are removed.", "#dc2626"),
         _row("City Bank Emergency Loans",    "7% per installment × 30 = 210% total","Government lends to insolvent city banks; total_owed = principal × 3.1; repayments return to operating cash", "#fbbf24"),
         _row("Bond Investment (outflow)",    f"25% of cash above {_usd(100_000)}","Auto-invests surplus into USD reserve bank bonds every 12 h", "#94a3b8"),
         _row("City Bank Grants (outflow)",   "2% of operating cash",        "Distributed equally to all city banks every 12 h to fund bank reserves", "#f87171"),
@@ -16445,6 +16446,7 @@ def events_page(request: Request,
         "crypto_scam":  "#fbbf24",
         "item_crisis":  "#ef4444",
         "land_grant":   "#4ade80",
+        "foreign_land_sale": "#dc2626",
     }
     _DUR_COLOR = {
         "daily":   "#f59e0b",

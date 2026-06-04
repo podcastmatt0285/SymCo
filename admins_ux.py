@@ -5490,7 +5490,12 @@ def admin_event_start(session_token: Optional[str] = Cookie(None), event_id: int
         finally:
             edb.close()
         if ev:
-            broadcast_event_push(ev.id, f"🔴 {ev.title} is LIVE!", ev.description or "The event is now active — join in!", tag=f"event-{ev.id}-live")
+            if ev.event_type == "foreign_land_sale":
+                # Active one-shot effect — run it now (it sends its own summary push)
+                from events import _on_event_live as _fire_live
+                _fire_live(ev.id)
+            else:
+                broadcast_event_push(ev.id, f"🔴 {ev.title} is LIVE!", ev.description or "The event is now active — join in!", tag=f"event-{ev.id}-live")
             schedule_event_notifications(ev)  # arms end timer if ends_at is future
         return RedirectResponse(f"/admin/events?msg={urllib.parse.quote(msg)}", status_code=303)
     except Exception as e:
@@ -5608,7 +5613,11 @@ def admin_event_restart(
             edb.close()
         if ev:
             cancel_event_timers(event_id)
-            broadcast_event_push(ev.id, f"🔴 {ev.title} is LIVE!", ev.description or "The event is now active — join in!", tag=f"event-{ev.id}-live")
+            if ev.event_type == "foreign_land_sale":
+                from events import _on_event_live as _fire_live
+                _fire_live(ev.id)
+            else:
+                broadcast_event_push(ev.id, f"🔴 {ev.title} is LIVE!", ev.description or "The event is now active — join in!", tag=f"event-{ev.id}-live")
             schedule_event_notifications(ev)  # arms end timer if new_end is future
         return RedirectResponse(f"/admin/events?msg={urllib.parse.quote(msg)}", status_code=303)
     except Exception as e:
@@ -5742,6 +5751,14 @@ def admin_event_create(
                 broadcast_event_push(ev.id, f"📅 Upcoming: {ev.title}",
                                      ev.description or "A new event is coming — stay tuned!",
                                      tag=f"event-{ev.id}-scheduled")
+            elif event_type == "foreign_land_sale":
+                # Active one-shot effect: the work (and its own LIVE push with a
+                # summary) happens inside _on_event_live, which the immediate-
+                # activation path never schedules a timer for. Fire it directly
+                # so the sale actually executes on creation.
+                from events import _on_event_live as _fire_live
+                _fire_live(ev.id)
+                schedule_event_notifications(ev)
             else:
                 _live_body = ev.description or "The event is now active — join in!"
                 if event_type == "item_crisis":

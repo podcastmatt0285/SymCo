@@ -5495,7 +5495,8 @@ _WIKIWADS_ARTICLES = [
         "title": "Federal Government",
         "icon": "🏛️",
         "keywords": ["federal government", "government", "treasury", "fiscal", "federal treasury", "government dashboard",
-                     "city grants", "city bank", "charter fee", "government loan", "petrodollar"],
+                     "city grants", "city bank", "charter fee", "government loan", "petrodollar",
+                     "foreign land sale", "land treaty", "land reserve"],
         "summary": "The Wadsworth Federal Government is an autonomous player (ID 0) that collects taxes, distributes grants, issues bonds, and loans to city banks.",
         "sections": [
             ("Overview", """The Federal Government of Wadsworth is a special system account (player ID 0) that acts as
@@ -5536,6 +5537,13 @@ of recent government fiscal activity."""),
 withholding and reserve balance taxes). These foreign balances are swept back to USD
 automatically during the bond investment tick. The government never holds negative balances
 in any currency."""),
+            ("Foreign Land Sale", """In rare circumstances an administrator may trigger a one-time <b style="color:#dde8ff;">Foreign Land Sale</b>
+special event. The federal government sells its <i>entire</i> land reserve — every unclaimed
+government-owned plot, including those sitting in active auctions or the land bank — to a
+foreign sovereign power. The treasury receives <b style="color:#dde8ff;">10% of the estimated land value</b>
+(based on each plot's annual tax × 10), paid in whichever reserve bank currency is worth the
+most at the time. The sold plots are permanently removed from the game world, and the proceeds
+appear in the government ledger as a <span style="color:#dc2626;">Foreign Land Sale</span> event."""),
         ],
     },
     {

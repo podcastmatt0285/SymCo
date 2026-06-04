@@ -24,6 +24,7 @@ EVENT_META = {
     "loan_repayment":      ("Loan Repayment",            "in",  "#34d399"),
     "petrodollar_customs": ("Petrodollar Customs",      "in",  "#38bdf8"),
     "estate_sale":         ("Estate Sale",               "in",  "#a78bfa"),
+    "foreign_land_sale":   ("Foreign Land Sale",         "in",  "#dc2626"),
     "bond_sale":           ("Bond Liquidation",          "in",  "#4ade80"),
     # ── New tax / fee revenue ─────────────────────────────────────────────────
     "federal_sales_tax":   ("Federal Sales Tax",        "in",  "#60a5fa"),

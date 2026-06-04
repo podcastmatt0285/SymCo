@@ -897,22 +897,51 @@ def _execute_foreign_land_sale(ev) -> str:
     10% of their estimated value in the highest-value foreign reserve currency.
     Returns a human-readable summary string for the push notification body.
     """
+    from sqlalchemy import func as _sqlfunc
     from land import LandPlot as _LP, get_db as _ldb
+    from land_market import GovernmentAuction as _GA, LandBank as _LBank
     from reserve_banks import (
         get_db as _rdb, StateReserveBank as _SRB,
         _adjust_currency_balance,
     )
     from govt_ledger import log_gov_event
 
-    # ── 1. Gather and delete all government plots ────────────────────────────
+    # ── 1. Delete all government plots, plus the auction / land-bank rows that
+    #       reference them (they live in the same main DB — land and land_market
+    #       share one engine). Skipping this cleanup would leave dangling
+    #       GovernmentAuction rows that still look biddable on /land-market but
+    #       reference a plot that no longer exists — a win would then crash
+    #       finalize_land_sale.
+    #
+    #       Everything is done with SQL-side aggregates and bulk DELETEs (no ORM
+    #       hydration) so this stays fast even when the reserve holds thousands
+    #       of plots — which is exactly the frozen-economy backlog this event is
+    #       meant to clear.
     land_db = _ldb()
     try:
-        gov_plots = land_db.query(_LP).filter(_LP.is_government_owned == True).all()
-        plot_count  = len(gov_plots)
-        total_value = sum((p.monthly_tax or 0.0) * 12 * 10 for p in gov_plots)
+        _gov = lambda q: q.filter(_LP.is_government_owned == True)  # noqa: E731
+        agg = _gov(land_db.query(
+            _sqlfunc.count(_LP.id),
+            _sqlfunc.coalesce(_sqlfunc.sum(_LP.monthly_tax), 0.0),
+        )).one()
+        plot_count  = int(agg[0] or 0)
+        total_value = float(agg[1] or 0.0) * 12 * 10
         sale_usd    = total_value * 0.10
-        for p in gov_plots:
-            land_db.delete(p)
+
+        auctions_cleared = 0
+        bank_cleared     = 0
+        if plot_count:
+            # Subquery of government plot IDs — Postgres evaluates the DELETE …
+            # WHERE land_plot_id IN (SELECT …) before the plots themselves are
+            # removed, so order matters: clear references first, then the plots.
+            _gov_ids = _gov(land_db.query(_LP.id))
+            auctions_cleared = (land_db.query(_GA)
+                                       .filter(_GA.land_plot_id.in_(_gov_ids))
+                                       .delete(synchronize_session=False))
+            bank_cleared     = (land_db.query(_LBank)
+                                       .filter(_LBank.land_plot_id.in_(_gov_ids))
+                                       .delete(synchronize_session=False))
+            _gov(land_db.query(_LP)).delete(synchronize_session=False)
         land_db.commit()
     finally:
         land_db.close()
@@ -944,7 +973,7 @@ def _execute_foreign_land_sale(ev) -> str:
 
     # ── 4. Log to govt ledger ────────────────────────────────────────────────
     log_gov_event(
-        event_type   = "estate_sale",
+        event_type   = "foreign_land_sale",
         direction    = "in",
         amount       = sale_usd,
         currency     = currency_code,
@@ -957,7 +986,8 @@ def _execute_foreign_land_sale(ev) -> str:
     )
 
     print(
-        f"[Events] foreign_land_sale: {plot_count:,} plots deleted, "
+        f"[Events] foreign_land_sale: {plot_count:,} plots deleted "
+        f"({auctions_cleared} auctions + {bank_cleared} land-bank rows cleared), "
         f"credited {flag} {currency_symbol} {foreign_amount:,.2f} {currency_code} "
         f"(≈ ${sale_usd:,.2f})"
     )
