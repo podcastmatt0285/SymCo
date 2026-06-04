@@ -2768,16 +2768,19 @@ def government_dashboard(
     gov_wsc_balance   = 0.0
     gov_meme_coins    = []
     try:
-        from counties import get_db as _crydb, CryptoWallet as _CW, County as _Cty, get_crypto_price_by_symbol
+        from counties import get_db as _crydb, CryptoWallet as _CW, County as _Cty
         _db = _crydb()
         _cty_map = {c.crypto_symbol: c for c in _db.query(_Cty).all()}
         for w in _db.query(_CW).filter(_CW.player_id == 0, _CW.balance > 0).all():
-            price_usd = 0.0
-            try:
-                price_usd = get_crypto_price_by_symbol(w.crypto_symbol)
-            except Exception:
-                pass
             cty = _cty_map.get(w.crypto_symbol)
+            # Derive price from treasury backing ratio — avoids the expensive
+            # calculate_crypto_price() cascade that queries every city member's
+            # total net worth (N×M DB sessions, catastrophically slow).
+            price_usd = 0.0
+            if cty:
+                _circ = cty.total_crypto_minted - cty.total_crypto_burned
+                if _circ > 0:
+                    price_usd = cty.treasury_balance / _circ
             gov_county_crypto.append({
                 "symbol":    w.crypto_symbol,
                 "name":      cty.crypto_name if cty else w.crypto_symbol,
