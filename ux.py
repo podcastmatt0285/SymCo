@@ -2519,19 +2519,31 @@ def government_dashboard(
         pass
 
     # ── 3. Government-owned land ──────────────────────────────────────────────
+    # Use GROUP BY aggregation rather than fetching every plot row — the game
+    # may have thousands of government-owned plots (all unclaimed land) and we
+    # only need per-terrain counts and tax sums.
     gov_land_total = 0
     gov_land_by_terrain = {}
     gov_land_tax_by_terrain = {}
     gov_land_value_est = 0.0
     try:
         from land import LandPlot as _LP, get_db as _ldb
+        from sqlalchemy import func as _func
         _db = _ldb()
-        for p in _db.query(_LP).filter(_LP.is_government_owned == True).all():
-            gov_land_total += 1
-            t = p.terrain_type
-            gov_land_by_terrain[t] = gov_land_by_terrain.get(t, 0) + 1
-            gov_land_tax_by_terrain[t] = gov_land_tax_by_terrain.get(t, 0) + (p.monthly_tax or 0)
-            gov_land_value_est += (p.monthly_tax or 0) * 12 * 10  # 10× annual tax as rough cap rate
+        for row in (_db.query(
+                _LP.terrain_type,
+                _func.count(_LP.id).label("cnt"),
+                _func.sum(_LP.monthly_tax).label("tax_sum"),
+            )
+            .filter(_LP.is_government_owned == True)
+            .group_by(_LP.terrain_type)
+            .all()
+        ):
+            t = row.terrain_type
+            gov_land_by_terrain[t] = row.cnt
+            gov_land_tax_by_terrain[t] = float(row.tax_sum or 0)
+            gov_land_total += row.cnt
+            gov_land_value_est += float(row.tax_sum or 0) * 12 * 10
         _db.close()
     except Exception:
         pass
@@ -2569,8 +2581,15 @@ def government_dashboard(
         _lm = _lmdb()
         _ld = _ldb()
         try:
-            for auc in _lm.query(_GA).filter(_GA.is_active == True).order_by(_GA.end_time).all():
-                plot = _ld.query(_LP).filter(_LP.id == auc.land_plot_id).first()
+            _active_aucs = _lm.query(_GA).filter(_GA.is_active == True).order_by(_GA.end_time).all()
+            # Batch-load all referenced plots in one query (avoids N+1).
+            _auc_plot_ids = [a.land_plot_id for a in _active_aucs if a.land_plot_id]
+            _auc_plots = {}
+            if _auc_plot_ids:
+                for _p in _ld.query(_LP).filter(_LP.id.in_(_auc_plot_ids)).all():
+                    _auc_plots[_p.id] = _p
+            for auc in _active_aucs:
+                plot = _auc_plots.get(auc.land_plot_id)
                 gov_auctions.append({
                     "id": auc.id,
                     "terrain": plot.terrain_type.replace("_", " ").title() if plot else "Unknown",
