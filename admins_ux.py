@@ -613,13 +613,6 @@ def admin_dashboard(
                 <button type="submit" style="background:#1c1917;border:1px solid #d97706;color:#fcd34d;border-radius:6px;padding:8px 18px;cursor:pointer;font-size:0.82rem;font-weight:600;">🏦 Force Charter Fees</button>
             </form>
         </div>
-        <div style="border-top:1px solid #1e293b;margin-top:12px;padding-top:12px;">
-            <div style="color:#64748b;font-size:0.72rem;margin-bottom:8px;">⚠ Irreversible operations — use only when the economy is frozen</div>
-            <form method="post" action="/api/admin/foreign-land-sale"
-                  onsubmit="return confirm('DELETE all government-owned land plots and credit 10% value to government in the highest-value foreign currency? This cannot be undone.')">
-                <button type="submit" style="background:#1a0a0a;border:1px solid #dc2626;color:#fca5a5;border-radius:6px;padding:8px 18px;cursor:pointer;font-size:0.82rem;font-weight:600;">🌍 Foreign Land Sale (delete all gov plots)</button>
-            </form>
-        </div>
     </div>
 
     <div class="card" style="margin-bottom:12px;">
@@ -4834,6 +4827,7 @@ def admin_events(session_token: Optional[str] = Cookie(None),
         "item_crisis": "#ef4444", "index_challenge": "#38bdf8",
         "crypto_scam": "#fbbf24",
         "land_grant":  "#4ade80",
+        "foreign_land_sale": "#dc2626",
     }
 
     event_cards = ""
@@ -5300,6 +5294,42 @@ def admin_events(session_token: Optional[str] = Cookie(None),
         </div>
     </div>
     {crisis_quick_form}
+    <div class="card" style="margin-bottom:18px;border:2px solid #7f1d1d;background:#0b0202;">
+      <div style="font-size:0.9rem;color:#fca5a5;font-weight:800;margin-bottom:4px;">🌍 Foreign Land Sale (Emergency Reset)</div>
+      <p style="font-size:0.74rem;color:#7c3a3a;margin:0 0 12px;line-height:1.45;">
+        One-time special event — fires immediately when activated. Deletes all government-owned land plots and
+        credits 10% of their estimated value to the government in the highest-value foreign reserve currency.
+        Use to clear a frozen land backlog. Irreversible.
+      </p>
+      <form method="post" action="/admin/events/create">
+        <input type="hidden" name="event_type" value="foreign_land_sale">
+        <input type="hidden" name="duration_class" value="special">
+        <input type="hidden" name="task_metric" value="">
+        <input type="hidden" name="task_target" value="0">
+        <input type="hidden" name="trophy_reward" value="0">
+        <input type="hidden" name="effect_data" value="{{}}">
+        <input type="hidden" name="activate_now" value="1">
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:10px;">
+          <div>
+            <div style="font-size:0.68rem;color:#7c3a3a;margin-bottom:3px;">Event Title</div>
+            <input type="text" name="title" value="Foreign Land Treaty"
+                   style="{_inp}" placeholder="Event title">
+          </div>
+          <div>
+            <div style="font-size:0.68rem;color:#7c3a3a;margin-bottom:3px;">Description (optional)</div>
+            <input type="text" name="description" value="The federal government sells its land reserves to a foreign sovereign power."
+                   style="{_inp}">
+          </div>
+        </div>
+        <button type="submit"
+                onclick="return confirm('This will DELETE all government-owned land plots and is irreversible. Proceed?')"
+                style="background:#7f1d1d;color:#fca5a5;border:1px solid #dc2626;border-radius:4px;
+                       padding:7px 18px;font-size:0.8rem;font-weight:700;cursor:pointer;">
+          🌍 Create &amp; Fire Foreign Land Sale
+        </button>
+      </form>
+    </div>
+
     <div class="card" style="margin-bottom:18px;border:2px solid #065f46;background:#020b08;">
       <div style="font-size:0.9rem;color:#6ee7b7;font-weight:800;margin-bottom:4px;">🌍 Create Federal Development Grant</div>
       <p style="font-size:0.74rem;color:#4d7c6a;margin:0 0 12px;line-height:1.45;">
@@ -5864,109 +5894,3 @@ def admin_land_grant_resolve(
             return RedirectResponse(f"/admin/events?err={urllib.parse.quote(err[:120])}", status_code=303)
     except Exception as e:
         return RedirectResponse(f"/admin/events?err={urllib.parse.quote(str(e)[:120])}", status_code=303)
-
-
-@router.post("/api/admin/foreign-land-sale")
-def admin_foreign_land_sale(session_token: Optional[str] = Cookie(None)):
-    """One-time event: sell all government-owned land to a 'foreign country'.
-
-    - Calculates total estimated value of all government-owned plots
-      (monthly_tax × 12 × 10 per plot, matching the /government page estimate)
-    - Sale price = 10% of that total
-    - Denomination = reserve bank currency with the highest usd_per_unit (most
-      prestigious foreign currency)
-    - Cash credited from nowhere (foreign buyer) directly into the government's
-      currency balance
-    - All government-owned plots are permanently deleted
-    - Event logged to govt_ledger
-    """
-    admin = require_admin(session_token)
-    if isinstance(admin, RedirectResponse):
-        return admin
-
-    try:
-        from land import LandPlot as _LP, get_db as _ldb
-        from reserve_banks import (
-            get_db as _rdb, StateReserveBank as _SRB,
-            _adjust_currency_balance,
-        )
-        from govt_ledger import log_gov_event
-
-        # ── 1. Gather all government plots ──────────────────────────────────
-        land_db = _ldb()
-        try:
-            gov_plots = land_db.query(_LP).filter(_LP.is_government_owned == True).all()
-            if not gov_plots:
-                return RedirectResponse(
-                    f"/admin?error={urllib.parse.quote('No government-owned land plots found.')}",
-                    status_code=303,
-                )
-            plot_count  = len(gov_plots)
-            total_value = sum((p.monthly_tax or 0.0) * 12 * 10 for p in gov_plots)
-            sale_usd    = total_value * 0.10
-
-            # ── 2. Delete every government-owned plot ────────────────────────
-            for p in gov_plots:
-                land_db.delete(p)
-            land_db.commit()
-        finally:
-            land_db.close()
-
-        # ── 3. Find the highest-value reserve currency ───────────────────────
-        res_db = _rdb()
-        try:
-            banks = res_db.query(_SRB).all()
-            # Prefer non-USD foreign currencies; fall back to USD if none
-            foreign = [b for b in banks if b.currency_code != "USD"]
-            best = max(foreign, key=lambda b: b.usd_per_unit) if foreign else (
-                next((b for b in banks if b.currency_code == "USD"), None)
-            )
-            if not best:
-                raise ValueError("No reserve banks configured")
-            currency_code   = best.currency_code
-            usd_per_unit    = best.usd_per_unit or 1.0
-            foreign_amount  = sale_usd / usd_per_unit
-            currency_symbol = best.currency_symbol or currency_code
-            flag            = best.flag_emoji or ""
-
-            # ── 4. Credit government (player_id=0) with foreign currency ────
-            _adjust_currency_balance(res_db, 0, currency_code, foreign_amount)
-            res_db.commit()
-        finally:
-            res_db.close()
-
-        # ── 5. Log the event ─────────────────────────────────────────────────
-        log_gov_event(
-            event_type   = "estate_sale",
-            direction    = "in",
-            amount       = sale_usd,
-            currency     = currency_code,
-            counterparty = "Foreign Sovereign Buyer",
-            description  = (
-                f"Land treaty: {plot_count:,} government plots sold to foreign country "
-                f"for 10% of estimated value ({flag} {currency_symbol} "
-                f"{foreign_amount:,.2f} @ {usd_per_unit:.6f} USD/{currency_code})"
-            ),
-        )
-
-        log_action(
-            admin.id,
-            "foreign_land_sale",
-            None,
-            f"Deleted {plot_count:,} gov plots; credited {flag} {currency_symbol} "
-            f"{foreign_amount:,.2f} {currency_code} (≈ ${sale_usd:,.2f})",
-        )
-
-        msg = (
-            f"Land treaty complete — {plot_count:,} government plots deleted. "
-            f"Government received {flag} {currency_symbol} {foreign_amount:,.2f} "
-            f"{currency_code} (≈ ${sale_usd:,.2f} USD)"
-        )
-        return RedirectResponse(
-            f"/admin?success={urllib.parse.quote(msg)}", status_code=303
-        )
-
-    except Exception as e:
-        return RedirectResponse(
-            f"/admin?error={urllib.parse.quote(str(e)[:200])}", status_code=303
-        )

@@ -890,6 +890,86 @@ def enter_land_grant_event(player_id: int, event_id: int) -> dict:
         db.close()
 
 
+def _execute_foreign_land_sale(ev) -> str:
+    """Fire the foreign_land_sale event effect.
+
+    Deletes all government-owned land plots and credits the government with
+    10% of their estimated value in the highest-value foreign reserve currency.
+    Returns a human-readable summary string for the push notification body.
+    """
+    from land import LandPlot as _LP, get_db as _ldb
+    from reserve_banks import (
+        get_db as _rdb, StateReserveBank as _SRB,
+        _adjust_currency_balance,
+    )
+    from govt_ledger import log_gov_event
+
+    # ── 1. Gather and delete all government plots ────────────────────────────
+    land_db = _ldb()
+    try:
+        gov_plots = land_db.query(_LP).filter(_LP.is_government_owned == True).all()
+        plot_count  = len(gov_plots)
+        total_value = sum((p.monthly_tax or 0.0) * 12 * 10 for p in gov_plots)
+        sale_usd    = total_value * 0.10
+        for p in gov_plots:
+            land_db.delete(p)
+        land_db.commit()
+    finally:
+        land_db.close()
+
+    if plot_count == 0:
+        return "The government land treaty was signed, but there were no plots to transfer."
+
+    # ── 2. Find the highest-value foreign reserve currency ───────────────────
+    res_db = _rdb()
+    try:
+        banks = res_db.query(_SRB).all()
+        foreign = [b for b in banks if b.currency_code != "USD"]
+        best = max(foreign, key=lambda b: b.usd_per_unit) if foreign else (
+            next((b for b in banks if b.currency_code == "USD"), None)
+        )
+        if not best:
+            raise ValueError("No reserve banks found")
+        currency_code   = best.currency_code
+        usd_per_unit    = best.usd_per_unit or 1.0
+        foreign_amount  = sale_usd / usd_per_unit
+        currency_symbol = best.currency_symbol or currency_code
+        flag            = best.flag_emoji or ""
+
+        # ── 3. Credit government (player_id=0) ──────────────────────────────
+        _adjust_currency_balance(res_db, 0, currency_code, foreign_amount)
+        res_db.commit()
+    finally:
+        res_db.close()
+
+    # ── 4. Log to govt ledger ────────────────────────────────────────────────
+    log_gov_event(
+        event_type   = "estate_sale",
+        direction    = "in",
+        amount       = sale_usd,
+        currency     = currency_code,
+        counterparty = "Foreign Sovereign Buyer",
+        description  = (
+            f"Land treaty (event: {ev.title}): {plot_count:,} plots sold, "
+            f"10% value = {flag} {currency_symbol} {foreign_amount:,.2f} "
+            f"@ {usd_per_unit:.6f} USD/{currency_code}"
+        ),
+    )
+
+    print(
+        f"[Events] foreign_land_sale: {plot_count:,} plots deleted, "
+        f"credited {flag} {currency_symbol} {foreign_amount:,.2f} {currency_code} "
+        f"(≈ ${sale_usd:,.2f})"
+    )
+
+    return (
+        f"The federal government has sold its land reserves to a foreign power. "
+        f"{plot_count:,} plots transferred. Government received "
+        f"{flag} {currency_symbol} {foreign_amount:,.2f} {currency_code} "
+        f"(≈ ${sale_usd:,.2f} USD)."
+    )
+
+
 def resolve_land_grant_event(event_id: int) -> dict:
     """Score entries, assign tiers, transfer plots, notify all entrants."""
     db = SessionLocal()
@@ -1199,6 +1279,13 @@ def _on_event_live(event_id: int):
                 except Exception:
                     pass
                 invalidate_effects_cache()
+            elif ev.event_type == "foreign_land_sale":
+                try:
+                    _fls_result = _execute_foreign_land_sale(ev)
+                    body = _fls_result
+                except Exception as _fls_e:
+                    print(f"[Events] foreign_land_sale error: {_fls_e}")
+                    body = "The government has concluded a foreign land treaty."
     except Exception as e:
         print(f"[Events] _on_event_live DB error: {e}")
     finally:
