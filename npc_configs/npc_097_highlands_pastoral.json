@@ -1,0 +1,87 @@
+{
+  "player_id": -2097,
+  "business_name": "Highlands Pastoral Co.",
+  "description": "Vertically integrated sheep and lamb meat operation. Three prairie pastures grow grass for fodder; four paddocks raise merino, corriedale, and suffolk sheep using border collies from the market; four meat-processing plants convert the flock to lamb meat. Sells everything it produces — no hoarding.",
+  "cash_caps": {
+    "hard_high": 30000000,
+    "soft_high": 12000000,
+    "soft_low": 3000000,
+    "hard_low": 1000000
+  },
+  "seed": {
+    "starting_cash": 6000000,
+    "land_plots": [
+      { "terrain_type": "prairie", "proximity_features": ["oasis"],  "size": 1 },
+      { "terrain_type": "prairie", "proximity_features": ["oasis"],  "size": 1 },
+      { "terrain_type": "prairie", "proximity_features": ["oasis"],  "size": 1 },
+      { "terrain_type": "prairie", "proximity_features": ["remote"], "size": 1 },
+      { "terrain_type": "prairie", "proximity_features": ["remote"], "size": 1 },
+      { "terrain_type": "prairie", "proximity_features": ["remote"], "size": 1 },
+      { "terrain_type": "prairie", "proximity_features": ["remote"], "size": 1 },
+      { "terrain_type": "prairie", "proximity_features": ["road"],   "size": 1 },
+      { "terrain_type": "prairie", "proximity_features": ["road"],   "size": 1 },
+      { "terrain_type": "prairie", "proximity_features": ["road"],   "size": 1 },
+      { "terrain_type": "prairie", "proximity_features": ["road"],   "size": 1 }
+    ],
+    "districts": []
+  },
+  "businesses": [
+    { "business_type": "free_range_pasture", "district_id": null, "active_lines": ["grass"] },
+    { "business_type": "free_range_pasture", "district_id": null, "active_lines": ["grass"] },
+    { "business_type": "free_range_pasture", "district_id": null, "active_lines": ["grass"] },
+    { "business_type": "paddock",            "district_id": null, "active_lines": ["merino", "corriedale", "suffolk_sheep"] },
+    { "business_type": "paddock",            "district_id": null, "active_lines": ["merino", "corriedale", "suffolk_sheep"] },
+    { "business_type": "paddock",            "district_id": null, "active_lines": ["merino", "corriedale", "suffolk_sheep"] },
+    { "business_type": "paddock",            "district_id": null, "active_lines": ["merino", "corriedale", "suffolk_sheep"] },
+    { "business_type": "meat_processing",    "district_id": null, "active_lines": ["lamb_meat"] },
+    { "business_type": "meat_processing",    "district_id": null, "active_lines": ["lamb_meat"] },
+    { "business_type": "meat_processing",    "district_id": null, "active_lines": ["lamb_meat"] },
+    { "business_type": "meat_processing",    "district_id": null, "active_lines": ["lamb_meat"] }
+  ],
+  "buy_items": {
+    "water": {
+      "target_inventory": 150000,
+      "reorder_at": 35000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "grass": {
+      "target_inventory": 20000,
+      "reorder_at": 5000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "lettuce": {
+      "target_inventory": 6000,
+      "reorder_at": 1500,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "border_collie": {
+      "target_inventory": 120,
+      "reorder_at": 25,
+      "max_price_multiplier": 1.2,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 60000,
+      "reorder_at": 15000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 6000,
+      "reorder_at": 1500,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    }
+  },
+  "sell_items": {
+    "lamb_meat": { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" }
+  },
+  "ipo": {
+    "ticker": "HPCO",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
+  }
+}
