@@ -296,6 +296,15 @@ def create_district_page(session_token: Optional[str] = Cookie(None)):
         plots = get_player_land(player.id)
         next_cost = get_next_merge_cost(player.id)
         plots_required = get_plots_required(player.id)
+
+        # Use real spending power (USD-equivalent of the player's legal-tender or USD
+        # balance, whichever the merge spend can draw from) so the displayed balance
+        # matches what can_afford_usd() will actually allow. For a non-USD player this
+        # is their tender balance — get_usd_balance() alone would read the empty USD
+        # row and wrongly show 0. This also migrates any legacy cash_balance into the
+        # reserve system, so funds that never migrated become immediately spendable.
+        from reserve_banks import get_spendable_usd
+        real_balance = get_spendable_usd(player.id)
         
         # Group plots by terrain type (only occupied plots)
         occupied_plots = [p for p in plots if p.occupied_by_business_id]
@@ -322,7 +331,7 @@ def create_district_page(session_token: Optional[str] = Cookie(None)):
                 </div>
                 <div>
                     <div style="color: #64748b; font-size: 0.8rem;">YOUR BALANCE</div>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: {"#22c55e" if player.cash_balance >= next_cost else "#ef4444"};">{fmt_usd(player.cash_balance, disp, precision=0)}</div>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: {"#22c55e" if real_balance >= next_cost else "#ef4444"};">{fmt_usd(real_balance, disp, precision=0)}</div>
                 </div>
             </div>
             <div style="margin-top: 16px; padding: 12px; background: #020617; border-left: 3px solid #64748b;">

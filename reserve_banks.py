@@ -1901,32 +1901,82 @@ def get_usd_balance(player_id: int) -> float:
 
     # Fallback: if PCB says $0, check whether the legacy players.cash_balance column
     # still exists in the auth DB. If it has a non-zero value, rescue it now.
+    #
+    # The legacy column is zeroed ATOMICALLY (row-locked) before the funds are
+    # credited to the reserve system, so the rescue can fire at most once. This is
+    # essential for non-USD tender players: credit_usd() converts the rescued USD
+    # into their own currency, leaving the USD PCB row at 0 — without zeroing the
+    # legacy column, every subsequent call here would re-rescue and duplicate money.
     if pcb_balance == 0.0:
         try:
             from database import engine as auth_engine
             from sqlalchemy import text
-            with auth_engine.connect() as conn:
+            rescued = 0.0
+            with auth_engine.begin() as conn:   # transaction → atomic claim
                 col = conn.execute(text(
                     "SELECT 1 FROM information_schema.columns "
                     "WHERE table_name='players' AND column_name='cash_balance' LIMIT 1"
                 )).fetchone()
                 if col:
-                    legacy = conn.execute(text(
-                        "SELECT cash_balance FROM players WHERE id = :pid"
+                    locked = conn.execute(text(
+                        "SELECT cash_balance FROM players WHERE id = :pid FOR UPDATE"
                     ), {"pid": player_id}).fetchone()
-                    if legacy and legacy[0] and float(legacy[0]) > 0:
-                        rescued = float(legacy[0])
-                        credit_usd(player_id, rescued)
-                        print(f"[ReserveBanks] Rescued ${rescued:,.4f} legacy USD for player {player_id}")
-                        return rescued
-        except Exception:
-            pass
+                    if locked and locked[0] and float(locked[0]) > 0:
+                        rescued = float(locked[0])
+                        conn.execute(text(
+                            "UPDATE players SET cash_balance = 0 WHERE id = :pid"
+                        ), {"pid": player_id})
+            # Legacy column is now zeroed and committed; credit the reserve system.
+            if rescued > 0:
+                credit_usd(player_id, rescued)
+                print(f"[ReserveBanks] Rescued ${rescued:,.4f} legacy USD for player {player_id} "
+                      f"(legacy cash_balance zeroed)")
+                return rescued
+        except Exception as e:
+            print(f"[ReserveBanks] Legacy rescue failed for player {player_id}: {e}")
 
     return pcb_balance
 
 
 # Alias used by reserve_banks_ux
 get_player_usd_pcb_balance = get_usd_balance
+
+
+def get_spendable_usd(player_id: int) -> float:
+    """Best single-purchase spending power expressed in USD.
+
+    Mirrors can_afford_usd(): a USD-denominated cost can be paid from the player's
+    legal-tender balance OR their USD balance, whichever covers it. Returns the
+    larger of (tender balance → USD) and (USD balance), so callers can display a
+    balance that matches what the spend check will actually allow.
+
+    Also triggers the one-time legacy cash_balance rescue (via get_usd_balance),
+    so a player whose funds never migrated sees — and can spend — their real money.
+    """
+    get_usd_balance(player_id)  # one-time legacy rescue into the reserve system
+    tender = get_player_legal_tender(player_id)
+    db = get_db()
+    try:
+        usd_row = db.query(PlayerCurrencyBalance).filter(
+            PlayerCurrencyBalance.player_id     == player_id,
+            PlayerCurrencyBalance.currency_code == "USD",
+        ).first()
+        usd_bal = float(usd_row.balance) if usd_row else 0.0
+        if tender == "USD":
+            return usd_bal
+        bank = db.query(StateReserveBank).filter(
+            StateReserveBank.currency_code == tender
+        ).first()
+        if not bank:
+            return usd_bal
+        tender_row = db.query(PlayerCurrencyBalance).filter(
+            PlayerCurrencyBalance.player_id     == player_id,
+            PlayerCurrencyBalance.currency_code == tender,
+        ).first()
+        tender_usd = (float(tender_row.balance) * bank.usd_per_unit) if tender_row else 0.0
+        return max(tender_usd, usd_bal)
+    finally:
+        db.close()
 
 
 def credit_usd(player_id: int, amount: float):

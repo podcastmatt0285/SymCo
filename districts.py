@@ -391,8 +391,13 @@ def create_district(
     # Get player and check cash
     player = db.query(Player).filter(Player.id == player_id).first()
     merge_cost = get_next_merge_cost(player_id)
-    
-    from reserve_banks import can_afford_usd, spend_player_funds
+
+    from reserve_banks import can_afford_usd, spend_player_funds, get_usd_balance
+    # Migrate any legacy auth-DB cash_balance into the reserve system first, so the
+    # affordability check sees the player's real spendable funds (the header balance
+    # is derived from the legacy column, which can otherwise diverge from the
+    # PlayerCurrencyBalance the spend actually draws from).
+    get_usd_balance(player.id)
     if not can_afford_usd(player.id, merge_cost):
         db.close()
         return None, f"Insufficient funds. District merge costs ${merge_cost:,.2f}"
