@@ -2835,6 +2835,21 @@ def admin_landbank(session_token: Optional[str] = Cookie(None), msg: Optional[st
     <h2 style="font-size:0.9rem;margin-bottom:10px;">Land Bank ({len(entries)}/100 slots)</h2>
     {_flash(msg=msg, err=err)}
     <div class="card">
+        <h3>Clear Expired Auctions</h3>
+        <p style="font-size:0.7rem;color:#64748b;margin-bottom:8px;">
+            Deactivates every government auction whose end time has already passed but whose
+            <code>is_active</code> flag was never cleared (happens when the tick loop was down).
+            Plots are NOT deleted — they remain government-owned and re-enter the auction cycle
+            on the next tick. Use <em>Delete</em> in the Plots in Bank table below to remove
+            individual plots entirely.
+        </p>
+        <form method="post" action="/admin/landbank/clear-expired">
+            <button type="submit" class="btn btn-red" onclick="return confirm('Deactivate all expired auctions?')">
+                Clear Expired Auctions
+            </button>
+        </form>
+    </div>
+    <div class="card">
         <h3>Add Plot to Land Bank</h3>
         <p style="font-size:0.7rem;color:#64748b;margin-bottom:8px;">Creates a new government-owned plot and adds it to the land bank.</p>
         <form method="post" action="/admin/landbank/add">
@@ -2880,6 +2895,29 @@ def post_landbank_remove(session_token: Optional[str] = Cookie(None), land_plot_
         action = "Deleted" if do_delete else "Removed"
         return RedirectResponse(url=f"/admin/landbank?msg={action}+plot+%23{land_plot_id}", status_code=303)
     return RedirectResponse(url=f"/admin/landbank?err={result['error']}", status_code=303)
+
+
+@router.post("/admin/landbank/clear-expired")
+def post_landbank_clear_expired(session_token: Optional[str] = Cookie(None)):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    try:
+        from land_market import GovernmentAuction, get_db as _lmdb
+        from datetime import datetime as _dt
+        db = _lmdb()
+        try:
+            cleared = (db.query(GovernmentAuction)
+                         .filter(GovernmentAuction.is_active == True,
+                                 GovernmentAuction.end_time < _dt.utcnow())
+                         .update({"is_active": False}, synchronize_session=False))
+            db.commit()
+        finally:
+            db.close()
+        print(f"[Admin] {admin.business_name} cleared {cleared} expired government auction(s)")
+        return RedirectResponse(url=f"/admin/landbank?msg=Cleared+{cleared}+expired+auction(s)", status_code=303)
+    except Exception as e:
+        return RedirectResponse(url=f"/admin/landbank?err={str(e)[:120]}", status_code=303)
 
 
 # ==========================

@@ -2104,23 +2104,32 @@ def _tutorials_tab(player) -> str:
 # ── Notifications tab ─────────────────────────────────────────────────────────
 
 def _notifications_tab(player, from_tutorial: bool = False) -> str:
-    # Notification features require either a CCO exec with p2p_notification OR an active FCC licence
+    # Notification features require either a CCO exec with p2p_notification OR an active FCC licence.
+    # Admins always bypass this gate — they own the server and shouldn't need to hire an exec to
+    # configure push on their own account.
     has_cco = False
     rental_expires = None   # datetime (UTC) if rental is active
     try:
-        from executive import player_has_cco, get_db as _exec_db
-        _edb = _exec_db()
-        has_cco = player_has_cco(_edb, player.id)
-        _edb.close()
-        # Separately check rental expiry for display
-        expires_raw = getattr(player, "cco_rental_expires", None)
-        if expires_raw:
-            from datetime import datetime
-            if expires_raw > datetime.utcnow():
-                rental_expires = expires_raw
-    except Exception as e:
-        import logging
-        logging.getLogger(__name__).exception("has_cco check failed for player %s: %s", getattr(player, 'id', '?'), e)
+        from admins import is_admin as _is_admin
+        if _is_admin(player.id):
+            has_cco = True
+    except Exception:
+        pass
+    if not has_cco:
+        try:
+            from executive import player_has_cco, get_db as _exec_db
+            _edb = _exec_db()
+            has_cco = player_has_cco(_edb, player.id)
+            _edb.close()
+            # Separately check rental expiry for display
+            expires_raw = getattr(player, "cco_rental_expires", None)
+            if expires_raw:
+                from datetime import datetime
+                if expires_raw > datetime.utcnow():
+                    rental_expires = expires_raw
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).exception("has_cco check failed for player %s: %s", getattr(player, 'id', '?'), e)
 
     # Display-currency formatting for rental prices
     from reserve_banks import get_player_display_currency, fmt_usd as _fmt
