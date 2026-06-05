@@ -434,7 +434,8 @@ def execute_trade(db, buy_order: DistrictMarketOrder, sell_order: DistrictMarket
             return
         # Federal sales tax: 2.02% of trade value, buyer pays to federal government
         _federal_tax = round(total_cost * 0.0202, 6)
-        if _federal_tax > 0 and buy_order.player_id > 0:
+        # player_id == 0 is the government itself; all others (players + NPCs) pay.
+        if _federal_tax > 0 and buy_order.player_id != 0:
             try:
                 from reserve_banks import GOVERNMENT_PLAYER_ID as _GOV_ID, credit_usd as _credit_usd
                 _fed_ok, _ = spend_player_funds(buy_order.player_id, _federal_tax)
