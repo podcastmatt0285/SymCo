@@ -436,11 +436,13 @@ def load_modules():
 async def tick_loop():
     """Global tick loop executing every second."""
     global current_tick
+    import time as _time
     while True:
         current_tick += 1
         now = datetime.utcnow()
         for name, module in modules.items():
             if hasattr(module, 'tick'):
+                _t0 = _time.monotonic()
                 try:
                     tick_fn = module.tick
                     if asyncio.iscoroutinefunction(tick_fn):
@@ -449,6 +451,11 @@ async def tick_loop():
                         await run_in_threadpool(tick_fn, current_tick, now)
                 except Exception as e:
                     print(f"[Tick {current_tick}] ERROR in {name}: {e}")
+                # Warn if a single module monopolises the tick — early signal of a
+                # freeze before it starves the whole game loop.
+                _elapsed = _time.monotonic() - _t0
+                if _elapsed > 4.0:
+                    print(f"[Tick {current_tick}] SLOW module '{name}': {_elapsed:.1f}s")
 
         if current_tick % 60 == 0:
             print(f"[Tick {current_tick}] {now.isoformat()}")

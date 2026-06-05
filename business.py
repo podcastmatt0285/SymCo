@@ -20,6 +20,8 @@ def _fire_business_push(player_id: int, biz_id: int, issue_key: str,
                          title: str, body: str) -> None:
     """Send a push notification for a business issue, rate-limited to once per 6 hours.
     Rate limit is persisted in DB so it survives server restarts."""
+    if player_id <= 0:
+        return  # NPCs have no push subscribers
     from push_ux import push_rate_ok, push_rate_mark
     db_key = f"biz-{biz_id}-{issue_key}"
     if not push_rate_ok(db_key, _BIZ_PUSH_COOLDOWN):
@@ -285,10 +287,8 @@ def get_dismantling_status(business_id: int):
 # ==========================
 # FIXED process_business_tick FUNCTION
 # ==========================
-# Replace the process_business_tick function in business.py with this corrected version
-
 def process_business_tick(db):
-    from inventory import add_item, remove_item, get_player_inventory
+    from inventory import InventoryItem
     from land import LandPlot
     from auth import Player
     import market
@@ -302,14 +302,80 @@ def process_business_tick(db):
         _crisis_factors = _get_crisis_factors()
     except Exception:
         _crisis_factors = {}
-    
+
+    # Batch-load data needed in every iteration to eliminate N+1 query patterns.
+    busy_biz_ids = {s.business_id for s in db.query(BusinessSale.business_id).all()}
+    _city_buffs_cache: dict = {}  # owner_id → buffs dict, populated lazily per owner
+
     active_biz = db.query(Business).filter(Business.is_active == True).all()
+
+    # Pre-load all players, plots, and inventory in 4 queries instead of N per business.
+    _all_owner_ids = {b.owner_id for b in active_biz}
+    _players_by_id = {p.id: p for p in db.query(Player).filter(Player.id.in_(_all_owner_ids)).all()}
+    _plot_ids = [b.land_plot_id for b in active_biz if b.land_plot_id and not b.district_id]
+    _plots_by_id = {p.id: p for p in (db.query(LandPlot).filter(LandPlot.id.in_(_plot_ids)).all() if _plot_ids else [])}
+
+    # Pre-load ALL inventory as ORM objects — update in-place, commit once at end.
+    _inv_objs: dict = {}  # (player_id, item_type) → InventoryItem ORM object
+    _inv_qty: dict = {}   # player_id → {item_type: float}  (in-memory view)
+    for _ii in db.query(InventoryItem).filter(InventoryItem.player_id.in_(list(_all_owner_ids))).all():
+        _inv_objs[(_ii.player_id, _ii.item_type)] = _ii
+        if _ii.quantity > 0:
+            _inv_qty.setdefault(_ii.player_id, {})[_ii.item_type] = _ii.quantity
+
+    def _inv_add(pid, itype, qty):
+        if qty <= 0:
+            return
+        key = (pid, itype)
+        if key in _inv_objs:
+            _inv_objs[key].quantity += qty
+        else:
+            new_obj = InventoryItem(player_id=pid, item_type=itype, quantity=qty)
+            db.add(new_obj)
+            _inv_objs[key] = new_obj
+        _inv_qty.setdefault(pid, {})[itype] = _inv_qty.get(pid, {}).get(itype, 0) + qty
+
+    def _inv_remove(pid, itype, qty) -> bool:
+        if qty <= 0:
+            return True
+        current = _inv_qty.get(pid, {}).get(itype, 0)
+        if current < qty:
+            return False
+        key = (pid, itype)
+        if key in _inv_objs:
+            _inv_objs[key].quantity -= qty
+        _inv_qty.setdefault(pid, {})[itype] = current - qty
+        return True
+
+    # Keep one brokerage session open for the whole tick to avoid 300 open/close cycles.
+    _brok_db = None
+    _brok_shares: dict = {}  # owner_id → CompanyShares (live objects in _brok_db)
+    try:
+        from banks.brokerage_firm import SessionLocal as _BrokDB2, CompanyShares as _CS2
+        _brok_db = _BrokDB2()
+        _brok_rows = _brok_db.query(_CS2).filter(
+            _CS2.founder_id.in_(list(_all_owner_ids)),
+            _CS2.is_delisted == False,
+            _CS2.share_class_label == "main",
+        ).all()
+        for _r in _brok_rows:
+            _brok_shares[_r.founder_id] = _r
+    except Exception:
+        if _brok_db:
+            try:
+                _brok_db.close()
+            except Exception:
+                pass
+        _brok_db = None
+
+    # Accumulate revenue credits per player — flush in batch after the loop.
+    _pending_credits: dict = {}  # player_id → total founder_credit
+
     for biz in active_biz:
         try:
-            sale = db.query(BusinessSale).filter(BusinessSale.business_id == biz.id).first()
-            if sale:
+            if biz.id in busy_biz_ids:
                 continue
-        
+
             # Check if this is a district business and load appropriate config.
             # Tutorial-reward businesses live on a land plot (not a District object) but
             # use district business types, so they also load from district_businesses.json.
@@ -318,12 +384,14 @@ def process_business_tick(db):
                 config = district_business_types.get(biz.business_type, {})
             else:
                 config = BUSINESS_TYPES.get(biz.business_type, {})
-        
+
             cycles = config.get("cycles_to_complete", 1)
             # Apply city cycle-speed buff (reduces effective cycles_to_complete)
             try:
                 from city_projects import get_city_production_buffs as _gcpb
-                _cs_mult = _gcpb(biz.owner_id).get("cycle_speed_multiplier", 1.0)
+                if biz.owner_id not in _city_buffs_cache:
+                    _city_buffs_cache[biz.owner_id] = _gcpb(biz.owner_id)
+                _cs_mult = _city_buffs_cache[biz.owner_id].get("cycle_speed_multiplier", 1.0)
                 cycles = max(1, int(cycles * _cs_mult))
             except Exception:
                 pass
@@ -332,15 +400,15 @@ def process_business_tick(db):
 
             if biz.progress_ticks < cycles:
                 continue
-            
-            player = db.query(Player).filter(Player.id == biz.owner_id).first()
-        
+
+            player = _players_by_id.get(biz.owner_id)
+
             # FIXED: For district businesses, skip plot lookup
             if biz.district_id:
                 # District businesses don't have plots, use default efficiency
                 eff_multiplier = 1.0
             else:
-                plot = db.query(LandPlot).filter(LandPlot.id == biz.land_plot_id).first()
+                plot = _plots_by_id.get(biz.land_plot_id)
                 if not plot:
                     continue
                 eff_multiplier = max(0.005, min(1.0, plot.efficiency / 100.0))
@@ -372,8 +440,7 @@ def process_business_tick(db):
             _city_wage_mult = 1.0
             _city_input_mult = 1.0
             try:
-                from city_projects import get_city_production_buffs
-                _city_buffs = get_city_production_buffs(biz.owner_id)
+                _city_buffs = _city_buffs_cache[biz.owner_id]
                 _city_output_mult = _city_buffs.get("output_multiplier", 1.0)
                 _city_wage_mult   = _city_buffs.get("wage_multiplier",   1.0)
                 _city_input_mult  = _city_buffs.get("input_multiplier",  1.0)
@@ -392,14 +459,16 @@ def process_business_tick(db):
 
             if wage_cost > 0:
                 wage_cost *= _city_wage_mult
-                from reserve_banks import can_afford_usd
-                if not can_afford_usd(player.id, wage_cost):
-                    biz_name = config.get("name", biz.business_type)
-                    _fire_business_push(player.id, biz.id, "wages",
-                        biz_name, f"Can't afford wages — ${wage_cost:,.0f} needed to keep running")
-                    continue
+                # NPCs always assumed to have funds — skip the per-business DB check.
+                if player.id > 0:
+                    from reserve_banks import can_afford_usd
+                    if not can_afford_usd(player.id, wage_cost):
+                        biz_name = config.get("name", biz.business_type)
+                        _fire_business_push(player.id, biz.id, "wages",
+                            biz_name, f"Can't afford wages — ${wage_cost:,.0f} needed to keep running")
+                        continue
 
-            player_inv = get_player_inventory(player.id)
+            player_inv = dict(_inv_qty.get(player.id, {}))
             lines_successfully_produced = 0
             total_revenue = 0.0
             has_retail = bool(config.get("products"))
@@ -444,7 +513,7 @@ def process_business_tick(db):
 
                     sold = sum(1 for _ in range(int(qty)) if random.random() < chance)
                     if sold > 0:
-                        remove_item(player.id, item, sold)
+                        _inv_remove(player.id, item, sold)
                         total_revenue += sold * current_p
                         lines_successfully_produced += 1
 
@@ -473,7 +542,7 @@ def process_business_tick(db):
 
                 if line_can_run:
                     for req in effective_inputs:
-                        remove_item(player.id, req["item"], req["quantity"])
+                        _inv_remove(player.id, req["item"], req["quantity"])
                         # Log resource consumption
                         log_transaction(
                             biz.owner_id,
@@ -484,28 +553,30 @@ def process_business_tick(db):
                             str(biz.id)
                         )
                         player_inv[req["item"]] -= req["quantity"]
-                        # Reduce WMA qty_basis for consumed inputs
-                        try:
-                            from wma import consume_wma
-                            consume_wma(player.id, req["item"], req["quantity"])
-                        except Exception:
-                            pass
+                        # Reduce WMA qty_basis for consumed inputs (players only — NPCs don't need cost tracking)
+                        if player.id > 0:
+                            try:
+                                from wma import consume_wma
+                                consume_wma(player.id, req["item"], req["quantity"])
+                            except Exception:
+                                pass
                     # Apply city project output multiplier + global event bonus + per-item crisis reduction
                     _item_crisis_f = _crisis_factors.get(line.get("output_item", ""), 1.0)
                     effective_output_qty = max(1, round(
                         line["output_qty"] * _city_output_mult * _ev_prod_factor
                         * _item_crisis_f * _exec_prod_mult
                     ))
-                    add_item(player.id, line["output_item"], effective_output_qty)
-                    # Update WMA cost basis for the newly produced output
-                    try:
-                        from wma import compute_production_cost_basis, update_wma
-                        _cb = compute_production_cost_basis(player.id, config, line)
-                        if _cb["unit_cost"] > 0:
-                            update_wma(player.id, line["output_item"],
-                                       effective_output_qty, _cb["unit_cost"])
-                    except Exception as _wma_e:
-                        print(f"[Business] WMA update error: {_wma_e}")
+                    _inv_add(player.id, line["output_item"], effective_output_qty)
+                    # Update WMA cost basis for the newly produced output (players only)
+                    if player.id > 0:
+                        try:
+                            from wma import compute_production_cost_basis, update_wma
+                            _cb = compute_production_cost_basis(player.id, config, line)
+                            if _cb["unit_cost"] > 0:
+                                update_wma(player.id, line["output_item"],
+                                           effective_output_qty, _cb["unit_cost"])
+                        except Exception as _wma_e:
+                            print(f"[Business] WMA update error: {_wma_e}")
                     # Log resource production — tag crisis in description when active
                     _prod_log_desc = f"Produced {effective_output_qty} {line['output_item']}"
                     if _item_crisis_f < 1.0:
@@ -527,8 +598,8 @@ def process_business_tick(db):
             _active_prod_set = set(config.get("products", {}).keys()) - paused_product_keys
             should_finalize = (has_retail and bool(_active_prod_set)) or lines_successfully_produced > 0
             if should_finalize:
-                # Pay city production subsidy on any production that ran
-                if production_lines and lines_successfully_produced > 0:
+                # Pay city production subsidy on any production that ran (players in cities only)
+                if production_lines and lines_successfully_produced > 0 and player.id > 0:
                     try:
                         from cities import pay_production_subsidy
                         production_cost = 0.0
@@ -574,41 +645,23 @@ def process_business_tick(db):
                 # ── Profit siphon: divert a % into the company's dividend escrow ──
                 siphon_amount = 0.0
                 try:
-                    from banks.brokerage_firm import SessionLocal as _BrokDB, CompanyShares as _CS
-                    _bdb = _BrokDB()
-                    try:
-                        _cs = _bdb.query(_CS).filter(
-                            _CS.founder_id == player.id,
-                            _CS.is_delisted == False,
-                            _CS.profit_siphon_rate > 0,
-                            _CS.share_class_label == "main",
-                        ).first()
-                        if _cs and _cs.profit_siphon_rate and net_revenue > 0:
+                    _cs = _brok_shares.get(player.id)
+                    if _cs and net_revenue > 0:
+                        _cs.revenue_7d  = (_cs.revenue_7d  or 0.0) + net_revenue
+                        _cs.revenue_30d = (_cs.revenue_30d or 0.0) + net_revenue
+                        if _cs.profit_siphon_rate:
                             siphon_amount = net_revenue * _cs.profit_siphon_rate
                             _cs.dividend_escrow_balance = (_cs.dividend_escrow_balance or 0.0) + siphon_amount
-                            _cs.revenue_7d  = (_cs.revenue_7d  or 0.0) + net_revenue
-                            _cs.revenue_30d = (_cs.revenue_30d or 0.0) + net_revenue
-                            _bdb.commit()
-                        elif _cs:
-                            _cs.revenue_7d  = (_cs.revenue_7d  or 0.0) + net_revenue
-                            _cs.revenue_30d = (_cs.revenue_30d or 0.0) + net_revenue
-                            _bdb.commit()
-                    finally:
-                        _bdb.close()
                 except Exception:
                     pass
 
                 founder_credit = net_revenue - siphon_amount
-                # Route income through the reserve bank so JPY (and other legal-
-                # tender) players receive their earnings in their chosen currency.
-                try:
-                    from reserve_banks import convert_to_legal_tender
-                    convert_to_legal_tender(player.id, founder_credit)
-                except Exception:
-                    from reserve_banks import credit_usd
-                    credit_usd(player.id, founder_credit)
+                # Accumulate revenue — credited in bulk after the loop to avoid
+                # one DB session per business.
+                if founder_credit > 0:
+                    _pending_credits[player.id] = _pending_credits.get(player.id, 0.0) + founder_credit
                 biz.progress_ticks = 0
-                db.commit()
+                # Do NOT commit here — batch commit at end of loop is more efficient.
                 if wage_cost > 0:
                     try:
                         log_transaction(
@@ -634,12 +687,45 @@ def process_business_tick(db):
                     except Exception as _lt_e:
                         print(f"[Business] retail log error biz {biz.id}: {_lt_e}")
         except Exception as _biz_tick_e:
-            # Isolate each business: one bad row must never abort the whole
-            # production pass (which would also block dismantling downstream).
+            # Log the error but do NOT rollback — other businesses in this tick
+            # have already modified the session (inventory, progress_ticks) and
+            # rolling back would undo all of them.
             print(f"[Business] tick error for biz {getattr(biz, 'id', '?')} "
                   f"({getattr(biz, 'business_type', '?')}): {_biz_tick_e}")
+
+    # Persist any progress_ticks and inventory increments not yet committed.
+    try:
+        db.commit()
+    except Exception:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+
+    # Flush accumulated revenue credits (one call per unique player instead of per business).
+    if _pending_credits:
+        from reserve_banks import convert_to_legal_tender, credit_usd
+        for _pid, _amt in _pending_credits.items():
             try:
-                db.rollback()
+                convert_to_legal_tender(_pid, _amt)
+            except Exception:
+                try:
+                    credit_usd(_pid, _amt)
+                except Exception:
+                    pass
+
+    # Commit brokerage revenue/escrow updates and close the shared session.
+    if _brok_db is not None:
+        try:
+            _brok_db.commit()
+        except Exception:
+            try:
+                _brok_db.rollback()
+            except Exception:
+                pass
+        finally:
+            try:
+                _brok_db.close()
             except Exception:
                 pass
 
