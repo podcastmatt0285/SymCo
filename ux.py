@@ -24,6 +24,33 @@ from skin_utils import skin_links as _skin_links
 router = APIRouter()
 
 # ==========================
+# TTL CACHE for expensive, slow-changing aggregates
+# ==========================
+# A few dashboard sections scan very large tables. The worst offender is the
+# government land aggregate: the government owns ALL unclaimed land, so that
+# query touches essentially the entire plots table — and previously it ran on
+# every single /government page load, pegging the DB and crashing the game
+# under load. These figures barely change second-to-second, so we compute them
+# at most once per TTL window and serve the cached result in between. A cache
+# hit does ZERO database work.
+import time as _time
+
+_TTL_CACHE: dict = {}
+
+def _cached(key: str, ttl_seconds: float, producer):
+    """Return a cached value for `key`, recomputing via `producer()` only when
+    the entry is missing or older than `ttl_seconds`. Any producer exception
+    propagates to the caller (which is expected to guard it)."""
+    now = _time.monotonic()
+    hit = _TTL_CACHE.get(key)
+    if hit is not None and (now - hit[0]) < ttl_seconds:
+        return hit[1]
+    value = producer()
+    _TTL_CACHE[key] = (now, value)
+    return value
+
+
+# ==========================
 # PRIVACY POLICY
 # ==========================
 @router.get("/privacy-policy", response_class=HTMLResponse)
@@ -2810,11 +2837,18 @@ def government_dashboard(
     # Use GROUP BY aggregation rather than fetching every plot row — the game
     # may have thousands of government-owned plots (all unclaimed land) and we
     # only need per-terrain counts and tax sums.
+    # Government owns ALL unclaimed land, so this aggregate scans the entire
+    # plots table. It changes slowly (only as land is bought/seized), so cache
+    # it for 2 minutes instead of re-scanning on every page load — a cache hit
+    # does no DB work at all.
     gov_land_total = 0
     gov_land_by_terrain = {}
     gov_land_tax_by_terrain = {}
     gov_land_value_est = 0.0
-    try:
+
+    def _compute_gov_land():
+        by_terrain, tax_by_terrain = {}, {}
+        total, value_est = 0, 0.0
         from land import LandPlot as _LP, get_db as _ldb
         from sqlalchemy import func as _func
         _db = _ldb()
@@ -2829,12 +2863,21 @@ def government_dashboard(
                 .all()
             ):
                 t = row.terrain_type
-                gov_land_by_terrain[t] = row.cnt
-                gov_land_tax_by_terrain[t] = float(row.tax_sum or 0)
-                gov_land_total += row.cnt
-                gov_land_value_est += float(row.tax_sum or 0) * 12 * 10
+                by_terrain[t] = row.cnt
+                tax_by_terrain[t] = float(row.tax_sum or 0)
+                total += row.cnt
+                value_est += float(row.tax_sum or 0) * 12 * 10
         finally:
             _db.close()
+        return {"by_terrain": by_terrain, "tax_by_terrain": tax_by_terrain,
+                "total": total, "value_est": value_est}
+
+    try:
+        _land = _cached("gov_land", 120, _compute_gov_land)
+        gov_land_by_terrain     = _land["by_terrain"]
+        gov_land_tax_by_terrain = _land["tax_by_terrain"]
+        gov_land_total          = _land["total"]
+        gov_land_value_est      = _land["value_est"]
     except Exception:
         pass
 
@@ -2995,8 +3038,11 @@ def government_dashboard(
     # Aggregate in SQL — government (player 0) accumulates inventory from every
     # death tax and estate seizure, so this table can hold a very large number
     # of rows. GROUP BY avoids hydrating them all into Python ORM objects.
-    gov_commodities = {}
-    try:
+    # Government (player 0) accumulates inventory from every death tax and
+    # estate seizure, so this table can hold a very large number of rows.
+    # Cache the aggregate for 2 minutes so we don't re-scan it every load.
+    def _compute_gov_commodities():
+        out = {}
         from inventory import get_db as _idb, InventoryItem as _II
         from sqlalchemy import func as _func8
         _db = _idb()
@@ -3008,9 +3054,14 @@ def government_dashboard(
                    .all()
             ):
                 if qty and qty > 0:
-                    gov_commodities[item_type] = float(qty)
+                    out[item_type] = float(qty)
         finally:
             _db.close()
+        return out
+
+    gov_commodities = {}
+    try:
+        gov_commodities = _cached("gov_commodities", 120, _compute_gov_commodities)
     except Exception:
         pass
 
@@ -3140,7 +3191,11 @@ def government_dashboard(
         from estate import get_db as _estdb, GovernmentEstateListing as _GEL
         _db = _estdb()
         try:
-            for lst in _db.query(_GEL).filter(_GEL.sold == False).order_by(_GEL.listed_at.desc()).all():
+            # Cap to the 200 most recent unsold listings — this table grows
+            # unbounded as estates are seized, and rendering a row (with a buy
+            # form) per listing previously loaded the whole table into memory.
+            for lst in (_db.query(_GEL).filter(_GEL.sold == False)
+                            .order_by(_GEL.listed_at.desc()).limit(200).all()):
                 gov_estate.append({
                     "id":          lst.id,
                     "item_type":   lst.item_type,
