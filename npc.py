@@ -1195,11 +1195,28 @@ def initialize():
 
 
 def tick(current_tick: int, now: datetime):
-    """Fire NPC decision cycles every NPC_TICK_INTERVAL ticks."""
-    if current_tick % NPC_TICK_INTERVAL != 0:
+    """Fire NPC decision cycles, spread evenly across NPC_TICK_INTERVAL ticks.
+
+    Previously every NPC ran in the SAME tick (when current_tick % interval == 0).
+    With ~100 NPCs each opening several DB sessions per buy/sell item, that produced
+    a ~14s burst every interval that saturated the shared Postgres connection pool
+    and timed out concurrent page loads (/land, /businesses, /districts).
+
+    We now process a rotating slice of NPCs each tick: NPC at list-index ``idx`` runs
+    when ``current_tick % interval == idx % interval``. Each NPC still acts about once
+    per interval, but the DB load is spread across every tick (~n/interval NPCs per
+    tick, ~1s instead of ~14s) so page requests never hit a multi-second contention
+    window.
+    """
+    npc_ids = list(_NPC_PLAYERS.keys())
+    n = len(npc_ids)
+    if n == 0:
         return
-    for player_id, cfg in list(_NPC_PLAYERS.items()):
-        _run_npc_cycle(player_id, cfg)
+    interval = max(1, NPC_TICK_INTERVAL)
+    slot = current_tick % interval
+    for idx in range(slot, n, interval):
+        player_id = npc_ids[idx]
+        _run_npc_cycle(player_id, _NPC_PLAYERS[player_id])
 
 
 __all__ = ["initialize", "seed_npcs_background", "is_ready", "seeding_status", "tick"]
