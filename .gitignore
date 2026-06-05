@@ -12,6 +12,7 @@ android/twa-project/
 
 # Runtime state files
 widget_devices.json
+nohup.out
 Task
 cloudflared.log
 tick_state.txt
