@@ -928,19 +928,18 @@ def _execute_foreign_land_sale(ev) -> str:
         total_value = float(agg[1] or 0.0) * 12 * 10
         sale_usd    = total_value * 0.10
 
-        auctions_cleared = 0
-        bank_cleared     = 0
+        # Clear EVERY government auction and land-bank row — not just the ones
+        # whose plot is still flagged is_government_owned. Filtering by the
+        # current gov-plot set (the old behaviour) left orphaned/expired
+        # auctions behind: rows whose plot was already transferred or deleted
+        # are not in that set, so they survived the wipe and kept showing on
+        # /land-market as "no time left" listings that never clear. This event
+        # liquidates the entire government land reserve, so by definition NO
+        # government auction or land-bank entry should outlive it. Delete the
+        # references first, then the plots (FK-safe ordering).
+        auctions_cleared = land_db.query(_GA).delete(synchronize_session=False)
+        bank_cleared     = land_db.query(_LBank).delete(synchronize_session=False)
         if plot_count:
-            # Subquery of government plot IDs — Postgres evaluates the DELETE …
-            # WHERE land_plot_id IN (SELECT …) before the plots themselves are
-            # removed, so order matters: clear references first, then the plots.
-            _gov_ids = _gov(land_db.query(_LP.id))
-            auctions_cleared = (land_db.query(_GA)
-                                       .filter(_GA.land_plot_id.in_(_gov_ids))
-                                       .delete(synchronize_session=False))
-            bank_cleared     = (land_db.query(_LBank)
-                                       .filter(_LBank.land_plot_id.in_(_gov_ids))
-                                       .delete(synchronize_session=False))
             _gov(land_db.query(_LP)).delete(synchronize_session=False)
         land_db.commit()
     finally:
