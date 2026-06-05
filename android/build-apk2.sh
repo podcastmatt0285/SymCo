@@ -191,7 +191,10 @@ if [ ! -d "${_SDK_PATH}/platform-tools" ]; then
     export PATH="${_SDK_PATH}/cmdline-tools/latest/bin:${_SDK_PATH}/platform-tools:$PATH"
     # Accept licenses and install required components
     yes | sdkmanager --licenses > /dev/null 2>&1 || true
-    sdkmanager "platform-tools" "build-tools;34.0.0" "platforms;android-34"
+    # bubblewrap template uses compileSdkVersion 36 — must install android-36 platform.
+    # build-tools;34.0.0 is kept because bubblewrap's AndroidSdkTools.js hardcodes that
+    # version for zipalign/apksigner; Gradle itself uses the highest available.
+    sdkmanager "platform-tools" "build-tools;34.0.0" "platforms;android-36"
     echo "  Android SDK installed at ${_SDK_PATH}"
 fi
 export ANDROID_HOME="${_SDK_PATH}"
@@ -205,6 +208,25 @@ sed -i "s/versionName \"[^\"]*\"/versionName \"${VERSION_NAME}\"/" app/build.gra
 # jcenter was shut down for new uploads in 2021 and is deprecated; use mavenCentral instead.
 sed -i "s/jcenter()/mavenCentral()/g" build.gradle
 echo "  Android project generated: versionCode=${VERSION_CODE}, versionName=${VERSION_NAME}"
+
+echo "=== Step 3c: Verify bubblewrap injected Play Billing ==="
+_billing_ok=1
+if grep -q "billing:1.1.0" app/build.gradle 2>/dev/null; then
+    echo "  ✓ billing:1.1.0 dependency in build.gradle"
+else
+    echo "  ✗ MISSING: billing:1.1.0 in build.gradle — features.playBilling may be disabled in twa-manifest.json"
+    _billing_ok=0
+fi
+_ds=$(find app/src/main/java -name "DelegationService.java" 2>/dev/null | head -1)
+if [ -n "$_ds" ] && grep -q "DigitalGoodsRequestHandler" "$_ds" 2>/dev/null; then
+    echo "  ✓ DigitalGoodsRequestHandler registered in DelegationService"
+else
+    echo "  ✗ MISSING: DigitalGoodsRequestHandler in DelegationService — Play Billing will not work in TWA"
+    _billing_ok=0
+fi
+if [ "$_billing_ok" -eq 0 ]; then
+    echo "  → Make sure twa-manifest.json has: \"features\": { \"playBilling\": { \"enabled\": true } }"
+fi
 
 # AGP 8+ deprecates package= in the manifest; namespace must be in build.gradle instead.
 # Remove package= attribute from the generated manifest.
@@ -550,6 +572,8 @@ if [ -n "$MERGED" ] && [ -f "$MERGED" ]; then
     done
     check "WadsworthTokenActivity"          "Widget auth token activity"
     check "WadsworthApplication"            "Custom Application (seeds notification-sound channels)"
+    check "PaymentActivity"                 "Play Billing PaymentActivity (Digital Goods API)"
+    check "PaymentService"                  "Play Billing PaymentService (IS_READY_TO_PAY)"
 else
     echo "  ✗ Could not locate merged manifest to verify — check the build output."; VERIFY_FAIL=1
 fi
