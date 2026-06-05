@@ -624,6 +624,13 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                                      description=f"Market: {quantity:.4f} {buy_order.item_type} @ ${price:.2f}")
                             except Exception:
                                 pass
+                            # Credit federal tax toward seller's Tax Contributor event progress
+                            if sell_order.player_id > 0:
+                                try:
+                                    from events import record_task_progress as _rtp
+                                    _rtp(sell_order.player_id, "market_sales_tax_usd", _federal_tax)
+                                except Exception:
+                                    pass
                     except Exception as _fte:
                         print(f"[Market] Federal tax error (non-fatal): {_fte}")
                 # City sales tax: compute tax on total_cost, route to city bank
