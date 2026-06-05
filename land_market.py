@@ -864,44 +864,62 @@ def update_auction_prices(current_tick: int):
     """
     Update auction prices (Dutch auction - price drops over time).
     Called every tick.
-    Moves expired auctions to land bank.
+    Expires auctions past their end_time and moves a bounded number to the land
+    bank (only while it has free slots).
+
+    IMPORTANT: expiry is done with a SINGLE bulk UPDATE, not a row-by-row loop
+    with a commit per auction. The old per-row version did one `db.commit()` for
+    every expired auction; once a large backlog accumulated (tens/hundreds of
+    thousands of expired-but-still-active rows, which happens when the land bank
+    is full so nothing drains), a single tick took so long it never finished —
+    freezing the ENTIRE game tick loop (the loop awaits each module's tick in
+    sequence). One UPDATE clears the whole backlog in milliseconds.
     """
     db = get_db()
     try:
-        auctions = db.query(GovernmentAuction).filter(
-            GovernmentAuction.is_active == True
-        ).all()
+        now = datetime.utcnow()
 
-        for auction in auctions:
-            # Check if expired
-            if datetime.utcnow() >= auction.end_time:
+        # 1. Move a BOUNDED number of expired auctions into the land bank, only
+        #    while it has free slots. Never iterate the whole backlog here — the
+        #    .limit() caps work at the number of free slots (<= LAND_BANK_MAX_SLOTS).
+        try:
+            free_slots = LAND_BANK_MAX_SLOTS - db.query(LandBank).count()
+        except Exception:
+            free_slots = 0
+        if free_slots > 0:
+            to_bank = (db.query(GovernmentAuction)
+                         .filter(GovernmentAuction.is_active == True,
+                                 GovernmentAuction.end_time <= now)
+                         .limit(free_slots).all())
+            for auction in to_bank:
                 auction.is_active = False
-                db.commit()   # commit expiry immediately so it's never rolled back
-
-                # Move to land bank (isolated — failure here must NOT un-expire the auction)
                 try:
-                    add_to_land_bank(
-                        auction.land_plot_id,
-                        auction.id,
-                        auction.current_price
-                    )
-                    print(f"[LandMarket] Auction {auction.id} expired unsold -> moved to land bank")
-                except Exception as e:
-                    print(f"[LandMarket] Auction {auction.id} expired but land-bank move failed: {e}")
-                continue
+                    add_to_land_bank(auction.land_plot_id, auction.id, auction.current_price)
+                except Exception:
+                    pass
+            if to_bank:
+                db.commit()
 
-            # Drop price every hour (3600 ticks)
-            if current_tick % 3600 == 0:
-                new_price = auction.current_price * PRICE_DROP_RATE
+        # 2. Bulk-deactivate ALL remaining expired auctions in ONE statement.
+        expired_count = (db.query(GovernmentAuction)
+                           .filter(GovernmentAuction.is_active == True,
+                                   GovernmentAuction.end_time <= now)
+                           .update({"is_active": False}, synchronize_session=False))
+        if expired_count:
+            print(f"[LandMarket] Bulk-expired {expired_count} unsold auction(s)")
 
-                # Don't go below minimum
-                auction.current_price = max(new_price, auction.minimum_price)
-
-                print(f"[LandMarket] Auction {auction.id} price dropped to ${auction.current_price:,.2f}")
+        # 3. Dutch-auction price drop for still-live auctions (hourly).
+        if current_tick % 3600 == 0:
+            for auction in (db.query(GovernmentAuction)
+                              .filter(GovernmentAuction.is_active == True).all()):
+                auction.current_price = max(
+                    auction.current_price * PRICE_DROP_RATE, auction.minimum_price
+                )
 
         db.commit()
     finally:
         db.close()
+
 
 
 def buy_auction_land(buyer_id: int, auction_id: int) -> bool:
