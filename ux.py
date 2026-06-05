@@ -961,6 +961,11 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 {_level_html}
                 <span class="balance" id="player-balance">{disp_sym}{disp_balance:,.2f}{disp_usd_note}</span>
                 {_notif_count_html}
+                <a id="nav-sup-btn" href="/settings"
+                    title="Subscribe on Google Play to support Wadsworth"
+                    style="color:#fbbf24;font-size:0.72rem;font-weight:600;text-decoration:none;
+                    border:1px solid #78350f;background:#1c1410;border-radius:4px;
+                    padding:2px 8px;white-space:nowrap;">&#11088; Supporters</a>
                 <button id="wds-install-btn" onclick="wdsInstall()" title="Install Wadsworth as an app"
                     style="display:none;background:none;border:1px solid var(--border-subtle,#334155);
                     color:var(--text-muted,#94a3b8);font-size:0.75rem;padding:3px 9px;border-radius:4px;
@@ -1220,6 +1225,40 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             window.addEventListener('pagehide', function() {{
                 clearTimeout(_reconnTimer);
                 if (_ws) _ws.close();
+            }});
+        }})();
+        </script>
+
+        <script data-cfasync="false">
+        /* ── Supporters button: Play Billing in TWA, /settings fallback in browser ── */
+        (function() {{
+            var btn = document.getElementById('nav-sup-btn');
+            if (!btn || !('getDigitalGoodsService' in window)) return;
+            btn.href = '#';
+            btn.addEventListener('click', function(e) {{
+                e.preventDefault();
+                window.getDigitalGoodsService('https://play.google.com/billing').then(function(svc) {{
+                    var req = new PaymentRequest(
+                        [{{ supportedMethods: 'https://play.google.com/billing', data: {{ sku: 'wads_basic' }} }}],
+                        {{ total: {{ label: 'Wadsworth Pro', amount: {{ currency: 'USD', value: '0' }} }} }}
+                    );
+                    req.show().then(function(resp) {{
+                        var token = resp.details.purchaseToken;
+                        fetch('/api/play/verify-subscription', {{
+                            method: 'POST',
+                            headers: {{'Content-Type': 'application/json'}},
+                            credentials: 'same-origin',
+                            body: JSON.stringify({{purchase_token: token}})
+                        }}).then(function(r) {{ return r.json(); }}).then(function(d) {{
+                            resp.complete('success');
+                            if (d && d.active) {{
+                                btn.textContent = '⭐ Pro Active!';
+                                btn.style.color = '#22c55e';
+                                btn.style.borderColor = '#15803d';
+                            }}
+                        }}).catch(function() {{ resp.complete('fail'); }});
+                    }}).catch(function() {{}});
+                }}).catch(function() {{}});
             }});
         }})();
         </script>
