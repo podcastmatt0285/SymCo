@@ -3017,9 +3017,16 @@ def _skins_tab(player) -> str:
                       'Wadsworth Pro Active</strong>';
                     return;
                   }
+                  // Found the purchase but the server could not confirm it
+                  // (e.g. Play API permission / verification failure). Clear the
+                  // "Restoring…" text so it doesn't hang forever and let the user retry.
+                  _setStatus('Could not verify your subscription yet. Tap Subscribe to retry.');
+                  return;
                 }
               }
-            } catch(e) {}
+              // No matching purchase found — nothing to restore.
+              _setStatus('');
+            } catch(e) { _setStatus(''); }
           }
 
           window.wdsSubscribe = async function() {
