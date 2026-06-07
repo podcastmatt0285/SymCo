@@ -3,6 +3,12 @@ __pycache__/
 *.pyo
 *.db
 *.sqlite
+
+# SQL dump files — too large to store in git; use backup.sh to manage these
+*.sql
+counties_backup.sql
+reserve_banks_backup.sql
+wadsworth_backup.sql
 .vapid_keys.json
 venv/
 .venv/
@@ -30,6 +36,11 @@ claudeHelper/
 # NEVER commit service account JSON keys
 *service-account*.json
 
-# Keep intentional DB backup SQL files tracked (written by backup.sh)
+# Keep intentional DB backup SQL files in the backups/ folder tracked
 !backups/*.sql
 !backups/.gitkeep
+
+# Large media / binary assets — not needed in git
+*.mp4
+*.apk
+*.aab
