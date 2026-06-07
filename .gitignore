@@ -3,12 +3,6 @@ __pycache__/
 *.pyo
 *.db
 *.sqlite
-
-# SQL dump files — too large to store in git; use backup.sh to manage these
-*.sql
-counties_backup.sql
-reserve_banks_backup.sql
-wadsworth_backup.sql
 .vapid_keys.json
 venv/
 .venv/
