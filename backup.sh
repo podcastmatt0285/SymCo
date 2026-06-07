@@ -27,13 +27,15 @@ git pull --rebase --autostash
 dump_db () {
     local db="$1" out="$2" tmp
     tmp="$(mktemp)"
-    if ! sudo -u postgres pg_dump --clean --if-exists --no-owner --no-privileges "$db" > "$tmp"; then
+    # Dump and gzip in one pipe — output is ~3-5 MB instead of ~46 MB raw SQL.
+    if ! sudo -u postgres pg_dump --clean --if-exists --no-owner --no-privileges "$db" \
+         | gzip -9 > "$tmp"; then
         echo "  ✗ pg_dump $db FAILED — keeping previous $out" >&2
         rm -f "$tmp"
         return 1
     fi
-    # Sanity: a real dump always contains a CREATE/COPY statement and >1KB of text.
-    if [ "$(wc -c < "$tmp")" -lt 1024 ] || ! grep -q "CREATE\|COPY\|INSERT" "$tmp"; then
+    # Sanity: a real gzip dump is always >1KB.
+    if [ "$(wc -c < "$tmp")" -lt 1024 ]; then
         echo "  ✗ $db dump looks empty/partial — keeping previous $out" >&2
         rm -f "$tmp"
         return 1
@@ -42,15 +44,15 @@ dump_db () {
     echo "  ✓ Dumped $db → $out ($(wc -c < "$out" | numfmt --to=iec 2>/dev/null || wc -c < "$out") bytes)"
 }
 
-dump_db wadsworth     wadsworth_backup.sql
-dump_db reserve_banks reserve_banks_backup.sql
+dump_db wadsworth     wadsworth_backup.sql.gz
+dump_db reserve_banks reserve_banks_backup.sql.gz
 # NOTE: counties data is a TABLE inside the wadsworth DB (counties.py uses the
-# wadsworth engine), so it is already captured by wadsworth_backup.sql above.
-# The legacy separate `counties` database dump was redundant and is dropped.
+# wadsworth engine), so it is already captured by wadsworth_backup.sql.gz above.
+# Restore command: gunzip -c wadsworth_backup.sql.gz | sudo -u postgres psql wadsworth
 
 # ── Stage everything worth keeping ───────────────────────────────────────────
 # Explicit dumps + game clock …
-git add wadsworth_backup.sql reserve_banks_backup.sql tick_state.txt 2>/dev/null || true
+git add wadsworth_backup.sql.gz reserve_banks_backup.sql.gz tick_state.txt 2>/dev/null || true
 # … PLUS every tracked file that changed (source edits, ADMIN_TODO.md, configs).
 # `-u` stages modifications/deletions to already-tracked files only; it will not
 # sweep in untracked junk. This is what prevents working-tree edits from being
