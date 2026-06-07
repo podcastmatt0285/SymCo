@@ -30,7 +30,9 @@ claudeHelper/
 # NEVER commit service account JSON keys
 *service-account*.json
 
-# Keep intentional DB backup SQL files in the backups/ folder tracked
+# Raw SQL dumps are too large (~46 MB) — backup.sh now writes gzip-compressed
+# .sql.gz files (~3-5 MB) instead. Track those, ignore raw .sql files.
+*.sql
 !backups/*.sql
 !backups/.gitkeep
 
