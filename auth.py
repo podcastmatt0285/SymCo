@@ -1426,7 +1426,7 @@ def login_page(session_token: Optional[str] = Cookie(None)):
 
                     <details class="faq-item">
                         <summary>Is it free to play? <span class="faq-icon">+</span></summary>
-                        <div class="faq-answer">Yes. Every economic system — commodity markets, land, businesses, stocks, ETFs, crypto, P2P contracts, foreign exchange, bonds — is fully available free. The optional <strong>Supporters subscription</strong> unlocks additional features like cosmetic skins, the Forex Trading Floor, a Player API, extra P2P slots, a profile picture, a trophy multiplier, and a Supporter badge. None of those affect core gameplay. See the Supporters FAQ entry for the full list.</div>
+                        <div class="faq-answer">Yes. Every economic system — commodity markets, land, businesses, stocks, ETFs, crypto, P2P contracts, foreign exchange, bonds — is fully available free, forever. The optional <strong>Wadsworth Pro</strong> (Supporters) subscription is a way to support development: today it unlocks 3 exclusive cosmetic skins, with more supporter perks on the roadmap. None of it affects core gameplay. See the Supporters FAQ entry below for the full list and what's live versus coming soon.</div>
                     </details>
 
                     <details class="faq-item">
@@ -1512,7 +1512,7 @@ def login_page(session_token: Optional[str] = Cookie(None)):
 
                     <details class="faq-item">
                         <summary>What are Reserve Banks and the multi-currency system? <span class="faq-icon">+</span></summary>
-                        <div class="faq-answer">Wadsworth has <strong>16 currencies</strong>: USD, JPY, MXP, GBP, CHF, CNY, EUR, INR, RUB, KRW, ZAR, BRL, TRY, SAR, AED, and ANA — each issued by a State Reserve Bank. Players choose a <strong>legal tender</strong>; all income auto-converts to it at a 0.2% fee. There is a <strong>7-day cooldown</strong> between legal tender changes and a 2% exit fee when leaving a non-USD currency. Exchange rates move dynamically based on bond demand and yield differentials. Supporters subscribers can create unique reserve currencies.</div>
+                        <div class="faq-answer">Wadsworth has <strong>16 currencies</strong>: USD, JPY, MXP, GBP, CHF, CNY, EUR, INR, RUB, KRW, ZAR, BRL, TRY, SAR, AED, and ANA — each issued by a State Reserve Bank. Players choose a <strong>legal tender</strong>; all income auto-converts to it at a 0.2% fee. There is a <strong>7-day cooldown</strong> between legal tender changes and a 2% exit fee when leaving a non-USD currency. Exchange rates move dynamically based on bond demand and yield differentials. (A planned Supporters perk will let subscribers create unique reserve currencies.)</div>
                     </details>
 
                     <details class="faq-item">
@@ -1592,23 +1592,22 @@ def login_page(session_token: Optional[str] = Cookie(None)):
 
                     <details class="faq-item">
                         <summary>What does the Supporters subscription include? <span class="faq-icon">+</span></summary>
-                        <div class="faq-answer">Supporters is a monthly subscription available through the Android app (Google Play). Benefits include:<br><br>
-                        &bull; 3 exclusive cosmetic skins (Kawaii Night, Soul Vinyl Dark, Soul Vinyl Light)<br>
-                        &bull; Access to the <strong>Forex Trading Floor</strong> dashboard<br>
-                        &bull; <strong>Player API</strong> — read access + limited commodity market writes<br>
-                        &bull; Ability to <strong>mint district coins</strong> (cosmetic)<br>
-                        &bull; Free city creation <em>or</em> 3 free city perks for an existing city<br>
-                        &bull; Extra <strong>P2P contract slots</strong><br>
-                        &bull; Custom <strong>profile picture</strong> upload<br>
-                        &bull; <strong>Trophy multiplier</strong> on event completions<br>
-                        &bull; Ability to create <strong>unique reserve currencies</strong><br>
-                        &bull; <strong>Supporter badge</strong> on your company profile<br><br>
-                        None of these affect core economic gameplay — all markets, production, land, stocks, and trading are fully available free.</div>
+                        <div class="faq-answer"><strong>Wadsworth Pro</strong> (Basic Supporter) is a low-cost monthly subscription billed through the Android app (Google Play). It's a way to support development — and it's deliberately cosmetic-and-convenience only, so it never gives a competitive edge.<br><br>
+                        <strong>Available now:</strong><br>
+                        &bull; 3 exclusive cosmetic skins — <strong>Kawaii Night</strong>, <strong>Soul Vinyl Dark</strong>, and <strong>Soul Vinyl Light</strong><br><br>
+                        <strong>On the roadmap</strong> (planned supporter perks, not yet live):<br>
+                        &bull; <strong>Forex Trading Floor</strong> — a currency-exchange dashboard<br>
+                        &bull; <strong>Player API</strong> — read access plus buy/sell writes on the commodity &amp; district markets<br>
+                        &bull; <strong>Mint district coins</strong> — cosmetic coins for forex, gifting, and display<br>
+                        &bull; <strong>City perk</strong> — a free city with mayoralship, or perks for your existing city<br>
+                        &bull; <strong>Supporter badge</strong> on the leaderboard and your profile<br>
+                        &bull; Extra <strong>P2P contact capacity</strong>, a permanent <strong>profile picture</strong>, a higher <strong>trophy multiplier</strong>, <strong>unique reserve currencies</strong>, a <strong>Trophies Store</strong>, and more<br><br>
+                        You can see the current status of every perk — what's active versus coming soon — any time under <strong>Settings → Account</strong>. None of these affect core economic gameplay: all markets, production, land, stocks, and trading are fully available for free, forever.</div>
                     </details>
 
                     <details class="faq-item">
                         <summary>Can I create more than one account? <span class="faq-icon">+</span></summary>
-                        <div class="faq-answer">No. Multiple accounts are prohibited — it creates an unfair economic advantage. If you want a fresh start, use <strong>Account Reset</strong> in Settings, which returns your company to its starting state while preserving any Supporters status. To permanently close an account, <strong>Delete Account</strong> in Settings initiates a confirmed permanent deletion via email verification.</div>
+                        <div class="faq-answer">No. Multiple accounts are prohibited — it creates an unfair economic advantage. If you want a fresh start, use <strong>Declare Bankruptcy</strong> under <strong>Settings → Account</strong>: it liquidates all your holdings and restarts your company with $20,000 and a starter prairie plot (your account and any Wadsworth Pro subscription stay intact). To permanently close an account, use <strong>Delete Account</strong> in the Estate Office (Settings → Account → Estate Office); it's irreversible and confirmed by typing your business name.</div>
                     </details>
 
                     <details class="faq-item">
@@ -1743,7 +1742,7 @@ def login_page(session_token: Optional[str] = Cookie(None)):
 
                     <details class="faq-item">
                         <summary>Can I create more than one account? <span class="faq-icon">+</span></summary>
-                        <div class="faq-answer">No. Multiple accounts are prohibited — it creates an unfair economic advantage over other players. If you want a fresh start, use the <strong>Account Reset</strong> option in Settings, which restores your company to its initial state while preserving any Supporters status you have earned.</div>
+                        <div class="faq-answer">No. Multiple accounts are prohibited — it creates an unfair economic advantage over other players. If you want a fresh start, use <strong>Declare Bankruptcy</strong> under <strong>Settings → Account</strong>, which liquidates your holdings and restarts your company with $20,000 and a starter prairie plot while keeping your account and any Wadsworth Pro subscription intact.</div>
                     </details>
 
                     <details class="faq-item">
