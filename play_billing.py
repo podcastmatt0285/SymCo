@@ -196,9 +196,13 @@ async def api_verify_subscription(request: Request,
     string (never a plain-text 500 that the front-end can't parse).
     """
     try:
-        from auth import get_session_player
+        from auth import get_player_from_session, get_db
         try:
-            player = get_session_player(session_token)
+            _db = get_db()
+            try:
+                player = get_player_from_session(_db, session_token)
+            finally:
+                _db.close()
         except Exception as exc:
             log.exception("verify-subscription: session lookup failed: %s", exc)
             return JSONResponse({"ok": False, "error": "session lookup failed: " + str(exc)}, status_code=500)
