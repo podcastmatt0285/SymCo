@@ -1590,6 +1590,9 @@ def login_page(session_token: Optional[str] = Cookie(None)):
                         Kawaii Night includes animated particle effects. All skins alter colours, typography, and UI components. Supporter skins are shown in the Press Kit with downloadable logo variants for each theme.</div>
                     </details>
 
+                    <!-- KEEP IN SYNC: the "Available now" vs "On the roadmap" perk split below
+                         mirrors _PRO_PERKS_LIVE / _PRO_PERKS_SOON in settings_ux.py. When a perk
+                         ships, move it up to "Available now" here AND into _PRO_PERKS_LIVE there. -->
                     <details class="faq-item">
                         <summary>What does the Supporters subscription include? <span class="faq-icon">+</span></summary>
                         <div class="faq-answer"><strong>Wadsworth Pro</strong> (Basic Supporter) is a low-cost monthly subscription billed through the Android app (Google Play). It's a way to support development — and it's deliberately cosmetic-and-convenience only, so it never gives a competitive edge.<br><br>

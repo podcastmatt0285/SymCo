@@ -3079,6 +3079,16 @@ function saveSkin(key, btn) {{
 # Only the skins perk is actually enforced in code today; everything else is on
 # the roadmap (ADMIN_TODO.md). Keep these two lists in sync with what ships so
 # the Account panel never over-promises.
+#
+# ⚠️ KEEP IN SYNC when a roadmap perk ships:
+#   1. Move it from _PRO_PERKS_SOON → _PRO_PERKS_LIVE below (flips its Account
+#      badge from "Coming soon" → "✓ Active").
+#   2. Wire the actual gate behind skin_utils.is_pro(player) where the feature
+#      lives (the only perk gated today is Pro skins — see is_pro usage here in
+#      _skins_tab and in api_save_skin).
+#   3. Update the login-screen FAQ in auth.py (the "What does the Supporters
+#      subscription include?" entry): move the perk from its "On the roadmap"
+#      bullet up to "Available now". Search auth.py for "On the roadmap".
 _PRO_PERKS_LIVE = [
     ("🎨", "Exclusive Pro skins",
      "Kawaii Night, Soul Vinyl Dark, and Soul Vinyl Light themes — apply them in Settings → Skins."),
