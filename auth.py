@@ -68,6 +68,15 @@ class Player(Base):
     # Wadsworth Pro subscriber — set by server after Google Play purchaseToken is verified.
     # Admins are always treated as Pro regardless of this flag (checked via admins.is_admin).
     subscriber = Column(Boolean, default=False, nullable=False)
+    # City Perk (Pro subscriber perk) — one-time redemption, two mutually exclusive paths:
+    #   city_perk_choice = NULL        → not yet redeemed
+    #                    = "free_city"  → redeemed option A (founded a free city)
+    #                    = "perks"      → redeemed option B (chose city-wide perks below)
+    # city_perks = JSON list of up to 3 perk keys (from city_perks.PERK_CATALOG). These are
+    # city-wide buffs that travel with the player: active for whatever city they belong to,
+    # dormant when they have no city, and auto-apply when they later join/found one.
+    city_perk_choice = Column(String(16), nullable=True, default=None)
+    city_perks       = Column(Text, nullable=True, default=None)
 
     @property
     def cash_balance(self) -> float:
@@ -204,6 +213,8 @@ def migrate_player_table():
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS cco_rental_expires TIMESTAMP",
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS skin VARCHAR(64) DEFAULT 'default'",
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS subscriber BOOLEAN DEFAULT FALSE",
+        "ALTER TABLE players ADD COLUMN IF NOT EXISTS city_perk_choice VARCHAR(16)",
+        "ALTER TABLE players ADD COLUMN IF NOT EXISTS city_perks TEXT",
     ])
 
 

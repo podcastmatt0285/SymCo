@@ -125,9 +125,15 @@ Items are grouped by category and ranked by value/complexity at the bottom.
 - [ ] **Mint District coins** — usable for **forex / gifting / display only**, NOT
       spendable in the game economy.
 - [ ] **Cosmetic skins.**
-- [ ] **City perk — "option B"** — subscriber chooses one of two paths: **(a)** get a
-      free city founded for them and become its mayor, OR **(b)** pick ~3 perks from a
-      ~25-item perk list to apply to their existing city (city upgrade route).
+- [x] **City perk — "option B"** — subscriber chooses one of two paths: **(a)** get a
+      free city founded for them and become its mayor, OR **(b)** pick up to 3 perks from a
+      25-item perk list applied city-wide.
+      ✅ Implemented. Branching on /cities: has a city → Option B only; no city → A or B
+      (B's perks are saved and auto-activate on joining/founding a city later). One-time,
+      permanent redemption tracked via players.city_perk_choice + players.city_perks (JSON).
+      25-perk catalog in city_perks.py; effects fold into get_city_production_buffs,
+      get_effective_max_members, and get_city_sales_tax_rate so they're truly city-wide.
+      A city's total = sum of every subscriber-member's chosen perks.
 - [ ] **P2P unchanged for non-subscribers** (no nerf to free players' P2P).
 
 ## Recovered features — confirmed by user recognition (2026-05-31)

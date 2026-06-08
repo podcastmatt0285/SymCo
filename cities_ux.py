@@ -262,6 +262,101 @@ def _currency_select_options() -> str:
 # ==========================
 # CITIES LIST
 # ==========================
+def _city_perk_section(player, has_city: bool) -> str:
+    """Render the City Perk (Option B) UI on /cities for Pro subscribers.
+
+    States:
+      • Not Pro                → "" (no UI)
+      • Already redeemed perks  → locked summary of the chosen perks
+      • Redeemed as free city   → brief note (perk already spent on Option A)
+      • Not yet redeemed        → perk picker (up to MAX_PERKS)
+    """
+    try:
+        from skin_utils import is_pro as _is_pro
+        if not _is_pro(player):
+            return ""
+        from city_perks import PERK_CATALOG, MAX_PERKS, get_player_perk_state
+        state = get_player_perk_state(player.id)
+    except Exception:
+        return ""
+
+    # Already redeemed as perks → show locked loadout
+    if state["choice"] == "perks":
+        chosen = state["perks"]
+        if not chosen:
+            return ""
+        items = "".join(
+            f'<div style="display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #1e293b;">'
+            f'<span style="font-size:1.1rem;">{PERK_CATALOG[k]["icon"]}</span>'
+            f'<div><strong style="color:#cbd5e1;font-size:0.85rem;">{PERK_CATALOG[k]["name"]}</strong>'
+            f'<p style="color:#64748b;font-size:0.76rem;margin:2px 0 0;">{PERK_CATALOG[k]["desc"]}</p></div></div>'
+            for k in chosen
+        )
+        scope_note = ("These perks are active for your city right now."
+                      if has_city else
+                      "These perks are saved — they activate automatically the moment you join or found a city.")
+        return f"""
+        <div class="card" style="border:1px solid #fbbf24;background:#1f1a0a;">
+            <h2 style="color:#fbbf24;">🌟 Your City Perks <span style="font-size:0.7rem;font-weight:700;color:#052e16;background:#4ade80;border-radius:8px;padding:2px 8px;vertical-align:middle;">Locked in</span></h2>
+            <p style="color:#94a3b8;font-size:0.82rem;margin:0 0 6px;">{scope_note}</p>
+            {items}
+        </div>"""
+
+    # Already redeemed as a free city
+    if state["choice"] == "free_city":
+        return """
+        <div class="card" style="border:1px solid #fbbf24;background:#1f1a0a;">
+            <h2 style="color:#fbbf24;">🌟 City Perk — Redeemed</h2>
+            <p style="color:#94a3b8;font-size:0.82rem;margin:0;">
+                You redeemed your City Perk as a free city. Enjoy your mayoralship!
+            </p>
+        </div>"""
+
+    # Not yet redeemed → perk picker
+    cards = "".join(
+        f'<label class="perk-pick" style="display:flex;gap:8px;align-items:flex-start;padding:10px;border:1px solid #1e293b;border-radius:8px;cursor:pointer;background:#0f172a;">'
+        f'<input type="checkbox" name="perks" value="{k}" onclick="return _perkLimit(this)" style="margin-top:3px;accent-color:#fbbf24;">'
+        f'<span style="font-size:1.1rem;">{v["icon"]}</span>'
+        f'<div><strong style="color:#cbd5e1;font-size:0.82rem;">{v["name"]}</strong>'
+        f'<p style="color:#64748b;font-size:0.73rem;margin:2px 0 0;line-height:1.4;">{v["desc"]}</p></div>'
+        f'</label>'
+        for k, v in PERK_CATALOG.items()
+    )
+    if has_city:
+        intro = (f"Pick up to <strong>{MAX_PERKS}</strong> city-wide perks. They apply to your city "
+                 f"<strong>immediately</strong> and are <strong>permanent</strong> — choose carefully.")
+    else:
+        intro = (f"Pick up to <strong>{MAX_PERKS}</strong> city-wide perks. You have no city yet, so they'll be "
+                 f"<strong>saved</strong> and activate automatically when you join or found a city. "
+                 f"This choice is <strong>permanent</strong>. (Prefer your own town? Found a free city below instead.)")
+    return f"""
+    <div class="card" style="border:1px solid #fbbf24;background:#1f1a0a;">
+        <h2 style="color:#fbbf24;">🌟 Choose Your City Perks <span style="font-size:0.7rem;font-weight:700;color:#78350f;background:#fcd34d;border-radius:8px;padding:2px 8px;vertical-align:middle;">Pro perk · Option B</span></h2>
+        <p style="color:#cbd5e1;font-size:0.85rem;margin:0 0 14px;">{intro}</p>
+        <form action="/api/city/perks/commit" method="post"
+              onsubmit="return confirm('Lock in these perks permanently? This cannot be changed.');">
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-bottom:14px;">
+                {cards}
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <button type="submit" class="btn btn-primary" style="background:#fbbf24;color:#1a1207;border:none;font-weight:700;">
+                    🌟 Lock In Perks
+                </button>
+                <span id="perk-count" style="color:#94a3b8;font-size:0.8rem;">0/{MAX_PERKS} selected</span>
+            </div>
+        </form>
+    </div>
+    <script>
+    function _perkLimit(box) {{
+        var boxes = document.querySelectorAll('input[name="perks"]:checked');
+        if (boxes.length > {MAX_PERKS}) {{ box.checked = false; return false; }}
+        var n = document.querySelectorAll('input[name="perks"]:checked').length;
+        document.getElementById('perk-count').textContent = n + '/{MAX_PERKS} selected';
+        return true;
+    }}
+    </script>"""
+
+
 @router.get("/cities", response_class=HTMLResponse)
 async def cities_list(session_token: Optional[str] = Cookie(None), msg: Optional[str] = Query(None)):
     """View all cities."""
@@ -348,11 +443,13 @@ async def cities_list(session_token: Optional[str] = Cookie(None), msg: Optional
         has_funds = can_afford_usd(player.id, 10_000_000)
         create_disabled = "" if can_create and has_funds else "disabled"
 
-        # Wadsworth Pro perk: found a city for free (no districts, no cost)
+        # Wadsworth Pro perk: found a city for free (no districts, no cost).
+        # Only offered if the player hasn't already redeemed their one-time City Perk.
         free_city_section = ""
         try:
             from skin_utils import is_pro as _is_pro
-            if _is_pro(player):
+            from city_perks import get_player_perk_state as _gpps
+            if _is_pro(player) and _gpps(player.id)["choice"] is None:
                 free_city_section = """
         <div class="card" style="border:1px solid #fbbf24;background:#1f1a0a;">
             <h2 style="color:#fbbf24;">🌟 Found a Free City <span style="font-size:0.7rem;font-weight:700;color:#78350f;background:#fcd34d;border-radius:8px;padding:2px 8px;vertical-align:middle;">Pro perk</span></h2>
@@ -421,7 +518,10 @@ async def cities_list(session_token: Optional[str] = Cookie(None), msg: Optional
             <a href="/city/my" class="btn btn-primary" style="margin-top: 12px;">View My City</a>
         </div>
         """
-    
+
+    # City Perk (Option B) picker / summary — Pro subscribers only
+    perk_section = _city_perk_section(player, has_city=bool(player_city))
+
     return f"""
     <!DOCTYPE html>
     <html>
@@ -444,9 +544,11 @@ async def cities_list(session_token: Optional[str] = Cookie(None), msg: Optional
             </div>
             
             {alert_html}
-            
+
+            {perk_section}
+
             {create_section}
-            
+
             <div class="card">
                 <h2>All Cities</h2>
                 {cities_html}
@@ -1776,6 +1878,41 @@ async def api_create_free_city(
         return RedirectResponse(url=f"/city/{city.id}?msg=Free+city+founded!", status_code=303)
     else:
         return RedirectResponse(url=f"/cities?msg={message.replace(' ', '+')}", status_code=303)
+
+
+@router.post("/api/city/perks/commit")
+async def api_commit_city_perks(
+    perks: List[str] = Form(default=[]),
+    session_token: Optional[str] = Cookie(None)
+):
+    """Lock in a Pro subscriber's City Perk loadout (Option B). One-time, permanent."""
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+
+    # Must be Pro
+    try:
+        from skin_utils import is_pro
+        if not is_pro(player):
+            return RedirectResponse(url="/cities?msg=City+perks+require+Wadsworth+Pro", status_code=303)
+    except Exception:
+        return RedirectResponse(url="/cities?msg=Could+not+verify+Pro+entitlement", status_code=303)
+
+    from city_perks import (
+        get_player_perk_state, set_player_perk_choice, is_valid_perk, MAX_PERKS,
+    )
+
+    # One-time: block if already redeemed either path
+    state = get_player_perk_state(player.id)
+    if state["choice"] is not None:
+        return RedirectResponse(url="/cities?msg=You+have+already+redeemed+your+City+Perk", status_code=303)
+
+    chosen = [k for k in dict.fromkeys(perks) if is_valid_perk(k)][:MAX_PERKS]
+    if not chosen:
+        return RedirectResponse(url="/cities?msg=Select+at+least+one+perk", status_code=303)
+
+    set_player_perk_choice(player.id, "perks", chosen)
+    return RedirectResponse(url="/cities?msg=City+perks+locked+in!", status_code=303)
 
 
 @router.post("/api/city/apply")
