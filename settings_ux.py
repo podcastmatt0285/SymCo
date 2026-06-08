@@ -3092,12 +3092,14 @@ function saveSkin(key, btn) {{
 _PRO_PERKS_LIVE = [
     ("🎨", "Exclusive Pro skins",
      "Kawaii Night, Soul Vinyl Dark, and Soul Vinyl Light themes — apply them in Settings → Skins."),
+    ("🏙️", "Free city + mayoralship",
+     "Found a city for free and become its Mayor — no district sacrifice, no $10M cost. Go to Cities."),
 ]
 _PRO_PERKS_SOON = [
     ("💱", "Forex Trading Floor",     "A subscriber-only currency-exchange dashboard."),
     ("🔌", "Player API",              "Read access, plus buy/sell writes limited to the commodity & district markets."),
     ("🪙", "Mint District coins",     "Cosmetic coins for forex, gifting, and display — not spendable in the economy."),
-    ("🏙️", "City perk",               "Choose a free city with mayoralship, or ~3 perks for your existing city."),
+    ("🏙️", "City upgrade perks",      "Pick ~3 perks for your existing city (alternative to the free city)."),
     ("🎖️", "Supporter badge",         "Shown on the leaderboard and your P2P contact card."),
     ("🤝", "Extra P2P capacity",      "More contacts than the standard 46-contact cap."),
     ("🖼️", "Permanent profile picture","Displayed on your P2P contact card."),

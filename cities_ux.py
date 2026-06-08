@@ -348,6 +348,33 @@ async def cities_list(session_token: Optional[str] = Cookie(None), msg: Optional
         has_funds = can_afford_usd(player.id, 10_000_000)
         create_disabled = "" if can_create and has_funds else "disabled"
 
+        # Wadsworth Pro perk: found a city for free (no districts, no cost)
+        free_city_section = ""
+        try:
+            from skin_utils import is_pro as _is_pro
+            if _is_pro(player):
+                free_city_section = """
+        <div class="card" style="border:1px solid #fbbf24;background:#1f1a0a;">
+            <h2 style="color:#fbbf24;">🌟 Found a Free City <span style="font-size:0.7rem;font-weight:700;color:#78350f;background:#fcd34d;border-radius:8px;padding:2px 8px;vertical-align:middle;">Pro perk</span></h2>
+            <p style="color:#cbd5e1;margin-bottom:16px;">
+                As a Wadsworth Pro supporter you can found a city <strong>for free</strong> and become its Mayor —
+                no 10-district sacrifice and no $10M cost. The city's bank starts with $0 reserves.
+            </p>
+            <form action="/api/city/create-free" method="post">
+                <div class="form-group">
+                    <label>City Name</label>
+                    <input type="text" name="city_name" required placeholder="New City Name">
+                </div>
+                <button type="submit" class="btn btn-primary"
+                    style="background:#fbbf24;color:#1a1207;border:none;font-weight:700;">
+                    🌟 Found Free City
+                </button>
+            </form>
+        </div>
+        """
+        except Exception:
+            free_city_section = ""
+
         # Display current balance in player's currency
         if disp["code"] == "USD":
             balance_disp = f"{fmt_usd(player.cash_balance, disp)}"
@@ -360,7 +387,7 @@ async def cities_list(session_token: Optional[str] = Cookie(None), msg: Optional
             else:
                 balance_disp = f"{fmt_usd(player.cash_balance, disp)}"
 
-        create_section = f"""
+        create_section = free_city_section + f"""
         <div class="card">
             <h2>🏙️ Create a City</h2>
             <p style="color: #94a3b8; margin-bottom: 16px;">
@@ -1724,9 +1751,29 @@ async def api_create_city(
         return RedirectResponse(url=f"/cities?msg=Must+select+exactly+10+districts+(selected+{len(district_ids)})", status_code=303)
     
     city, message = create_city(player.id, city_name, district_ids)
-    
+
     if city:
         return RedirectResponse(url=f"/city/{city.id}?msg=City+created!", status_code=303)
+    else:
+        return RedirectResponse(url=f"/cities?msg={message.replace(' ', '+')}", status_code=303)
+
+
+@router.post("/api/city/create-free")
+async def api_create_free_city(
+    city_name: str = Form(...),
+    session_token: Optional[str] = Cookie(None)
+):
+    """Found a city for free — Wadsworth Pro subscriber perk (no districts, no cost)."""
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+
+    from cities import create_free_city
+
+    city, message = create_free_city(player.id, city_name)
+
+    if city:
+        return RedirectResponse(url=f"/city/{city.id}?msg=Free+city+founded!", status_code=303)
     else:
         return RedirectResponse(url=f"/cities?msg={message.replace(' ', '+')}", status_code=303)
 

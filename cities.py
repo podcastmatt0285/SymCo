@@ -427,6 +427,109 @@ def is_mayor(player_id: int, city_id: int) -> bool:
 # ==========================
 # CITY CREATION
 # ==========================
+def create_free_city(founder_id: int, city_name: str) -> Tuple[Optional[City], str]:
+    """
+    Found a city for free as a Wadsworth Pro subscriber perk.
+
+    Unlike create_city(), this requires NO district sacrifice and NO $10M cost —
+    it is the "free city + mayoralship" supporter perk. Gated to Pro entitlement
+    (active subscriber OR admin). The new city's bank is seeded with $0 reserves
+    so the perk grants governance, not free capital.
+
+    The existing one-city-per-player rule naturally limits a subscriber to a
+    single active free city; to found another they must first leave/disband
+    their current one (which yields no money), so there is no farm incentive.
+
+    Returns (City instance or None, status message).
+    """
+    from auth import Player
+
+    db = get_db()
+    try:
+        # Validate founder exists
+        player = db.query(Player).filter(Player.id == founder_id).first()
+        if not player:
+            return None, "Player not found"
+
+        # Gate to Pro entitlement (subscriber or admin)
+        try:
+            from skin_utils import is_pro
+            if not is_pro(player):
+                return None, "Founding a free city requires Wadsworth Pro."
+        except Exception:
+            return None, "Could not verify your Wadsworth Pro entitlement."
+
+        # Check founder isn't already in a city
+        existing_membership = db.query(CityMember).filter(
+            CityMember.player_id == founder_id
+        ).first()
+        if existing_membership:
+            return None, "You are already a member of a city"
+
+        # Validate city name
+        city_name = (city_name or "").strip()
+        if not city_name:
+            return None, "City name cannot be empty"
+        existing_city = db.query(City).filter(City.name == city_name).first()
+        if existing_city:
+            return None, "A city with this name already exists"
+
+        # Create the city (no cost, no districts)
+        city = City(
+            name=city_name,
+            mayor_id=founder_id,
+            application_fee=50_000.0,
+            relocation_fee=10_000.0,
+            application_fee_percent=25.0,
+            relocation_fee_percent=10.0,
+        )
+        db.add(city)
+        db.flush()  # Get the city ID
+
+        # City bank seeded with $0 reserves — the perk grants governance, not cash
+        bank = CityBank(city_id=city.id, cash_reserves=0.0)
+        db.add(bank)
+
+        # Founder as first member and mayor
+        membership = CityMember(
+            city_id=city.id,
+            player_id=founder_id,
+            application_fee_paid=0.0,
+            is_mayor=True,
+        )
+        db.add(membership)
+
+        db.commit()
+
+        print(f"[Cities] Pro subscriber {founder_id} founded FREE city '{city_name}' (ID: {city.id})")
+        try:
+            log_transaction(
+                founder_id,
+                "city_creation",
+                "money",
+                0.0,
+                f"Founded free city (Pro perk): {city_name}",
+                reference_id="city_creation_free",
+            )
+        except Exception:
+            pass
+        try:
+            from admin_notifications import notify_city_created
+            notify_city_created(city_name, city.id, founder_id)
+        except Exception:
+            pass
+        return city, "Success"
+
+    except Exception as e:
+        db.rollback()
+        print(f"[Cities] Error creating free city: {e}")
+        import traceback
+        traceback.print_exc()
+        return None, str(e)
+    finally:
+        db.close()
+
+
 def create_city(founder_id: int, city_name: str, district_ids: List[int]) -> Tuple[Optional[City], str]:
     """
     Create a new city by sacrificing 10 districts.
@@ -3086,6 +3189,7 @@ __all__ = [
     
     # City creation/management
     'create_city',
+    'create_free_city',
     'get_city_by_id',
     'get_city_by_name',
     'get_player_city',
