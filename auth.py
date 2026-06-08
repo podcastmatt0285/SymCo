@@ -699,6 +699,9 @@ def login_page(session_token: Optional[str] = Cookie(None)):
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Wadsworth">
     <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=EB+Garamond:ital@0;1&display=swap" rel="stylesheet">
         """ + _skin_tags + """
     <style>
         * {
@@ -924,16 +927,120 @@ def login_page(session_token: Optional[str] = Cookie(None)):
             opacity: 1;
         }
 
-        .hero-tagline {
-            margin-top: 18px;
+        /* ── Hero "Build an Empire" card ── */
+        .hero-card {
+            position: relative;
+            margin-top: 22px;
+            padding: 42px 28px 38px;
             text-align: center;
-            color: #cbd5e1;
-            font-size: 15px;
-            line-height: 1.65;
-            max-width: 480px;
-            margin-left: auto;
-            margin-right: auto;
+            border-radius: 16px;
+            overflow: hidden;
+            background:
+                radial-gradient(ellipse at 50% 0%, rgba(202,138,4,0.10) 0%, rgba(12,10,9,0) 60%),
+                linear-gradient(160deg, #14100c 0%, #0c0a09 55%, #14100c 100%);
+            border: 1px solid rgba(176,141,87,0.28);
+            box-shadow: 0 22px 60px rgba(0,0,0,0.6),
+                        inset 0 1px 0 rgba(255,225,170,0.06);
+        }
+
+        .hero-gear {
+            position: absolute;
+            opacity: 0.06;
+            fill: #eab308;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .hero-gear.g1 { top: -54px; left: -50px;  width: 200px; height: 200px;
+                        animation: hero-gear-rotate 26s linear infinite; }
+        .hero-gear.g2 { bottom: -60px; right: -56px; width: 240px; height: 240px;
+                        animation: hero-gear-rotate 46s linear infinite reverse; }
+
+        .hero-inner { position: relative; z-index: 1; }
+
+        .hero-breathe { animation: hero-breathe 5s ease-in-out infinite; }
+
+        .hero-title {
+            font-family: 'Cinzel', serif;
+            font-weight: 900;
+            font-size: clamp(2.4rem, 9vw, 3.2rem);
+            line-height: 0.96;
+            text-transform: uppercase;
             letter-spacing: 0.01em;
+            margin: 0;
+            background: linear-gradient(90deg,
+                #ca8a04 0%, #ca8a04 40%, #fef08a 50%, #ca8a04 60%, #ca8a04 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.8);
+            filter: drop-shadow(0 0 2px rgba(253,224,71,0.45));
+            animation: hero-gold-shine 3.4s linear infinite;
+        }
+
+        .hero-kicker {
+            margin: 12px 0 0;
+            color: rgba(202,138,4,0.82);
+            font-weight: 700;
+            font-size: 0.7rem;
+            letter-spacing: 0.32em;
+            text-transform: uppercase;
+        }
+
+        .hero-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            margin: 26px 0;
+        }
+        .hero-divider .hd-line {
+            height: 1px;
+            width: 56px;
+            background: linear-gradient(90deg, transparent, rgba(234,179,8,0.75));
+        }
+        .hero-divider .hd-line.right {
+            background: linear-gradient(90deg, rgba(234,179,8,0.75), transparent);
+        }
+        .hero-divider .hd-diamond {
+            width: 9px; height: 9px;
+            transform: rotate(45deg);
+            border: 1px solid #facc15;
+            background: rgba(202,138,4,0.4);
+        }
+
+        .hero-quote {
+            font-family: 'EB Garamond', Georgia, serif;
+            font-style: italic;
+            font-size: 1.18rem;
+            line-height: 1.6;
+            color: #e7e2d8;
+            margin: 0 auto;
+            max-width: 380px;
+            text-shadow: 0 1px 6px rgba(0,0,0,0.5);
+        }
+
+        .hero-footer {
+            margin: 22px 0 0;
+            color: #eab308;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.4em;
+            text-transform: uppercase;
+            opacity: 0.72;
+        }
+
+        @keyframes hero-gold-shine { to { background-position: 200% center; } }
+        @keyframes hero-breathe {
+            0%, 100% { transform: scale(1); }
+            50%      { transform: scale(1.025); }
+        }
+        @keyframes hero-gear-rotate {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .hero-title, .hero-breathe, .hero-gear { animation: none; }
         }
 
         /* ── Indices card support ── */
@@ -1032,11 +1139,30 @@ def login_page(session_token: Optional[str] = Cookie(None)):
             <div class="marquee-text" id="marquee"></div>
         </div>
 
-        <!-- Hero tagline -->
-        <div class="hero-tagline">
-            Build an empire from a single storefront. Trade commodities, float your company
-            on the stock market, corner entire industries, and outmaneuver thousands of
-            rival tycoons in one living, breathing economy.
+        <!-- Hero tagline card -->
+        <div class="hero-card">
+            <svg class="hero-gear g1" viewBox="0 0 100 100" aria-hidden="true">
+                <path d="M50 25c-1.1 0-2 .9-2 2v4.2c-2.3.5-4.5 1.4-6.4 2.7l-3-3c-.8-.8-2-.8-2.8 0l-3.5 3.5c-.8.8-.8 2 0 2.8l3 3c-1.3 1.9-2.2 4.1-2.7 6.4H27c-1.1 0-2 .9-2 2v5c0 1.1.9 2 2 2h4.2c.5 2.3 1.4 4.5 2.7 6.4l-3 3c-.8.8-.8 2 0 2.8l3.5 3.5c.8.8 2 .8 2.8 0l3-3c1.9 1.3 4.1 2.2 6.4 2.7V73c0 1.1.9 2 2 2h5c1.1 0 2-.9 2-2v-4.2c2.3-.5 4.5-1.4 6.4-2.7l3 3c.8.8 2 .8 2.8 0l3.5-3.5c.8-.8.8-2 0-2.8l-3-3c1.3-1.9 2.2-4.1 2.7-6.4H73c1.1 0 2-.9 2-2v-5c0-1.1-.9-2-2-2h-4.2c-.5-2.3-1.4-4.5-2.7-6.4l3-3c.8-.8.8-2 0-2.8l-3.5-3.5c-.8-.8-2-.8-2.8 0l-3 3c-1.9-1.3-4.1-2.2-6.4-2.7V27c0-1.1-.9-2-2-2h-5zM50 40c5.5 0 10 4.5 10 10s-4.5 10-10 10-10-4.5-10-10 4.5-10 10-10z"/>
+            </svg>
+            <svg class="hero-gear g2" viewBox="0 0 100 100" aria-hidden="true">
+                <path d="M50 25c-1.1 0-2 .9-2 2v4.2c-2.3.5-4.5 1.4-6.4 2.7l-3-3c-.8-.8-2-.8-2.8 0l-3.5 3.5c-.8.8-.8 2 0 2.8l3 3c-1.3 1.9-2.2 4.1-2.7 6.4H27c-1.1 0-2 .9-2 2v5c0 1.1.9 2 2 2h4.2c.5 2.3 1.4 4.5 2.7 6.4l-3 3c-.8.8-.8 2 0 2.8l3.5 3.5c.8.8 2 .8 2.8 0l3-3c1.9 1.3 4.1 2.2 6.4 2.7V73c0 1.1.9 2 2 2h5c1.1 0 2-.9 2-2v-4.2c2.3-.5 4.5-1.4 6.4-2.7l3 3c.8.8 2 .8 2.8 0l3.5-3.5c.8-.8.8-2 0-2.8l-3-3c1.3-1.9 2.2-4.1 2.7-6.4H73c1.1 0 2-.9 2-2v-5c0-1.1-.9-2-2-2h-4.2c-.5-2.3-1.4-4.5-2.7-6.4l3-3c.8-.8.8-2 0-2.8l-3.5-3.5c-.8-.8-2-.8-2.8 0l-3 3c-1.9-1.3-4.1-2.2-6.4-2.7V27c0-1.1-.9-2-2-2h-5zM50 40c5.5 0 10 4.5 10 10s-4.5 10-10 10-10-4.5-10-10 4.5-10 10-10z"/>
+            </svg>
+            <div class="hero-inner">
+                <div class="hero-breathe">
+                    <h1 class="hero-title">Build an<br>Empire</h1>
+                </div>
+                <p class="hero-kicker">From a single storefront</p>
+                <div class="hero-divider">
+                    <span class="hd-line"></span>
+                    <span class="hd-diamond"></span>
+                    <span class="hd-line right"></span>
+                </div>
+                <p class="hero-quote">
+                    &ldquo;Trade commodities, float your company on the stock market,
+                    and outmaneuver thousands of rival tycoons.&rdquo;
+                </p>
+                <p class="hero-footer">One living, breathing economy</p>
+            </div>
         </div>
 
         <!-- Indices card placeholder -->
