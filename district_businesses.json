@@ -23303,7 +23303,13 @@
           }
         ]
       }
-    ]
+    ],
+    "products": {
+      "funeral_wreath": {
+        "base_sale_chance": 0.25,
+        "elasticity": 1.1
+      }
+    }
   },
   "gem_exchange_district": {
     "name": "Gem Exchange District",
