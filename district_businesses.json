@@ -22540,7 +22540,478 @@
       "district_mega_mall",
       "district_neighborhood"
     ],
-    "production_lines": []
+    "production_lines": [
+      {
+        "output_item": "rose",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 400
+          },
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 25000
+          }
+        ]
+      },
+      {
+        "output_item": "lily",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 350
+          },
+          {
+            "item": "energy",
+            "quantity": 160
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 22000
+          }
+        ]
+      },
+      {
+        "output_item": "tulip",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 300
+          },
+          {
+            "item": "energy",
+            "quantity": 150
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 20000
+          }
+        ]
+      },
+      {
+        "output_item": "carnation",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 280
+          },
+          {
+            "item": "energy",
+            "quantity": 140
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 20000
+          }
+        ]
+      },
+      {
+        "output_item": "sunflower",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 350
+          },
+          {
+            "item": "energy",
+            "quantity": 180
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 22000
+          }
+        ]
+      },
+      {
+        "output_item": "chrysanthemum",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 300
+          },
+          {
+            "item": "energy",
+            "quantity": 150
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 21000
+          }
+        ]
+      },
+      {
+        "output_item": "lavender",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 350
+          },
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 30000
+          }
+        ]
+      },
+      {
+        "output_item": "orchid",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 600
+          },
+          {
+            "item": "energy",
+            "quantity": 300
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 60000
+          },
+          {
+            "item": "fertilizer_npk",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "peony",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 500
+          },
+          {
+            "item": "energy",
+            "quantity": 250
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 45000
+          }
+        ]
+      },
+      {
+        "output_item": "hydrangea",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 400
+          },
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 30000
+          }
+        ]
+      },
+      {
+        "output_item": "bouquet",
+        "output_qty": 10,
+        "inputs": [
+          {
+            "item": "rose",
+            "quantity": 20
+          },
+          {
+            "item": "lily",
+            "quantity": 15
+          },
+          {
+            "item": "carnation",
+            "quantity": 25
+          },
+          {
+            "item": "tulip",
+            "quantity": 15
+          },
+          {
+            "item": "pollen",
+            "quantity": 50000
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 50
+          }
+        ]
+      },
+      {
+        "output_item": "wedding_bouquet",
+        "output_qty": 5,
+        "inputs": [
+          {
+            "item": "peony",
+            "quantity": 20
+          },
+          {
+            "item": "rose",
+            "quantity": 30
+          },
+          {
+            "item": "lily",
+            "quantity": 15
+          },
+          {
+            "item": "orchid",
+            "quantity": 8
+          },
+          {
+            "item": "carnation",
+            "quantity": 15
+          },
+          {
+            "item": "freesia",
+            "quantity": 12
+          },
+          {
+            "item": "pollen",
+            "quantity": 90000
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 80
+          }
+        ]
+      },
+      {
+        "output_item": "funeral_wreath",
+        "output_qty": 5,
+        "inputs": [
+          {
+            "item": "lily",
+            "quantity": 30
+          },
+          {
+            "item": "chrysanthemum",
+            "quantity": 30
+          },
+          {
+            "item": "rose",
+            "quantity": 20
+          },
+          {
+            "item": "iris",
+            "quantity": 15
+          },
+          {
+            "item": "pollen",
+            "quantity": 60000
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 60
+          }
+        ]
+      },
+      {
+        "output_item": "corsage",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "orchid",
+            "quantity": 10
+          },
+          {
+            "item": "rose",
+            "quantity": 10
+          },
+          {
+            "item": "freesia",
+            "quantity": 8
+          },
+          {
+            "item": "pollen",
+            "quantity": 40000
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          }
+        ]
+      },
+      {
+        "output_item": "floral_centerpiece",
+        "output_qty": 8,
+        "inputs": [
+          {
+            "item": "hydrangea",
+            "quantity": 20
+          },
+          {
+            "item": "rose",
+            "quantity": 20
+          },
+          {
+            "item": "dahlia",
+            "quantity": 15
+          },
+          {
+            "item": "peony",
+            "quantity": 10
+          },
+          {
+            "item": "pollen",
+            "quantity": 70000
+          },
+          {
+            "item": "glass",
+            "quantity": 8
+          },
+          {
+            "item": "energy",
+            "quantity": 60
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "dried_flower_bundle",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "lavender",
+            "quantity": 40
+          },
+          {
+            "item": "rose",
+            "quantity": 30
+          },
+          {
+            "item": "zinnia",
+            "quantity": 30
+          },
+          {
+            "item": "heather",
+            "quantity": 25
+          },
+          {
+            "item": "pollen",
+            "quantity": 45000
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          },
+          {
+            "item": "energy",
+            "quantity": 40
+          }
+        ]
+      },
+      {
+        "output_item": "flower_crown",
+        "output_qty": 10,
+        "inputs": [
+          {
+            "item": "rose",
+            "quantity": 20
+          },
+          {
+            "item": "carnation",
+            "quantity": 20
+          },
+          {
+            "item": "lily",
+            "quantity": 15
+          },
+          {
+            "item": "violet",
+            "quantity": 15
+          },
+          {
+            "item": "pollen",
+            "quantity": 55000
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "energy",
+            "quantity": 40
+          }
+        ]
+      }
+    ]
   },
   "perfume_atelier": {
     "name": "Perfume Atelier",
