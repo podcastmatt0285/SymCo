@@ -2376,7 +2376,18 @@ document.querySelectorAll('input[type=checkbox]').forEach(function(cb) {
     if (togs) { togs.style.opacity = '0.4'; togs.style.pointerEvents = 'none'; }
     return;
   }
-  setStatus(Notification.permission);
+  if (Notification.permission === 'denied') {
+    setStatus('denied');
+  } else if (Notification.permission === 'granted') {
+    // Check if actually subscribed — permission != subscription
+    navigator.serviceWorker && navigator.serviceWorker.ready.then(function(reg) {
+      reg.pushManager.getSubscription().then(function(sub) {
+        setStatus(sub ? 'granted' : 'default');
+      }).catch(function() { setStatus('default'); });
+    }).catch(function() { setStatus('default'); });
+  } else {
+    setStatus('default');
+  }
 })();
 </script>"""
 
@@ -2420,6 +2431,7 @@ document.querySelectorAll('input[type=checkbox]').forEach(function(cb) {
       .then(function(r) { return r.json(); })
       .then(function(d) {
         if (d.ok) {
+          localStorage.removeItem('wadsworth_push_disabled');
           lbl.textContent = 'Push enabled';
           var dot = document.getElementById('push-status-dot');
           if (dot) dot.style.background = '#4ade80';
@@ -2443,8 +2455,9 @@ document.querySelectorAll('input[type=checkbox]').forEach(function(cb) {
     if (enBtn) enBtn.style.display = 'inline-block';
   }
 
-  // Auto-subscribe if permission already granted
-  if ('Notification' in window && Notification.permission === 'granted') {
+  // Auto-subscribe if permission granted AND user hasn't explicitly disabled
+  if ('Notification' in window && Notification.permission === 'granted' &&
+      localStorage.getItem('wadsworth_push_disabled') !== '1') {
     navigator.serviceWorker && navigator.serviceWorker.ready.then(function(reg) {
       reg.pushManager.getSubscription().then(function(existing) {
         if (!existing) _subscribePush();
@@ -2455,19 +2468,24 @@ document.querySelectorAll('input[type=checkbox]').forEach(function(cb) {
   window.disablePush = function() {
     navigator.serviceWorker && navigator.serviceWorker.ready.then(function(reg) {
       reg.pushManager.getSubscription().then(function(sub) {
+        var endpoint = sub ? sub.endpoint : null;
         var unsub = sub ? sub.unsubscribe() : Promise.resolve();
         return unsub.then(function() {
           return fetch('/api/push/unsubscribe', {
-            method: 'POST', credentials: 'same-origin',
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({endpoint: endpoint}),
+            credentials: 'same-origin',
           });
         });
       }).then(function() {
+        localStorage.setItem('wadsworth_push_disabled', '1');
         var lbl   = document.getElementById('push-status-label');
         var dot   = document.getElementById('push-status-dot');
         var enBtn = document.getElementById('push-enable-btn');
         var disBtn = document.getElementById('push-disable-btn');
         var togs  = document.getElementById('push-toggles');
-        if (lbl)   lbl.textContent = 'Push not enabled';
+        if (lbl)   lbl.textContent = 'Push not enabled on this device';
         if (dot)   dot.style.background = '#f59e0b';
         if (enBtn) enBtn.style.display = 'inline-block';
         if (disBtn) disBtn.style.display = 'none';
@@ -2568,13 +2586,21 @@ def api_save_notifications(
     player = _require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    _has_cco = False
     try:
-        from executive import player_has_cco, get_db as _exec_db
-        _edb = _exec_db()
-        _has_cco = player_has_cco(_edb, player.id)
-        _edb.close()
+        from admins import is_admin as _is_admin
+        if _is_admin(player.id):
+            _has_cco = True
     except Exception:
-        _has_cco = False
+        pass
+    if not _has_cco:
+        try:
+            from executive import player_has_cco, get_db as _exec_db
+            _edb = _exec_db()
+            _has_cco = player_has_cco(_edb, player.id)
+            _edb.close()
+        except Exception:
+            _has_cco = False
     if _has_cco:
         try:
             db = _auth.get_db()
