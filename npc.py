@@ -20,9 +20,13 @@ Cash state tiers (per NPC config):
   low        → between hard_low and soft_low: tighten sell margins
   hard_low   → cash below floor: emergency sell at market price, no cost floor
 
-Pricing rule (normal):  sell_price = max(market_price * 1.02, unit_cost * 1.02)
-Pricing rule (low):     sell_price = max(market_price * 1.01, unit_cost * 1.01)
+Pricing rule (normal):  sell_price = max(market_price * 1.0002, unit_cost * 1.0002)
+Pricing rule (low):     sell_price = max(market_price * 1.0001, unit_cost * 1.0001)
 Pricing rule (hard_low):sell_price = market_price  (cost floor bypassed entirely)
+
+Markups are deliberately tiny (0.02% / 0.01%): the price is pegged to a rolling
+average of recent trades, so a markup compounds on every fill. A larger markup
+(the old 2%) ratcheted the market upward on every NPC sale → runaway inflation.
 
 Order dedup: always check quantity already listed before placing a new order.
 Order cancel: evaluate each open order individually — never bulk-nuke.
@@ -42,12 +46,17 @@ from database import engine, SessionLocal
 NPC_TICK_INTERVAL    = 12   # run NPC logic every N game ticks
 PRICE_ROLLING_WINDOW = 20   # number of recent trades for the rolling average
 
-# Sell markup rates by cash state
+# Sell markup rates by cash state.
+# NOTE: these are tiny on purpose. NPC sell prices are pegged to a rolling
+# average of recent trades, so any markup compounds every time an NPC order
+# fills (each fill nudges the average up, which raises the next listing). A 2%
+# markup here produced runaway inflation; 0.02% keeps the market essentially
+# flat while still giving NPCs a sliver of margin.
 _MARKUP = {
-    "hard_high":   0.02,
-    "high":        0.02,
-    "comfortable": 0.02,
-    "low":         0.01,
+    "hard_high":   0.0002,
+    "high":        0.0002,
+    "comfortable": 0.0002,
+    "low":         0.0001,
     "hard_low":    0.00,   # list at market price, cost floor is bypassed
 }
 
