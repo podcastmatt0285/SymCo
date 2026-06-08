@@ -459,6 +459,20 @@ def create_free_city(founder_id: int, city_name: str) -> Tuple[Optional[City], s
         except Exception:
             return None, "Could not verify your Wadsworth Pro entitlement."
 
+        # The City Perk is a one-time redemption with two mutually exclusive paths
+        # (free city OR perks). Block if the player has already redeemed either.
+        try:
+            from city_perks import get_player_perk_state
+            _st = get_player_perk_state(founder_id)
+            if _st["choice"] == "free_city":
+                return None, "You've already redeemed your free city."
+            if _st["choice"] == "perks":
+                return None, ("You already redeemed your City Perk as city-wide perks — "
+                              "the free-city path is no longer available. You can still found a "
+                              "city the normal way.")
+        except Exception:
+            pass
+
         # Check founder isn't already in a city
         existing_membership = db.query(CityMember).filter(
             CityMember.player_id == founder_id
@@ -500,6 +514,13 @@ def create_free_city(founder_id: int, city_name: str) -> Tuple[Optional[City], s
         db.add(membership)
 
         db.commit()
+
+        # Consume the one-time City Perk redemption (Option A)
+        try:
+            from city_perks import set_player_perk_choice
+            set_player_perk_choice(founder_id, "free_city")
+        except Exception as _e:
+            print(f"[Cities] Could not mark city_perk_choice for {founder_id}: {_e}")
 
         print(f"[Cities] Pro subscriber {founder_id} founded FREE city '{city_name}' (ID: {city.id})")
         try:

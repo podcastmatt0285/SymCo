@@ -1009,6 +1009,26 @@ def get_city_production_buffs(player_id: int) -> Dict[str, float]:
             total_input_pen += d.get("input_penalty", 0.0)       * lv
             total_tax       += d.get("sales_tax", 0.0)           * lv
 
+        # Fold in Wadsworth Pro city-wide perks (Option B) — summed across every
+        # subscriber-member of this city. Perks use the same dimension names as
+        # project buffs, so they add directly to the accumulators above.
+        try:
+            from city_perks import get_city_perk_buffs
+            _pk = get_city_perk_buffs(city_id)
+            total_output     += _pk["output"]
+            total_wage_save  += _pk["wage_savings"]
+            total_input_save += _pk["input_savings"]
+            total_cycle      += _pk["cycle_speed"]
+            total_fee        += _pk["market_fee_reduction"]
+            total_cs         += _pk["construction_speed"]
+            total_loan       += _pk["loan_interest_reduction"]
+            total_lic_bonus  += _pk["license_production"]
+            total_wage_pen   += _pk["wage_penalty"]
+            total_input_pen  += _pk["input_penalty"]
+            total_tax        -= _pk["sales_tax_reduction"]   # perks REDUCE sales tax
+        except Exception:
+            pass
+
         # Apply cities exec bonus — amplifies the output multiplier from city projects
         cities_exec_mult = 1.0
         try:
@@ -1030,7 +1050,7 @@ def get_city_production_buffs(player_id: int) -> Dict[str, float]:
             "construction_speed_mult": max(0.2,  1.0 - total_cs),
             "loan_interest_multiplier":max(0.1,  1.0 - total_loan),
             "license_production_bonus":total_lic_bonus,
-            "sales_tax_rate":          min(0.50, total_tax),
+            "sales_tax_rate":          max(0.0, min(0.50, total_tax)),
         }
     finally:
         db.close()
@@ -1050,7 +1070,13 @@ def get_city_sales_tax_rate(city_id: int) -> float:
             * inst.level
             for inst in instances
         )
-        return min(0.50, total)
+        # Pro city-wide perks reduce the city sales tax
+        try:
+            from city_perks import get_city_perk_buffs
+            total -= get_city_perk_buffs(city_id).get("sales_tax_reduction", 0.0)
+        except Exception:
+            pass
+        return max(0.0, min(0.50, total))
     finally:
         db.close()
 
@@ -1065,7 +1091,14 @@ def get_effective_max_members(city_id: int) -> int:
             CityProjectInstance.status == STATUS_ACTIVE,
         ).first()
         bonus = (inst.level * 3) if inst else 0
-        return DEFAULT_MEMBER_SLOTS + bonus
+        # Pro city-wide perks add member capacity
+        perk_slots = 0
+        try:
+            from city_perks import get_city_perk_buffs
+            perk_slots = int(get_city_perk_buffs(city_id).get("member_slots", 0.0))
+        except Exception:
+            perk_slots = 0
+        return DEFAULT_MEMBER_SLOTS + bonus + perk_slots
     finally:
         db.close()
 
