@@ -12790,7 +12790,7 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
   <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
     <div>
       <label style="color:#64748b;font-size:9px;display:block;">PRINCIPAL ({sym})</label>
-      <input id="calc-principal" type="number" value="50000" min="10000" step="1000"
+      <input id="calc-principal" type="number" value="50000" min="10000" step="any"
         oninput="_calcPmt()"
         style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:4px;width:130px;">
     </div>
@@ -12837,7 +12837,7 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
       <div>
         <label style="color:#64748b;font-size:9px;display:block;">PREMIUM ({sym})</label>
-        <input name="purchase_price" type="number" min="{ANNUITY_IMMEDIATE_MIN:.0f}" step="100" value="{ANNUITY_IMMEDIATE_MIN:.0f}" required
+        <input name="purchase_price" type="number" min="{ANNUITY_IMMEDIATE_MIN:.0f}" step="any" value="{ANNUITY_IMMEDIATE_MIN:.0f}" required
           style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:4px;width:130px;">
       </div>
       <div>
@@ -12879,7 +12879,7 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
       <div>
         <label style="color:#64748b;font-size:9px;display:block;">INITIAL DEPOSIT ({sym}, optional)</label>
-        <input name="initial_premium" type="number" min="0" step="100" value="0"
+        <input name="initial_premium" type="number" min="0" step="any" value="0"
           style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:4px;width:130px;">
       </div>
       <div>
@@ -12938,7 +12938,7 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
     <h3 style="color:#a78bfa;margin:0 0 12px;">Add Contribution</h3>
     <input id="contrib-cid" type="hidden">
     <label style="color:#64748b;font-size:9px;display:block;">AMOUNT ({sym})</label>
-    <input id="contrib-amount" type="number" min="100" step="100" value="1000"
+    <input id="contrib-amount" type="number" min="100" step="any" value="1000"
       style="width:100%;background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:7px 10px;border-radius:4px;margin-bottom:12px;">
     <div id="contrib-msg" style="font-size:10px;min-height:14px;margin-bottom:8px;"></div>
     <div style="display:flex;gap:8px;">
