@@ -12739,7 +12739,15 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
             hist_rows = '<tr><td colspan="7" style="color:#64748b;text-align:center;padding:14px;">No history yet.</td></tr>'
 
         # ── Page body ──────────────────────────────────────────────────────
-        bal = fmt_usd(player.cash_balance, disp)
+        # get_spendable_usd checks both the USD slot AND the player's legal-tender
+        # slot, returning the larger; this is the correct "how much can I spend"
+        # figure for ALL currency configurations.
+        from reserve_banks import get_spendable_usd as _get_spendable
+        _spendable_usd = _get_spendable(player.id)
+        bal = fmt_usd(_spendable_usd, disp)
+        # Max input values (floor so entered × upu never exceeds actual balance)
+        _max_spia_input     = int(_math.floor(_spendable_usd / upu))
+        _max_deferred_input = int(_math.floor(_spendable_usd / upu))
         body = f"""
 <h2 style="color:#38bdf8;margin:0 0 4px;">📋 Annuity Contracts</h2>
 <p style="color:#64748b;margin:0 0 18px;font-size:11px;">
@@ -12844,11 +12852,17 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
 <!-- ── Open SPIA Form ─────────────────────────────────────────────────── -->
 <div id="spia-form" style="background:#1e293b;border:1px solid #1e3a5f;border-radius:8px;padding:16px;margin-bottom:18px;">
   <h3 style="color:#38bdf8;margin:0 0 12px;font-size:13px;">📋 Open Immediate Annuity (SPIA)</h3>
-  <p style="color:#64748b;font-size:10px;margin:0 0 12px;">Your balance: <span style="color:#22c55e;">{bal}</span></p>
+  <p style="color:#64748b;font-size:10px;margin:0 0 12px;">
+    Available: <span style="color:#22c55e;">{bal}</span>
+    <span style="color:#475569;"> · min {fmt_usd(ANNUITY_IMMEDIATE_MIN, disp, precision=0)}</span>
+  </p>
   <form id="spia-submit-form" onsubmit="submitSpia(event)">
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
       <div>
-        <label style="color:#64748b;font-size:9px;display:block;">PREMIUM ({sym})</label>
+        <label style="color:#64748b;font-size:9px;display:block;">PREMIUM ({sym})
+          <button type="button" onclick="document.querySelector('[name=purchase_price]').value={_max_spia_input}"
+            style="font-size:8px;background:#0f3460;color:#38bdf8;border:1px solid #1e3a5f;border-radius:3px;padding:1px 5px;cursor:pointer;margin-left:4px;">MAX</button>
+        </label>
         <input name="purchase_price" type="number" min="{_to_disp_floor(ANNUITY_IMMEDIATE_MIN)}" step="any" value="{_to_disp_floor(ANNUITY_IMMEDIATE_MIN)}" required
           style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:4px;width:130px;">
       </div>
@@ -12887,10 +12901,16 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
 <!-- ── Open Deferred Form ─────────────────────────────────────────────── -->
 <div id="deferred-form" style="background:#1e293b;border:1px solid #3b1d8a;border-radius:8px;padding:16px;margin-bottom:18px;">
   <h3 style="color:#a78bfa;margin:0 0 12px;font-size:13px;">💼 Open Deferred Annuity</h3>
+  <p style="color:#64748b;font-size:10px;margin:0 0 12px;">
+    Available: <span style="color:#22c55e;">{bal}</span>
+  </p>
   <form id="deferred-submit-form" onsubmit="submitDeferred(event)">
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
       <div>
-        <label style="color:#64748b;font-size:9px;display:block;">INITIAL DEPOSIT ({sym}, optional)</label>
+        <label style="color:#64748b;font-size:9px;display:block;">INITIAL DEPOSIT ({sym}, optional)
+          <button type="button" onclick="document.querySelector('[name=initial_premium]').value={_max_deferred_input}"
+            style="font-size:8px;background:#1e1b4b;color:#a78bfa;border:1px solid #3b1d8a;border-radius:3px;padding:1px 5px;cursor:pointer;margin-left:4px;">MAX</button>
+        </label>
         <input name="initial_premium" type="number" min="0" step="any" value="0"
           style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:4px;width:130px;">
       </div>
