@@ -191,47 +191,65 @@ async def api_verify_subscription(request: Request,
     """
     Called by the in-app Digital Goods API after purchase or on app launch
     to restore entitlement. Body: { "purchase_token": "..." }
+
+    The whole body is wrapped so the client ALWAYS receives a JSON error
+    string (never a plain-text 500 that the front-end can't parse).
     """
-    from auth import get_session_player
-    player = get_session_player(session_token)
-    if not player:
-        return JSONResponse({"ok": False, "error": "not authenticated"}, status_code=401)
-
     try:
-        body = await request.json()
-    except Exception:
-        return JSONResponse({"ok": False, "error": "invalid JSON"}, status_code=400)
+        from auth import get_session_player
+        try:
+            player = get_session_player(session_token)
+        except Exception as exc:
+            log.exception("verify-subscription: session lookup failed: %s", exc)
+            return JSONResponse({"ok": False, "error": "session lookup failed: " + str(exc)}, status_code=500)
+        if not player:
+            return JSONResponse({"ok": False, "error": "not authenticated"}, status_code=401)
 
-    token = (body.get("purchase_token") or "").strip()
-    if not token:
-        return JSONResponse({"ok": False, "error": "missing purchase_token"}, status_code=400)
+        try:
+            body = await request.json()
+        except Exception:
+            return JSONResponse({"ok": False, "error": "invalid JSON"}, status_code=400)
 
-    if not os.path.exists(_KEY_FILE):
-        log.error("Play service account key not found at %s", _KEY_FILE)
-        return JSONResponse({"ok": False, "error": "billing not configured"}, status_code=503)
+        token = (body.get("purchase_token") or "").strip()
+        if not token:
+            return JSONResponse({"ok": False, "error": "missing purchase_token"}, status_code=400)
 
-    try:
-        info = verify_play_subscription(token)
+        if not os.path.exists(_KEY_FILE):
+            log.error("Play service account key not found at %s", _KEY_FILE)
+            return JSONResponse({"ok": False, "error": "billing not configured (key file missing on this server)"}, status_code=503)
+
+        try:
+            info = verify_play_subscription(token)
+        except Exception as exc:
+            log.exception("Play API error for player %d: %s", player.id, exc)
+            return JSONResponse({"ok": False, "error": "Play API error: " + str(exc)[:200]}, status_code=502)
+
+        # Persist state. Defensively ensure the table exists first — on a fresh
+        # server (e.g. migrated to a new machine) init() may not have run yet.
+        try:
+            _ensure_table()
+            _upsert_subscription(
+                player_id  = player.id,
+                token      = token,
+                product_id = _SUB_ID,
+                order_id   = info["order_id"],
+                state      = info["state"],
+                expiry     = info["expiry"],
+            )
+            _set_subscriber(player.id, info["active"])
+        except Exception as exc:
+            log.exception("verify-subscription: DB write failed for player %d: %s", player.id, exc)
+            return JSONResponse({"ok": False, "error": "db write failed: " + str(exc)[:200]}, status_code=500)
+
+        return JSONResponse({
+            "ok":        True,
+            "active":    info["active"],
+            "state":     info["state"],
+            "expiry":    info["expiry"].isoformat() if info["expiry"] else None,
+        })
     except Exception as exc:
-        log.exception("Play API error for player %d: %s", player.id, exc)
-        return JSONResponse({"ok": False, "error": "Play API error"}, status_code=502)
-
-    _upsert_subscription(
-        player_id  = player.id,
-        token      = token,
-        product_id = _SUB_ID,
-        order_id   = info["order_id"],
-        state      = info["state"],
-        expiry     = info["expiry"],
-    )
-    _set_subscriber(player.id, info["active"])
-
-    return JSONResponse({
-        "ok":        True,
-        "active":    info["active"],
-        "state":     info["state"],
-        "expiry":    info["expiry"].isoformat() if info["expiry"] else None,
-    })
+        log.exception("verify-subscription: unhandled error: %s", exc)
+        return JSONResponse({"ok": False, "error": "server error: " + str(exc)[:200]}, status_code=500)
 
 
 @router.post("/api/play/rtdn")
