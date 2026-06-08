@@ -715,6 +715,20 @@ def login_page(session_token: Optional[str] = Cookie(None)):
             align-items: center;
         }
 
+        .game-title {
+            text-align: center;
+            margin-bottom: 16px;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            line-height: 1.25;
+            background: linear-gradient(90deg, #B08D57, #e5c88a, #B08D57);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 1px 12px rgba(176, 141, 87, 0.25);
+        }
+
         .logo {
             text-align: center;
             margin-bottom: 12px;
@@ -851,6 +865,18 @@ def login_page(session_token: Optional[str] = Cookie(None)):
             opacity: 1;
         }
 
+        .hero-tagline {
+            margin-top: 18px;
+            text-align: center;
+            color: #cbd5e1;
+            font-size: 15px;
+            line-height: 1.65;
+            max-width: 480px;
+            margin-left: auto;
+            margin-right: auto;
+            letter-spacing: 0.01em;
+        }
+
         .video-wrap {
             margin-top: 20px;
             border-radius: 12px;
@@ -873,6 +899,7 @@ def login_page(session_token: Optional[str] = Cookie(None)):
 
 <body>
     <div class="splash">
+        <div class="game-title">Wadsworth Economic Tycoon Simulator</div>
         <div class="logo"><img src="/static/logo.png?v=3" alt="Wadsworth"></div>
 
         <div class="panel">
@@ -914,6 +941,13 @@ def login_page(session_token: Optional[str] = Cookie(None)):
         <!-- Rotating tagline -->
         <div class="marquee-wrap">
             <div class="marquee-text" id="marquee"></div>
+        </div>
+
+        <!-- Hero tagline -->
+        <div class="hero-tagline">
+            Build an empire from a single storefront. Trade commodities, float your company
+            on the stock market, corner entire industries, and outmaneuver thousands of
+            rival tycoons in one living, breathing economy.
         </div>
 
         <!-- Intro video -->
