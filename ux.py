@@ -446,7 +446,12 @@ def _nav_loader_html() -> str:
             "Tip: Set retail prices without a page reload — type a price and click Set.",
             "Tip: Check WikiWads for guides on ETFs, taxes, and advanced investing strategies.",
             "Tip: Executives with banking bonuses boost ETF dividends — hire a CFO to start.",
-            "Tip: Land plots near water or mountains yield more resources per tick."
+            "Tip: Land plots near water or mountains yield more resources per tick.",
+            "Tip: Annuities pay in your legal tender — no USD conversion needed after purchase.",
+            "Tip: Qualified annuities skip the 0.25% issuance fee — 20% tax applies to the full payment.",
+            "Tip: Deferred annuities grow at 5% annual during accumulation — annuitize when ready.",
+            "Tip: Surrender charges on annuities drop 1% each year — wait for the 8th year to surrender free.",
+            "Tip: You can contribute to a deferred annuity any time — minimum deposit is just 100."
           ];
           var overlay = document.getElementById('nav-loader');
           var bar     = document.getElementById('nl-bar');
@@ -12541,6 +12546,7 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
 
     from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
+    sym  = disp["symbol"]
 
     try:
         from app import current_tick
@@ -12575,8 +12581,8 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
                   <td style="color:#22c55e;font-weight:bold;">{rate*100:.0f}%</td>
                   <td>{freq.capitalize()}</td>
                   <td>{n}</td>
-                  <td style="color:#38bdf8;">${pmt:,.2f}</td>
-                  <td style="color:#a5b4fc;">${total:,.2f}</td>
+                  <td style="color:#38bdf8;">{sym}{pmt:,.2f}</td>
+                  <td style="color:#a5b4fc;">{sym}{total:,.2f}</td>
                 </tr>"""
 
         # ── Active contract cards ───────────────────────────────────────────
@@ -12629,7 +12635,7 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
                 </div>
                 <div style="display:flex;gap:20px;flex-wrap:wrap;margin:6px 0;">
                   <div><span style="color:#64748b;font-size:9px;">BALANCE</span><br>
-                    <span style="color:#22c55e;font-weight:bold;">${acc_val:,.2f}</span></div>
+                    <span style="color:#22c55e;font-weight:bold;">{sym}{acc_val:,.2f}</span></div>
                   <div><span style="color:#64748b;font-size:9px;">CREDITED RATE</span><br>
                     <span style="color:#38bdf8;">{cr:.1f}% annual</span></div>
                   <div><span style="color:#64748b;font-size:9px;">NEXT INTEREST CREDIT</span><br>
@@ -12661,7 +12667,7 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
                 </div>
                 <div style="display:flex;gap:20px;flex-wrap:wrap;margin:6px 0;">
                   <div><span style="color:#64748b;font-size:9px;">PAYMENT</span><br>
-                    <span style="color:#22c55e;font-weight:bold;">${pmt:,.2f}</span>
+                    <span style="color:#22c55e;font-weight:bold;">{sym}{pmt:,.2f}</span>
                     <span style="color:#64748b;font-size:9px;"> {freq_label}</span></div>
                   <div><span style="color:#64748b;font-size:9px;">PROGRESS</span><br>
                     <span style="color:#e2e8f0;">{made}/{total_n}</span></div>
@@ -12683,9 +12689,9 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
                 <span style="color:#64748b;font-size:9px;margin-left:auto;">#{cid} &nbsp;·&nbsp; {surr_charge_label}</span>
               </div>
               <div style="color:#64748b;font-size:9px;">
-                Principal: <span style="color:#e2e8f0;">${(c.get('total_contributions') or 0.0):,.2f}</span>
-                &nbsp;·&nbsp; Paid out: <span style="color:#22c55e;">${(c.get('total_paid_out') or 0.0):,.2f}</span>
-                &nbsp;·&nbsp; Surrender est.: <span style="color:#f59e0b;">${surr:,.2f}</span>
+                Principal: <span style="color:#e2e8f0;">{sym}{(c.get('total_contributions') or 0.0):,.2f}</span>
+                &nbsp;·&nbsp; Paid out: <span style="color:#22c55e;">{sym}{(c.get('total_paid_out') or 0.0):,.2f}</span>
+                &nbsp;·&nbsp; Surrender est.: <span style="color:#f59e0b;">{sym}{surr:,.2f}</span>
               </div>
               {phase_html}
             </div>"""
@@ -12712,8 +12718,8 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
               <td style="color:#94a3b8;font-size:10px;">{opened}</td>
               <td>{atype}</td>
               <td>{status_badge}</td>
-              <td style="color:#e2e8f0;">${principal:,.0f}</td>
-              <td style="color:#22c55e;">${total_out:,.2f}</td>
+              <td style="color:#e2e8f0;">{sym}{principal:,.0f}</td>
+              <td style="color:#22c55e;">{sym}{total_out:,.2f}</td>
               <td style="color:{'#22c55e' if eff_yield >= 0 else '#ef4444'};">{eff_yield:+.1f}%</td>
               <td style="color:#64748b;font-size:10px;">{closed}</td>
             </tr>"""
@@ -12737,7 +12743,7 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
     <div style="background:#0f172a;border:1px solid #1e3a5f;border-radius:6px;padding:14px;">
       <div style="color:#38bdf8;font-weight:bold;font-size:12px;margin-bottom:6px;">📋 Immediate Annuity (SPIA)</div>
       <ul style="color:#94a3b8;font-size:10px;line-height:1.7;margin:0 0 10px;padding-left:16px;">
-        <li>Single lump-sum premium (min ${ANNUITY_IMMEDIATE_MIN:,.0f})</li>
+        <li>Single lump-sum premium (min {sym}{ANNUITY_IMMEDIATE_MIN:,.0f})</li>
         <li>Payments start at the next interval</li>
         <li>Principal + interest returned via fixed payments</li>
         <li><b>Non-qualified</b>: 0.25% issuance fee, 15% tax on interest only</li>
@@ -12753,7 +12759,7 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
         <li>Open with $0 or make an initial deposit</li>
         <li>Add contributions any time</li>
         <li>Earns {ANNUITY_CREDITED_RATE*100:.0f}% annual during accumulation</li>
-        <li>Annuitize when ready (min ${ANNUITY_MIN_TO_ANNUITIZE:,.0f})</li>
+        <li>Annuitize when ready (min {sym}{ANNUITY_MIN_TO_ANNUITIZE:,.0f})</li>
         <li>Same tax treatment as SPIA at annuitization</li>
       </ul>
       <button onclick="document.getElementById('deferred-form').scrollIntoView({{behavior:'smooth'}})"
@@ -12768,8 +12774,8 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
         <th style="text-align:left;padding:6px 8px;">ANNUAL RATE</th>
         <th style="text-align:left;padding:6px 8px;">FREQUENCY</th>
         <th style="text-align:left;padding:6px 8px;">PAYMENTS</th>
-        <th style="text-align:left;padding:6px 8px;">PMT ON $100K</th>
-        <th style="text-align:left;padding:6px 8px;">TOTAL ON $100K</th>
+        <th style="text-align:left;padding:6px 8px;">PMT ON {sym}100K</th>
+        <th style="text-align:left;padding:6px 8px;">TOTAL ON {sym}100K</th>
       </tr>
     </thead>
     <tbody style="color:#e2e8f0;">
@@ -12783,7 +12789,7 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
   <h3 style="color:#e2e8f0;margin:0 0 10px;font-size:13px;">💡 Payment Calculator</h3>
   <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
     <div>
-      <label style="color:#64748b;font-size:9px;display:block;">PRINCIPAL ($)</label>
+      <label style="color:#64748b;font-size:9px;display:block;">PRINCIPAL ({sym})</label>
       <input id="calc-principal" type="number" value="50000" min="10000" step="1000"
         oninput="_calcPmt()"
         style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:4px;width:130px;">
@@ -12830,7 +12836,7 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
   <form id="spia-submit-form" onsubmit="submitSpia(event)">
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
       <div>
-        <label style="color:#64748b;font-size:9px;display:block;">PREMIUM ($)</label>
+        <label style="color:#64748b;font-size:9px;display:block;">PREMIUM ({sym})</label>
         <input name="purchase_price" type="number" min="{ANNUITY_IMMEDIATE_MIN:.0f}" step="100" value="{ANNUITY_IMMEDIATE_MIN:.0f}" required
           style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:4px;width:130px;">
       </div>
@@ -12872,7 +12878,7 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
   <form id="deferred-submit-form" onsubmit="submitDeferred(event)">
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
       <div>
-        <label style="color:#64748b;font-size:9px;display:block;">INITIAL DEPOSIT ($, optional)</label>
+        <label style="color:#64748b;font-size:9px;display:block;">INITIAL DEPOSIT ({sym}, optional)</label>
         <input name="initial_premium" type="number" min="0" step="100" value="0"
           style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:4px;width:130px;">
       </div>
@@ -12898,7 +12904,7 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
     </div>
     <p style="color:#64748b;font-size:9px;margin:0 0 10px;">
       Earns {ANNUITY_CREDITED_RATE*100:.0f}% annual (credited monthly) during accumulation.
-      Annuitize when balance ≥ ${ANNUITY_MIN_TO_ANNUITIZE:,.0f}. Add contributions any time.
+      Annuitize when balance ≥ {sym}{ANNUITY_MIN_TO_ANNUITIZE:,.0f}. Add contributions any time.
     </p>
     <div id="deferred-msg" style="font-size:10px;margin:6px 0;min-height:14px;"></div>
     <button type="submit" class="btn-blue" style="padding:7px 20px;background:#7c3aed;">Open Deferred Account</button>
@@ -12931,7 +12937,7 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
   <div style="background:#1e293b;border:1px solid #334155;border-radius:10px;padding:22px;width:320px;max-width:95vw;">
     <h3 style="color:#a78bfa;margin:0 0 12px;">Add Contribution</h3>
     <input id="contrib-cid" type="hidden">
-    <label style="color:#64748b;font-size:9px;display:block;">AMOUNT ($)</label>
+    <label style="color:#64748b;font-size:9px;display:block;">AMOUNT ({sym})</label>
     <input id="contrib-amount" type="number" min="100" step="100" value="1000"
       style="width:100%;background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:7px 10px;border-radius:4px;margin-bottom:12px;">
     <div id="contrib-msg" style="font-size:10px;min-height:14px;margin-bottom:8px;"></div>
@@ -12972,6 +12978,7 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
 <script>
 // ── PMT calculator ────────────────────────────────────────────────────────
 const RATES = {{"30":0.08,"90":0.10,"180":0.12,"365":0.15}};
+const CURR_SYM = '{sym}';
 function _calcPmt() {{
   const p = parseFloat(document.getElementById('calc-principal').value) || 0;
   const term = document.getElementById('calc-term').value;
@@ -12983,7 +12990,7 @@ function _calcPmt() {{
   const pmt  = r > 0 ? p * r / (1 - Math.pow(1 + r, -n)) : p / n;
   const total = pmt * n;
   const yld   = p > 0 ? ((total / p - 1) * 100) : 0;
-  const fmt   = v => '$' + v.toLocaleString('en-US', {{minimumFractionDigits:2,maximumFractionDigits:2}});
+  const fmt   = v => CURR_SYM + v.toLocaleString('en-US', {{minimumFractionDigits:2,maximumFractionDigits:2}});
   document.getElementById('calc-pmt').textContent   = fmt(pmt);
   document.getElementById('calc-total').textContent = fmt(total);
   document.getElementById('calc-yield').textContent = yld.toFixed(2) + '%';
@@ -13004,7 +13011,7 @@ async function submitSpia(e) {{
     const d = await r.json();
     if (d.ok) {{
       msg.style.color = '#22c55e';
-      msg.textContent = `✅ Annuity opened — ${{d.total_payments}} payments of $${{d.payment_amount.toLocaleString('en-US',{{minimumFractionDigits:2}})}}. Reloading…`;
+      msg.textContent = `✅ Annuity opened — ${{d.total_payments}} payments of ${{CURR_SYM}}${{d.payment_amount.toLocaleString('en-US',{{minimumFractionDigits:2}})}}. Reloading…`;
       setTimeout(() => location.reload(), 1800);
     }} else {{
       msg.style.color = '#ef4444'; msg.textContent = '❌ ' + d.error;
@@ -13054,7 +13061,7 @@ async function submitContrib() {{
     const d = await r.json();
     if (d.ok) {{
       msg.style.color = '#22c55e';
-      msg.textContent = `✅ Contributed! New balance: $${{d.new_balance.toLocaleString('en-US',{{minimumFractionDigits:2}})}}. Reloading…`;
+      msg.textContent = `✅ Contributed! New balance: ${{CURR_SYM}}${{d.new_balance.toLocaleString('en-US',{{minimumFractionDigits:2}})}}. Reloading…`;
       setTimeout(() => location.reload(), 1500);
     }} else {{
       msg.style.color = '#ef4444'; msg.textContent = '❌ ' + d.error;
@@ -13083,7 +13090,7 @@ async function submitAnnuitize() {{
     const d = await r.json();
     if (d.ok) {{
       msg.style.color = '#22c55e';
-      msg.textContent = `✅ Annuitized! ${{d.total_payments}} payments of $${{d.payment_amount.toLocaleString('en-US',{{minimumFractionDigits:2}})}}. Reloading…`;
+      msg.textContent = `✅ Annuitized! ${{d.total_payments}} payments of ${{CURR_SYM}}${{d.payment_amount.toLocaleString('en-US',{{minimumFractionDigits:2}})}}. Reloading…`;
       setTimeout(() => location.reload(), 1800);
     }} else {{
       msg.style.color = '#ef4444'; msg.textContent = '❌ ' + d.error;
@@ -13094,14 +13101,14 @@ async function submitAnnuitize() {{
 // ── Surrender ─────────────────────────────────────────────────────────────
 function confirmSurrender(cid, est, chargePct) {{
   const msg = chargePct > 0
-    ? `Surrender this annuity? You will receive approximately $${{est.toLocaleString('en-US',{{minimumFractionDigits:2}})}} (after ${{chargePct}}% surrender charge).`
-    : `Surrender this annuity? You will receive approximately $${{est.toLocaleString('en-US',{{minimumFractionDigits:2}})}} (no surrender charge).`;
+    ? `Surrender this annuity? You will receive approximately ${{CURR_SYM}}${{est.toLocaleString('en-US',{{minimumFractionDigits:2}})}} (after ${{chargePct}}% surrender charge).`
+    : `Surrender this annuity? You will receive approximately ${{CURR_SYM}}${{est.toLocaleString('en-US',{{minimumFractionDigits:2}})}} (no surrender charge).`;
   if (!confirm(msg)) return;
   const fd = new FormData(); fd.append('contract_id', cid);
   fetch('/api/brokerage/surrender-annuity', {{method:'POST',credentials:'same-origin',body:fd}})
     .then(r => r.json())
     .then(d => {{
-      if (d.ok) {{ alert(`Surrendered. Received: $${{d.surrender_payout.toLocaleString('en-US',{{minimumFractionDigits:2}})}}`); location.reload(); }}
+      if (d.ok) {{ alert(`Surrendered. Received: ${{CURR_SYM}}${{d.surrender_payout.toLocaleString('en-US',{{minimumFractionDigits:2}})}}`); location.reload(); }}
       else alert('Error: ' + d.error);
     }}).catch(() => alert('Network error'));
 }}

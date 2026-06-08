@@ -75,6 +75,7 @@ def initialize():
     Base.metadata.create_all(bind=engine)
     _migrate_from_json()
     _seed_land_grant_entry()
+    _seed_annuity_entries()
 
 
 def _seed_land_grant_entry():
@@ -117,6 +118,106 @@ def _seed_land_grant_entry():
     except Exception as e:
         db.rollback()
         print(f"[Wiki] Seed land grant error: {e}")
+    finally:
+        db.close()
+
+
+def _seed_annuity_entries():
+    _ANNUITY_ENTRIES = [
+        (
+            "What is an Annuity",
+            "An annuity is a financial contract where you pay a lump sum (or series of contributions) "
+            "to the Wadsworth Brokerage Firm in exchange for guaranteed fixed income payments over a set term.\n\n"
+            "Key concepts:\n"
+            "• Premium — the upfront amount you pay to open the contract.\n"
+            "• Payout — the fixed periodic payments you receive during the payout phase.\n"
+            "• Term — the length of the payout period (30, 90, 180, or 365 game-days).\n"
+            "• Rate — the annual interest rate applied to your principal (8%–15% depending on term).\n\n"
+            "Payments are made in your legal tender — if your account uses JPY, EUR, or another currency, "
+            "annuity payouts are automatically converted and credited in that currency.\n\n"
+            "Taxes apply to each payment:\n"
+            "• Non-qualified: 15% tax on the interest portion only (principal returned tax-free).\n"
+            "• Qualified: 20% tax on the full payment, but no 0.25% issuance fee at opening.\n\n"
+            "Open an annuity at Brokerage → Annuity Contracts.",
+        ),
+        (
+            "Immediate vs Deferred Annuities",
+            "Wadsworth offers two annuity structures:\n\n"
+            "IMMEDIATE ANNUITY (SPIA — Single Premium Immediate Annuity)\n"
+            "• You pay a single lump-sum premium (minimum 10,000).\n"
+            "• Payments start at the very next payment interval.\n"
+            "• Choose your term (30/90/180/365 days) and frequency (weekly or monthly).\n"
+            "• Longer terms earn higher rates: 30d = 8%, 90d = 10%, 180d = 12%, 365d = 15%.\n"
+            "• Good for players who want income to start right away.\n\n"
+            "DEFERRED ANNUITY\n"
+            "• Open with 0 deposit or an initial amount (minimum 1,000 if depositing at opening).\n"
+            "• Add contributions any time (minimum 100 per contribution).\n"
+            "• Balance earns 5% annual interest, credited monthly during accumulation.\n"
+            "• When your balance reaches 5,000 or more, click Annuitize to convert to a payout stream.\n"
+            "• You choose the payout term and frequency at annuitization time.\n"
+            "• Set an accumulation term for automatic annuitization at the end of the term.\n\n"
+            "Strategy: Use deferred annuities to build up a larger principal over time before locking in "
+            "payments, or use an immediate annuity for instant guaranteed income from idle capital.",
+        ),
+        (
+            "Annuity Surrender Charges",
+            "You can exit any annuity early by surrendering it, but a surrender charge may apply.\n\n"
+            "How surrender charges work:\n"
+            "• The charge is based on how long ago the contract was opened.\n"
+            "• Charge schedule: Year 1 = 7%, Year 2 = 6%, Year 3 = 5%, Year 4 = 4%, Year 5 = 3%, "
+            "Year 6 = 2%, Year 7 = 1%, Year 8+ = 0% (no charge).\n"
+            "• Each year in game time equates to approximately 365 in-game days.\n\n"
+            "Free withdrawal allowance:\n"
+            "• Each contract year, you may withdraw up to 10% of the contract value with no surrender charge.\n"
+            "• This resets at the start of each new contract year.\n\n"
+            "Surrender payout:\n"
+            "• For accumulation-phase contracts: base = current accumulated value.\n"
+            "• For payout-phase contracts: base = remaining present value of future payments.\n"
+            "• Payout = free portion + charged portion × (1 − charge rate).\n\n"
+            "Tip: If you need liquidity, try using the 10% free withdrawal first rather than a full surrender, "
+            "especially if you are still within the first few contract years.",
+        ),
+        (
+            "Annuity Tax Treatment",
+            "Annuity income is taxable in Wadsworth. The tax treatment depends on whether your contract "
+            "is qualified or non-qualified.\n\n"
+            "NON-QUALIFIED ANNUITY\n"
+            "• 0.25% issuance fee charged at contract opening (paid to the government reserve).\n"
+            "• Only the interest portion of each payment is taxed at 15%.\n"
+            "• Example: 100 payment, 60 principal return + 40 interest → tax = 40 × 15% = 6.00.\n"
+            "• Net payment to you: 94.00.\n\n"
+            "QUALIFIED ANNUITY\n"
+            "• No issuance fee at opening.\n"
+            "• The full payment is taxed at 20%.\n"
+            "• Example: 100 payment → tax = 20.00, net to you = 80.00.\n\n"
+            "Which is better?\n"
+            "• Non-qualified wins when most of your payment is principal return (early in the payout stream).\n"
+            "• Qualified wins when the interest portion is high relative to principal (long-term, high-rate contracts).\n\n"
+            "Executive bonus: Banking-role executives boost your net payout by their bonus percentage, "
+            "applied before tax is deducted — hire a VP of Finance or CFO with banking skills to increase income.",
+        ),
+    ]
+
+    db = _db()
+    try:
+        for title, description in _ANNUITY_ENTRIES:
+            if db.query(WikiMedia).filter(WikiMedia.title == title).first():
+                continue
+            max_order = db.query(WikiMedia).count()
+            db.add(WikiMedia(
+                youtube_id="",
+                kind="video",
+                title=title,
+                description=description,
+                category="banks",
+                sort_order=max_order,
+                pinned=False,
+            ))
+        db.commit()
+        print("[Wiki] Seeded annuity entries")
+    except Exception as e:
+        db.rollback()
+        print(f"[Wiki] Seed annuity error: {e}")
     finally:
         db.close()
 

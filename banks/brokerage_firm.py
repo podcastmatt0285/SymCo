@@ -4284,6 +4284,15 @@ def initialize():
 # ANNUITY FUNCTIONS
 # ==========================
 
+def _player_sym(player_id: int) -> str:
+    """Return the display currency symbol for a player (e.g. '$', '¥', '£')."""
+    try:
+        from reserve_banks import get_player_display_currency
+        return get_player_display_currency(player_id).get("symbol", "$")
+    except Exception:
+        return "$"
+
+
 def _calc_pmt(principal: float, annual_rate: float, periods_per_year: int, n: int) -> float:
     """Standard annuity PMT with zero-division and overflow guards."""
     if n <= 0 or principal <= 0 or periods_per_year <= 0:
@@ -4399,22 +4408,24 @@ def open_immediate_annuity(player_id: int, purchase_price: float, term_days: int
 
     try:
         from stats_ux import log_transaction as _lt
+        _sym = _player_sym(player_id)
         tax_label = "qualified — full pmt taxed 20%" if is_qualified else "non-qualified — interest taxed 15%"
         _lt(player_id, "annuity_purchase", "money", -(purchase_price + fee),
             description=f"Opened {term_days}-day SPIA @ {rate*100:.0f}% ({tax_label}) — "
-                        f"{n} {payment_frequency} payments of ${pmt:,.2f}",
+                        f"{n} {payment_frequency} payments of {_sym}{pmt:,.2f}",
             reference_id=str(cid))
     except Exception:
         pass
 
     try:
         from push_ux import create_game_notification
+        _sym = _player_sym(player_id)
         qual_label = "Qualified" if is_qualified else "Non-qualified"
         create_game_notification(
             player_id,
             "📋 Immediate Annuity Opened",
-            f"{qual_label} ${purchase_price:,.0f} SPIA @ {rate*100:.0f}% — "
-            f"{n} {payment_frequency} payments of ${pmt:,.2f}",
+            f"{qual_label} {_sym}{purchase_price:,.0f} SPIA @ {rate*100:.0f}% — "
+            f"{n} {payment_frequency} payments of {_sym}{pmt:,.2f}",
             url="/brokerage/annuities",
         )
     except Exception:
@@ -4429,7 +4440,7 @@ def open_deferred_annuity(player_id: int, initial_premium: float,
     """Open a flexible-premium deferred annuity. Contributions grow at 5% annual until annuitized."""
     initial_premium = initial_premium or 0.0
     if initial_premium > 0 and initial_premium < 1000.0:
-        return {"ok": False, "error": "Minimum opening deposit is $1,000 (or $0 to open empty)"}
+        return {"ok": False, "error": "Minimum opening deposit is 1,000 (or 0 to open empty)"}
 
     acc_end_tick = None
     if accumulation_term_days:
@@ -4493,8 +4504,9 @@ def open_deferred_annuity(player_id: int, initial_premium: float,
     try:
         from stats_ux import log_transaction as _lt
         if initial_premium > 0:
+            _sym = _player_sym(player_id)
             _lt(player_id, "annuity_contribution", "money", -initial_premium,
-                description=f"Opened deferred annuity — initial deposit ${initial_premium:,.2f}",
+                description=f"Opened deferred annuity — initial deposit {_sym}{initial_premium:,.2f}",
                 reference_id=str(cid))
     except Exception:
         pass
@@ -4519,7 +4531,7 @@ def open_deferred_annuity(player_id: int, initial_premium: float,
 def contribute_to_deferred(player_id: int, contract_id: int, amount: float, current_tick: int) -> dict:
     """Add funds to a deferred annuity's accumulation account."""
     if (amount or 0.0) < ANNUITY_DEFERRED_CONTRIB_MIN:
-        return {"ok": False, "error": f"Minimum contribution is ${ANNUITY_DEFERRED_CONTRIB_MIN:,.0f}"}
+        return {"ok": False, "error": f"Minimum contribution is {ANNUITY_DEFERRED_CONTRIB_MIN:,.0f}"}
 
     db = get_db()
     try:
@@ -4559,8 +4571,9 @@ def contribute_to_deferred(player_id: int, contract_id: int, amount: float, curr
 
     try:
         from stats_ux import log_transaction as _lt
+        _sym = _player_sym(player_id)
         _lt(player_id, "annuity_contribution", "money", -amount,
-            description=f"Contributed ${amount:,.2f} to deferred annuity #{contract_id}",
+            description=f"Contributed {_sym}{amount:,.2f} to deferred annuity #{contract_id}",
             reference_id=str(contract_id))
     except Exception:
         pass
@@ -4590,7 +4603,7 @@ def annuitize_deferred(player_id: int, contract_id: int, payout_term_days: int,
 
         principal = contract.accumulated_value or 0.0
         if principal < ANNUITY_MIN_TO_ANNUITIZE:
-            return {"ok": False, "error": f"Minimum ${ANNUITY_MIN_TO_ANNUITIZE:,.0f} required to annuitize"}
+            return {"ok": False, "error": f"Minimum {ANNUITY_MIN_TO_ANNUITIZE:,.0f} required to annuitize"}
 
         periods_per_year = 52 if payment_frequency == "weekly" else 12
         n = max(1, round(payout_term_days / 365.0 * periods_per_year))
@@ -4617,20 +4630,22 @@ def annuitize_deferred(player_id: int, contract_id: int, payout_term_days: int,
 
     try:
         from stats_ux import log_transaction as _lt
+        _sym = _player_sym(player_id)
         _lt(player_id, "annuity_purchase", "money", 0.0,
             description=f"Annuitized deferred contract #{contract_id} — "
-                        f"${principal:,.2f} @ {rate*100:.0f}% for {payout_term_days}d — "
-                        f"{n} {payment_frequency} payments of ${pmt:,.2f}",
+                        f"{_sym}{principal:,.2f} @ {rate*100:.0f}% for {payout_term_days}d — "
+                        f"{n} {payment_frequency} payments of {_sym}{pmt:,.2f}",
             reference_id=str(contract_id))
     except Exception:
         pass
 
     try:
         from push_ux import create_game_notification
+        _sym = _player_sym(player_id)
         create_game_notification(
             player_id,
             "▶ Deferred Annuity Annuitized",
-            f"${principal:,.0f} locked in — {n} {payment_frequency} payments of ${pmt:,.2f} starting soon",
+            f"{_sym}{principal:,.0f} locked in — {n} {payment_frequency} payments of {_sym}{pmt:,.2f} starting soon",
             url="/brokerage/annuities",
         )
     except Exception:
@@ -4691,8 +4706,9 @@ def surrender_annuity(player_id: int, contract_id: int, current_tick: int) -> di
 
     try:
         from stats_ux import log_transaction as _lt
+        _sym = _player_sym(player_id)
         _lt(player_id, "annuity_surrender", "money", payout,
-            description=f"Annuity #{contract_id} surrendered — received ${payout:,.2f} "
+            description=f"Annuity #{contract_id} surrendered — received {_sym}{payout:,.2f} "
                         f"(surrender charge: {charge_rate*100:.0f}%)",
             reference_id=str(contract_id))
     except Exception:
@@ -4700,10 +4716,11 @@ def surrender_annuity(player_id: int, contract_id: int, current_tick: int) -> di
 
     try:
         from push_ux import create_game_notification, send_push_notification
+        _sym = _player_sym(player_id)
         create_game_notification(
             player_id,
             "🔓 Annuity Surrendered",
-            f"Received ${payout:,.2f} — surrender charge {charge_rate*100:.0f}%",
+            f"Received {_sym}{payout:,.2f} — surrender charge {charge_rate*100:.0f}%",
             url="/brokerage/annuities",
         )
     except Exception:
@@ -4909,22 +4926,23 @@ def _process_annuity_payments(current_tick: int):
             from push_ux import create_game_notification, send_push_notification
             import auth as _auth
 
+            _sym = _player_sym(c.player_id)
             _lt(c.player_id, "annuity_payout", "money", net_pmt,
                 description=f"Annuity payment {c.payments_made}/{c.total_payments} — "
-                            f"${net_pmt:,.2f} net (tax: ${tax:,.2f})",
+                            f"{_sym}{net_pmt:,.2f} net (tax: {_sym}{tax:,.2f})",
                 reference_id=str(c.id))
 
             create_game_notification(
                 c.player_id,
                 "💰 Annuity Payment",
-                f"${net_pmt:,.2f} received — payment {c.payments_made}/{c.total_payments or '?'}",
+                f"{_sym}{net_pmt:,.2f} received — payment {c.payments_made}/{c.total_payments or '?'}",
                 url="/brokerage/annuities",
             )
 
             if c.status == "completed":
                 _lt(c.player_id, "annuity_maturity", "money", 0.0,
                     description=f"Annuity #{c.id} matured — all {c.total_payments or '?'} payments complete, "
-                                f"${(c.total_paid_out or 0.0):,.2f} total received",
+                                f"{_sym}{(c.total_paid_out or 0.0):,.2f} total received",
                     reference_id=str(c.id))
                 try:
                     _adb = _auth.get_db()
@@ -4938,7 +4956,7 @@ def _process_annuity_payments(current_tick: int):
                         c.player_id,
                         "🎉 Annuity Matured",
                         f"Your annuity is complete! All {c.total_payments} payments paid. "
-                        f"Total received: ${(c.total_paid_out or 0.0):,.2f}",
+                        f"Total received: {_sym}{(c.total_paid_out or 0.0):,.2f}",
                         url="/brokerage/annuities",
                         notif_type="annuities",
                     )
