@@ -137,8 +137,11 @@ Items are grouped by category and ranked by value/complexity at the bottom.
 - [ ] **Higher trophy multiplier** on events.
 - [ ] **Access to unique reserve currencies** — subscriber-only currencies via
       the State Reserve Banks.
-- [ ] **Free city + mayoralship** — city perk option A: subscribers get a city founded
+- [x] **Free city + mayoralship** — city perk option A: subscribers get a city founded
       for free and become its mayor (normally a paid/earned governance role).
+      ✅ Implemented: `create_free_city()` in cities.py, `POST /api/city/create-free`
+      endpoint + Pro-gated "Found a Free City" card on /cities. No district sacrifice,
+      no $10M cost, bank seeded $0. One-city-per-player rule limits to one active free city.
 - [ ] **Post banner ads** in P2P chatrooms + scrolling tickers.
 - [ ] **Access to a Trophies Store** — subscriber-only store to spend trophies.
 - [ ] **Private server** — subscriber can run a private instance for them + friends.
