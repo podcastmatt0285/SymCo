@@ -76,6 +76,7 @@ def initialize():
     _migrate_from_json()
     _seed_land_grant_entry()
     _seed_annuity_entries()
+    _seed_index_challenge_entry()
 
 
 def _seed_land_grant_entry():
@@ -218,6 +219,55 @@ def _seed_annuity_entries():
     except Exception as e:
         db.rollback()
         print(f"[Wiki] Seed annuity error: {e}")
+    finally:
+        db.close()
+
+
+def _seed_index_challenge_entry():
+    db = _db()
+    try:
+        if db.query(WikiMedia).filter(WikiMedia.title == "Index Challenge Event").first():
+            return
+        max_order = db.query(WikiMedia).count()
+        db.add(WikiMedia(
+            youtube_id="",
+            kind="video",
+            title="Index Challenge Event",
+            description=(
+                "The Index Challenge is a monthly event that rewards players for crossing the WBC-50 Top 50 "
+                "index boundary — in whichever direction they don't currently occupy.\n\n"
+                "How it works:\n"
+                "• When the event goes live, the system snapshots which player companies are in the WBC-50 index.\n"
+                "• Players OUTSIDE the index must ENTER the Top 50 to earn the trophy reward.\n"
+                "• Players INSIDE the index must EXIT the Top 50 to earn the trophy reward.\n"
+                "• The challenge is personalised — your events page shows whether your goal is to Enter or Exit.\n\n"
+                "How the WBC-50 works:\n"
+                "• The WBC-50 (Wadsworth Blue-Chip 50) index tracks the top 50 publicly listed companies by market cap.\n"
+                "• The index rebalances periodically as stock prices change.\n"
+                "• Every rebalance where your company crosses the in/out boundary counts as progress.\n\n"
+                "Earning the reward:\n"
+                "• Progress is tracked automatically — you don't need to do anything except hold/grow your company.\n"
+                "• When the rebalance confirms you've crossed in the correct direction, the task completes (1/1).\n"
+                "• You receive the trophy reward instantly, plus an in-game banner notification.\n\n"
+                "Strategy tips:\n"
+                "• If you need to ENTER: buy shares of your own company (buyback program) to boost market cap, "
+                "or expand operations to drive revenue and valuation growth.\n"
+                "• If you need to EXIT: dilute the share price by issuing new shares, or let other companies "
+                "overtake yours in market cap without intervention.\n"
+                "• The event is monthly only — there is one chance per event window.\n"
+                "• NPC companies also participate in the index, so their valuations affect whether your rank "
+                "is above or below the boundary.\n\n"
+                "Note: NPCs cannot complete this event — only real player companies count."
+            ),
+            category="advanced",
+            sort_order=max_order,
+            pinned=False,
+        ))
+        db.commit()
+        print("[Wiki] Seeded Index Challenge Event entry")
+    except Exception as e:
+        db.rollback()
+        print(f"[Wiki] Seed index challenge error: {e}")
     finally:
         db.close()
 
