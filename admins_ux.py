@@ -4911,7 +4911,7 @@ def admin_events(session_token: Optional[str] = Cookie(None),
                 f' style="display:inline-flex;align-items:center;gap:3px;vertical-align:top;">'
                 f'<input type="hidden" name="event_id" value="{ev.id}">'
                 f'<input type="datetime-local" name="ends_at"'
-                f' title="Optional end date (UTC)" placeholder="end (UTC)"'
+                f' title="Optional end date (your local time)" placeholder="end (local)"'
                 f' style="background:#0f172a;color:#94a3b8;border:1px solid #334155;'
                 f'border-radius:4px;padding:4px 5px;font-size:0.68rem;width:140px;">'
                 f'<button type="submit" style="background:#1e3a5f;color:#fff;border:none;'
@@ -5398,11 +5398,11 @@ def admin_events(session_token: Optional[str] = Cookie(None),
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
           <div>
-            <div style="font-size:0.68rem;color:#4d7c6a;margin-bottom:3px;">Start date/time (UTC)</div>
+            <div style="font-size:0.68rem;color:#4d7c6a;margin-bottom:3px;">Start date/time (your local time)</div>
             <input type="datetime-local" name="starts_at" style="{_inp}">
           </div>
           <div>
-            <div style="font-size:0.68rem;color:#4d7c6a;margin-bottom:3px;">End date/time (UTC)</div>
+            <div style="font-size:0.68rem;color:#4d7c6a;margin-bottom:3px;">End date/time (your local time)</div>
             <input type="datetime-local" name="ends_at" style="{_inp}">
           </div>
         </div>
@@ -5413,7 +5413,30 @@ def admin_events(session_token: Optional[str] = Cookie(None),
         </button>
       </form>
     </div>
-    {event_cards}"""
+    {event_cards}
+    <script>
+    /* Event schedule times are entered in the admin's LOCAL time via
+       <input type="datetime-local">. The server stores naive UTC and compares
+       against datetime.utcnow(), so we must convert local -> UTC at submit time.
+       Without this, an admin west of UTC scheduling an event for "today" lands
+       it hours in the past as UTC and it immediately shows ENDED. */
+    (function () {{
+      function pad(n) {{ return (n < 10 ? '0' : '') + n; }}
+      document.addEventListener('submit', function (e) {{
+        var form = e.target;
+        if (!form || !form.action || form.action.indexOf('/admin/events') === -1) return;
+        var inputs = form.querySelectorAll('input[type=datetime-local]');
+        for (var i = 0; i < inputs.length; i++) {{
+          var inp = inputs[i];
+          if (!inp.value) continue;
+          var d = new Date(inp.value);           // datetime-local value is parsed as LOCAL time
+          if (isNaN(d.getTime())) continue;
+          inp.value = d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate())
+                    + 'T' + pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes());
+        }}
+      }}, true);
+    }})();
+    </script>"""
 
     return HTMLResponse(admin_shell("Events", body, admin.business_name, "/admin/events", player_id=admin.id))
 
