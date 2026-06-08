@@ -627,6 +627,65 @@ def login_page(session_token: Optional[str] = Cookie(None)):
         return RedirectResponse(url="/", status_code=303)
     
     _skin_tags = _skin_links(None)
+
+    # ── Market Indices card (same data as /banks page card) ──
+    _indices_card = ""
+    try:
+        from banks.indices import INDICES, _get_history, _fmt, _pct_change
+        _snaps = _get_history("WBC50", 2)
+        _wbc_now  = _snaps[-1].value if _snaps else 0.0
+        _wbc_prev = _snaps[0].value  if len(_snaps) >= 2 else _wbc_now
+        _wbc_ch   = _pct_change(_wbc_now, _wbc_prev)
+        _wbc_str  = _fmt(_wbc_now, "USD")
+        _wbc_col  = "#22c55e" if _wbc_ch >= 0 else "#ef4444"
+        _wbc_arrow = "▲" if _wbc_ch >= 0 else "▼"
+        _gfi_snaps = _get_history("GFI", 1)
+        _gfi_val   = _gfi_snaps[-1].value if _gfi_snaps else 50.0
+        _gfi_col   = ("#dc2626" if _gfi_val <= 24 else "#f97316" if _gfi_val <= 44
+                      else "#eab308" if _gfi_val <= 55 else "#22c55e")
+        _gfi_label = ("Extreme Fear" if _gfi_val <= 24 else "Fear" if _gfi_val <= 44
+                      else "Neutral" if _gfi_val <= 55 else "Greed" if _gfi_val <= 75
+                      else "Extreme Greed")
+        _indices_card = f'''
+        <div class="card" style="border:1px solid #7c3aed;background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 100%);margin-top:20px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                <div>
+                    <h3 style="margin:0;">📊 Market Indices</h3>
+                    <p style="color:#64748b;margin-top:5px;font-size:.85rem;">
+                        {len(INDICES)} composite indices tracking the Wadsworth economy in real time.
+                    </p>
+                </div>
+                <span class="badge" style="background:#7c3aed;">LIVE</span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-top:16px;">
+                <div>
+                    <div style="color:#64748b;font-size:.8rem;">WBC-50</div>
+                    <div style="font-size:1.1rem;font-weight:bold;color:#38bdf8;">{_wbc_str}</div>
+                    <div style="font-size:.72rem;color:{_wbc_col};">{_wbc_arrow} {abs(_wbc_ch):.2f}%</div>
+                </div>
+                <div>
+                    <div style="color:#64748b;font-size:.8rem;">Greed &amp; Fear</div>
+                    <div style="font-size:1.1rem;font-weight:bold;color:{_gfi_col};">{_gfi_val:.0f}</div>
+                    <div style="font-size:.72rem;color:{_gfi_col};">{_gfi_label}</div>
+                </div>
+                <div>
+                    <div style="color:#64748b;font-size:.8rem;">Indices</div>
+                    <div style="font-size:1.1rem;font-weight:bold;color:#a78bfa;">{len(INDICES)}</div>
+                    <div style="font-size:.72rem;color:#64748b;">active</div>
+                </div>
+                <div>
+                    <div style="color:#64748b;font-size:.8rem;">Coverage</div>
+                    <div style="font-size:1.1rem;font-weight:bold;color:#34d399;">Global</div>
+                    <div style="font-size:.72rem;color:#64748b;">economy</div>
+                </div>
+            </div>
+            <div style="margin-top:16px;">
+                <a href="/banks/indices/unloggedin" class="btn-blue" style="background:#7c3aed;">View All Indices</a>
+            </div>
+        </div>'''
+    except Exception:
+        pass
+
     return ("""
 <!DOCTYPE html>
 <html>
@@ -877,6 +936,36 @@ def login_page(session_token: Optional[str] = Cookie(None)):
             letter-spacing: 0.01em;
         }
 
+        /* ── Indices card support ── */
+        .card {
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        .badge {
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 3px;
+            background: #1e293b;
+            margin-left: 6px;
+            white-space: nowrap;
+            color: #e2e8f0;
+        }
+        .btn-blue {
+            border: none;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            border-radius: 6px;
+            font-family: inherit;
+            font-weight: 600;
+            background: #38bdf8;
+            color: #020617;
+            text-decoration: none;
+            display: inline-block;
+        }
+
         .video-wrap {
             margin-top: 20px;
             border-radius: 12px;
@@ -949,6 +1038,9 @@ def login_page(session_token: Optional[str] = Cookie(None)):
             on the stock market, corner entire industries, and outmaneuver thousands of
             rival tycoons in one living, breathing economy.
         </div>
+
+        <!-- Indices card placeholder -->
+        """ + _indices_card + """
 
         <!-- Intro video -->
         <div class="video-wrap">
