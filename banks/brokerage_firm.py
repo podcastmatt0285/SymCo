@@ -4347,7 +4347,7 @@ def open_immediate_annuity(player_id: int, purchase_price: float, term_days: int
     if payment_frequency not in ANNUITY_PAYMENT_TICKS:
         return {"ok": False, "error": "Payment frequency must be 'weekly' or 'monthly'"}
     if (purchase_price or 0.0) < ANNUITY_IMMEDIATE_MIN:
-        return {"ok": False, "error": f"Minimum purchase is ${ANNUITY_IMMEDIATE_MIN:,.0f}"}
+        return {"ok": False, "error": f"Minimum purchase is {ANNUITY_IMMEDIATE_MIN:,.0f}"}
 
     from reserve_banks import spend_player_funds, credit_usd
     ok, msg = spend_player_funds(player_id, purchase_price)
