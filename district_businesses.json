@@ -7758,7 +7758,7 @@
             "quantity": 600
           },
           {
-            "item": "oil",
+            "item": "cooking_oil",
             "quantity": 100
           },
           {
@@ -7788,7 +7788,7 @@
             "quantity": 100
           },
           {
-            "item": "oil",
+            "item": "cooking_oil",
             "quantity": 80
           },
           {
@@ -9135,7 +9135,7 @@
             "quantity": 100
           },
           {
-            "item": "oil",
+            "item": "cooking_oil",
             "quantity": 50
           },
           {
