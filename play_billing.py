@@ -152,17 +152,19 @@ def verify_play_subscription(purchase_token: str) -> dict:
     #   result["lineItems"][0]["expiryTime"]  RFC3339
     raw_state = result.get("subscriptionState", "SUBSCRIPTION_STATE_EXPIRED")
     state_map = {
-        "SUBSCRIPTION_STATE_ACTIVE":         "ACTIVE",
-        "SUBSCRIPTION_STATE_CANCELED":       "CANCELED",
+        "SUBSCRIPTION_STATE_ACTIVE":          "ACTIVE",
+        "SUBSCRIPTION_STATE_PENDING":         "PENDING",   # first payment still processing
+        "SUBSCRIPTION_STATE_CANCELED":        "CANCELED",
         "SUBSCRIPTION_STATE_IN_GRACE_PERIOD": "IN_GRACE_PERIOD",
-        "SUBSCRIPTION_STATE_ON_HOLD":        "ON_HOLD",
-        "SUBSCRIPTION_STATE_PAUSED":         "PAUSED",
-        "SUBSCRIPTION_STATE_EXPIRED":        "EXPIRED",
+        "SUBSCRIPTION_STATE_ON_HOLD":         "ON_HOLD",
+        "SUBSCRIPTION_STATE_PAUSED":          "PAUSED",
+        "SUBSCRIPTION_STATE_EXPIRED":         "EXPIRED",
     }
     state = state_map.get(raw_state, "EXPIRED")
+    log.info("verify_play_subscription: raw_state=%s → state=%s", raw_state, state)
 
-    # Entitlement continues through grace period (user gets ~3-day buffer)
-    active = state in ("ACTIVE", "CANCELED", "IN_GRACE_PERIOD")
+    # Entitlement continues through grace period and while first payment is pending
+    active = state in ("ACTIVE", "PENDING", "CANCELED", "IN_GRACE_PERIOD")
 
     expiry = None
     items  = result.get("lineItems", [])

@@ -2983,7 +2983,8 @@ def _skins_tab(player) -> str:
               credentials: 'same-origin',
               body: JSON.stringify({purchase_token: token})
             });
-            return r.ok ? await r.json() : null;
+            // Always return the body so callers can surface the error message.
+            try { return await r.json(); } catch(e) { return {ok: false, error: 'no response'}; }
           }
 
           function _setStatus(msg) {
@@ -3017,10 +3018,10 @@ def _skins_tab(player) -> str:
                       'Wadsworth Pro Active</strong>';
                     return;
                   }
-                  // Found the purchase but the server could not confirm it
-                  // (e.g. Play API permission / verification failure). Clear the
-                  // "Restoring…" text so it doesn't hang forever and let the user retry.
-                  _setStatus('Could not verify your subscription yet. Tap Subscribe to retry.');
+                  // Found the purchase but the server could not confirm it.
+                  var errMsg = (result && result.error) ? result.error : 'unknown error';
+                  var stateMsg = (result && result.state) ? ' (state: ' + result.state + ')' : '';
+                  _setStatus('Verify failed: ' + errMsg + stateMsg + '. Tap Subscribe to retry.');
                   return;
                 }
               }
