@@ -725,6 +725,31 @@ def press_kit(session_token: Optional[str] = Cookie(None)):
   <div style="font-size:0.8rem;color:#7a5230;">↓ download</div>
 </a>"""
 
+    # Skin logo variants — each cosmetic theme ships its own branded logo.
+    # (filename on disk, display label, theme tier)
+    skin_logos = [
+        ("/static/logo.png",                  "Default",                 "free"),
+        ("/static/logo-dark-nature.png",      "Expressive Nature · Dark", "free"),
+        ("/static/logo-nature.png",           "Expressive Nature · Light","pro"),
+        ("/static/logo-kawaii.png",           "Kawaii Night",            "pro"),
+        ("/static/logo-soul-vinyl-dark.png",  "Soul Vinyl · Dark",       "pro"),
+        ("/static/logo-soul-vinyl-light.png", "Soul Vinyl · Light",      "pro"),
+    ]
+    skin_html = ""
+    for src, label, tier in skin_logos:
+        fname = src.rsplit("/", 1)[-1]
+        badge = ('<span style="font-size:0.7rem;font-weight:700;color:#b8860b;">★ PRO</span>'
+                 if tier == "pro"
+                 else '<span style="font-size:0.7rem;color:#7a5230;">FREE</span>')
+        # Light skins read better on a dark tile; dark skins on a light tile.
+        bg = "#1a1206" if "light" in label.lower() else "#f3e9d8"
+        skin_html += f"""<a href="{src}" download="{fname}" class="icon-card" title="Click to download" style="background:{bg};">
+  <img src="{src}" width="120" height="120" alt="{label} logo" style="max-width:120px;max-height:120px;object-fit:contain;">
+  <div>{label}</div>
+  <div>{badge}</div>
+  <div style="font-size:0.8rem;color:#7a5230;">↓ download</div>
+</a>"""
+
     body = f"""
 <p>All assets below are provided for press, editorial, and promotional use.
 Click any image to download.</p>
@@ -732,7 +757,13 @@ Click any image to download.</p>
 <h2>I. Brand Assets</h2>
 <div class="icon-grid">{icon_html}</div>
 
-<h2>II. About the Game</h2>
+<h2>II. Skin Logos</h2>
+<p>Wadsworth ships multiple cosmetic themes. Each theme has its own branded logo —
+free themes are available to all players, ★ PRO themes unlock with a
+<strong>Wadsworth Pro</strong> (Supporters) subscription.</p>
+<div class="icon-grid">{skin_html}</div>
+
+<h2>III. About the Game</h2>
 <p><strong>Wadsworth Economic Tycoon Simulator</strong> is a persistent real-time multiplayer
 economic strategy game. Players build industrial empires, trade commodities, manage equity
 portfolios, govern cities, operate county blockchains, and compete on a fully interconnected
@@ -745,7 +776,7 @@ financial leaderboard.</p>
   <li>Tick-driven real-time simulation engine</li>
 </ul>
 
-<h2>III. Key Features</h2>
+<h2>IV. Key Features</h2>
 <ul>
   <li>Continuous double-auction commodity market</li>
   <li>Live stock exchange with IPOs, shorts, and ETFs</li>
@@ -757,7 +788,7 @@ financial leaderboard.</p>
   <li>Full PWA: home-screen install, push notifications, widgets</li>
 </ul>
 
-<h2>IV. Technical</h2>
+<h2>V. Technical</h2>
 <ul>
   <li>Backend: Python / FastAPI / PostgreSQL</li>
   <li>Frontend: Server-rendered PWA, no JS framework</li>
