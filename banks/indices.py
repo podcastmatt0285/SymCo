@@ -998,6 +998,27 @@ def _shell(title, body, balance=0.0, player_id=None):
         return f"<html><body>{body}</body></html>"
 
 
+def _guest_shell(title: str, body: str) -> str:
+    """Minimal HTML shell for unauthenticated visitors — no game nav."""
+    from skin_utils import skin_links
+    skin_tags = skin_links(None)
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{title} · Wadsworth</title>
+{skin_tags}
+<style>
+body {{ max-width:1200px; margin:0 auto; padding:20px 20px 80px; }}
+</style>
+</head>
+<body>
+{body}
+</body>
+</html>"""
+
+
 def _gfi_color(score: float) -> str:
     if score <= 24:   return "#dc2626"
     if score <= 44:   return "#f97316"
@@ -1140,6 +1161,109 @@ def indices_landing(session_token: Optional[str] = Cookie(None)):
         pass
 
     return _shell("Market Indices", tut4 + body + "<script>window._tkCategories=['stocks'];</script>", getattr(player, 'cash_balance', 0), getattr(player, 'id', None))
+
+
+@router.get("/banks/indices/unloggedin", response_class=HTMLResponse)
+def indices_landing_unloggedin():
+    """Same indices grid as /banks/indices but for unauthenticated visitors."""
+    cards_html = ""
+    for code, meta in INDICES.items():
+        snaps30 = _get_history(code, 30)
+        snap_now = snaps30[-1] if snaps30 else None
+
+        current  = snap_now.value if snap_now else 0.0
+        fmted    = _fmt(current, meta["unit"])
+
+        snap_24h = _snap_near_24h(snaps30)
+        if snap_24h is snap_now:
+            snap_24h = None
+        snap_7d = None
+        if snaps30:
+            t7 = datetime.utcnow() - timedelta(days=7)
+            snap_7d = min(snaps30, key=lambda s: abs((s.timestamp - t7).total_seconds()))
+            if snap_7d is snap_now:
+                snap_7d = None
+        snap_30d = snaps30[0] if len(snaps30) >= 2 else None
+
+        ch24  = _pct_change(current, snap_24h.value) if snap_24h else None
+        ch7   = _pct_change(current, snap_7d.value)  if snap_7d  else None
+        ch30  = _pct_change(current, snap_30d.value) if snap_30d else None
+
+        def _chip(label: str, pct: "float | None") -> str:
+            if pct is None:
+                return f'<span class="perf-chip perf-na">{label} —</span>'
+            c = "#22c55e" if pct >= 0 else "#ef4444"
+            a = "▲" if pct >= 0 else "▼"
+            return (f'<span class="perf-chip" style="color:{c};">'
+                    f'{label} {a}{abs(pct):.1f}%</span>')
+
+        pt_change = current - snap_24h.value if snap_24h else None
+        pt_str = ""
+        if pt_change is not None:
+            pt_col = "#22c55e" if pt_change >= 0 else "#ef4444"
+            pt_fmt = _fmt(abs(pt_change), meta["unit"])
+            sign   = "+" if pt_change >= 0 else "−"
+            pt_str = f'<span style="color:{pt_col};font-size:.7rem;">{sign}{pt_fmt}</span>'
+
+        svg = _sparkline_svg(snaps30[-48:], meta["color"]) if snaps30 else ""
+
+        cards_html += f"""
+        <a href="/banks/indices/{code}/unloggedin" class="idx-card" style="--c:{meta['color']};">
+          <div class="idx-top">
+            <span class="idx-icon">{meta['icon']}</span>
+            <span class="idx-code">{meta['code']}</span>
+          </div>
+          <div class="idx-name">{meta['name']}</div>
+          <div class="idx-value">{fmted} {pt_str}</div>
+          <div class="idx-perfs">{_chip("24h",ch24)}{_chip("7D",ch7)}{_chip("30D",ch30)}</div>
+          <div class="idx-spark">{svg}</div>
+        </a>"""
+
+    body = f"""
+    <style>
+      .idx-grid {{
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+        gap: 14px;
+        margin-top: 16px;
+      }}
+      .idx-card {{
+        background: #0f172a;
+        border: 1px solid #1e293b;
+        border-top: 3px solid var(--c,#38bdf8);
+        border-radius: 8px;
+        padding: 14px;
+        text-decoration: none;
+        color: #e2e8f0;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        transition: border-color .15s, background .15s;
+      }}
+      .idx-card:hover {{ background:#1e293b; border-color: var(--c,#38bdf8); text-decoration:none; }}
+      .idx-top {{ display:flex; justify-content:space-between; align-items:center; }}
+      .idx-icon {{ font-size:1.4rem; }}
+      .idx-code {{ font-size:.7rem; color:var(--c,#38bdf8); font-weight:bold;
+                   background:rgba(255,255,255,.06); padding:2px 6px; border-radius:4px; }}
+      .idx-name {{ font-size:.78rem; color:#94a3b8; margin-top:2px; }}
+      .idx-value {{ font-size:1.2rem; font-weight:bold; color:var(--c,#38bdf8);
+                    display:flex; align-items:baseline; gap:6px; }}
+      .idx-perfs {{ display:flex; gap:4px; flex-wrap:wrap; margin-top:2px; }}
+      .perf-chip {{ font-size:.65rem; background:rgba(255,255,255,.05);
+                    border-radius:3px; padding:1px 5px; white-space:nowrap; }}
+      .perf-na   {{ color:#475569; }}
+      .idx-spark {{ margin-top:4px; }}
+    </style>
+
+    <a href="/login" style="color:#38bdf8;font-size:.85rem;">← Back to Login</a>
+    <h1 style="margin:10px 0 4px;">Market Indices</h1>
+    <p style="color:#64748b;font-size:.85rem;margin:0 0 4px;">
+      {len(INDICES)} live composite indices tracking the Wadsworth economy.
+    </p>
+    <div class="idx-grid">{cards_html}</div>
+    """
+
+    return _guest_shell("Market Indices", body)
 
 
 @router.get("/banks/indices/{code}", response_class=HTMLResponse)
@@ -1662,6 +1786,479 @@ def index_detail(code: str, session_token: Optional[str] = Cookie(None)):
 
     return _shell(meta["name"], tut4 + body + "<script>window._tkCategories=['stocks'];</script>",
                   getattr(player, 'cash_balance', 0), getattr(player, 'id', None))
+
+
+@router.get("/banks/indices/{code}/unloggedin", response_class=HTMLResponse)
+def index_detail_unloggedin(code: str):
+    """Same index detail page as /banks/indices/{code} but for unauthenticated visitors."""
+    code = code.upper()
+    if code not in INDICES:
+        return _guest_shell("Not Found", "<p>Index not found. <a href='/banks/indices/unloggedin'>← Back</a></p>")
+
+    disp = None  # no player currency preference for guests
+
+    meta  = INDICES[code]
+    color = meta["color"]
+
+    snaps30  = _get_history(code, 30)
+    snaps7   = _get_history(code, 7)
+    snaps1   = _get_history(code, 1)
+    snap_now = snaps30[-1] if snaps30 else None
+
+    current = snap_now.value if snap_now else 0.0
+    fmted   = _fmt(current, meta["unit"], disp)
+
+    snap_24h = _snap_near_24h(snaps30)
+    if snap_24h is snap_now:
+        snap_24h = None
+    snap_7d = None
+    if snaps30:
+        t7 = datetime.utcnow() - timedelta(days=7)
+        snap_7d = min(snaps30, key=lambda s: abs((s.timestamp - t7).total_seconds()))
+        if snap_7d is snap_now:
+            snap_7d = None
+    snap_30d = snaps30[0] if len(snaps30) >= 2 else None
+
+    ch24 = _pct_change(current, snap_24h.value) if snap_24h else None
+    ch7  = _pct_change(current, snap_7d.value)  if snap_7d  else None
+    ch30 = _pct_change(current, snap_30d.value) if snap_30d else None
+
+    pt_change = (current - snap_24h.value) if snap_24h else None
+
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    snaps_today = [s for s in snaps1 if s.timestamp >= today_start]
+    day_open = snaps_today[0].value  if snaps_today else None
+    day_high = max(s.value for s in snaps_today) if snaps_today else None
+    day_low  = min(s.value for s in snaps_today) if snaps_today else None
+
+    prev_close = _get_prev_close(code)
+    ath, atl   = _get_alltime_stats(code) if snaps30 else (None, None)
+    vol7       = _calc_volatility(snaps7)
+
+    high30 = max(s.value for s in snaps30) if snaps30 else None
+    low30  = min(s.value for s in snaps30) if snaps30 else None
+
+    range_pct: float | None = None
+    if ath and atl and ath > atl:
+        range_pct = round((current - atl) / (ath - atl) * 100, 1)
+
+    last_updated = snap_now.timestamp.strftime("%b %d, %H:%M UTC") if snap_now else "—"
+    snap_count   = len(snaps30)
+    header_spark = _sparkline_svg(snaps30[-48:], color) if len(snaps30) >= 2 else ""
+
+    breakdown: list[dict] = []
+    latest_meta: dict = {}
+    if snap_now and snap_now.meta_json:
+        try:
+            latest_meta = json.loads(snap_now.meta_json)
+            breakdown = latest_meta.get("breakdown", [])
+        except Exception:
+            pass
+
+    def _cjson(snaps):
+        return (json.dumps([s.timestamp.strftime("%m/%d %H:%M") for s in snaps]),
+                json.dumps([round(s.value, 6) for s in snaps]))
+
+    lbl24, val24 = _cjson(snaps1)
+    lbl7,  val7  = _cjson(snaps7)
+    lbl30, val30 = _cjson(snaps30)
+
+    ohlcv     = _build_ohlcv(snaps7)
+    candle_js = json.dumps(ohlcv)
+
+    pie_labels = json.dumps([b["label"] for b in breakdown[:12]])
+    pie_vals   = json.dumps([b["value"] for b in breakdown[:12]])
+    _palette = [
+        "#38bdf8","#22c55e","#f59e0b","#a78bfa","#f472b6","#34d399",
+        "#fb923c","#84cc16","#06b6d4","#fcd34d","#ef4444","#60a5fa",
+    ]
+    pie_colors = json.dumps((_palette * 3)[:len(breakdown)])
+
+    heatmap_html = _build_heatmap(code, breakdown, latest_meta, color, meta["unit"], disp)
+    no_history   = len(snaps30) < 2
+
+    def _sv(v):
+        if v is None:
+            return '<span style="color:#475569;">—</span>'
+        return _fmt(v, meta["unit"], disp)
+
+    def _pf(lbl, pct):
+        if pct is None:
+            return (f'<div class="pf-cell"><span class="pf-lbl">{lbl}</span>'
+                    f'<span class="pf-val pf-na">—</span></div>')
+        c = "#22c55e" if pct >= 0 else "#ef4444"
+        a = "▲" if pct >= 0 else "▼"
+        return (f'<div class="pf-cell"><span class="pf-lbl">{lbl}</span>'
+                f'<span class="pf-val" style="color:{c};">{a} {abs(pct):.2f}%</span></div>')
+
+    pt_color = "#22c55e" if pt_change is None or pt_change >= 0 else "#ef4444"
+    if pt_change is None:
+        pt_disp = "—"
+    else:
+        pt_sign = "+" if pt_change >= 0 else "−"
+        pt_disp = f'{pt_sign}{_fmt(abs(pt_change), meta["unit"], disp)}'
+
+    related_html = ""
+    related_codes = _RELATED.get(code, [])
+    if related_codes:
+        rcards = ""
+        for rc in related_codes:
+            if rc not in INDICES:
+                continue
+            rm   = INDICES[rc]
+            rs   = _get_latest(rc)
+            rv   = rs.value if rs else 0.0
+            rfmt = _fmt(rv, rm["unit"], disp)
+            rcards += (
+                f'<a href="/banks/indices/{rc}/unloggedin" class="rel-card">'
+                f'<span style="font-size:1.2rem;flex-shrink:0;">{rm["icon"]}</span>'
+                f'<div style="flex:1;min-width:0;">'
+                f'<div style="font-size:.6rem;color:{rm["color"]};font-weight:bold;">{rm["code"]}</div>'
+                f'<div style="font-size:.7rem;color:#cbd5e1;white-space:nowrap;overflow:hidden;'
+                f'text-overflow:ellipsis;">{rm["name"]}</div>'
+                f'<div style="font-size:.75rem;color:{rm["color"]};font-weight:bold;">{rfmt}</div>'
+                f'</div></a>'
+            )
+        related_html = (
+            '<div style="margin-top:24px;">'
+            '<h4 style="color:#94a3b8;font-size:.78rem;text-transform:uppercase;'
+            'letter-spacing:.05em;margin:0 0 10px;">Related Indices</h4>'
+            f'<div class="rel-grid">{rcards}</div>'
+            '</div>'
+        )
+
+    body = f"""
+    <style>
+      .chart-grid {{
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-top: 16px;
+      }}
+      @media(max-width:700px) {{ .chart-grid {{ grid-template-columns:1fr; }} }}
+      .chart-box {{
+        background: #0f172a;
+        border: 1px solid #1e293b;
+        border-radius: 8px;
+        padding: 14px;
+      }}
+      .chart-box h4 {{
+        margin: 0 0 10px;
+        color: #94a3b8;
+        font-size: .78rem;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+      }}
+      .stat-row {{
+        display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0;
+      }}
+      .stat-box {{
+        background: #0f172a; border:1px solid #1e293b; border-radius:6px;
+        padding: 8px 13px; min-width: 80px;
+      }}
+      .stat-lbl {{ color:#64748b; font-size:.65rem; text-transform:uppercase;
+                   letter-spacing:.04em; white-space:nowrap; }}
+      .stat-val {{ font-size:.95rem; font-weight:bold; margin-top:2px; }}
+      .perf-row {{ display:flex; gap:0; margin:8px 0; background:#0f172a;
+                   border:1px solid #1e293b; border-radius:6px; overflow:hidden; }}
+      .pf-cell  {{ flex:1; padding:8px 10px; border-right:1px solid #1e293b; text-align:center; }}
+      .pf-cell:last-child {{ border-right:none; }}
+      .pf-lbl   {{ font-size:.65rem; color:#64748b; text-transform:uppercase; display:block; }}
+      .pf-val   {{ font-size:.85rem; font-weight:bold; display:block; margin-top:2px; }}
+      .pf-na    {{ color:#475569; }}
+      .method-box {{
+        background:#0f172a; border:1px solid #1e293b; border-left:3px solid {color};
+        border-radius:6px; padding:9px 13px; margin:8px 0;
+        font-size:.78rem; color:#94a3b8; line-height:1.5;
+      }}
+      .method-box strong {{ color:#e2e8f0; }}
+      .tf-tabs  {{ display:flex; gap:5px; }}
+      .tf-btn   {{ padding:3px 10px; border-radius:4px; border:1px solid #334155;
+                   background:transparent; color:#64748b; font-size:.7rem;
+                   cursor:pointer; transition:all .15s; }}
+      .tf-btn.active {{ background:{color}22; border-color:{color}; color:{color}; font-weight:bold; }}
+      .rel-grid {{
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+        gap: 10px;
+      }}
+      .rel-card {{
+        background:#0f172a; border:1px solid #1e293b; border-radius:6px;
+        padding:10px 12px; text-decoration:none; color:#e2e8f0;
+        display:flex; align-items:center; gap:8px;
+        transition:background .15s;
+      }}
+      .rel-card:hover {{ background:#1e293b; text-decoration:none; }}
+      .bd-list {{ display:flex; flex-direction:column; gap:5px;
+                  max-height:220px; overflow-y:auto; }}
+      .bd-row  {{ display:flex; align-items:center; gap:8px; font-size:.72rem; }}
+      .bd-label {{ flex:0 0 110px; color:#cbd5e1; white-space:nowrap; overflow:hidden;
+                   text-overflow:ellipsis; text-align:right; }}
+      .bd-bar-wrap {{ flex:1; background:#1e293b; border-radius:3px; height:14px; }}
+      .bd-bar {{ height:100%; border-radius:3px; min-width:2px; }}
+      .bd-val  {{ flex:0 0 70px; text-align:right; color:#94a3b8; font-size:.68rem; }}
+    </style>
+
+    <a href="/banks/indices/unloggedin" style="color:#38bdf8;font-size:.85rem;">← Indices</a>
+
+    <!-- Header -->
+    <div style="margin-top:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:space-between;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="font-size:1.8rem;">{meta['icon']}</span>
+        <div>
+          <div style="font-size:.7rem;color:{color};font-weight:bold;letter-spacing:.08em;">{meta['code']}</div>
+          <h2 style="margin:0;font-size:1.2rem;">{meta['name']}</h2>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+        {header_spark}
+        <div style="font-size:.63rem;color:#475569;">
+          Updated {last_updated} &nbsp;·&nbsp; {snap_count} snapshots (30d)
+        </div>
+      </div>
+    </div>
+
+    <!-- Methodology card -->
+    <div class="method-box"><strong>Methodology:</strong> {meta['desc']}</div>
+
+    <!-- Stat row 1 -->
+    <div class="stat-row">
+      <div class="stat-box" style="border-top:2px solid {color};">
+        <div class="stat-lbl">Current</div>
+        <div class="stat-val" style="color:{color};">{fmted}</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-lbl">Change (24h)</div>
+        <div class="stat-val" style="color:{pt_color};">{pt_disp}</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-lbl">Day High</div>
+        <div class="stat-val" style="color:#22c55e;">{_sv(day_high)}</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-lbl">Day Low</div>
+        <div class="stat-val" style="color:#ef4444;">{_sv(day_low)}</div>
+      </div>
+    </div>
+
+    <!-- Stat row 2 -->
+    <div class="stat-row">
+      <div class="stat-box">
+        <div class="stat-lbl">Open</div>
+        <div class="stat-val">{_sv(day_open)}</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-lbl">Prev Close</div>
+        <div class="stat-val">{_sv(prev_close)}</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-lbl">All-Time High</div>
+        <div class="stat-val" style="color:#22c55e;">{_sv(ath)}</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-lbl">All-Time Low</div>
+        <div class="stat-val" style="color:#ef4444;">{_sv(atl)}</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-lbl">Volatility (7d)</div>
+        <div class="stat-val">{f"{vol7:.2f}%" if vol7 > 0 else '<span style="color:#475569;">—</span>'}</div>
+      </div>
+    </div>
+
+    <!-- Stat row 3 -->
+    <div class="stat-row">
+      <div class="stat-box">
+        <div class="stat-lbl">30D High</div>
+        <div class="stat-val" style="color:#22c55e;">{_sv(high30)}</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-lbl">30D Low</div>
+        <div class="stat-val" style="color:#ef4444;">{_sv(low30)}</div>
+      </div>
+      <div class="stat-box" style="flex:2;min-width:160px;">
+        <div class="stat-lbl">Position (ATL → ATH)</div>
+        {'<div style="margin-top:5px;"><div style="background:#1e293b;border-radius:4px;height:8px;position:relative;"><div style="position:absolute;left:0;top:0;height:100%;border-radius:4px;background:' + color + ';width:' + str(range_pct) + '%;opacity:.85;"></div></div><div style="display:flex;justify-content:space-between;margin-top:3px;font-size:.6rem;color:#475569;"><span>' + _sv(atl) + '</span><span style="color:' + color + ';font-weight:bold;">' + str(range_pct) + '%</span><span>' + _sv(ath) + '</span></div></div>' if range_pct is not None else '<span style="color:#475569;font-size:.75rem;">—</span>'}
+      </div>
+    </div>
+
+    <!-- Performance band -->
+    <div class="perf-row">
+      {_pf("1D", ch24)}
+      {_pf("7D", ch7)}
+      {_pf("30D", ch30)}
+    </div>
+
+    {'<p style="color:#f59e0b;font-size:.8rem;margin:8px 0;">⚠ Insufficient history for charts — check back once the index has more data.</p>' if no_history else ''}
+
+    <!-- Line chart -->
+    <div class="chart-box" style="margin-top:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <h4 style="margin:0;">📈 Price History</h4>
+        <div class="tf-tabs">
+          <button class="tf-btn active" id="tf-24h" onclick="setTf('24H')">24H</button>
+          <button class="tf-btn"        id="tf-7d"  onclick="setTf('7D')">7D</button>
+          <button class="tf-btn"        id="tf-30d" onclick="setTf('30D')">30D</button>
+        </div>
+      </div>
+      <canvas id="lineChart" height="150"></canvas>
+    </div>
+
+    <div class="chart-grid">
+      <div class="chart-box">
+        <h4>🕯️ 7-Day OHLCV (Hourly Candles)</h4>
+        <div id="candleChart" style="height:180px;"></div>
+      </div>
+      <div class="chart-box">
+        <h4>🥧 Composition</h4>
+        <canvas id="pieChart" height="180"></canvas>
+      </div>
+      <div class="chart-box" style="grid-column:1/-1;">
+        <h4>📊 Top Components</h4>
+        <p style="color:#64748b;font-size:.68rem;margin:0 0 8px;">
+          Sorted largest to smallest — bar width shows each component's share of the biggest value.
+        </p>
+        {heatmap_html}
+      </div>
+    </div>
+
+    {related_html}
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+
+    <script>
+    (function() {{
+      const COLOR     = {json.dumps(color)};
+      const CANDLES   = {candle_js};
+      const P_LBL     = {pie_labels};
+      const P_VAL     = {pie_vals};
+      const P_COL     = {pie_colors};
+      const IDX_UNIT  = {json.dumps(meta["unit"])};
+      const DISP_SYM  = "$";
+      const DISP_RATE = 1.0;
+
+      const TF_DATA = {{
+        "24H": {{ labels: {lbl24}, vals: {val24} }},
+        "7D":  {{ labels: {lbl7},  vals: {val7}  }},
+        "30D": {{ labels: {lbl30}, vals: {val30} }},
+      }};
+
+      function fmtTick(v) {{
+        if (IDX_UNIT === "USD" || IDX_UNIT === "USD/hr" || IDX_UNIT === "USD/mo") {{
+          const conv = v / DISP_RATE;
+          if (Math.abs(conv) >= 1e9) return DISP_SYM + (conv/1e9).toFixed(1) + 'B';
+          if (Math.abs(conv) >= 1e6) return DISP_SYM + (conv/1e6).toFixed(1) + 'M';
+          if (Math.abs(conv) >= 1e3) return DISP_SYM + (conv/1e3).toFixed(1) + 'K';
+          return DISP_SYM + conv.toFixed(2);
+        }}
+        if (IDX_UNIT === "%") return v.toFixed(2) + '%';
+        if (IDX_UNIT === "ratio") return v.toFixed(3) + '×';
+        if (IDX_UNIT === "WSC") return v >= 1e6 ? (v/1e6).toFixed(2)+'M WSC' : v.toFixed(0)+' WSC';
+        return v >= 1e6 ? (v/1e6).toFixed(2)+'M' : v >= 1e3 ? (v/1e3).toFixed(1)+'K' : v.toFixed(2);
+      }}
+
+      let lineChart = null;
+
+      function buildLineChart(tf) {{
+        const d = TF_DATA[tf];
+        const ctx = document.getElementById('lineChart').getContext('2d');
+        if (lineChart) lineChart.destroy();
+        if (!d || d.vals.length < 2) {{
+          ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+          return;
+        }}
+        lineChart = new Chart(ctx, {{
+          type: 'line',
+          data: {{
+            labels: d.labels,
+            datasets: [{{
+              data: d.vals,
+              borderColor: COLOR,
+              backgroundColor: COLOR + '18',
+              borderWidth: 1.5,
+              fill: true,
+              pointRadius: 0,
+              tension: 0.3,
+            }}]
+          }},
+          options: {{
+            responsive: true,
+            plugins: {{
+              legend: {{ display: false }},
+              tooltip: {{ callbacks: {{ label: c => fmtTick(c.parsed.y) }} }}
+            }},
+            scales: {{
+              x: {{ display: false }},
+              y: {{
+                grid: {{ color: '#1e293b' }},
+                ticks: {{ color: '#64748b', font: {{ size: 10 }}, callback: fmtTick }},
+              }}
+            }}
+          }}
+        }});
+      }}
+
+      window.setTf = function(tf) {{
+        document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+        const btn = document.getElementById('tf-' + tf.toLowerCase());
+        if (btn) btn.classList.add('active');
+        buildLineChart(tf);
+      }};
+
+      buildLineChart("24H");
+
+      if (CANDLES.length >= 2) {{
+        const container = document.getElementById('candleChart');
+        const chart = LightweightCharts.createChart(container, {{
+          width: container.clientWidth || 400, height: 180,
+          layout: {{ background: {{ color: '#0f172a' }}, textColor: '#94a3b8' }},
+          grid: {{ vertLines: {{ color: '#1e293b' }}, horzLines: {{ color: '#1e293b' }} }},
+          rightPriceScale: {{ borderColor: '#1e293b' }},
+          timeScale: {{ borderColor: '#1e293b', timeVisible: true }},
+          localization: {{ priceFormatter: fmtTick }},
+        }});
+        const series = chart.addCandlestickSeries({{
+          upColor: '#22c55e', downColor: '#ef4444',
+          borderUpColor: '#22c55e', borderDownColor: '#ef4444',
+          wickUpColor: '#22c55e', wickDownColor: '#ef4444',
+          priceFormat: {{ type: 'custom', formatter: fmtTick }},
+        }});
+        series.setData(CANDLES);
+        chart.timeScale().fitContent();
+      }} else {{
+        document.getElementById('candleChart').innerHTML =
+          '<p style="color:#64748b;font-size:.75rem;text-align:center;padding-top:60px;">Insufficient candle data</p>';
+      }}
+
+      if (P_VAL.length > 0 && P_VAL.some(v => v > 0)) {{
+        const ctx2 = document.getElementById('pieChart').getContext('2d');
+        new Chart(ctx2, {{
+          type: 'doughnut',
+          data: {{
+            labels: P_LBL,
+            datasets: [{{ data: P_VAL, backgroundColor: P_COL,
+                          borderColor: '#0f172a', borderWidth: 2 }}]
+          }},
+          options: {{
+            responsive: true,
+            plugins: {{
+              legend: {{
+                position: 'right',
+                labels: {{ color: '#94a3b8', font: {{ size: 10 }}, boxWidth: 10 }},
+              }}
+            }}
+          }}
+        }});
+      }} else {{
+        document.getElementById('pieChart').style.display = 'none';
+        document.getElementById('pieChart').insertAdjacentHTML('afterend',
+          '<p style="color:#64748b;font-size:.75rem;">No breakdown data yet.</p>');
+      }}
+    }})();
+    </script>
+    """
+
+    return _guest_shell(meta["name"], body)
 
 
 def _build_heatmap(code: str, breakdown: list[dict],
