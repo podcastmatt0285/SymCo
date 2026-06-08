@@ -2971,134 +2971,25 @@ def _skins_tab(player) -> str:
         {pro_cards}
     </div>"""
 
-    pro_notice = ""
     if not is_pro_user:
+        # Subscription management lives on the Account tab — point users there
+        # instead of duplicating the Subscribe button / billing flow here.
         pro_notice = """
-        <div id="wds-pro-banner" style="background:var(--accent-3-bg);border:1px solid var(--accent-3);
+        <div style="background:var(--accent-3-bg);border:1px solid var(--accent-3);
             border-radius:var(--radius-md);padding:12px 16px;margin-bottom:18px;
             display:flex;align-items:center;gap:12px;">
             <span style="font-size:1.3rem;">🌟</span>
             <div style="flex:1;">
-                <strong style="color:var(--accent-3);font-size:0.85rem;">Wadsworth Pro</strong>
+                <strong style="color:var(--accent-3);font-size:0.85rem;">Wadsworth Pro unlocks these skins</strong>
                 <p style="color:var(--text-muted);font-size:0.78rem;margin:2px 0 0;">
-                    Unlock Pro skins and exclusive features.</p>
+                    Subscribe and manage your supporter benefits in
+                    <a href="/settings?tab=account" style="color:var(--accent-3);font-weight:700;">Account</a>.</p>
             </div>
-            <button id="wds-sub-btn" onclick="wdsSubscribe()"
+            <a href="/settings?tab=account"
                 style="background:var(--accent-3);color:#000;border:none;border-radius:6px;
-                padding:7px 16px;font-size:0.8rem;font-weight:700;cursor:pointer;
-                white-space:nowrap;display:none;">Subscribe</button>
-            <span id="wds-sub-status" style="font-size:0.75rem;color:var(--text-muted);"></span>
-        </div>
-        <script>
-        (function() {
-          var SUB_ID = 'wads_basic';
-          var _service = null;
-
-          async function _getService() {
-            if (!('getDigitalGoodsService' in window)) return null;
-            try {
-              var svc = await window.getDigitalGoodsService('https://play.google.com/billing');
-              return svc;
-            } catch(e) { return null; }
-          }
-
-          async function _verifyToken(token) {
-            var r = await fetch('/api/play/verify-subscription', {
-              method: 'POST',
-              headers: {'Content-Type': 'application/json'},
-              credentials: 'same-origin',
-              body: JSON.stringify({purchase_token: token})
-            });
-            // Always return the body so callers can surface the error message.
-            try { return await r.json(); } catch(e) { return {ok: false, error: 'no response'}; }
-          }
-
-          function _setStatus(msg) {
-            var el = document.getElementById('wds-sub-status');
-            if (el) el.textContent = msg;
-          }
-
-          // On page load: try to restore entitlement from any existing purchase
-          // (covers reinstalls, account switches, and cross-device restores).
-          async function _tryRestore() {
-            var svc = await _getService();
-            if (!svc) return;
-            _service = svc;
-            // Show the subscribe button now that we know billing is available
-            var btn = document.getElementById('wds-sub-btn');
-            if (btn) btn.style.display = '';
-
-            try {
-              var existing = await svc.listPurchases();
-              for (var i = 0; i < existing.length; i++) {
-                if (existing[i].itemId === SUB_ID) {
-                  _setStatus('Restoring…');
-                  var result = await _verifyToken(existing[i].purchaseToken);
-                  if (result && result.active) {
-                    _setStatus('');
-                    // Hide banner — subscriber state will show on next full page load
-                    var banner = document.getElementById('wds-pro-banner');
-                    if (banner) banner.innerHTML =
-                      '<span style="font-size:1.3rem;">🌟</span>' +
-                      '<strong style="color:var(--accent-3);font-size:0.85rem;margin-left:10px;">' +
-                      'Wadsworth Pro Active</strong>';
-                    return;
-                  }
-                  // Found the purchase but the server could not confirm it.
-                  var errMsg = (result && result.error) ? result.error : 'unknown error';
-                  var stateMsg = (result && result.state) ? ' (state: ' + result.state + ')' : '';
-                  _setStatus('Verify failed: ' + errMsg + stateMsg + '. Tap Subscribe to retry.');
-                  return;
-                }
-              }
-              // No matching purchase found — nothing to restore.
-              _setStatus('');
-            } catch(e) { _setStatus(''); }
-          }
-
-          window.wdsSubscribe = async function() {
-            var btn = document.getElementById('wds-sub-btn');
-            if (btn) btn.disabled = true;
-            _setStatus('Opening…');
-            try {
-              var svc = _service || await _getService();
-              if (!svc) {
-                _setStatus('Billing not available on this device.');
-                if (btn) btn.disabled = false;
-                return;
-              }
-              var req = new PaymentRequest(
-                [{ supportedMethods: 'https://play.google.com/billing',
-                   data: { sku: SUB_ID } }],
-                { total: { label: 'Wadsworth Pro', amount: { currency: 'USD', value: '0' } } }
-              );
-              var response = await req.show();
-              var token = response.details.purchaseToken;
-              _setStatus('Verifying…');
-              var result = await _verifyToken(token);
-              await response.complete('success');
-              if (result && result.active) {
-                _setStatus('');
-                var banner = document.getElementById('wds-pro-banner');
-                if (banner) banner.innerHTML =
-                  '<span style="font-size:1.3rem;">🌟</span>' +
-                  '<strong style="color:var(--accent-3);font-size:0.85rem;margin-left:10px;">' +
-                  'Wadsworth Pro Active — refresh to apply Pro skins!</strong>';
-              } else {
-                _setStatus('Verification failed — please try again.');
-                if (btn) btn.disabled = false;
-              }
-            } catch(e) {
-              // User cancelled or billing error
-              _setStatus(e.name === 'AbortError' ? '' : 'Error: ' + e.message);
-              if (btn) btn.disabled = false;
-            }
-          };
-
-          // Kick off restore attempt silently in background
-          _tryRestore();
-        })();
-        </script>"""
+                padding:7px 16px;font-size:0.8rem;font-weight:700;cursor:pointer;text-decoration:none;
+                white-space:nowrap;">View Pro</a>
+        </div>"""
     else:
         pro_notice = """
         <div style="background:var(--accent-3-bg);border:1px solid var(--accent-3);
@@ -3183,6 +3074,190 @@ function saveSkin(key, btn) {{
 """
 
 
+# Wadsworth Pro / Basic Supporter perks.
+#   ("icon", "title", "description")
+# Only the skins perk is actually enforced in code today; everything else is on
+# the roadmap (ADMIN_TODO.md). Keep these two lists in sync with what ships so
+# the Account panel never over-promises.
+_PRO_PERKS_LIVE = [
+    ("🎨", "Exclusive Pro skins",
+     "Kawaii Night, Soul Vinyl Dark, and Soul Vinyl Light themes — apply them in Settings → Skins."),
+]
+_PRO_PERKS_SOON = [
+    ("💱", "Forex Trading Floor",     "A subscriber-only currency-exchange dashboard."),
+    ("🔌", "Player API",              "Read access, plus buy/sell writes limited to the commodity & district markets."),
+    ("🪙", "Mint District coins",     "Cosmetic coins for forex, gifting, and display — not spendable in the economy."),
+    ("🏙️", "City perk",               "Choose a free city with mayoralship, or ~3 perks for your existing city."),
+    ("🎖️", "Supporter badge",         "Shown on the leaderboard and your P2P contact card."),
+    ("🤝", "Extra P2P capacity",      "More contacts than the standard 46-contact cap."),
+    ("🖼️", "Permanent profile picture","Displayed on your P2P contact card."),
+    ("🏆", "Higher trophy multiplier","Earn more trophies on event completions."),
+    ("💰", "Unique reserve currencies","Subscriber-only currencies via the State Reserve Banks."),
+    ("📣", "P2P banner ads & tickers","Post banner ads in chatrooms and scrolling tickers."),
+    ("🛍️", "Trophies Store",          "A subscriber-only store to spend your trophies."),
+    ("🖥️", "Private server",          "Run a private instance for you and your friends."),
+]
+
+# Self-contained Google Play billing flow (Android TWA only; no-ops elsewhere).
+# Moved here from the Skins tab — subscription management now lives in Account.
+_SUB_BILLING_JS = """
+<script>
+(function() {
+  var SUB_ID = 'wads_basic';
+  var _service = null;
+  async function _getService() {
+    if (!('getDigitalGoodsService' in window)) return null;
+    try { return await window.getDigitalGoodsService('https://play.google.com/billing'); }
+    catch(e) { return null; }
+  }
+  async function _verifyToken(token) {
+    var r = await fetch('/api/play/verify-subscription', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      credentials: 'same-origin', body: JSON.stringify({purchase_token: token})
+    });
+    try { return await r.json(); } catch(e) { return {ok: false, error: 'no response'}; }
+  }
+  function _setStatus(msg) { var el = document.getElementById('wds-sub-status'); if (el) el.textContent = msg; }
+  function _markActive(txt) {
+    var banner = document.getElementById('wds-pro-banner');
+    if (banner) banner.innerHTML =
+      '<span style="font-size:1.3rem;">🌟</span>' +
+      '<strong style="color:#fbbf24;font-size:0.9rem;margin-left:10px;">' + txt + '</strong>';
+  }
+  async function _tryRestore() {
+    var svc = await _getService();
+    if (!svc) return;
+    _service = svc;
+    var btn = document.getElementById('wds-sub-btn');
+    if (btn) btn.style.display = '';
+    try {
+      var existing = await svc.listPurchases();
+      for (var i = 0; i < existing.length; i++) {
+        if (existing[i].itemId === SUB_ID) {
+          _setStatus('Restoring…');
+          var result = await _verifyToken(existing[i].purchaseToken);
+          if (result && result.active) { _setStatus(''); _markActive('Wadsworth Pro Active'); return; }
+          var errMsg = (result && result.error) ? result.error : 'unknown error';
+          var stateMsg = (result && result.state) ? ' (state: ' + result.state + ')' : '';
+          _setStatus('Verify failed: ' + errMsg + stateMsg + '. Tap Subscribe to retry.');
+          return;
+        }
+      }
+      _setStatus('');
+    } catch(e) { _setStatus(''); }
+  }
+  window.wdsSubscribe = async function() {
+    var btn = document.getElementById('wds-sub-btn');
+    if (btn) btn.disabled = true;
+    _setStatus('Opening…');
+    try {
+      var svc = _service || await _getService();
+      if (!svc) { _setStatus('Billing is only available in the Android app.'); if (btn) btn.disabled = false; return; }
+      var req = new PaymentRequest(
+        [{ supportedMethods: 'https://play.google.com/billing', data: { sku: SUB_ID } }],
+        { total: { label: 'Wadsworth Pro', amount: { currency: 'USD', value: '0' } } }
+      );
+      var response = await req.show();
+      var token = response.details.purchaseToken;
+      _setStatus('Verifying…');
+      var result = await _verifyToken(token);
+      await response.complete('success');
+      if (result && result.active) { _setStatus(''); _markActive('Wadsworth Pro Active — refresh to apply Pro perks!'); }
+      else { _setStatus('Verification failed — please try again.'); if (btn) btn.disabled = false; }
+    } catch(e) {
+      _setStatus(e.name === 'AbortError' ? '' : 'Error: ' + e.message);
+      if (btn) btn.disabled = false;
+    }
+  };
+  _tryRestore();
+})();
+</script>"""
+
+
+def _subscription_section(player) -> str:
+    """Wadsworth Pro (Basic Supporter) status + perks, for the Account tab."""
+    from skin_utils import is_pro as _is_pro
+    is_pro_user   = _is_pro(player)
+    is_subscriber = bool(getattr(player, "subscriber", False))
+    is_admin_pro  = is_pro_user and not is_subscriber  # admins get Pro free
+
+    # ── "What you have" status panel ──
+    if is_pro_user:
+        note = "Active"
+        if is_admin_pro:
+            note = "Active — complimentary (admin)"
+        elif is_subscriber:
+            try:
+                from play_billing import get_player_subscription
+                _sub = get_player_subscription(player.id)
+            except Exception:
+                _sub = None
+            if _sub:
+                _exp   = _sub.get("expiry_time")
+                _state = (_sub.get("sub_state") or "").upper()
+                if _exp:
+                    _d = _exp.strftime("%b %d, %Y")
+                    note = f"Active until {_d} — won't renew" if _state in ("CANCELED", "CANCELLED") else f"Active · renews {_d}"
+        status_panel = f"""
+        <div id="wds-pro-banner" style="background:#1f1a0a;border:1px solid #fbbf24;border-radius:10px;
+            padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:1.3rem;">🌟</span>
+            <div>
+                <strong style="color:#fbbf24;font-size:0.9rem;">Wadsworth Pro — {note}</strong>
+                <p style="color:#94a3b8;font-size:0.76rem;margin:2px 0 0;">Thanks for supporting Wadsworth.</p>
+            </div>
+        </div>"""
+    else:
+        status_panel = """
+        <div id="wds-pro-banner" style="background:#1f1a0a;border:1px solid #fbbf24;border-radius:10px;
+            padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <span style="font-size:1.3rem;">🌟</span>
+            <div style="flex:1;min-width:200px;">
+                <strong style="color:#fbbf24;font-size:0.9rem;">Basic Supporter</strong>
+                <p style="color:#94a3b8;font-size:0.76rem;margin:2px 0 0;">
+                    Not subscribed. Support development and unlock Pro — billed through Google Play.</p>
+            </div>
+            <button id="wds-sub-btn" onclick="wdsSubscribe()"
+                style="background:#fbbf24;color:#1a1207;border:none;border-radius:6px;padding:8px 18px;
+                font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;display:none;">Subscribe</button>
+            <span id="wds-sub-status" style="font-size:0.74rem;color:#94a3b8;width:100%;"></span>
+        </div>"""
+
+    # ── "What you get" perk list ──
+    def _perk(icon, title, desc, live):
+        badge = ('<span style="font-size:0.6rem;font-weight:700;color:#052e16;background:#4ade80;'
+                 'border-radius:8px;padding:1px 7px;white-space:nowrap;">✓ Active</span>' if live else
+                 '<span style="font-size:0.6rem;font-weight:700;color:#78350f;background:#fcd34d;'
+                 'border-radius:8px;padding:1px 7px;white-space:nowrap;">Coming soon</span>')
+        return (f'<div style="display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid #1e293b;">'
+                f'<span style="font-size:1rem;flex-shrink:0;line-height:1.3;">{icon}</span>'
+                f'<div style="flex:1;">'
+                f'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
+                f'<strong style="color:#cbd5e1;font-size:0.82rem;">{title}</strong>{badge}</div>'
+                f'<p style="color:#64748b;font-size:0.76rem;margin:2px 0 0;line-height:1.5;">{desc}</p>'
+                f'</div></div>')
+
+    perks_html = "".join(_perk(i, t, d, True)  for (i, t, d) in _PRO_PERKS_LIVE)
+    perks_html += "".join(_perk(i, t, d, False) for (i, t, d) in _PRO_PERKS_SOON)
+
+    billing = "" if is_pro_user else _SUB_BILLING_JS
+
+    return f"""
+    <h3 style="margin:0 0 6px;color:#fbbf24;">🌟 Wadsworth Pro</h3>
+    <p style="color:#64748b;font-size:0.82rem;margin:0 0 12px;">
+        Your supporter subscription. None of these perks affect core economic gameplay —
+        all markets, production, land, stocks, and trading are fully available for free.
+    </p>
+    {status_panel}
+    <div style="font-size:0.7rem;font-weight:700;color:#475569;text-transform:uppercase;
+        letter-spacing:0.06em;margin:0 0 2px;">What's included</div>
+    <div style="background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:4px 16px;">
+        {perks_html}
+    </div>
+    {billing}
+    """
+
+
 def _account_tab(player) -> str:
     try:
         from corporate_actions import is_player_bankrupt
@@ -3233,6 +3308,10 @@ def _account_tab(player) -> str:
 
     return f"""
 <div style="max-width:600px;">
+
+    {_subscription_section(player)}
+
+    <hr style="border:none;border-top:1px solid #1e293b;margin:28px 0;">
 
     <h3 style="margin:0 0 6px;color:#94a3b8;">Estate &amp; Succession</h3>
     <p style="color:#64748b;font-size:0.82rem;margin:0 0 12px;">

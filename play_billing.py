@@ -111,6 +111,31 @@ def _player_id_for_token(token: str) -> int | None:
         db.close()
 
 
+def get_player_subscription(player_id: int) -> dict | None:
+    """Return the most recent Play subscription record for a player, or None.
+
+    Shape: {product_id, sub_state, expiry_time (datetime|None)}. Used by the
+    Account → Subscription panel to show renewal/expiry info. Safe to call even
+    if the table doesn't exist yet (returns None on any error)."""
+    from auth import get_db
+    from sqlalchemy import text
+    db = get_db()
+    try:
+        row = db.execute(
+            text("SELECT product_id, sub_state, expiry_time "
+                 "FROM play_subscriptions WHERE player_id = :pid "
+                 "ORDER BY last_verified DESC LIMIT 1"),
+            dict(pid=player_id)
+        ).fetchone()
+        if not row:
+            return None
+        return {"product_id": row[0], "sub_state": row[1], "expiry_time": row[2]}
+    except Exception:
+        return None
+    finally:
+        db.close()
+
+
 # ---------------------------------------------------------------------------
 # Google Play Developer API
 # ---------------------------------------------------------------------------
