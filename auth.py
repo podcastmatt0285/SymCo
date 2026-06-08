@@ -1043,6 +1043,61 @@ def login_page(session_token: Optional[str] = Cookie(None)):
             .hero-title, .hero-breathe, .hero-gear { animation: none; }
         }
 
+        /* ── FAQ accordion ── */
+        .faq-section {
+            margin-top: 36px;
+            border-top: 1px solid rgba(176,141,87,0.18);
+            padding-top: 28px;
+            text-align: left;
+        }
+        .faq-heading {
+            font-family: 'Cinzel', serif;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: rgba(202,138,4,0.82);
+            text-align: center;
+            margin: 0 0 22px;
+        }
+        .faq-item {
+            border-bottom: 1px solid rgba(255,255,255,0.055);
+        }
+        .faq-item summary {
+            padding: 13px 2px;
+            cursor: pointer;
+            font-size: 0.87rem;
+            font-weight: 600;
+            color: #e2e8f0;
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+            transition: color 0.15s;
+            user-select: none;
+        }
+        .faq-item summary::-webkit-details-marker { display: none; }
+        .faq-item summary:hover { color: #fef08a; }
+        .faq-icon {
+            flex-shrink: 0;
+            margin-top: 1px;
+            font-size: 1rem;
+            font-weight: 300;
+            color: rgba(202,138,4,0.7);
+            transition: transform 0.2s;
+            line-height: 1;
+        }
+        .faq-item[open] .faq-icon { transform: rotate(45deg); }
+        .faq-answer {
+            padding: 2px 4px 16px;
+            font-size: 0.82rem;
+            color: #94a3b8;
+            line-height: 1.72;
+        }
+        .faq-answer strong { color: #cbd5e1; }
+        .faq-answer a { color: #38bdf8; }
+
         /* ── Indices card support ── */
         .card {
             background: #0f172a;
@@ -1162,6 +1217,153 @@ def login_page(session_token: Optional[str] = Cookie(None)):
                     and outmaneuver thousands of rival tycoons.&rdquo;
                 </p>
                 <p class="hero-footer">One living, breathing economy</p>
+
+                <!-- FAQ accordion -->
+                <div class="faq-section">
+                    <p class="faq-heading">Frequently Asked Questions</p>
+
+                    <details class="faq-item">
+                        <summary>What is Wadsworth Economic Tycoon Simulator? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Wadsworth is a persistent-world browser and Android economic strategy game. You run a company, build businesses on land you own, produce and trade real commodities, float your company on the stock market, invest in ETFs and cryptocurrencies, and compete against thousands of other players in one shared, living economy. The game runs 24/7 — production and markets tick in real time whether you&rsquo;re online or not.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>Is it free to play? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Yes. The full game is free with no paywalls on any economic mechanic. An optional <strong>Supporters subscription</strong> unlocks cosmetic skins (Kawaii Night, Soul Vinyl, Expressive Nature, and more) and a profile badge, but every system — markets, land, businesses, stocks, crypto, ETFs — is fully available to free players. Your subscription can be managed through the Android app via Google Play.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>How do I start making money? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Buy a land plot, build a business on it, and activate a production line. Your business automatically produces goods on each game tick. Sell those goods on the commodity market or set a retail price for direct consumer sales. Early-game the fastest path is raw resources — farming and basic manufacturing sell quickly and require no input materials to get started.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>How do businesses and production lines work? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Each business type has one or more <strong>production lines</strong> that convert input materials into output goods. A Wheat Farm turns seeds and water into wheat automatically every tick. You activate specific lines, manage your input inventory, and your outputs land in your warehouse ready to sell. Different business types are only available on compatible terrain — a Naval Shipyard needs a Military district; a Flour Mill needs a Farm plot.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What&rsquo;s the difference between the market and retail? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer"><strong>Commodity market</strong>: player-to-player buy and sell orders, matched by price then timestamp. You post a sell order and wait for a buyer, or use Quick Buy to fill at the best available price immediately. A small market fee applies.<br><br><strong>Retail</strong>: direct consumer sales from a business you own. Set a retail price on a retail-capable business and the game&rsquo;s simulated consumer demand automatically purchases from you when your price is competitive. No market fee, but you need the right business type.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What are NPCs? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">NPCs (Non-Player Characters) are automated bot companies operated by the game itself. Their purpose is to ensure essential goods are always available on the market — they act as market-makers of last resort, posting sell orders slightly above typical player prices so you&rsquo;re never completely stuck without inputs. There are currently 64+ NPC companies covering agriculture, military hardware, electronics, construction, finance, and more.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>How do I level up and earn trophies? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Levels are driven by <strong>trophies</strong>. You earn trophies by completing event tasks — time-limited challenges that might ask you to trade a certain volume, enter the WBC-50 index, win a land auction, produce a target quantity of goods, or complete a monthly Index Challenge. Each completed task awards trophies, and accumulating enough trophies advances your player level. Weekly, monthly, and special events continuously rotate new challenges.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What is the WBC-50? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">The <strong>Wadsworth Blue-Chip 50</strong> is the game&rsquo;s flagship stock index tracking the 50 highest-market-cap companies (both player companies and NPC enterprises). It functions like a real-world index — when blue-chip companies do well the WBC-50 rises, and it falls when they decline. You can invest in it passively through the WBC-50 Index Fund ETF, or aim to enter it yourself by growing your own company&rsquo;s market capitalisation.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>How does the stock market work? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Once you unlock the Brokerage you can take your company public via an <strong>IPO</strong>. Set an offering price, decide how many shares to offer, and other players can buy in. Your share price then moves with trading activity and market sentiment. You can also invest in other companies&rsquo; stocks, participate in secondary share offerings, vote on corporate governance proposals, launch buyback programs to retire shares, or short-sell companies you believe are overvalued.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What are ETFs? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Exchange-Traded Funds are passive investment vehicles whose price tracks underlying game assets. Wadsworth has five:<br><br>
+                        &bull; <strong>Apple Seeds ETF</strong> — tracks agricultural commodity prices<br>
+                        &bull; <strong>Energy ETF</strong> — tracks the power sector<br>
+                        &bull; <strong>City NAV ETF</strong> — tracks real estate and district values<br>
+                        &bull; <strong>Land Bank</strong> — tracks overall land valuations<br>
+                        &bull; <strong>WBC-50 Index Fund</strong> — tracks the top 50 companies<br><br>
+                        ETFs pay dividends and are traded on the brokerage order book. They&rsquo;re ideal for players who want market exposure without managing individual commodity or stock positions.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What are districts, and why should I build one? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Districts are formed by merging multiple land plots of the same terrain type. A merged district unlocks <strong>district-exclusive businesses</strong> — hotels, casinos, military bases, tech startup hubs, seaports, and more — that produce high-value services not available on raw terrain. Districts also generate higher monthly land tax income and enable production lines inaccessible outside them. The larger the district (more plots merged), the more powerful businesses you can build.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What are executives? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Executives are hireable characters with specific skills — CEO, CFO, COO, CMO, and specialist roles like Chief Compliance Officer. Each executive reduces an overhead cost or boosts production in their domain. A <strong>CFO</strong> lowers accounting overhead fees on large cash balances; a <strong>COO</strong> reduces administration costs as your business empire grows. Executives are paid on a set cycle (hourly, daily, weekly, or monthly), so confirm their savings outweigh their wage before hiring.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>How do P2P contracts work? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Peer-to-peer contracts let you trade directly with another player at an agreed price, bypassing the open market entirely. You specify the item, quantity, price, and recipient. The recipient must accept before goods and cash change hands. Either party can cancel a pending contract for a full refund of goods and cash. P2P contracts carry no market fee, making them ideal for bulk supply arrangements with regular trading partners.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What is land and what do terrain types mean? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Land plots are physical locations you own on the game map. Each plot has a <strong>terrain type</strong> — prairie, savanna, forest, mountain, desert, coastal, volcanic, riverbank, and more — which determines which businesses you can build on it. Prairies suit farms; mountains suit mines and quarries; coastal land suits fishing and port operations. Plots also have a monthly tax value that rises as you develop the land, and serves as a proxy for the land&rsquo;s worth on the land market.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What is the Land Market? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">The Land Market is where players buy and sell plots. You can list owned land at a fixed asking price, place a standing buy order for a specific terrain type at your desired price, or bid in <strong>government land auctions</strong> when new plots are released. Land is a long-term asset — prime terrain with high tax value and district potential tends to appreciate as the economy grows and scarcity increases.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What are county cryptocurrencies? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Each county in the game issues its own native cryptocurrency — a layer-1 token backed by the county&rsquo;s treasury. Players can buy, hold, and sell county tokens on the meme/crypto market. Token value is driven by the county&rsquo;s treasury balance, circulating supply, and recent trade volume. The <strong>County Crypto Composite (CCC)</strong> index on the Market Indices page tracks the total crypto market cap across all counties.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What is WSC (Wadsworth Stable Coin)? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">WSC is the game&rsquo;s internal stable token, soft-pegged to USD. It can be minted using in-game cash, earned through yield farming pools, received via periodic airdrops, or traded on the crypto scam market. WSC acts as a platform-native currency for certain in-game transactions. The <strong>WSC Minting Rate Index (WMRI)</strong> on the Market Indices page tracks total supply, circulating amount, and pool distribution in real time.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What are Reserve Banks and foreign currencies? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Wadsworth has a full multi-currency system. Player-created <strong>Reserve Banks</strong> issue foreign currencies — each with its own yield rate and exchange rate vs USD. You can set your preferred <strong>legal tender</strong> so all income auto-converts to your chosen currency, buy foreign-currency bonds to earn yield passively, and trade on the <strong>Forex market</strong>. Holding diverse currencies adds income diversification and exposure to yield rate movements tracked by the Reserve Bank Yield Composite (RBYC) index.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What is the Greed &amp; Fear Index? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">The GFI is a 0&ndash;100 market sentiment gauge, calculated from five live signals: <strong>WBC-50 momentum</strong> vs its 30-day moving average, <strong>market breadth</strong> (share of companies trading above IPO price), <strong>corporate actions</strong> (buybacks vs share issuances), <strong>P2P contract velocity</strong>, and <strong>24-hour trade volume</strong>. A score below 25 is Extreme Fear; above 75 is Extreme Greed. It&rsquo;s a useful contrarian indicator — historically, extreme fear precedes recoveries and extreme greed precedes corrections.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>How are market orders matched? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Orders are matched by <strong>price priority</strong> first (lowest ask wins for buys; highest bid wins for sells), then by <strong>timestamp</strong> (older orders fill first at equal prices). If you post a sell order and a matching buy order already exists at that price or better, it fills immediately. <strong>Partial fills</strong> are supported — your order stays active at the remaining quantity. Quick Buy fills at the current best ask instantly, no waiting.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What do the Market Indices track? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">There are 19 live composite indices covering every corner of the economy — from the <strong>WBC-50</strong> (blue-chip market cap) and <strong>GLVI</strong> (real estate values) to niche indices like the <strong>Bee Index</strong> (total bees in all player inventories) and the <strong>Grass &amp; Pollen Index</strong>. Each index updates every 10 minutes and has full 30-day history, candlestick charts, composition breakdowns, and related-index cards. You can explore all of them from this login page without signing in.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What are events and tasks? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Events are time-limited challenges (daily, weekly, or monthly) that award trophies on completion. Each event has a <strong>task metric</strong> — trade a target volume, enter the WBC-50 index, win a land auction, produce a specific quantity, or complete an Index Challenge. Finishing all steps earns trophy rewards and contributes to your level. The Events page shows active challenges, your current progress, and the leaderboard for competitive events.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>Can I create more than one account? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">No. Multiple accounts are prohibited — it creates an unfair economic advantage over other players. If you want a fresh start, use the <strong>Account Reset</strong> option in Settings, which restores your company to its initial state while preserving any Supporters status you have earned.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>Is there a mobile app? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Yes. Wadsworth is available as an Android app (Trusted Web Activity) on Google Play. The app is currently in closed testing while the game is in beta. The full game runs in any modern browser — Chrome, Firefox, Safari, and Edge are all supported. The game is mobile-responsive, so the browser version works well on phones and tablets without the app.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What happens while I&rsquo;m offline? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Production continues. Businesses tick every 5 seconds as long as they have input materials in your warehouse, filling your inventory whether you&rsquo;re logged in or not. Open market orders remain active. Your cash earns any applicable yield from bonds or foreign currencies passively. You can log back in hours later and your warehouses will be stocked, ready to sell. Managing your input supply before logging off is a key part of efficient play.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>How often is the game updated? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Frequently. Small fixes and balance tweaks deploy every few days. Major new features — new index types, new business categories, expanded weapons and military systems, new district types, economic events — ship roughly monthly. The game is actively developed and player feedback directly shapes the roadmap. Feature ideas and bug reports are welcome at the GitHub issues link in the page footer.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>Where can I get help? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">The in-game <strong>Wiki</strong> covers most mechanics in detail with guides for beginners, the market, land, districts, ETFs, crypto, and more — accessible from the main menu after signing in. The in-game <strong>chat</strong> is the fastest way to reach experienced players. For bugs or feature requests, file an issue on <a href="https://github.com/podcastmatt0285/symco/issues">GitHub</a>. You can also reach the developer directly through the contact info in the footer.</div>
+                    </details>
+
+                </div><!-- /faq-section -->
             </div>
         </div>
 
