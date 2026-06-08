@@ -12545,8 +12545,18 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
         return player
 
     from reserve_banks import get_player_display_currency, fmt_usd
+    import math as _math
     disp = get_player_display_currency(player.id)
     sym  = disp["symbol"]
+    upu  = disp["usd_per_unit"] or 1.0
+
+    # Form inputs are entered in the player's legal tender. The backend works in
+    # USD, so the JS multiplies each amount by USD_PER_UNIT on submit. The HTML
+    # min/value attributes below must therefore be the USD minimums expressed in
+    # the player's currency (= usd_min / upu), rounded UP so the converted-back
+    # value never falls a hair under the backend minimum.
+    def _to_disp_floor(usd_amount):
+        return int(_math.ceil((usd_amount or 0.0) / upu))
 
     try:
         from app import current_tick
@@ -12554,7 +12564,7 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
             get_player_annuities, ANNUITY_IMMEDIATE_RATES, ANNUITY_CREDITED_RATE,
             ANNUITY_IMMEDIATE_MIN, ANNUITY_MIN_TO_ANNUITIZE, ANNUITY_PAYMENT_TICKS,
             ANNUITY_NONQUAL_TAX_RATE, ANNUITY_QUAL_TAX_RATE, ANNUITY_ISSUANCE_FEE,
-            ANNUITY_SURRENDER_SCHEDULE, _calc_pmt,
+            ANNUITY_SURRENDER_SCHEDULE, ANNUITY_DEFERRED_CONTRIB_MIN, _calc_pmt,
         )
 
         data = get_player_annuities(player.id, current_tick)
@@ -12567,7 +12577,9 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
             rate = ANNUITY_IMMEDIATE_RATES.get(term, 0)
             ppy  = 52 if freq == "weekly" else 12
             n    = max(1, round(term / 365.0 * ppy))
-            pmt  = _calc_pmt(100_000.0, rate, ppy, n)
+            # Illustrate on a 100K-of-the-player's-currency premium (= 100K×upu USD)
+            # so the rendered fmt_usd amounts line up with the "{sym}100K" header.
+            pmt  = _calc_pmt(100_000.0 * upu, rate, ppy, n)
             total = round(pmt * n, 2)
             return pmt, n, total
 
@@ -12581,8 +12593,8 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
                   <td style="color:#22c55e;font-weight:bold;">{rate*100:.0f}%</td>
                   <td>{freq.capitalize()}</td>
                   <td>{n}</td>
-                  <td style="color:#38bdf8;">{sym}{pmt:,.2f}</td>
-                  <td style="color:#a5b4fc;">{sym}{total:,.2f}</td>
+                  <td style="color:#38bdf8;">{fmt_usd(pmt, disp)}</td>
+                  <td style="color:#a5b4fc;">{fmt_usd(total, disp)}</td>
                 </tr>"""
 
         # ── Active contract cards ───────────────────────────────────────────
@@ -12635,7 +12647,7 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
                 </div>
                 <div style="display:flex;gap:20px;flex-wrap:wrap;margin:6px 0;">
                   <div><span style="color:#64748b;font-size:9px;">BALANCE</span><br>
-                    <span style="color:#22c55e;font-weight:bold;">{sym}{acc_val:,.2f}</span></div>
+                    <span style="color:#22c55e;font-weight:bold;">{fmt_usd(acc_val, disp)}</span></div>
                   <div><span style="color:#64748b;font-size:9px;">CREDITED RATE</span><br>
                     <span style="color:#38bdf8;">{cr:.1f}% annual</span></div>
                   <div><span style="color:#64748b;font-size:9px;">NEXT INTEREST CREDIT</span><br>
@@ -12667,7 +12679,7 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
                 </div>
                 <div style="display:flex;gap:20px;flex-wrap:wrap;margin:6px 0;">
                   <div><span style="color:#64748b;font-size:9px;">PAYMENT</span><br>
-                    <span style="color:#22c55e;font-weight:bold;">{sym}{pmt:,.2f}</span>
+                    <span style="color:#22c55e;font-weight:bold;">{fmt_usd(pmt, disp)}</span>
                     <span style="color:#64748b;font-size:9px;"> {freq_label}</span></div>
                   <div><span style="color:#64748b;font-size:9px;">PROGRESS</span><br>
                     <span style="color:#e2e8f0;">{made}/{total_n}</span></div>
@@ -12689,9 +12701,9 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
                 <span style="color:#64748b;font-size:9px;margin-left:auto;">#{cid} &nbsp;·&nbsp; {surr_charge_label}</span>
               </div>
               <div style="color:#64748b;font-size:9px;">
-                Principal: <span style="color:#e2e8f0;">{sym}{(c.get('total_contributions') or 0.0):,.2f}</span>
-                &nbsp;·&nbsp; Paid out: <span style="color:#22c55e;">{sym}{(c.get('total_paid_out') or 0.0):,.2f}</span>
-                &nbsp;·&nbsp; Surrender est.: <span style="color:#f59e0b;">{sym}{surr:,.2f}</span>
+                Principal: <span style="color:#e2e8f0;">{fmt_usd(c.get('total_contributions') or 0.0, disp)}</span>
+                &nbsp;·&nbsp; Paid out: <span style="color:#22c55e;">{fmt_usd(c.get('total_paid_out') or 0.0, disp)}</span>
+                &nbsp;·&nbsp; Surrender est.: <span style="color:#f59e0b;">{fmt_usd(surr, disp)}</span>
               </div>
               {phase_html}
             </div>"""
@@ -12718,8 +12730,8 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
               <td style="color:#94a3b8;font-size:10px;">{opened}</td>
               <td>{atype}</td>
               <td>{status_badge}</td>
-              <td style="color:#e2e8f0;">{sym}{principal:,.0f}</td>
-              <td style="color:#22c55e;">{sym}{total_out:,.2f}</td>
+              <td style="color:#e2e8f0;">{fmt_usd(principal, disp, precision=0)}</td>
+              <td style="color:#22c55e;">{fmt_usd(total_out, disp)}</td>
               <td style="color:{'#22c55e' if eff_yield >= 0 else '#ef4444'};">{eff_yield:+.1f}%</td>
               <td style="color:#64748b;font-size:10px;">{closed}</td>
             </tr>"""
@@ -12743,7 +12755,7 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
     <div style="background:#0f172a;border:1px solid #1e3a5f;border-radius:6px;padding:14px;">
       <div style="color:#38bdf8;font-weight:bold;font-size:12px;margin-bottom:6px;">📋 Immediate Annuity (SPIA)</div>
       <ul style="color:#94a3b8;font-size:10px;line-height:1.7;margin:0 0 10px;padding-left:16px;">
-        <li>Single lump-sum premium (min {sym}{ANNUITY_IMMEDIATE_MIN:,.0f})</li>
+        <li>Single lump-sum premium (min {fmt_usd(ANNUITY_IMMEDIATE_MIN, disp, precision=0)})</li>
         <li>Payments start at the next interval</li>
         <li>Principal + interest returned via fixed payments</li>
         <li><b>Non-qualified</b>: 0.25% issuance fee, 15% tax on interest only</li>
@@ -12759,7 +12771,7 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
         <li>Open with $0 or make an initial deposit</li>
         <li>Add contributions any time</li>
         <li>Earns {ANNUITY_CREDITED_RATE*100:.0f}% annual during accumulation</li>
-        <li>Annuitize when ready (min {sym}{ANNUITY_MIN_TO_ANNUITIZE:,.0f})</li>
+        <li>Annuitize when ready (min {fmt_usd(ANNUITY_MIN_TO_ANNUITIZE, disp, precision=0)})</li>
         <li>Same tax treatment as SPIA at annuitization</li>
       </ul>
       <button onclick="document.getElementById('deferred-form').scrollIntoView({{behavior:'smooth'}})"
@@ -12837,7 +12849,7 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
       <div>
         <label style="color:#64748b;font-size:9px;display:block;">PREMIUM ({sym})</label>
-        <input name="purchase_price" type="number" min="{ANNUITY_IMMEDIATE_MIN:.0f}" step="any" value="{ANNUITY_IMMEDIATE_MIN:.0f}" required
+        <input name="purchase_price" type="number" min="{_to_disp_floor(ANNUITY_IMMEDIATE_MIN)}" step="any" value="{_to_disp_floor(ANNUITY_IMMEDIATE_MIN)}" required
           style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:4px;width:130px;">
       </div>
       <div>
@@ -12904,7 +12916,7 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
     </div>
     <p style="color:#64748b;font-size:9px;margin:0 0 10px;">
       Earns {ANNUITY_CREDITED_RATE*100:.0f}% annual (credited monthly) during accumulation.
-      Annuitize when balance ≥ {sym}{ANNUITY_MIN_TO_ANNUITIZE:,.0f}. Add contributions any time.
+      Annuitize when balance ≥ {fmt_usd(ANNUITY_MIN_TO_ANNUITIZE, disp, precision=0)}. Add contributions any time.
     </p>
     <div id="deferred-msg" style="font-size:10px;margin:6px 0;min-height:14px;"></div>
     <button type="submit" class="btn-blue" style="padding:7px 20px;background:#7c3aed;">Open Deferred Account</button>
@@ -12938,7 +12950,7 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
     <h3 style="color:#a78bfa;margin:0 0 12px;">Add Contribution</h3>
     <input id="contrib-cid" type="hidden">
     <label style="color:#64748b;font-size:9px;display:block;">AMOUNT ({sym})</label>
-    <input id="contrib-amount" type="number" min="100" step="any" value="1000"
+    <input id="contrib-amount" type="number" min="{_to_disp_floor(ANNUITY_DEFERRED_CONTRIB_MIN)}" step="any" value="{_to_disp_floor(1000.0)}"
       style="width:100%;background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:7px 10px;border-radius:4px;margin-bottom:12px;">
     <div id="contrib-msg" style="font-size:10px;min-height:14px;margin-bottom:8px;"></div>
     <div style="display:flex;gap:8px;">
@@ -12979,6 +12991,14 @@ def brokerage_annuities_page(session_token: Optional[str] = Cookie(None)):
 // ── PMT calculator ────────────────────────────────────────────────────────
 const RATES = {{"30":0.08,"90":0.10,"180":0.12,"365":0.15}};
 const CURR_SYM = '{sym}';
+// USD value of one unit of the player's legal tender (1.0 for USD players).
+// Inputs on this page are entered in the player's currency; the backend works
+// in USD — so we multiply by USD_PER_UNIT on submit, and divide by it when
+// displaying USD amounts the backend returns.
+const USD_PER_UNIT = {upu};
+function fmtCur(usd) {{
+  return CURR_SYM + (usd / USD_PER_UNIT).toLocaleString('en-US', {{minimumFractionDigits:2, maximumFractionDigits:2}});
+}}
 function _calcPmt() {{
   const p = parseFloat(document.getElementById('calc-principal').value) || 0;
   const term = document.getElementById('calc-term').value;
@@ -13003,6 +13023,8 @@ async function submitSpia(e) {{
   const form = e.target;
   const fd   = new FormData(form);
   const msg  = document.getElementById('spia-msg');
+  // Entered premium is in the player's currency → convert to USD for the backend.
+  fd.set('purchase_price', ((parseFloat(fd.get('purchase_price')) || 0) * USD_PER_UNIT).toFixed(4));
   msg.style.color = '#64748b'; msg.textContent = 'Processing…';
   try {{
     const r = await fetch('/api/brokerage/open-immediate-annuity', {{
@@ -13011,7 +13033,7 @@ async function submitSpia(e) {{
     const d = await r.json();
     if (d.ok) {{
       msg.style.color = '#22c55e';
-      msg.textContent = `✅ Annuity opened — ${{d.total_payments}} payments of ${{CURR_SYM}}${{d.payment_amount.toLocaleString('en-US',{{minimumFractionDigits:2}})}}. Reloading…`;
+      msg.textContent = `✅ Annuity opened — ${{d.total_payments}} payments of ${{fmtCur(d.payment_amount)}}. Reloading…`;
       setTimeout(() => location.reload(), 1800);
     }} else {{
       msg.style.color = '#ef4444'; msg.textContent = '❌ ' + d.error;
@@ -13025,6 +13047,8 @@ async function submitDeferred(e) {{
   const form = e.target;
   const fd   = new FormData(form);
   const msg  = document.getElementById('deferred-msg');
+  // Entered deposit is in the player's currency → convert to USD for the backend.
+  fd.set('initial_premium', ((parseFloat(fd.get('initial_premium')) || 0) * USD_PER_UNIT).toFixed(4));
   msg.style.color = '#64748b'; msg.textContent = 'Processing…';
   try {{
     const r = await fetch('/api/brokerage/open-deferred-annuity', {{
@@ -13049,7 +13073,8 @@ function openContribModal(cid) {{
 }}
 async function submitContrib() {{
   const cid    = document.getElementById('contrib-cid').value;
-  const amount = document.getElementById('contrib-amount').value;
+  // Entered amount is in the player's currency → convert to USD for the backend.
+  const amount = ((parseFloat(document.getElementById('contrib-amount').value) || 0) * USD_PER_UNIT).toFixed(4);
   const msg    = document.getElementById('contrib-msg');
   msg.style.color = '#64748b'; msg.textContent = 'Processing…';
   const fd = new FormData();
@@ -13061,7 +13086,7 @@ async function submitContrib() {{
     const d = await r.json();
     if (d.ok) {{
       msg.style.color = '#22c55e';
-      msg.textContent = `✅ Contributed! New balance: ${{CURR_SYM}}${{d.new_balance.toLocaleString('en-US',{{minimumFractionDigits:2}})}}. Reloading…`;
+      msg.textContent = `✅ Contributed! New balance: ${{fmtCur(d.new_balance)}}. Reloading…`;
       setTimeout(() => location.reload(), 1500);
     }} else {{
       msg.style.color = '#ef4444'; msg.textContent = '❌ ' + d.error;
@@ -13090,7 +13115,7 @@ async function submitAnnuitize() {{
     const d = await r.json();
     if (d.ok) {{
       msg.style.color = '#22c55e';
-      msg.textContent = `✅ Annuitized! ${{d.total_payments}} payments of ${{CURR_SYM}}${{d.payment_amount.toLocaleString('en-US',{{minimumFractionDigits:2}})}}. Reloading…`;
+      msg.textContent = `✅ Annuitized! ${{d.total_payments}} payments of ${{fmtCur(d.payment_amount)}}. Reloading…`;
       setTimeout(() => location.reload(), 1800);
     }} else {{
       msg.style.color = '#ef4444'; msg.textContent = '❌ ' + d.error;
@@ -13099,16 +13124,17 @@ async function submitAnnuitize() {{
 }}
 
 // ── Surrender ─────────────────────────────────────────────────────────────
+// `est` is passed in USD (server-rendered); fmtCur converts to the player's currency.
 function confirmSurrender(cid, est, chargePct) {{
   const msg = chargePct > 0
-    ? `Surrender this annuity? You will receive approximately ${{CURR_SYM}}${{est.toLocaleString('en-US',{{minimumFractionDigits:2}})}} (after ${{chargePct}}% surrender charge).`
-    : `Surrender this annuity? You will receive approximately ${{CURR_SYM}}${{est.toLocaleString('en-US',{{minimumFractionDigits:2}})}} (no surrender charge).`;
+    ? `Surrender this annuity? You will receive approximately ${{fmtCur(est)}} (after ${{chargePct}}% surrender charge).`
+    : `Surrender this annuity? You will receive approximately ${{fmtCur(est)}} (no surrender charge).`;
   if (!confirm(msg)) return;
   const fd = new FormData(); fd.append('contract_id', cid);
   fetch('/api/brokerage/surrender-annuity', {{method:'POST',credentials:'same-origin',body:fd}})
     .then(r => r.json())
     .then(d => {{
-      if (d.ok) {{ alert(`Surrendered. Received: ${{CURR_SYM}}${{d.surrender_payout.toLocaleString('en-US',{{minimumFractionDigits:2}})}}`); location.reload(); }}
+      if (d.ok) {{ alert(`Surrendered. Received: ${{fmtCur(d.surrender_payout)}}`); location.reload(); }}
       else alert('Error: ' + d.error);
     }}).catch(() => alert('Network error'));
 }}
