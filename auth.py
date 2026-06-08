@@ -1224,18 +1224,224 @@ def login_page(session_token: Optional[str] = Cookie(None)):
 
                     <details class="faq-item">
                         <summary>What is Wadsworth Economic Tycoon Simulator? <span class="faq-icon">+</span></summary>
-                        <div class="faq-answer">Wadsworth is a persistent-world browser and Android economic strategy game. You run a company, build businesses on land you own, produce and trade real commodities, float your company on the stock market, invest in ETFs and cryptocurrencies, and compete against thousands of other players in one shared, living economy. The game runs 24/7 — production and markets tick in real time whether you&rsquo;re online or not.</div>
+                        <div class="faq-answer">Wadsworth is a persistent-world browser and Android economic strategy game. You run a company, build businesses on land you own, produce and trade real commodities, float your company on the stock market, invest in ETFs, bonds, and cryptocurrencies, and compete against thousands of players in one shared, living economy. The game has 138+ business types, 16 currencies, 19 live economic indices, a full multi-layer tax system, and ticks in real time 24/7 whether you&rsquo;re logged in or not.</div>
                     </details>
 
                     <details class="faq-item">
                         <summary>Is it free to play? <span class="faq-icon">+</span></summary>
-                        <div class="faq-answer">Yes. The full game is free with no paywalls on any economic mechanic. An optional <strong>Supporters subscription</strong> unlocks cosmetic skins (Kawaii Night, Soul Vinyl, Expressive Nature, and more) and a profile badge, but every system — markets, land, businesses, stocks, crypto, ETFs — is fully available to free players. Your subscription can be managed through the Android app via Google Play.</div>
+                        <div class="faq-answer">Yes. Every economic system — commodity markets, land, businesses, stocks, ETFs, crypto, P2P contracts, foreign exchange, bonds — is fully available free. The optional <strong>Supporters subscription</strong> unlocks additional features like cosmetic skins, the Forex Trading Floor, a Player API, extra P2P slots, a profile picture, a trophy multiplier, and a Supporter badge. None of those affect core gameplay. See the Supporters FAQ entry for the full list.</div>
                     </details>
 
                     <details class="faq-item">
                         <summary>How do I start making money? <span class="faq-icon">+</span></summary>
-                        <div class="faq-answer">Buy a land plot, build a business on it, and activate a production line. Your business automatically produces goods on each game tick. Sell those goods on the commodity market or set a retail price for direct consumer sales. Early-game the fastest path is raw resources — farming and basic manufacturing sell quickly and require no input materials to get started.</div>
+                        <div class="faq-answer">Buy a land plot, build a business that matches its terrain type, and activate a production line. Your business automatically produces goods every tick. Sell on the commodity market, set a retail price for direct consumer sales, or negotiate a P2P contract with another player. Raw-resource businesses (farming, basic mining) are the lowest-friction starting point — they need no manufactured inputs and sell quickly.</div>
                     </details>
+
+                    <details class="faq-item">
+                        <summary>How do businesses and production lines work? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Each of 138+ business types has one or more <strong>production lines</strong> that consume input materials and automatically output goods every game tick. Terrain compatibility is strict — Wheat Farms need prairie, Naval Shipyards need a Military district, Solar Farms need desert. Outputs land in your warehouse ready to sell. Production continues offline as long as your warehouse is stocked with the required inputs.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What happens while I&rsquo;m offline? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Production continues uninterrupted as long as your warehouse has the required inputs. Open market orders remain active. Bond interest accrues hourly. Cash earns foreign-currency yield on active bonds. Executives continue aging and drawing wages — a missed wage payment causes them to quit immediately with a severance penalty, so make sure your cash is sufficient before logging off. Notifications accumulate and are waiting in your feed on next login.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What taxes does my company pay? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Wadsworth has a layered tax system across every part of the economy:<br><br>
+                        &bull; <strong>Federal Sales Tax (2.02%)</strong> — charged to the buyer on every commodity market trade and IPO purchase.<br>
+                        &bull; <strong>Land / Property Tax (monthly)</strong> — based on terrain type. Base rates range from $30/mo (desert) to $120/mo (urban) to $500–$900/mo (developed districts). Proximity multipliers apply — coastal and resource-rich plots pay more.<br>
+                        &bull; <strong>Hoarding Tax</strong> — your first 5 land plots are surcharge-free. Every additional plot beyond 5 costs an extra <strong>$5,000/month</strong>, deducted hourly. Food carts are exempt.<br>
+                        &bull; <strong>Forex Conversion Fee (0.2%)</strong> — charged every time cash is auto-converted between currencies, including when income arrives in a currency other than your legal tender.<br>
+                        &bull; <strong>Bond Issuance Fee (0.25%)</strong> — paid when you purchase bonds. Goes to the federal reserve.<br>
+                        &bull; <strong>Bond Interest Withholding Tax (15%)</strong> — 15% of all hourly bond interest is withheld by the government. You receive 85%.<br>
+                        &bull; <strong>Early Bond Redemption Fee (1.5%)</strong> — flat penalty if you sell a bond within its first 7 days.<br>
+                        &bull; <strong>Legal Tender Switch Fee (2%)</strong> — charged on your current foreign-currency balance when switching away from a non-USD legal tender.<br>
+                        &bull; <strong>City Sales Tax</strong> — variable per city; a portion of each local sale routes to that city&rsquo;s fund.<br><br>
+                        Executives with Tax Shield abilities (General Counsel, Chief Compliance Officer) can reduce many of these. Tax vouchers earned from events can offset federal sales tax.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What&rsquo;s the difference between the market, retail, and P2P contracts? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer"><strong>Commodity market</strong>: open player-to-player order book. Post a sell order; another player buys it. The 2.02% federal sales tax is paid by the buyer. Orders are matched by price then timestamp.<br><br><strong>Retail</strong>: set a price on a retail-capable business; simulated consumer demand buys from you directly. No market fee. Requires a specific retail-type business with stock and a price set via the Businesses page — with no page reload required.<br><br><strong>P2P contract</strong>: agree a price directly with a named player. No market fee, no federal sales tax. Both parties must accept; either can cancel before acceptance with full refund.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>How are market orders matched? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Orders are matched by <strong>price priority</strong> (lowest ask wins for buys; highest bid wins for sells), then by <strong>timestamp</strong> (older orders fill first at equal prices). Partial fills are supported — your order stays active at the remaining quantity. <strong>Quick Buy</strong> fills at the best current ask immediately. Updating an existing order resets its timestamp, moving it to the back of the queue at that price level.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What are NPCs? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">NPCs (Non-Player Characters) are 64+ automated bot companies operated by the game itself. They act as market-makers of last resort — always posting sell orders for essential goods at prices slightly above typical player prices, so you&rsquo;re never stuck without inputs. NPC companies cover agriculture, military hardware, electronics, construction materials, financial instruments, district services, and more. Their pricing is intentionally above market to let player sellers stay competitive with profit.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>How do I level up and earn trophies? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Levels are driven by <strong>trophies</strong>. Earn trophies by completing event tasks — time-limited challenges that might ask you to trade a target volume, enter the WBC-50 index, win a land auction, complete a monthly Index Challenge, or produce a specific quantity of goods. Each completed event awards trophies and levelling up unlocks more of the game. Weekly, monthly, and special events continuously rotate new challenges with different reward tiers.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What are events and tasks? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Events are time-limited challenges (daily, weekly, or monthly) with a specific measurable metric — trade volume, production quantity, stock market participation, index entry or exit. The <strong>Index Challenge</strong> is a monthly event with asymmetric goals: players outside the WBC-50 must enter it; players already inside must exit. Both groups complete the same event with opposite objectives. Finishing all steps earns trophy rewards. The Events page shows active challenges, your progress, and leaderboard standings.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What is the WBC-50? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">The <strong>Wadsworth Blue-Chip 50</strong> is the flagship stock index tracking the 50 highest-market-cap companies — both player companies and NPC enterprises combined. It functions like a real index: rising when top companies grow, falling in downturns. The index rebalances every 10 minutes. You can invest in it passively via the WBC-50 Index Fund ETF, or compete to enter it yourself by growing your company&rsquo;s market capitalisation and displacing a current constituent.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What are districts and why should I build one? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Districts are formed by merging multiple land plots of the same terrain type. A merged district unlocks <strong>district-exclusive businesses</strong> — hotels, casinos, military bases, tech startup hubs, seaports, aerospace facilities, and more — that produce high-value services unavailable on raw terrain. Larger districts (more plots merged) unlock more powerful business tiers. District businesses cannot be placed on raw terrain, only on district-type plots. Districts also generate higher monthly land tax income.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>How does the stock market work? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">When eligible, take your company public via an <strong>IPO</strong> through the Brokerage: set an offering price, choose how many shares to sell, and other players can buy in. The 2.02% federal sales tax applies to IPO purchases. Your share price then moves with trading activity. You can also invest in other companies&rsquo; stocks, launch secondary share offerings, run buyback programs to retire shares, vote on corporate governance proposals, or <strong>short-sell</strong> companies you believe are overvalued.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What are ETFs? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Five Exchange-Traded Funds track different economy segments, all traded on the Brokerage floor:<br><br>
+                        &bull; <strong>Apple Seeds ETF</strong> — agricultural commodity prices<br>
+                        &bull; <strong>Energy ETF</strong> — the power sector<br>
+                        &bull; <strong>City NAV ETF</strong> — real estate and district values<br>
+                        &bull; <strong>Land Bank</strong> — overall land valuations<br>
+                        &bull; <strong>WBC-50 Index Fund</strong> — the top 50 companies<br><br>
+                        ETFs pay dividends and each ETF bank maintains a standing buyback order at approximately <strong>92% of NAV</strong>, providing a price floor. CFO executives with Dividend Booster abilities earn enhanced returns from ETF holdings.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What are Reserve Banks and the multi-currency system? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Wadsworth has <strong>16 currencies</strong>: USD, JPY, MXP, GBP, CHF, CNY, EUR, INR, RUB, KRW, ZAR, BRL, TRY, SAR, AED, and ANA — each issued by a State Reserve Bank. Players choose a <strong>legal tender</strong>; all income auto-converts to it at a 0.2% fee. There is a <strong>7-day cooldown</strong> between legal tender changes and a 2% exit fee when leaving a non-USD currency. Exchange rates move dynamically based on bond demand and yield differentials. Supporters subscribers can create unique reserve currencies.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What are bonds? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Bonds are fixed-income instruments issued by each of the 16 State Reserve Banks. You loan cash to a bank and receive <strong>hourly interest</strong> in its native currency. Yields are dynamic — more buying pushes them down, less demand lets them drift up. Available maturities: <strong>7, 14, or 30 days</strong>. A <strong>15% withholding tax</strong> applies to all interest earned (you receive 85%). Selling within 7 days incurs a 1.5% early redemption penalty. Banks may force-call a bond (at face value + 3% premium + accrued interest) if the current market yield drops to ≤40% of your purchase yield — protecting you from being stuck in above-market bonds.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What is WSC (Wadsworth Stable Coin)? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">WSC is the game&rsquo;s internal stable token, soft-pegged to USD. It can be minted with in-game cash, earned via <strong>yield farming pools</strong>, received as periodic airdrops, or traded on the crypto market. WSC is used in certain platform transactions and accrues yield when held in treasury pools. The <strong>WSC Minting Rate Index (WMRI)</strong> on the Market Indices page tracks total supply, circulating amount, and pool distribution in real time.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What are county cryptocurrencies? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Each county issues its own native cryptocurrency — a layer-1 token backed by the county&rsquo;s treasury. Token value is driven by treasury balance, circulating supply, and trading volume. Players buy, sell, and hold county tokens on the meme market. The <strong>County Crypto Composite (CCC)</strong> index on the Market Indices page tracks the total crypto market cap across all counties in real time.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What is the Greed &amp; Fear Index? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">The GFI is a 0&ndash;100 market sentiment gauge calculated from five live signals: <strong>WBC-50 momentum</strong> vs its 30-day moving average, <strong>market breadth</strong> (share of companies above IPO price), <strong>corporate actions</strong> (buybacks vs share issuances), <strong>P2P contract velocity</strong>, and <strong>24-hour trade volume</strong>. Below 25 = Extreme Fear; 25&ndash;44 = Fear; 45&ndash;55 = Neutral; 56&ndash;75 = Greed; above 75 = Extreme Greed. A useful contrarian indicator — extreme fear historically precedes recoveries.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What do the 19 Market Indices track? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">19 live composite indices update every 10 minutes across the full economy:<br><br>
+                        <strong>WBC-50</strong> (blue-chip market cap) · <strong>GLVI</strong> (real estate values) · <strong>CCC</strong> (crypto market cap) · <strong>EPI</strong> (executive payroll) · <strong>CDI</strong> (share dilution ratio) · <strong>REGI</strong> (land gentrification) · <strong>RBYC</strong> (reserve bank yields) · <strong>GSI</strong> (banking solvency) · <strong>PCVI</strong> (P2P contract velocity) · <strong>NSCI</strong> (neighbourhood service costs) · <strong>ASI</strong> (agricultural staples) · <strong>GDSI</strong> (defense spending) · <strong>WMRI</strong> (WSC minting) · <strong>BEE</strong> (bee inventory) · <strong>WEI</strong> (water &amp; energy) · <strong>GPI</strong> (grass &amp; pollen) · <strong>AMP</strong> (average market price) · <strong>SEED</strong> (seed inventory) · <strong>GFI</strong> (greed &amp; fear)<br><br>
+                        Every index has 30-day history, candlestick charts, composition breakdowns, and related-index cards. All 19 are publicly viewable right now — no login required — from the <a href="/banks/indices/unloggedin">Market Indices page</a>.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What are executives? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Executives are hireable characters across <strong>11 specialisation categories</strong> — Business, Sales, Production, Banking, Taxes, Crypto, Land, Cities, Districts, Counties, and P2P. You can hold up to <strong>8 simultaneously</strong>. Each executive has 3&ndash;5 randomly assigned abilities from their job&rsquo;s pool (a <strong>5% legendary chance</strong> adds a bonus ability with higher values). They are paid on a set cycle; a missed wage payment triggers immediate resignation plus a severance deduction.<br><br>
+                        Key roles:<br>
+                        &bull; <strong>CFO</strong> — reduces accounting overhead; boosts ETF dividends and banking income<br>
+                        &bull; <strong>COO</strong> — reduces administration and operational costs<br>
+                        &bull; <strong>General Counsel / Chief Compliance Officer</strong> — reduces all taxes<br>
+                        &bull; <strong>VP Land Development</strong> — slows land efficiency decay; reduces hoarding tax<br>
+                        &bull; <strong>CTO / CIO</strong> — boosts WSC yield farming and crypto mining<br>
+                        &bull; <strong>CCO (Content)</strong> — unlocks broadcast notifications to followers<br><br>
+                        Executives age up over time, earning a <strong>7.85% raise</strong> per milestone. Sending them to school (~30 min) awards a <strong>15% permanent boost</strong>.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What is WikiWads? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">WikiWads is the in-game knowledge base — an admin-curated library of guides, video embeds, and audio content covering all game systems. It is organised into <strong>10 categories</strong>: Getting Started, Economy, Land, Banks, Markets, Businesses, Districts, Cities, Advanced Tactics, and Reference. Entries include embedded YouTube walkthroughs, written explanations, and audio commentary. Access WikiWads from the main menu after logging in. Admins can add, pin, reorder, and update entries at any time, so the library grows with the game.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What is the Transaction Ledger? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">The <strong>Stats page</strong> contains your full transaction ledger — a timestamped record of every financial event in your company, including market buys and sells, production inputs and outputs, retail sales, bond interest earned, dividends, wages paid, and every tax deduction (federal sales tax, forex fees, bond fees, withholding taxes, reserve balance tax). Each entry shows transaction type, category (money or resource), amount, item type, quantity, unit price, description, and a reference ID. The ledger is your primary tool for tracking cost basis, analysing profitability per product, and understanding exactly where fees are being deducted from your income.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>How do push notifications work? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Two separate notification systems run in parallel:<br><br>
+                        <strong>In-game notifications</strong>: stored in your feed automatically. Triggered by bond maturity and call events, executive events (hiring, aging, retirement, late payment), land efficiency floor warnings, government announcements, P2P contract updates, and major transaction events. These cannot be disabled and accumulate while you&rsquo;re offline.<br><br>
+                        <strong>Android / web push notifications</strong>: optional device alerts delivered via the Web Push API when the app is backgrounded or closed. Subscribe via Settings. You receive real-time alerts for the same major events. Opt out anytime in Settings. The Android app (currently in closed beta) delivers these as native Android notifications.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What is the Android widget? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">The Android home screen widget shows your <strong>live balance</strong>, your most recent transaction (description, amount, timestamp, and a tap-link to the relevant page), a scrolling list of recent activity, and live market data — WBC-50 and other index values, top stock prices, bond yields, and memecoin prices.<br><br>
+                        To set it up: open the Android app, go to <strong>Settings → Link Widget Device</strong>. The widget refreshes automatically using a secure HMAC token tied to your account. A new Federal Development Grant notice appears on the widget when a grant event is active.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>How do I change my game skin / theme? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Go to <strong>Settings</strong> and select from 6 visual themes. The change applies instantly with no reload:<br><br>
+                        &bull; <strong>Default</strong> — clean modern dark (free)<br>
+                        &bull; <strong>Dark Nature</strong> — dark earth tones (free)<br>
+                        &bull; <strong>Expressive Nature</strong> — vibrant nature colours (free)<br>
+                        &bull; <strong>Kawaii Night</strong> — soft kawaii pastels with particle effects (Supporters)<br>
+                        &bull; <strong>Soul Vinyl Dark</strong> — retro dark vinyl aesthetic (Supporters)<br>
+                        &bull; <strong>Soul Vinyl Light</strong> — retro light vinyl aesthetic (Supporters)<br><br>
+                        Kawaii Night includes animated particle effects. All skins alter colours, typography, and UI components. Supporter skins are shown in the Press Kit with downloadable logo variants for each theme.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What does the Supporters subscription include? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Supporters is a monthly subscription available through the Android app (Google Play). Benefits include:<br><br>
+                        &bull; 3 exclusive cosmetic skins (Kawaii Night, Soul Vinyl Dark, Soul Vinyl Light)<br>
+                        &bull; Access to the <strong>Forex Trading Floor</strong> dashboard<br>
+                        &bull; <strong>Player API</strong> — read access + limited commodity market writes<br>
+                        &bull; Ability to <strong>mint district coins</strong> (cosmetic)<br>
+                        &bull; Free city creation <em>or</em> 3 free city perks for an existing city<br>
+                        &bull; Extra <strong>P2P contract slots</strong><br>
+                        &bull; Custom <strong>profile picture</strong> upload<br>
+                        &bull; <strong>Trophy multiplier</strong> on event completions<br>
+                        &bull; Ability to create <strong>unique reserve currencies</strong><br>
+                        &bull; <strong>Supporter badge</strong> on your company profile<br><br>
+                        None of these affect core economic gameplay — all markets, production, land, stocks, and trading are fully available free.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>Can I create more than one account? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">No. Multiple accounts are prohibited — it creates an unfair economic advantage. If you want a fresh start, use <strong>Account Reset</strong> in Settings, which returns your company to its starting state while preserving any Supporters status. To permanently close an account, <strong>Delete Account</strong> in Settings initiates a confirmed permanent deletion via email verification.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>Is there a mobile app? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Yes. The Android app is available via Google Play and is currently in <strong>closed testing</strong> during beta. The full game runs in any modern browser (Chrome, Firefox, Safari, Edge) — fully mobile-responsive on phones and tablets. The Android app adds native push notifications and home screen widget support. Web and app share the same account and economy seamlessly.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What is the loading screen? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">The loading overlay appears on any same-origin page navigation to signal that a new page is loading. It features an animated logo, a brass-themed progress bar, and rotating status messages. While it&rsquo;s on screen, a random <strong>game tip</strong> may appear — tips cover things like ETF dividend strategies, CFO executive bonuses, retail price setting shortcuts, WikiWads guides, and tax voucher redemption. The overlay dismisses automatically when the new page has fully loaded. It does not appear on AJAX actions like setting a retail price.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>Where can I explore the game and find help? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Several resources are available right from this login screen, no account required:<br><br>
+                        &bull; <a href="/banks/indices/unloggedin"><strong>Market Indices</strong></a> — live view of all 19 economic indices with full charts<br>
+                        &bull; <a href="/sitemap"><strong>Sitemap</strong></a> — searchable directory of all 40+ game pages with descriptions<br>
+                        &bull; <a href="/company/whitepaper"><strong>Whitepaper</strong></a> — full game design document covering economy architecture and every mechanic<br>
+                        &bull; <a href="/company/press-kit"><strong>Press Kit</strong></a> — brand assets, downloadable logos for all skins, official game description<br>
+                        &bull; <a href="/company/careers"><strong>Careers</strong></a> — freelance and paid positions<br>
+                        &bull; <a href="/privacy-policy"><strong>Privacy Policy</strong></a> — data collection and usage<br><br>
+                        After logging in, <strong>WikiWads</strong> (in-game knowledge base) covers every mechanic in detail. For bugs or feature requests, use the GitHub Issues link in the footer.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>How often is the game updated? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">Frequently. Small fixes and balance tweaks deploy every few days. Major new features — new index types, business categories, weapons systems, district types, financial instruments, economic events — ship roughly monthly. The game is actively developed and player feedback directly shapes the roadmap. Feature ideas and bug reports are always welcome via the GitHub link in the page footer.</div>
+                    </details>
+
+                </div><!-- /faq-section -->
 
                     <details class="faq-item">
                         <summary>How do businesses and production lines work? <span class="faq-icon">+</span></summary>
