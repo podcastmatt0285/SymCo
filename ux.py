@@ -961,7 +961,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 {_level_html}
                 <span class="balance" id="player-balance">{disp_sym}{disp_balance:,.2f}{disp_usd_note}</span>
                 {_notif_count_html}
-                <a id="nav-sup-btn" href="/settings?tab=skins"
+                <a id="nav-sup-btn" href="/settings?tab=account"
                     title="Subscribe on Google Play to support Wadsworth"
                     style="color:#fbbf24;font-size:0.72rem;font-weight:600;text-decoration:none;
                     border:1px solid #78350f;background:#1c1410;border-radius:4px;
