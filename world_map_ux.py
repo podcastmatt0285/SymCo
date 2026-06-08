@@ -588,9 +588,6 @@ _MY_PROPS_MODAL = r"""
   var TW=64, TH=38, BLOCK=4;
   var SPRITE_BASE='/static/iso/buildings/';
   var TILE_BASE='/static/iso/tiles/';
-  var ISO_BASE='/assets/iso/';
-  var KENNEY_BASE='/assets/kenney/';
-  var FARMLIFE_BASE='/assets/farmlife/';
   var tileImgs={};
 
   /* 5×5 downtown block — 24 buildings surrounding a central park.
@@ -729,9 +726,9 @@ _MY_PROPS_MODAL = r"""
     if(!t) return null;
     /* government / civic */
     if(/city_hall|capitol|courthouse|government|municipal|reserve_bank|central_bank/.test(t)) return 'mansion';
-    if(/military|barracks|armory/.test(t))                                          return 'warehouse';
+    if(/military|barracks|armory/.test(t))                                          return 'industrial';
     /* extraction / mining */
-    if(/mine|alluvial|quarry|mineral|oil_rig/.test(t))                return 'warehouse';
+    if(/mine|alluvial|quarry|mineral|oil_rig/.test(t))                return 'industrial';
     /* energy */
     if(/solar|power_plant|powerplant/.test(t))                        return 'powerplant';
     /* water utility */
@@ -751,7 +748,7 @@ _MY_PROPS_MODAL = r"""
     /* marine leisure (boat yards, marinas, dive ops) */
     if(/marina|boat_yard|dive_op/.test(t))                            return 'tennis';
     /* storage / logistics */
-    if(/warehouse|storage|depot|silo/.test(t))                        return 'warehouse';
+    if(/warehouse|storage|depot|silo/.test(t))                        return 'industrial';
     /* luxury & upscale commerce */
     if(/jeweler|lapidary|luxury_show|publishing_house/.test(t))       return 'mansion';
     /* aquatic harvesting / marine fleets */
@@ -1453,47 +1450,47 @@ _MY_PROPS_MODAL = r"""
       'decor_bush1','decor_bush2','decor_tent',
       'decor_tree1','decor_tree2','decor_tree3','decor_tree4','decor_tree5','decor_tree6'
     ];
-    /* external tiles: iso + kenney assets, each with an explicit URL */
+    /* external tiles — all mapped to existing /static/iso/tiles/ assets */
     var EXT_TILES=[
-      /* isometric-city */
-      {k:'iso_water2',          url:ISO_BASE+'water2.png'},
-      /* kenney: terrain + lot */
-      {k:'kenney_grass',        url:KENNEY_BASE+'grass.png'},
-      {k:'kenney_grassWhole',   url:KENNEY_BASE+'grassWhole.png'},
-      {k:'kenney_beach',        url:KENNEY_BASE+'beach.png'},
-      {k:'kenney_hillN',        url:KENNEY_BASE+'hillN.png'},
-      {k:'kenney_hillS',        url:KENNEY_BASE+'hillS.png'},
-      {k:'kenney_hillW',        url:KENNEY_BASE+'hillW.png'},
-      {k:'kenney_lot',          url:KENNEY_BASE+'lotN.png'},
-      /* kenney: water — centre + 4 edges + 4 outer corners */
-      {k:'kenney_water',        url:KENNEY_BASE+'water.png'},
-      {k:'kenney_waterN',       url:KENNEY_BASE+'waterN.png'},
-      {k:'kenney_waterS',       url:KENNEY_BASE+'waterS.png'},
-      {k:'kenney_waterE',       url:KENNEY_BASE+'waterE.png'},
-      {k:'kenney_waterW',       url:KENNEY_BASE+'waterW.png'},
-      {k:'kenney_waterNE',      url:KENNEY_BASE+'waterNE.png'},
-      {k:'kenney_waterNW',      url:KENNEY_BASE+'waterNW.png'},
-      {k:'kenney_waterES',      url:KENNEY_BASE+'waterES.png'},
-      {k:'kenney_waterSW',      url:KENNEY_BASE+'waterSW.png'},
-      /* kenney: roads — directional + crossroad + bridges */
-      {k:'kenney_roadNS',       url:KENNEY_BASE+'roadNS.png'},
-      {k:'kenney_roadEW',       url:KENNEY_BASE+'roadEW.png'},
-      {k:'kenney_crossroad',    url:KENNEY_BASE+'crossroad.png'},
-      {k:'kenney_bridgeNS',     url:KENNEY_BASE+'bridgeNS.png'},
-      {k:'kenney_bridgeEW',     url:KENNEY_BASE+'bridgeEW.png'},
-      /* Farm Life vehicles and characters */
-      {k:'car_red',   url:FARMLIFE_BASE+'Cars/Red%20car.png'},
-      {k:'car_blue',  url:FARMLIFE_BASE+'Cars/Blue%20car.png'},
-      {k:'char_walk', url:TILE_BASE+'char_walk.png'},
-      /* kenney: trees — deciduous + conifers (drawn at ~42% tile width) */
-      {k:'kenney_treeShort',     url:KENNEY_BASE+'treeShort.png'},
-      {k:'kenney_treeTall',      url:KENNEY_BASE+'treeTall.png'},
-      {k:'kenney_treeAltShort',  url:KENNEY_BASE+'treeAltShort.png'},
-      {k:'kenney_treeAltTall',   url:KENNEY_BASE+'treeAltTall.png'},
-      {k:'kenney_coniferShort',  url:KENNEY_BASE+'coniferShort.png'},
-      {k:'kenney_coniferTall',   url:KENNEY_BASE+'coniferTall.png'},
-      {k:'kenney_coniferAltShort',url:KENNEY_BASE+'coniferAltShort.png'},
-      {k:'kenney_coniferAltTall', url:KENNEY_BASE+'coniferAltTall.png'},
+      /* iso water */
+      {k:'iso_water2',             url:TILE_BASE+'water2.png'},
+      /* terrain + lot */
+      {k:'kenney_grass',           url:TILE_BASE+'terrain_grass.png'},
+      {k:'kenney_grassWhole',      url:TILE_BASE+'terrain_grass_v2.png'},
+      {k:'kenney_beach',           url:TILE_BASE+'terrain_savanna.png'},
+      {k:'kenney_hillN',           url:TILE_BASE+'terrain_arid_v2.png'},
+      {k:'kenney_hillS',           url:TILE_BASE+'terrain_arid_v3.png'},
+      {k:'kenney_hillW',           url:TILE_BASE+'terrain_arid_v4.png'},
+      {k:'kenney_lot',             url:TILE_BASE+'tile1.png'},
+      /* water — centre + directional edges */
+      {k:'kenney_water',           url:TILE_BASE+'water1.png'},
+      {k:'kenney_waterN',          url:TILE_BASE+'terrain_water_a.png'},
+      {k:'kenney_waterS',          url:TILE_BASE+'terrain_water_a.png'},
+      {k:'kenney_waterE',          url:TILE_BASE+'terrain_water_b.png'},
+      {k:'kenney_waterW',          url:TILE_BASE+'terrain_water_b.png'},
+      {k:'kenney_waterNE',         url:TILE_BASE+'water2.png'},
+      {k:'kenney_waterNW',         url:TILE_BASE+'water2.png'},
+      {k:'kenney_waterES',         url:TILE_BASE+'water3.png'},
+      {k:'kenney_waterSW',         url:TILE_BASE+'water3.png'},
+      /* roads + bridges (no dedicated sprites — use urban tiles) */
+      {k:'kenney_roadNS',          url:TILE_BASE+'tile2.png'},
+      {k:'kenney_roadEW',          url:TILE_BASE+'tile3.png'},
+      {k:'kenney_crossroad',       url:TILE_BASE+'tile3.png'},
+      {k:'kenney_bridgeNS',        url:TILE_BASE+'dirt1.png'},
+      {k:'kenney_bridgeEW',        url:TILE_BASE+'dirt2.png'},
+      /* vehicles + characters */
+      {k:'car_red',                url:TILE_BASE+'char_walk.png'},
+      {k:'car_blue',               url:TILE_BASE+'char_idle.png'},
+      {k:'char_walk',              url:TILE_BASE+'char_walk.png'},
+      /* trees — deciduous + conifers */
+      {k:'kenney_treeShort',       url:TILE_BASE+'decor_tree1.png'},
+      {k:'kenney_treeTall',        url:TILE_BASE+'decor_tree2.png'},
+      {k:'kenney_treeAltShort',    url:TILE_BASE+'decor_tree3.png'},
+      {k:'kenney_treeAltTall',     url:TILE_BASE+'decor_tree4.png'},
+      {k:'kenney_coniferShort',    url:TILE_BASE+'decor_tree5.png'},
+      {k:'kenney_coniferTall',     url:TILE_BASE+'decor_tree6.png'},
+      {k:'kenney_coniferAltShort', url:TILE_BASE+'decor_bush1.png'},
+      {k:'kenney_coniferAltTall',  url:TILE_BASE+'decor_bush2.png'},
     ];
     var pending=0;
     function _onImg(){if(--pending===0)cb();}
