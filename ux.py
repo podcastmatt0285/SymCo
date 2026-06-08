@@ -14862,7 +14862,29 @@ def api_widget_p2p_contacts(device_id: Optional[str] = None,
         except Exception:
             return ""
 
-    raw = get_contacts(player.id)   # [(Contact, other_id, my_notes)]
+    def _cap(s, max_lines=10, max_chars=480):
+        """Bound a multi-line detail string so the rendered Android RemoteViews
+        never exceeds the Binder transaction size limit. A maxed-out account can
+        produce enormous inventory/order/holdings strings — left unbounded they
+        make the home-screen widget fail with a grey "Can't load widget"."""
+        if not s:
+            return s
+        lines = s.split("\n")
+        extra = len(lines) - max_lines
+        if extra > 0:
+            lines = lines[:max_lines]
+        out = "\n".join(lines)
+        if len(out) > max_chars:
+            out = out[:max_chars].rstrip() + "…"
+        if extra > 0:
+            out += f"\n… +{extra} more"
+        return out
+
+    try:
+        raw = get_contacts(player.id)   # [(Contact, other_id, my_notes)]
+    except Exception as _e:
+        print(f"[widget] p2p-contacts get_contacts failed for {player.id}: {_e}")
+        raw = []
     cards = []
     for _row, other_id, _notes in raw:
         try:
@@ -15242,29 +15264,29 @@ def api_widget_p2p_contacts(device_id: Optional[str] = None,
                 "inv_value":                inv_value,
                 "share_value":              share_value,
                 "cash_usd":                 cash_usd,
-                "cash_other":               cash_other,
+                "cash_other":               _cap(cash_other, max_lines=6, max_chars=240),
                 "debt":                     debt,
-                "biz_list":                 biz_list,
+                "biz_list":                 _cap(biz_list),
                 "land_count":               land_count,
-                "land_detail":              land_detail,
-                "inventory":                inventory,
-                "land_listings":            land_listings,
+                "land_detail":              _cap(land_detail),
+                "inventory":                _cap(inventory),
+                "land_listings":            _cap(land_listings),
                 "exec_summary":             exec_summary,
-                "exec_detail":              exec_detail,
+                "exec_detail":              _cap(exec_detail),
                 "city":                     city,
                 "county":                   county,
-                "stock_detail":             stock_detail,
-                "bond_detail":              bond_detail,
+                "stock_detail":             _cap(stock_detail),
+                "bond_detail":              _cap(bond_detail),
                 "div_received":             div_received,
                 "div_paid":                 div_paid,
                 "commodity_orders":         commodity_orders,
-                "commodity_order_detail":   commodity_order_detail,
+                "commodity_order_detail":   _cap(commodity_order_detail),
                 "district_orders":          district_orders,
-                "district_order_detail":    district_order_detail,
+                "district_order_detail":    _cap(district_order_detail),
                 "p2p_offers":               p2p_offers,
                 "contacts_count":           contacts_count,
                 "bankruptcy_active":        bankruptcy_active,
-                "bankruptcy_detail":        bankruptcy_detail,
+                "bankruptcy_detail":        _cap(bankruptcy_detail),
             })
         except Exception:
             continue
