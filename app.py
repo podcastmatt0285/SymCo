@@ -962,9 +962,10 @@ except ModuleNotFoundError:
     pass
 
 try:
-    from play_billing import router as play_billing_router, init as play_billing_init
-    play_billing_init()
-    app.include_router(play_billing_router)
+    import play_billing as _pb_mod
+    _pb_mod.init()
+    app.include_router(_pb_mod.router)
+    register_module("play_billing", _pb_mod)
     print("Play Billing routes registered")
 except ModuleNotFoundError:
     pass
