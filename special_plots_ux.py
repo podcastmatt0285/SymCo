@@ -478,22 +478,23 @@ def _mint_dashboard_html(sp, owner=None) -> str:
     paused_line_idxs = set(_json.loads(biz.paused_lines or "[]"))
 
     # ── Production lines with input check + quick-buy ───────────────────────
+    # NOTE: identical markup + behaviour to the /businesses page Quick Buy panel
+    # (uses the same qb-* classes and the shared qbSchedule/qbSubmit/qbToggle JS).
     def _qb_panel_html(item_type: str, panel_id: str, default_qty: int) -> str:
-        iname = item_type.replace("_", " ").title()
+        item_disp = item_type.replace("_", " ").title()
         return (
-            f'<div class="qb-panel" id="{panel_id}" data-item="{item_type}"'
-            f' style="display:none;background:#0f172a;border:1px solid #334155;border-radius:6px;padding:10px;margin-top:6px;">'
-            f'<div style="font-size:0.72rem;color:#64748b;margin-bottom:8px;">Quick Buy: <b style="color:#e2e8f0;">{iname}</b></div>'
+            f'<div class="qb-panel" id="{panel_id}" data-item="{item_type}">'
+            f'<div style="font-size:0.72rem;color:#64748b;margin-bottom:8px;">Quick Buy: '
+            f'<b style="color:#e2e8f0;">{item_disp}</b></div>'
             f'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">'
             f'<div><div style="font-size:0.65rem;color:#64748b;margin-bottom:2px;">Quantity</div>'
             f'<input type="number" class="qb-input qb-qty" value="{default_qty}" min="1" step="1"'
-            f' oninput="mintQbSchedule(this)"></div>'
+            f' oninput="qbSchedule(this)"></div>'
             f'<div><div style="font-size:0.65rem;color:#64748b;margin-bottom:2px;">Cap price ({disp["code"]})</div>'
             f'<input type="number" class="qb-input qb-cap" min="0.000001" step="any" placeholder="auto"'
-            f' oninput="mintQbSchedule(this)"></div></div>'
+            f' oninput="qbSchedule(this)"></div></div>'
             f'<div class="qb-preview" style="margin-top:8px;min-height:30px;"></div>'
-            f'<form method="post" action="/api/market/quick-buy/execute" style="margin-top:8px;"'
-            f' onsubmit="return mintQbSubmit(this)">'
+            f'<form method="post" action="/api/market/quick-buy/execute" style="margin-top:8px;" onsubmit="return qbSubmit(this)">'
             f'<input type="hidden" name="item_type" value="{item_type}">'
             f'<input type="hidden" name="quantity" value="{default_qty}">'
             f'<input type="hidden" name="cap_price" value="">'
@@ -536,7 +537,7 @@ def _mint_dashboard_html(sp, owner=None) -> str:
             missing_html += (
                 f'<span style="font-size:0.68rem;color:#f59e0b;">{iname} {have:,.0f}/{need:,}</span>'
                 f'<button type="button" class="btn-sm btn-sm-blue" style="font-size:0.62rem;padding:2px 5px;"'
-                f' onclick="document.getElementById(\'mqbp-{biz.id}-{li}-{safe}\').style.display=\'block\'">Buy</button> '
+                f' onclick="qbToggle(\'{pid}\')">Buy</button> '
             )
             qb_panels += _qb_panel_html(item, pid, dqty)
 
@@ -616,12 +617,11 @@ def _mint_dashboard_html(sp, owner=None) -> str:
 
     html = f'''
     <style>
-    .btn-sm{{display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;border:none;cursor:pointer;font-size:0.78rem;font-weight:600;}}
-    .btn-sm-orange{{background:#f59e0b;color:#000;}}
-    .btn-sm-green{{background:#22c55e;color:#000;}}
-    .btn-sm-red{{background:#ef4444;color:#fff;}}
-    .btn-sm-blue{{background:#3b82f6;color:#fff;}}
-    .qb-panel{{display:none;}}
+    .btn-sm{{padding:5px 10px;font-size:0.78rem;border:none;border-radius:3px;cursor:pointer;font-family:inherit;font-weight:600;}}
+    .btn-sm-blue{{background:#38bdf8;color:#020617;}} .btn-sm-orange{{background:#f59e0b;color:#020617;}}
+    .btn-sm-red{{background:#ef4444;color:#fff;}} .btn-sm-green{{background:#22c55e;color:#020617;}}
+    .qb-panel{{display:none;margin:6px 0 0;background:#060c18;border:1px solid #334155;border-radius:4px;padding:10px;}}
+    .qb-input{{padding:4px 6px;font-size:0.78rem;background:#0f172a;border:1px solid #334155;color:#e2e8f0;border-radius:3px;width:100px;}}
     </style>
 
     {coin_card}
@@ -687,32 +687,89 @@ def _mint_dashboard_html(sp, owner=None) -> str:
     </div>
 
     <script>
-    function mintQbSchedule(inp) {{
-        var panel = inp.closest('.qb-panel');
-        if (!panel) return;
-        var qty = panel.querySelector('.qb-qty').value;
-        var cap = panel.querySelector('.qb-cap').value;
-        var item = panel.dataset.item;
-        if (!qty || qty <= 0) return;
-        var params = new URLSearchParams({{item_type: item, quantity: qty}});
-        if (cap) params.append('cap_price', cap);
+    (function(){{
+      var _t = {{}};
+      window.qbToggle = function(id) {{
+        var p = document.getElementById(id);
+        if (!p) return;
+        var hidden = p.style.display === 'none' || p.style.display === '';
+        document.querySelectorAll('.qb-panel').forEach(function(x){{ x.style.display='none'; }});
+        if (hidden) {{ p.style.display='block'; qbFetch(p); }}
+      }};
+      window.qbSchedule = function(el) {{
+        var p = el.closest('.qb-panel'); if (!p) return;
+        clearTimeout(_t[p.id]);
+        _t[p.id] = setTimeout(function(){{ qbFetch(p); }}, 450);
+      }};
+      window.qbFetch = function(p) {{
+        var item = p.dataset.item;
+        var qty  = p.querySelector('.qb-qty').value || '1';
+        var cap  = p.querySelector('.qb-cap').value;
+        var prev = p.querySelector('.qb-preview');
+        prev.innerHTML = '<span style="color:#475569;">Loading…</span>';
+        var params = new URLSearchParams({{item_type:item, quantity:qty}});
+        if (cap) params.set('cap_price', cap);
         fetch('/api/market/quick-buy/preview?' + params)
-            .then(function(r){{return r.json();}})
-            .then(function(d){{
-                var pv = panel.querySelector('.qb-preview');
-                if (pv) pv.innerHTML = d.html || '';
-                var form = panel.querySelector('form');
-                if (form) {{
-                    form.querySelector('[name=quantity]').value = qty;
-                    if (cap) form.querySelector('[name=cap_price]').value = cap;
-                }}
-            }}).catch(function(){{}});
-    }}
-    function mintQbSubmit(form) {{
-        var qty = form.querySelector('[name=quantity]').value;
-        if (!qty || qty <= 0) return false;
-        return true;
-    }}
+          .then(function(r){{ return r.json(); }})
+          .then(function(d) {{
+            if (d.error) {{ prev.innerHTML='<span style="color:#ef4444;">'+d.error+'</span>'; return; }}
+            var capIn = p.querySelector('.qb-cap');
+            if (d.suggested_cap_raw != null && !capIn.value) {{
+              p.dataset.suggestedCap = d.suggested_cap_raw;
+              capIn.placeholder = d.suggested_cap_disp || String(d.suggested_cap_raw);
+            }}
+            var h = '';
+            if (d.fills && d.fills.length) {{
+              h += '<div style="color:#64748b;font-size:0.68rem;margin-bottom:2px;">Order book:</div>';
+              d.fills.forEach(function(f){{
+                h += '<div style="margin-left:8px;color:#94a3b8;font-size:0.7rem;">'+Number(f.qty).toLocaleString()+'× @ '+f.price_disp+'</div>';
+              }});
+              h += '<div style="margin-top:4px;padding-top:4px;border-top:1px solid #1e293b;font-size:0.72rem;">';
+              h += '<span style="color:#22c55e;">'+Number(d.total_filled).toLocaleString()+' filled</span>';
+              if (d.avg_price_disp) h += ' @ '+d.avg_price_disp+' avg';
+              if (d.immediate_cost_disp) h += ' = <b style="color:#38bdf8;">'+d.immediate_cost_disp+'</b>';
+              h += '</div>';
+            }}
+            if (d.unfilled_qty > 0) {{
+              h += '<div style="color:#f59e0b;font-size:0.7rem;margin-top:3px;">'+Number(d.unfilled_qty).toLocaleString()+' unavailable → buy order at cap price</div>';
+              if (d.reservation_disp) h += '<div style="color:#64748b;font-size:0.7rem;">Max reservation: '+d.reservation_disp+'</div>';
+            }}
+            if ((!d.fills || !d.fills.length) && !d.unfilled_qty) h += '<span style="color:#64748b;font-size:0.7rem;">No active sell orders found.</span>';
+            if (d.forex_fee_disp) h += '<div style="color:#64748b;font-size:0.7rem;margin-top:2px;">Forex fee: '+d.forex_fee_disp+'</div>';
+            prev.innerHTML = h;
+          }})
+          .catch(function(){{ prev.innerHTML='<span style="color:#ef4444;font-size:0.7rem;">Preview unavailable.</span>'; }});
+      }};
+      window.qbSubmit = function(form) {{
+        var p   = form.closest('.qb-panel');
+        var qty = p.querySelector('.qb-qty').value;
+        var cap = p.querySelector('.qb-cap').value;
+        if (!cap || parseFloat(cap) <= 0) {{
+          cap = p.dataset.suggestedCap || '';
+          if (!cap || parseFloat(cap) <= 0) {{
+            alert('Please enter a cap price before confirming.');
+            return false;
+          }}
+        }}
+        var prev = p.querySelector('.qb-preview');
+        prev.innerHTML = '<span style="color:#475569;font-size:0.8rem;">Placing order…</span>';
+        var data = new FormData(form);
+        data.set('quantity', qty);
+        data.set('cap_price', cap);
+        fetch(form.action, {{method:'POST', body:data}})
+          .then(function(r){{ return r.json(); }})
+          .then(function(d){{
+            if (d.ok) {{
+              prev.innerHTML = '<span style="color:#22c55e;font-size:0.8rem;">✓ '+d.message+'</span>';
+              setTimeout(function(){{ p.style.display='none'; }}, 2500);
+            }} else {{
+              prev.innerHTML = '<span style="color:#ef4444;font-size:0.8rem;">'+(d.error||'Order failed.')+'</span>';
+            }}
+          }})
+          .catch(function(){{ prev.innerHTML='<span style="color:#ef4444;font-size:0.8rem;">Request failed.</span>'; }});
+        return false;
+      }};
+    }})();
     </script>
     '''
     return html
