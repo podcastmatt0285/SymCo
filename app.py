@@ -421,7 +421,7 @@ def register_module(name: str, module):
 
 def load_modules():
     """Attempt to load all game modules."""
-    module_names = ['auth', 'inventory', 'wma', 'business', 'market', 'land', 'land_restoration', 'land_market', 'banks', 'districts', 'district_market', 'cities', 'city_projects', 'counties', 'memecoins', 'wallet', 'city_wallet', 'stats_ux', 'executive', 'estate', 'p2p', 'chat', 'admins', 'dm', 'corporate_actions', 'reserve_banks', 'trusted_trade', 'contacts', 'soundtrack', 'wcpr', 'npc', 'events', 'govt_ledger', 'beta', 'market_ws', 'player_feed_ws']
+    module_names = ['auth', 'inventory', 'wma', 'business', 'market', 'land', 'land_restoration', 'land_market', 'banks', 'districts', 'special_plots', 'district_market', 'cities', 'city_projects', 'counties', 'memecoins', 'wallet', 'city_wallet', 'stats_ux', 'executive', 'estate', 'p2p', 'chat', 'admins', 'dm', 'corporate_actions', 'reserve_banks', 'trusted_trade', 'contacts', 'soundtrack', 'wcpr', 'npc', 'events', 'govt_ledger', 'beta', 'market_ws', 'player_feed_ws']
     for name in module_names:
         try:
             mod = __import__(name)

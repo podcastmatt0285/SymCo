@@ -122,8 +122,22 @@ Items are grouped by category and ranked by value/complexity at the bottom.
 - [ ] **Forex trading floor** — subscriber-only currency-exchange dashboard.
 - [ ] **Player API** — extensive read access + write limited to **buy/sell on the
       commodity market and district market only** (no other write access).
-- [ ] **Mint District coins** — usable for **forex / gifting / display only**, NOT
-      spendable in the game economy.
+- [x] **Mint / Special Plots / Coin Currencies** — ✅ Implemented (supersedes the
+      old "cosmetic Mint District coins" idea — coinage is now a *real*, fully-backed
+      currency, not cosmetic).
+      - Subscriber-only **Special Plots** built by Fibonacci land sacrifice (5,8,13,21…;
+        separate counter from districts; empty plots allowed). `special_plots.py`
+        (SpecialPlot + PlayerSpecialPlotStats models, tax tick, gov fee routing) +
+        `special_plots_ux.py` (/special-plots dashboard, /create wizard, /{id}/build).
+      - **Mint** business (`mint_businesses.json`, class:"mint", terrain special_mint)
+        consumes metal + energy and strikes coinage via business.py production hook
+        (reserve_banks.credit_mint_coinage) — hard money, pegged 1:1 to consumed metal.
+      - 6 coin currencies w/ own StateReserveBank: AU24, AU22 (gold), AG999, AG925
+        (silver), PT9995, PT950 (platinum). usd_per_unit pegged live to metal prices
+        each tick (reserve_banks._peg_coin_to_metals). Bonds open to all; legal-tender
+        selection subscriber-gated (set_player_legal_tender + /banks dropdown).
+      - Integrations: net worth (special_plot_value), sitemap, settings perks, login
+        FAQ, loading tips, admin Pro panel, in-game + Android push, transaction ledger.
 - [ ] **Cosmetic skins.**
 - [x] **City perk — "option B"** — subscriber chooses one of two paths: **(a)** get a
       free city founded for them and become its mayor, OR **(b)** pick up to 3 perks from a

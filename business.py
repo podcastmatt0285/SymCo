@@ -575,6 +575,10 @@ def process_business_tick(db):
                     ))
 
                     # ── Mint hook: convert consumed metals into coinage currency ─────
+                    # Hard money — coinage is pegged 1:1 to the USD value of the metal
+                    # actually consumed (not boosted by exec/city/event multipliers, so
+                    # the peg can never be inflated). credit_mint_coinage() also writes
+                    # the ledger entry and returns the minted amount.
                     if config.get("class") == "mint":
                         _currency_code = line.get("output_item", "")
                         _metal_usd = sum(
@@ -585,12 +589,14 @@ def process_business_tick(db):
                         if _metal_usd > 0 and _currency_code:
                             try:
                                 from reserve_banks import credit_mint_coinage
-                                credit_mint_coinage(player.id, _currency_code, _metal_usd)
+                                _minted = credit_mint_coinage(player.id, _currency_code, _metal_usd)
+                                if player.id > 0 and _minted > 0:
+                                    _biz_name = config.get("name", biz.business_type)
+                                    _fire_business_push(player.id, biz.id, "mint-run",
+                                        _biz_name,
+                                        f"Minted {_minted:,.2f} {_currency_code} (${_metal_usd:,.0f} metal value)")
                             except Exception as _mint_e:
                                 print(f"[Business] Mint coinage error: {_mint_e}")
-                        _prod_log_desc = f"Minted {_currency_code} (${_metal_usd:.2f} metal value)"
-                        log_transaction(biz.owner_id, "resource_gain", "resource",
-                                        _metal_usd, _prod_log_desc, str(biz.id))
                         lines_successfully_produced += 1
                         continue  # skip _inv_add and WMA for mint output
                     # ────────────────────────────────────────────────────────────────

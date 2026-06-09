@@ -311,6 +311,19 @@ def calculate_player_stats(player_id: int) -> dict:
         except:
             pass
 
+        # Special plot value (mints) — valued at ~annualized tax, like districts.
+        # NOTE: minted coinage itself is NOT added here — foreign-currency balances
+        # (including coinage) are already folded into cash_balance above as USD.
+        stats["special_plots_owned"] = 0
+        stats["special_plot_value"] = 0.0
+        try:
+            from special_plots import SpecialPlot
+            sps = db.query(SpecialPlot).filter(SpecialPlot.owner_id == player_id).all()
+            stats["special_plots_owned"] = len(sps)
+            stats["special_plot_value"] = sum((sp.monthly_tax or 0.0) * 12 for sp in sps)
+        except Exception:
+            pass
+
         # Share value (bank shares + brokerage shares — must match estate calc)
         share_val = 0.0
         try:
@@ -345,7 +358,8 @@ def calculate_player_stats(player_id: int) -> dict:
             stats["inventory_value"] +
             stats["business_value"] +
             stats["share_value"] +
-            stats["district_value"]
+            stats["district_value"] +
+            stats.get("special_plot_value", 0.0)
         )
 
         return stats

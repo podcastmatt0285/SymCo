@@ -451,7 +451,12 @@ def _nav_loader_html() -> str:
             "Tip: Qualified annuities skip the 0.25% issuance fee — 20% tax applies to the full payment.",
             "Tip: Deferred annuities grow at 5% annual during accumulation — annuitize when ready.",
             "Tip: Surrender charges on annuities drop 1% each year — wait for the 8th year to surrender free.",
-            "Tip: You can contribute to a deferred annuity any time — minimum deposit is just 100."
+            "Tip: You can contribute to a deferred annuity any time — minimum deposit is just 100.",
+            "Tip: Wadsworth Pro lets you sacrifice land for a Special Plot, then build a Mint.",
+            "Tip: Mints strike metal-backed coinage — AU24, AG999, PT9995 and three karat alloys.",
+            "Tip: Coinage value is pegged live to gold, silver, and platinum market prices.",
+            "Tip: Sacrificed plots for Special Plots can be empty — they don't need a business.",
+            "Tip: Anyone can buy metal-coinage bonds; only subscribers can set coinage as legal tender."
           ];
           var overlay = document.getElementById('nav-loader');
           var bar     = document.getElementById('nl-bar');
@@ -4222,9 +4227,11 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
         for biz in player_businesses:
             config = BUSINESS_TYPES.get(biz.business_type)
             if not isinstance(config, dict) or not config:
-                from business import get_district_business_types
+                from business import get_district_business_types, get_mint_business_types
                 district_types = get_district_business_types()
                 config = district_types.get(biz.business_type)
+                if not isinstance(config, dict) or not config:
+                    config = get_mint_business_types().get(biz.business_type)
                 if not isinstance(config, dict):
                     config = {}
             biz_name = config.get("name", biz.business_type)
@@ -5627,11 +5634,11 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
         land_db = get_land_db()
         owned_businesses_count = land_db.query(Business).filter(Business.owner_id == player.id).count()
 
-        # Load ALL player businesses once (land + district) to avoid N+1 queries
-        from business import get_district_business_types
+        # Load ALL player businesses once (land + district + mint) to avoid N+1 queries
+        from business import get_district_business_types, get_mint_business_types
         _all_player_bizs = land_db.query(Business).filter(Business.owner_id == player.id).all()
         _biz_by_id = {b.id: b for b in _all_player_bizs}
-        ALL_BUSINESS_TYPES = {**BUSINESS_TYPES, **get_district_business_types()}
+        ALL_BUSINESS_TYPES = {**BUSINESS_TYPES, **get_district_business_types(), **get_mint_business_types()}
 
         # Build supply chain maps across ALL player businesses (land + district)
         # player_produces: item_key -> [business_display_name, ...]
@@ -8433,7 +8440,9 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
         # RESERVE NOTES & BONDS
         # ==========================
         try:
-            from reserve_banks import get_all_banks, get_player_legal_tender
+            from reserve_banks import get_all_banks, get_player_legal_tender, COIN_CURRENCY_CODES
+            from skin_utils import is_pro as _is_pro
+            _player_is_pro = _is_pro(player)
             all_banks_rb  = get_all_banks()
             current_code  = get_player_legal_tender(player.id)
             currency_rows = ('<option value="USD"'
@@ -8441,10 +8450,15 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
                              + '>🇺🇸 USD — Wadsworth Dollar (default)</option>')
             for bk in all_banks_rb:
                 sel = ' selected' if current_code == bk["code"] else ''
+                # Coin currencies are subscriber-only as legal tender — disable for non-Pro
+                _is_coin = bk["code"] in COIN_CURRENCY_CODES
+                _gated = _is_coin and not _player_is_pro
+                _disabled = ' disabled' if _gated else ''
+                _pro_tag = ' 🔒 Pro only' if _gated else (' ✨ Pro coinage' if _is_coin else '')
                 currency_rows += (
-                    f'<option value="{bk["code"]}"{sel}>'
+                    f'<option value="{bk["code"]}"{sel}{_disabled}>'
                     f'{bk["flag"]} {bk["code"]} — {bk["name"]} '
-                    f'(yield {bk["yield_pct"]:+.4f}%,  1 {bk["code"]} = ${bk["usd_per_unit"]:.6f})'
+                    f'(yield {bk["yield_pct"]:+.4f}%,  1 {bk["code"]} = ${bk["usd_per_unit"]:.6f}){_pro_tag}'
                     f'</option>'
                 )
             bank_html += f'''
