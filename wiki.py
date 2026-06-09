@@ -80,6 +80,7 @@ def initialize():
     _seed_annuity_entries()
     _seed_index_challenge_entry()
     _seed_institution_entries()
+    _seed_npc_currency_mandate_entry()
 
 
 def _seed_land_grant_entry():
@@ -360,6 +361,61 @@ def _seed_index_challenge_entry():
     except Exception as e:
         db.rollback()
         print(f"[Wiki] Seed index challenge error: {e}")
+    finally:
+        db.close()
+
+
+def _seed_npc_currency_mandate_entry():
+    db = _db()
+    try:
+        if db.query(WikiMedia).filter(WikiMedia.title == "NPC Currency Mandate Event").first():
+            return
+        max_order = db.query(WikiMedia).count()
+        db.add(WikiMedia(
+            youtube_id="",
+            kind="video",
+            title="NPC Currency Mandate Event",
+            description=(
+                "The NPC Currency Mandate is a special government event that forces all NPC businesses to "
+                "switch their legal tender to a currency chosen by the admin.\n\n"
+                "What it does:\n"
+                "• When the event goes live, every NPC business's legal tender is updated to the mandated currency.\n"
+                "• The switch is permanent — NPCs stay on the new currency after the event window closes.\n"
+                "• NPC balances are NOT converted. NPCs always operate internally in USD regardless of "
+                "their legal tender setting.\n"
+                "• A future NPC Currency Mandate event can switch NPCs to a different currency again.\n\n"
+                "What changes in the market:\n"
+                "• NPC legal tender appears on their profile and in currency stats pages.\n"
+                "• The government ledger records how many NPCs were switched and to which currency.\n"
+                "• Market analysts may interpret a mass NPC currency shift as a government signal about "
+                "which currencies the administration favours.\n\n"
+                "Available currencies:\n"
+                "• All 16 fiat currencies (USD, JPY, EUR, GBP, CHF, CNY, INR, RUB, KRW, MXP, BRL, ZAR, "
+                "TRY, SAR, AED, ANA).\n"
+                "• All 6 metal coinage currencies (AU24, AU22, AG999, AG925, PT9995, PT950). Because NPCs "
+                "don't hold coinage balances, switching to a coin currency has no effect on NPC trading — "
+                "it is a purely symbolic designation.\n\n"
+                "How to trigger it:\n"
+                "• Admins create the event from /admin/events using the NPC Currency Mandate quick-form card.\n"
+                "• Select the target currency, set a start date, and optionally set an end date for the "
+                "event window display. Activate immediately or schedule for a future time.\n"
+                "• The event fires once at start_at and is not repeating.\n\n"
+                "Strategic implications:\n"
+                "• An NPC mandate to a high-yield currency (e.g. TRY, RUB) signals an inflationary "
+                "environment — players may want to hedge by buying bonds in that currency.\n"
+                "• An NPC mandate to a stable safe-haven currency (CHF, JPY) signals risk-off conditions.\n"
+                "• A coinage mandate (AU24) is a strong hard-money signal — expect metal commodity "
+                "demand to spike as players respond."
+            ),
+            category="advanced",
+            sort_order=max_order,
+            pinned=False,
+        ))
+        db.commit()
+        print("[Wiki] Seeded NPC Currency Mandate Event entry")
+    except Exception as e:
+        db.rollback()
+        print(f"[Wiki] Seed NPC currency mandate error: {e}")
     finally:
         db.close()
 

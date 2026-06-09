@@ -821,6 +821,24 @@ def _execute_npc_currency_switch(db, ev: "GameEvent") -> str:
     except Exception:
         pass
 
+    # Log a transaction entry for each switched NPC so their ledger reflects the change
+    try:
+        from stats_ux import log_transaction as _lt
+        for npc_id in npc_ids:
+            row = existing_rows.get(npc_id)
+            if row and row.currency_code == target_code:
+                continue  # was already on target — skipped, nothing to log
+            try:
+                _lt(
+                    npc_id, "event_mandate", "money", 0.0,
+                    f"Legal tender switched to {target_code} by government mandate: {ev.title}",
+                    reference_id=f"event-{ev.id}",
+                )
+            except Exception:
+                pass
+    except Exception:
+        pass
+
     return (
         f"By government mandate, {switched} NPC business"
         f"{'es' if switched != 1 else ''} now operate in {target_code}. "

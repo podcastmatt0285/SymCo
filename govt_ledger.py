@@ -39,6 +39,7 @@ EVENT_META = {
     "city_grant":          ("City Bank Grant",          "out", "#f87171"),
     "bond_purchase":       ("Bond Purchase",            "out", "#818cf8"),
     "loan_disbursement":   ("Emergency Loan Issued",    "out", "#fb923c"),
+    "npc_currency_switch": ("NPC Currency Mandate",     "in",  "#818cf8"),
 }
 
 

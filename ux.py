@@ -456,7 +456,9 @@ def _nav_loader_html() -> str:
             "Tip: Mints strike metal-backed coinage — AU24, AG999, PT9995 and three karat alloys.",
             "Tip: Coinage value is pegged live to gold, silver, and platinum market prices.",
             "Tip: Sacrificed plots for Institutions can be empty — they don't need a business.",
-            "Tip: Anyone can buy metal-coinage bonds; only subscribers can set coinage as legal tender."
+            "Tip: Anyone can buy metal-coinage bonds; only subscribers can set coinage as legal tender.",
+            "Tip: Government events can mandate all NPC businesses to switch currencies — watch how market pricing shifts.",
+            "Tip: NPC legal tender affects how they report prices but they always settle internally in USD."
           ];
           var overlay = document.getElementById('nav-loader');
           var bar     = document.getElementById('nl-bar');
@@ -16935,6 +16937,7 @@ def events_page(request: Request,
         "item_crisis":  "#ef4444",
         "land_grant":   "#4ade80",
         "foreign_land_sale": "#dc2626",
+        "npc_currency_switch": "#818cf8",
     }
     _DUR_COLOR = {
         "daily":   "#f59e0b",
@@ -17424,9 +17427,48 @@ def events_page(request: Request,
             except Exception:
                 pass
 
+        # NPC Currency Mandate personalised info box
+        npc_mandate_html = ""
+        if etype == "npc_currency_switch":
+            try:
+                _ncs_code  = _effect.get("currency_code", "?")
+                _ncs_sw    = _effect.get("switched_count")
+                _ncs_sk    = _effect.get("skipped_count")
+                _ncs_names = {
+                    "USD":"US Dollar","EUR":"Euro","GBP":"Pound Sterling","JPY":"Japanese Yen",
+                    "CHF":"Swiss Franc","CNY":"Chinese Yuan","INR":"Indian Rupee","RUB":"Russian Ruble",
+                    "KRW":"Korean Won","MXP":"Mexican Peso","BRL":"Brazilian Real","ZAR":"S. African Rand",
+                    "TRY":"Turkish Lira","SAR":"Saudi Riyal","AED":"UAE Dirham","ANA":"Anacostia Blunt",
+                    "AU24":"Gold 24k","AU22":"Gold 22k","AG999":"Silver 999","AG925":"Silver 925",
+                    "PT9995":"Platinum 9995","PT950":"Platinum 950",
+                }
+                _ncs_name = _ncs_names.get(_ncs_code, _ncs_code)
+                if _ncs_sw is not None:
+                    _ncs_detail = (
+                        f'{_ncs_sw} NPC business{"es" if _ncs_sw != 1 else ""} switched '
+                        f'· {_ncs_sk} already on {_ncs_code}'
+                    )
+                else:
+                    _ncs_detail = "Switch fires when event goes live"
+                npc_mandate_html = (
+                    f'<div style="margin-top:8px;padding:8px 11px;background:#0d0a1a;'
+                    f'border:1px solid #3730a3;border-radius:6px;">'
+                    f'<div style="font-size:0.65rem;color:#4c4880;text-transform:uppercase;'
+                    f'letter-spacing:.07em;margin-bottom:5px;">NPC Currency Mandate</div>'
+                    f'<div style="display:flex;align-items:center;gap:8px;">'
+                    f'<span style="font-size:1.2rem;">🏦</span>'
+                    f'<div>'
+                    f'<div style="color:#a5b4fc;font-weight:700;font-size:0.85rem;">'
+                    f'All NPCs: {_ncs_code} — {_ncs_name}</div>'
+                    f'<div style="color:#6366f1;font-size:0.75rem;">{_ncs_detail}</div>'
+                    f'</div></div></div>'
+                )
+            except Exception:
+                pass
+
         # Effect banner for non-task, non-crypto_scam events with effect_data
         effect_html = ""
-        if etype not in ("task", "index_challenge") and not (_effect.get("type") == "crypto_scam") and _effect:
+        if etype not in ("task", "index_challenge", "npc_currency_switch") and not (_effect.get("type") == "crypto_scam") and _effect:
             import html as _html
             _eff_rows = []
 
@@ -17557,6 +17599,7 @@ def events_page(request: Request,
                     <div style="font-size:0.95rem;font-weight:700;color:#e2e8f0;margin-bottom:4px;">{title} {trophy_html}</div>
                     <div style="font-size:0.80rem;color:#64748b;line-height:1.5;">{desc}</div>
                     {index_challenge_html}
+                    {npc_mandate_html}
                     {progress_html}
                     {meme_panel}
                     {effect_html}
