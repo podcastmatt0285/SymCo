@@ -767,6 +767,68 @@ def admin_player_detail(
     return HTMLResponse(admin_shell(f"Player #{pid}", body, admin.business_name, "/admin/players", player_id=admin.id))
 
 
+def _player_pro_panel(pid, detail):
+    """Wadsworth Pro subscription card on the player info tab."""
+    flag = detail.get("subscriber", False)
+    is_adm = detail.get("is_admin", False)
+    flag_html = (
+        '<span style="color:#22c55e;font-weight:700;">✓ True</span>'
+        if flag else
+        '<span style="color:#64748b;">False</span>'
+    )
+    admin_note = (
+        ' <span style="color:#94a3b8;font-size:0.68rem;">'
+        '(admin — always Pro regardless of this flag)</span>'
+        if is_adm else ""
+    )
+
+    # Most recent play_subscriptions row
+    sub_row_html = ""
+    try:
+        from play_billing import get_player_subscription
+        rec = get_player_subscription(pid)
+        if rec:
+            expiry_str = rec["expiry_time"].strftime("%Y-%m-%d %H:%M UTC") if rec["expiry_time"] else "—"
+            sub_row_html = f"""
+            <div class="detail-row"><span class="label">Play state</span>
+              <span class="value" style="color:#f59e0b;">{rec['sub_state']}</span></div>
+            <div class="detail-row"><span class="label">Expires</span>
+              <span class="value">{expiry_str}</span></div>
+            """
+    except Exception:
+        pass
+
+    # Resync button (only useful when service account key is configured)
+    resync_btn = f"""
+    <form method="post" action="/api/admin/sub-resync/{pid}" style="display:inline;"
+          onsubmit="this.querySelector('button').textContent='…'">
+      <button type="submit" class="btn btn-blue" style="font-size:0.7rem;padding:3px 8px;">
+        Resync with Play API
+      </button>
+    </form>"""
+
+    grant_btn  = f'<form method="post" action="/api/admin/sub-grant/{pid}"  style="display:inline;"><button class="btn btn-green" style="font-size:0.7rem;padding:3px 8px;">Grant Pro</button></form>'
+    revoke_btn = f'<form method="post" action="/api/admin/sub-revoke/{pid}" style="display:inline;"><button class="btn btn-red"   style="font-size:0.7rem;padding:3px 8px;">Revoke Pro</button></form>'
+
+    return f"""
+    <div class="card">
+        <h3>Wadsworth Pro</h3>
+        <div class="detail-row"><span class="label">subscriber flag</span>
+          <span class="value">{flag_html}{admin_note}</span></div>
+        {sub_row_html}
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">
+          {resync_btn}
+          {grant_btn}
+          {revoke_btn}
+        </div>
+        <p style="color:#4b5563;font-size:0.68rem;margin-top:8px;">
+          Resync calls the Play Developer API to re-verify the token and sync the flag.
+          Grant/Revoke override the flag directly (use for comp subscriptions or fraud).
+        </p>
+    </div>
+    """
+
+
 def _player_push_panel(pid):
     subs = get_player_push_subscriptions(pid)
     if not subs:
@@ -903,6 +965,7 @@ def _player_info_tab(pid, detail, disp=None):
         {set_any_form}
     </div>
     {_player_push_panel(pid)}
+    {_player_pro_panel(pid, detail)}
     {_player_audit_trail(pid)}
     <div class="card">
         <div style="border-top:1px solid #7f1d1d;padding-top:16px;">

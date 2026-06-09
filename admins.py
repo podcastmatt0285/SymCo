@@ -643,6 +643,7 @@ def get_player_detail(player_id: int) -> Optional[dict]:
         "last_login": player.last_login.isoformat() if player.last_login else None,
         "is_admin": player.id in ADMIN_PLAYER_IDS,
         "tutorial_step": getattr(player, "tutorial_step", 0),
+        "subscriber": bool(getattr(player, "subscriber", False)),
     }
     db.close()
 

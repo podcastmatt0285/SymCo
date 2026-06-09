@@ -355,6 +355,149 @@ async def api_play_rtdn(request: Request):
 
 
 # ---------------------------------------------------------------------------
+# Periodic revalidation sweep
+# ---------------------------------------------------------------------------
+
+_SWEEP_EVERY_TICKS = 17_280  # ~24 h at 5 s / tick
+
+
+def revalidate_active_subscriptions() -> int:
+    """Re-verify stale non-terminal subscriptions via the Play API.
+
+    Picks up to 50 rows whose sub_state is not EXPIRED and whose last_verified
+    is older than 23 hours, re-calls the Play API, and syncs subscriber flags.
+    Returns the count processed. Safe to call when the key file is absent.
+    """
+    if not os.path.exists(_KEY_FILE):
+        return 0
+    from auth import get_db
+    from sqlalchemy import text as _sql
+    db = get_db()
+    try:
+        rows = db.execute(_sql(
+            "SELECT player_id, purchase_token, product_id "
+            "FROM play_subscriptions "
+            "WHERE sub_state IN ('ACTIVE','CANCELED','IN_GRACE_PERIOD','ON_HOLD','PENDING') "
+            "  AND last_verified < NOW() - INTERVAL '23 hours' "
+            "ORDER BY last_verified ASC LIMIT 50"
+        )).fetchall()
+    finally:
+        db.close()
+
+    processed = 0
+    for row in rows:
+        player_id, token, product_id = row[0], row[1], row[2]
+        try:
+            info = verify_play_subscription(token)
+            _upsert_subscription(player_id, token, product_id,
+                                 info["order_id"], info["state"], info["expiry"])
+            _set_subscriber(player_id, info["active"])
+            log.info("sub_sweep: player %d → %s active=%s", player_id, info["state"], info["active"])
+            processed += 1
+        except Exception as exc:
+            log.warning("sub_sweep: player %d token %.12s: %s", player_id, token, exc)
+    return processed
+
+
+def tick(tick_num: int, now) -> None:
+    """Game-tick hook: run a subscription revalidation sweep once per day."""
+    if tick_num % _SWEEP_EVERY_TICKS == 0:
+        import threading
+        threading.Thread(target=revalidate_active_subscriptions, daemon=True).start()
+
+
+# ---------------------------------------------------------------------------
+# Admin endpoints
+# ---------------------------------------------------------------------------
+
+@router.post("/api/admin/sub-resync/{player_id}")
+async def api_admin_sub_resync(player_id: int,
+                                session_token: Optional[str] = Cookie(None)):
+    """Admin: force re-verify all Play subscription records for a specific player."""
+    from auth import get_player_from_session, get_db
+    from admins import is_admin
+    from sqlalchemy import text as _sql
+    db = get_db()
+    try:
+        requester = get_player_from_session(db, session_token)
+    finally:
+        db.close()
+    if not requester or not is_admin(requester.id):
+        return JSONResponse({"ok": False, "error": "unauthorized"}, status_code=403)
+
+    if not os.path.exists(_KEY_FILE):
+        return JSONResponse({"ok": False,
+                             "error": "Play service account key not found on this server"})
+
+    db = get_db()
+    try:
+        rows = db.execute(_sql(
+            "SELECT purchase_token, product_id FROM play_subscriptions "
+            "WHERE player_id = :pid ORDER BY last_verified DESC LIMIT 5"
+        ), dict(pid=player_id)).fetchall()
+    finally:
+        db.close()
+
+    if not rows:
+        return JSONResponse({"ok": False,
+                             "error": "No subscription records found for this player"})
+
+    results = []
+    final_active = False
+    for token, product_id in rows:
+        try:
+            info = verify_play_subscription(token)
+            _upsert_subscription(player_id, token, product_id,
+                                 info["order_id"], info["state"], info["expiry"])
+            _set_subscriber(player_id, info["active"])
+            if info["active"]:
+                final_active = True
+            results.append({
+                "token":   token[:14] + "…",
+                "state":   info["state"],
+                "active":  info["active"],
+                "expiry":  info["expiry"].isoformat() if info["expiry"] else None,
+            })
+        except Exception as exc:
+            results.append({"token": token[:14] + "…", "error": str(exc)[:120]})
+
+    return JSONResponse({"ok": True, "subscriber_flag_now": final_active, "records": results})
+
+
+@router.post("/api/admin/sub-grant/{player_id}")
+async def api_admin_sub_grant(player_id: int,
+                               session_token: Optional[str] = Cookie(None)):
+    """Admin: manually grant Wadsworth Pro (comp or test)."""
+    return await _admin_set_subscriber(player_id, True, session_token)
+
+
+@router.post("/api/admin/sub-revoke/{player_id}")
+async def api_admin_sub_revoke(player_id: int,
+                                session_token: Optional[str] = Cookie(None)):
+    """Admin: manually revoke Wadsworth Pro (fraud / refund enforcement)."""
+    return await _admin_set_subscriber(player_id, False, session_token)
+
+
+async def _admin_set_subscriber(player_id: int, value: bool,
+                                 session_token: Optional[str]):
+    from auth import get_player_from_session, get_db
+    from admins import is_admin, log_action
+    from fastapi.responses import RedirectResponse
+    db = get_db()
+    try:
+        requester = get_player_from_session(db, session_token)
+    finally:
+        db.close()
+    if not requester or not is_admin(requester.id):
+        return JSONResponse({"ok": False, "error": "unauthorized"}, status_code=403)
+    _set_subscriber(player_id, value)
+    log_action(requester.id, "sub_override", player_id,
+               f"subscriber manually set to {value}")
+    return RedirectResponse(f"/admin/player/{player_id}?tab=info&msg=subscriber+set+to+{value}",
+                            status_code=303)
+
+
+# ---------------------------------------------------------------------------
 # Called once at startup
 # ---------------------------------------------------------------------------
 
