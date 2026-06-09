@@ -139,7 +139,31 @@ DEFAULT_BANKS = [
     ("SAR", "Wadsworth Saudi Central Bank",      "﷼",  "🇸🇦", 0.050,  0.267,  -0.010, 0.25),
     ("AED", "Central Bank of Wadsworth UAE",     "د.إ","🇦🇪", 0.040,  0.272,  -0.010, 0.25),
     ("ANA", "Sovereign Reserve Blunt Spliff of Anacostia", "Ɉ", "🌿", 0.00,  10.00, -99999.00, 420420.00),
+    # ── Precious-metal coinage (subscriber Mint special plots) ────────────────
+    # usd_per_unit is overwritten each tick by the metal-peg; initial value is a
+    # rough seed so bonds have a sane starting rate.
+    ("AU24",   "Wadsworth Gold Reserve (24-karat)",      "Au",  "🥇", 0.01, 1900.0, 0.0, 0.15),
+    ("AU22",   "Wadsworth Gold Reserve (22-karat)",      "Au",  "🥇", 0.01, 1740.0, 0.0, 0.15),
+    ("AG999",  "Wadsworth Silver Reserve (999-fine)",    "Ag",  "🥈", 0.02,   24.0, 0.0, 0.20),
+    ("AG925",  "Wadsworth Silver Reserve (925 Sterling)","Ag",  "🥈", 0.02,   22.0, 0.0, 0.20),
+    ("PT9995", "Wadsworth Platinum Reserve (9995-fine)", "Pt",  "🔩", 0.01,  960.0, 0.0, 0.15),
+    ("PT950",  "Wadsworth Platinum Reserve (950)",       "Pt",  "🔩", 0.01,  912.0, 0.0, 0.15),
 ]
+
+# Alloy compositions for the six coin currencies.
+# Keys are item_type strings in the commodity market; values are weight fractions.
+# These define the metal-peg: usd_per_unit = Σ fraction × market_price(metal).
+COIN_METAL_COMPOSITIONS: dict = {
+    "AU24":   {"gold": 1.0},
+    "AU22":   {"gold": 22/24, "copper": 2/24},
+    "AG999":  {"silver": 1.0},
+    "AG925":  {"silver": 0.925, "copper": 0.075},
+    "PT9995": {"platinum": 1.0},
+    "PT950":  {"platinum": 0.95, "copper": 0.05},
+}
+
+# Set of coin currency codes for O(1) membership tests.
+COIN_CURRENCY_CODES: frozenset = frozenset(COIN_METAL_COMPOSITIONS)
 
 # How long a player must wait between legal-tender switches (days).
 TENDER_SWITCH_COOLDOWN_DAYS = 7
@@ -551,6 +575,36 @@ def _push_reserve(player_id: int, title: str, body: str):
     threading.Thread(target=_send, daemon=True).start()
 
 
+def credit_mint_coinage(player_id: int, currency_code: str, metal_usd_value: float) -> None:
+    """Credit newly-minted coinage to a player.
+
+    Called by business.py when a mint production cycle completes.
+    amount = metal_usd_value / bank.usd_per_unit
+    (e.g. 10 gold consumed, gold = $2000/unit, AU24 usd_per_unit = $2000 → 10 AU24 credited)
+    """
+    db = get_db()
+    try:
+        bank = db.query(StateReserveBank).filter(
+            StateReserveBank.currency_code == currency_code
+        ).first()
+        if not bank or bank.usd_per_unit <= 0:
+            print(f"[Mint] No active bank or zero rate for {currency_code}")
+            return
+        amount = metal_usd_value / bank.usd_per_unit
+        if amount <= 0:
+            return
+        _adjust_currency_balance(db, player_id, currency_code, amount)
+        bank.total_face_value_wsc += metal_usd_value  # track total minted supply in USD equiv
+        db.commit()
+        print(f"[Mint] Credited {amount:.6f} {currency_code} to player {player_id} "
+              f"(${metal_usd_value:.2f} metal value @ {bank.usd_per_unit:.2f}/unit)")
+    except Exception as e:
+        db.rollback()
+        print(f"[Mint] Error crediting {currency_code} to player {player_id}: {e}")
+    finally:
+        db.close()
+
+
 def _call_bonds_if_needed(db, bank: StateReserveBank):
     """
     Bank call provision: if the current yield has fallen to ≤ BOND_CALL_YIELD_THRESHOLD
@@ -625,7 +679,15 @@ def _adjust_yield_and_fx(db, bank: StateReserveBank):
     Positive demand (buys exceed redemptions) → lower yield (more buyers = richer bond).
     Negative demand → higher yield (nobody wants the bond → must offer more return).
     Then link FX rate to yield change: lower yield → stronger currency (appreciation).
+
+    For coin currencies (AU24, AU22, AG999, AG925, PT9995, PT950) the FX rate is
+    hard-pegged to live metal market prices instead of yield dynamics.
     """
+    # ── Coin currencies: metal-price peg (override normal FX dynamics) ───────
+    if bank.currency_code in COIN_CURRENCY_CODES:
+        _peg_coin_to_metals(db, bank)
+        return
+
     old_yield = bank.yield_rate
     demand    = bank.net_demand_wsc
 
@@ -650,6 +712,38 @@ def _adjust_yield_and_fx(db, bank: StateReserveBank):
         bank.usd_per_unit = max(0.000001, bank.usd_per_unit + fx_change)
     else:
         bank.usd_per_unit = 1.0   # enforce peg
+
+
+def _peg_coin_to_metals(db, bank: StateReserveBank):
+    """Hard-peg a coin currency's usd_per_unit to live metal market prices.
+
+    usd_per_unit = Σ (alloy_fraction × market_price_of_metal)
+
+    Yield still adjusts with bond demand (so bonds remain attractive/unattractive
+    depending on whether people buy them), but the exchange rate is commodity-driven,
+    not interest-rate-driven — just like real gold standards.
+    """
+    composition = COIN_METAL_COMPOSITIONS.get(bank.currency_code, {})
+    try:
+        import market as _mkt
+        usd_value = sum(
+            fraction * (_mkt.get_market_price(metal) or 0.0)
+            for metal, fraction in composition.items()
+        )
+        if usd_value > 0:
+            bank.usd_per_unit = usd_value
+    except Exception as _e:
+        print(f"[ReserveBanks] Metal peg error for {bank.currency_code}: {_e}")
+
+    # Yield still responds to bond demand (identical logic, just no FX link)
+    old_yield = bank.yield_rate
+    demand    = bank.net_demand_wsc
+    delta_yield = -demand * YIELD_SENSITIVITY
+    new_yield   = old_yield + delta_yield
+    if demand == 0.0:
+        new_yield += (bank.max_yield - new_yield) * YIELD_REVERSION_RATE
+    bank.yield_rate     = max(bank.min_yield, min(bank.max_yield, new_yield))
+    bank.net_demand_wsc = 0.0
 
 
 def _mature_bonds(db, bank: StateReserveBank, now: datetime):
@@ -1647,6 +1741,23 @@ def set_player_legal_tender(player_id: int, currency_code: str) -> Tuple[bool, s
             ).first()
             if not new_bank:
                 return False, f"No reserve bank found for '{code}'. Available: {_available_codes(db)}"
+
+        # ── Coin currencies: subscriber-only legal tender selection ───────────
+        if code in COIN_CURRENCY_CODES:
+            try:
+                from auth import get_db as _auth_db, Player as _Player
+                from skin_utils import is_pro as _is_pro
+                _adb = _auth_db()
+                _p = _adb.query(_Player).filter(_Player.id == player_id).first()
+                _adb.close()
+                if not _p or not _is_pro(_p):
+                    return False, (
+                        "Setting a metal coinage currency as legal tender requires "
+                        "an active Wadsworth Pro subscription."
+                    )
+            except Exception as _sub_e:
+                print(f"[ReserveBanks] Subscriber check error: {_sub_e}")
+                return False, "Could not verify subscription status. Please try again."
 
         # ── Load existing legal-tender row ────────────────────────────────────
         row = db.query(PlayerLegalTender).filter(

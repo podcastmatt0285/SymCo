@@ -58,6 +58,7 @@ class Business(Base):
     progress_ticks = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
     district_id = Column(Integer, nullable=True)  # District ID if business is on a district
+    special_plot_id = Column(Integer, nullable=True)  # SpecialPlot ID if on a special plot
     # Per-line pause: JSON arrays of paused line indices / product keys
     paused_lines = Column(String, default="[]")      # e.g. "[0, 2]"
     paused_products = Column(String, default="[]")   # e.g. '["bread", "milk"]'
@@ -105,6 +106,7 @@ def initialize():
         "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS paused_lines TEXT DEFAULT '[]'",
         "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS paused_products TEXT DEFAULT '[]'",
         "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS is_tutorial_reward BOOLEAN DEFAULT FALSE",
+        "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS special_plot_id INTEGER DEFAULT NULL",
     ])
     load_business_config()
     print("[Business] Module initialized with production patches and dismantling system")
@@ -176,7 +178,9 @@ def process_dismantling_tick(db):
                 if biz:
                     # Notify owner before deleting
                     try:
-                        if biz.district_id or getattr(biz, 'is_tutorial_reward', False):
+                        if getattr(biz, 'special_plot_id', None):
+                            _cfg = get_mint_business_types().get(biz.business_type, {})
+                        elif biz.district_id or getattr(biz, 'is_tutorial_reward', False):
                             _cfg = get_district_business_types().get(biz.business_type, {})
                         else:
                             _cfg = BUSINESS_TYPES.get(biz.business_type, {})
@@ -231,7 +235,9 @@ def start_business_dismantling(player_id: int, business_id: int) -> bool:
         if getattr(biz, 'is_tutorial_reward', False):
             total_refund = 0.0
         else:
-            if biz.district_id:
+            if getattr(biz, 'special_plot_id', None):
+                config = get_mint_business_types().get(biz.business_type, {})
+            elif biz.district_id:
                 config = get_district_business_types().get(biz.business_type, {})
             else:
                 config = BUSINESS_TYPES.get(biz.business_type, {})
@@ -376,10 +382,12 @@ def process_business_tick(db):
             if biz.id in busy_biz_ids:
                 continue
 
-            # Check if this is a district business and load appropriate config.
-            # Tutorial-reward businesses live on a land plot (not a District object) but
-            # use district business types, so they also load from district_businesses.json.
-            if biz.district_id or getattr(biz, 'is_tutorial_reward', False):
+            # Check if this is a district/special-plot business and load appropriate config.
+            # Tutorial-reward businesses live on a land plot but use district business types.
+            if getattr(biz, 'special_plot_id', None):
+                mint_types = get_mint_business_types()
+                config = mint_types.get(biz.business_type, {})
+            elif biz.district_id or getattr(biz, 'is_tutorial_reward', False):
                 district_business_types = get_district_business_types()
                 config = district_business_types.get(biz.business_type, {})
             else:
@@ -403,9 +411,8 @@ def process_business_tick(db):
 
             player = _players_by_id.get(biz.owner_id)
 
-            # FIXED: For district businesses, skip plot lookup
-            if biz.district_id:
-                # District businesses don't have plots, use default efficiency
+            # FIXED: For district/special-plot businesses, skip land plot lookup
+            if biz.district_id or getattr(biz, 'special_plot_id', None):
                 eff_multiplier = 1.0
             else:
                 plot = _plots_by_id.get(biz.land_plot_id)
@@ -566,6 +573,28 @@ def process_business_tick(db):
                         line["output_qty"] * _city_output_mult * _ev_prod_factor
                         * _item_crisis_f * _exec_prod_mult
                     ))
+
+                    # ── Mint hook: convert consumed metals into coinage currency ─────
+                    if config.get("class") == "mint":
+                        _currency_code = line.get("output_item", "")
+                        _metal_usd = sum(
+                            req["quantity"] * (market.get_market_price(req["item"]) or 0.0)
+                            for req in effective_inputs
+                            if req["item"] not in ("energy", "paper", "water")
+                        )
+                        if _metal_usd > 0 and _currency_code:
+                            try:
+                                from reserve_banks import credit_mint_coinage
+                                credit_mint_coinage(player.id, _currency_code, _metal_usd)
+                            except Exception as _mint_e:
+                                print(f"[Business] Mint coinage error: {_mint_e}")
+                        _prod_log_desc = f"Minted {_currency_code} (${_metal_usd:.2f} metal value)"
+                        log_transaction(biz.owner_id, "resource_gain", "resource",
+                                        _metal_usd, _prod_log_desc, str(biz.id))
+                        lines_successfully_produced += 1
+                        continue  # skip _inv_add and WMA for mint output
+                    # ────────────────────────────────────────────────────────────────
+
                     _inv_add(player.id, line["output_item"], effective_output_qty)
                     # Update WMA cost basis for the newly produced output (players only)
                     if player.id > 0:
@@ -938,6 +967,16 @@ def get_district_business_types():
             return json.load(f)
     except FileNotFoundError:
         print("[Business] Warning: district_businesses.json not found")
+        return {}
+
+
+def get_mint_business_types():
+    """Load mint business types from mint_businesses.json"""
+    try:
+        with open('mint_businesses.json', 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print("[Business] Warning: mint_businesses.json not found")
         return {}
 
 # ==========================
