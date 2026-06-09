@@ -305,14 +305,25 @@ def get_city_perk_buffs(city_id: int) -> Dict[str, float]:
 
         adb = get_auth_db()
         try:
-            rows = adb.query(Player.city_perks).filter(
+            rows = adb.query(Player.id, Player.subscriber, Player.city_perks).filter(
                 Player.id.in_(member_ids),
                 Player.city_perks.isnot(None),
             ).all()
         finally:
             adb.close()
 
-        for (raw,) in rows:
+        try:
+            from admins import is_admin as _is_admin
+        except Exception:
+            _is_admin = lambda _pid: False
+
+        for (pid, sub, raw) in rows:
+            # Only apply a member's perks while they currently hold Pro
+            # entitlement (subscriber flag, or admin who gets Pro free). A
+            # member who redeemed perks then lost Pro (refund/expiry) stops
+            # buffing the city — perks are not a permanent unpaid benefit.
+            if not (sub or _is_admin(pid)):
+                continue
             for key in parse_player_perks(raw):
                 for dim, val in PERK_CATALOG[key]["effects"].items():
                     if dim in totals:
