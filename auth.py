@@ -1606,17 +1606,18 @@ def login_page(session_token: Optional[str] = Cookie(None)):
                          ships, move it up to "Available now" here AND into _PRO_PERKS_LIVE there. -->
                     <details class="faq-item">
                         <summary>What does the Supporters subscription include? <span class="faq-icon">+</span></summary>
-                        <div class="faq-answer"><strong>Wadsworth Pro</strong> (Basic Supporter) is a low-cost monthly subscription billed through the Android app (Google Play). It's a way to support development — and it's deliberately cosmetic-and-convenience only, so it never gives a competitive edge.<br><br>
+                        <div class="faq-answer"><strong>Wadsworth Pro</strong> (Basic Supporter) is a low-cost monthly subscription billed through the Android app (Google Play). It's a way to support development — and it's deliberately limited to cosmetics, convenience, and optional sandbox features, so it never gives a pay-to-win edge.<br><br>
                         <strong>Available now:</strong><br>
-                        &bull; 3 exclusive cosmetic skins — <strong>Kawaii Night</strong>, <strong>Soul Vinyl Dark</strong>, and <strong>Soul Vinyl Light</strong><br><br>
+                        &bull; 3 exclusive cosmetic skins — <strong>Kawaii Night</strong>, <strong>Soul Vinyl Dark</strong>, and <strong>Soul Vinyl Light</strong><br>
+                        &bull; <strong>City perk</strong> — a free city with mayoralship, or perks for your existing city<br>
+                        &bull; <strong>Special Plots &amp; Mints</strong> — sacrifice land to forge a Mint that strikes precious-metal coinage (fully backed by the metals you spend, so it's never wealth from nothing)<br>
+                        &bull; <strong>Metal coinage legal tender</strong> — six gold/silver/platinum currencies pegged live to metal prices; subscribers can set one as their legal tender<br><br>
                         <strong>On the roadmap</strong> (planned supporter perks, not yet live):<br>
                         &bull; <strong>Forex Trading Floor</strong> — a currency-exchange dashboard<br>
                         &bull; <strong>Player API</strong> — read access plus buy/sell writes on the commodity &amp; district markets<br>
-                        &bull; <strong>Mint district coins</strong> — cosmetic coins for forex, gifting, and display<br>
-                        &bull; <strong>City perk</strong> — a free city with mayoralship, or perks for your existing city<br>
                         &bull; <strong>Supporter badge</strong> on the leaderboard and your profile<br>
-                        &bull; Extra <strong>P2P contact capacity</strong>, a permanent <strong>profile picture</strong>, a higher <strong>trophy multiplier</strong>, <strong>unique reserve currencies</strong>, a <strong>Trophies Store</strong>, and more<br><br>
-                        You can see the current status of every perk — what's active versus coming soon — any time under <strong>Settings → Account</strong>. None of these affect core economic gameplay: all markets, production, land, stocks, and trading are fully available for free, forever.</div>
+                        &bull; Extra <strong>P2P contact capacity</strong>, a permanent <strong>profile picture</strong>, a higher <strong>trophy multiplier</strong>, a <strong>Trophies Store</strong>, and more<br><br>
+                        You can see the current status of every perk — what's active versus coming soon — any time under <strong>Settings → Account</strong>. Anyone can buy sovereign bonds, including the metal-coinage banks; all markets, production, land, stocks, and trading are fully available for free, forever.</div>
                     </details>
 
                     <details class="faq-item">

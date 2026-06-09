@@ -406,6 +406,7 @@ SITEMAP_ENTRIES = [
     ("/districts",                   "Districts",              "Browse player-created districts and apply to join one for shared bonuses"),
     ("/districts/create",            "Create District",        "Found a new district on your land — set type, name, and membership rules"),
     ("/district-market",             "District Market",        "Order book for district-specific goods and specialty commodities"),
+    ("/special-plots",               "Special Plots",          "Subscriber-only mega-facilities — build a Mint to strike metal-backed coinage currencies"),
     # ── Markets & Finance ─────────────────────────────────────────────────────
     ("/market",                      "Commodity Market",       "Continuous double-auction order book for all raw and finished goods"),
     ("/brokerage/trading",           "Brokerage (WPE)",        "Wadsworth Public Exchange — trade company shares, ETFs, and IPOs"),

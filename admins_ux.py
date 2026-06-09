@@ -810,6 +810,41 @@ def _player_pro_panel(pid, detail):
     grant_btn  = f'<form method="post" action="/api/admin/sub-grant/{pid}"  style="display:inline;"><button class="btn btn-green" style="font-size:0.7rem;padding:3px 8px;">Grant Pro</button></form>'
     revoke_btn = f'<form method="post" action="/api/admin/sub-revoke/{pid}" style="display:inline;"><button class="btn btn-red"   style="font-size:0.7rem;padding:3px 8px;">Revoke Pro</button></form>'
 
+    # Special plots (mints) summary — subscriber-only facilities
+    sp_html = ""
+    try:
+        from special_plots import get_player_special_plots, get_player_sacrifice_stats
+        from business import get_mint_business_types
+        sps = get_player_special_plots(pid)
+        if sps:
+            mint_types = get_mint_business_types()
+            sp_stats = get_player_sacrifice_stats(pid)
+            rows = ""
+            for sp in sps:
+                mint_label = "—"
+                if sp.occupied_by_business_id:
+                    from business import Business as _Biz
+                    from special_plots import get_db as _sp_db
+                    _d = _sp_db()
+                    try:
+                        _b = _d.query(_Biz).filter(_Biz.id == sp.occupied_by_business_id).first()
+                        if _b:
+                            mint_label = mint_types.get(_b.business_type, {}).get("name", _b.business_type)
+                    finally:
+                        _d.close()
+                rows += (
+                    f'<div class="detail-row"><span class="label">#{sp.id} {sp.special_type}</span>'
+                    f'<span class="value">{mint_label}</span></div>'
+                )
+            sp_html = f"""
+            <div style="margin-top:10px;border-top:1px solid #1e293b;padding-top:8px;">
+              <div style="color:#a78bfa;font-size:0.75rem;font-weight:600;margin-bottom:4px;">
+                ⚗️ Special Plots ({len(sps)}) · sacrifices: {sp_stats.total_sacrifices_completed}</div>
+              {rows}
+            </div>"""
+    except Exception:
+        pass
+
     return f"""
     <div class="card">
         <h3>Wadsworth Pro</h3>
@@ -821,6 +856,7 @@ def _player_pro_panel(pid, detail):
           {grant_btn}
           {revoke_btn}
         </div>
+        {sp_html}
         <p style="color:#4b5563;font-size:0.68rem;margin-top:8px;">
           Resync calls the Play Developer API to re-verify the token and sync the flag.
           Grant/Revoke override the flag directly (use for comp subscriptions or fraud).

@@ -575,12 +575,15 @@ def _push_reserve(player_id: int, title: str, body: str):
     threading.Thread(target=_send, daemon=True).start()
 
 
-def credit_mint_coinage(player_id: int, currency_code: str, metal_usd_value: float) -> None:
-    """Credit newly-minted coinage to a player.
+def credit_mint_coinage(player_id: int, currency_code: str, metal_usd_value: float) -> float:
+    """Credit newly-minted coinage to a player. Returns the amount of coinage minted.
 
     Called by business.py when a mint production cycle completes.
     amount = metal_usd_value / bank.usd_per_unit
     (e.g. 10 gold consumed, gold = $2000/unit, AU24 usd_per_unit = $2000 → 10 AU24 credited)
+
+    Hard money: coinage only enters circulation here, pegged 1:1 to the USD value
+    of the precious metal actually consumed. The bank cannot issue freely.
     """
     db = get_db()
     try:
@@ -589,18 +592,28 @@ def credit_mint_coinage(player_id: int, currency_code: str, metal_usd_value: flo
         ).first()
         if not bank or bank.usd_per_unit <= 0:
             print(f"[Mint] No active bank or zero rate for {currency_code}")
-            return
+            return 0.0
         amount = metal_usd_value / bank.usd_per_unit
         if amount <= 0:
-            return
+            return 0.0
         _adjust_currency_balance(db, player_id, currency_code, amount)
         bank.total_face_value_wsc += metal_usd_value  # track total minted supply in USD equiv
         db.commit()
+        # Ledger entry (USD-equivalent value of minted coinage)
+        try:
+            from stats_ux import log_transaction
+            log_transaction(player_id, "mint", "money", metal_usd_value,
+                            f"Minted {amount:,.4f} {currency_code} "
+                            f"({bank.currency_symbol}{amount:,.4f}) @ ${bank.usd_per_unit:,.2f}/unit")
+        except Exception:
+            pass
         print(f"[Mint] Credited {amount:.6f} {currency_code} to player {player_id} "
               f"(${metal_usd_value:.2f} metal value @ {bank.usd_per_unit:.2f}/unit)")
+        return amount
     except Exception as e:
         db.rollback()
         print(f"[Mint] Error crediting {currency_code} to player {player_id}: {e}")
+        return 0.0
     finally:
         db.close()
 
