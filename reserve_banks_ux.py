@@ -403,7 +403,10 @@ def forex_dashboard(
     if not player:
         return RedirectResponse("/login")
 
-    from reserve_banks import get_player_display_currency, fmt_usd, get_player_usd_pcb_balance
+    from reserve_banks import (get_player_display_currency, fmt_usd, get_player_usd_pcb_balance,
+                               get_coin_iou_queue, get_player_coin_iou_notes,
+                               get_coin_bank_own_reserve, COIN_CURRENCY_CODES,
+                               COIN_SEIGNIORAGE_RATE)
     disp = get_player_display_currency(player.id)
 
     banks       = get_all_banks()
@@ -570,6 +573,71 @@ def forex_dashboard(
     else:
         fx_trades_html = ""
 
+    # ── Coinage IOU queue section ──────────────────────────────────────────
+    iou_html = ""
+    try:
+        from reserve_banks import get_db as _rb_get_db, StateReserveBank as _SRB
+        _db = _rb_get_db()
+        coin_banks_map = {b.currency_code: b for b in
+                          _db.query(_SRB).filter(_SRB.currency_code.in_(list(COIN_CURRENCY_CODES))).all()}
+        _db.close()
+
+        my_iou_notes = get_player_coin_iou_notes(player.id)
+        my_notes_by_bank = {}
+        for n in my_iou_notes:
+            my_notes_by_bank.setdefault(n.bank_id, []).append(n)
+
+        rows = ""
+        for code in sorted(COIN_CURRENCY_CODES):
+            cb = coin_banks_map.get(code)
+            if not cb:
+                continue
+            queue    = get_coin_iou_queue(cb.id)
+            on_hand  = get_coin_bank_own_reserve(cb.id, code)
+            total_ow = sum(n.coin_amount_owed - n.filled_amount for n in queue)
+            n_notes  = len(queue)
+            my_notes = [n for n in my_notes_by_bank.get(cb.id, []) if not n.is_fulfilled]
+            my_str   = ""
+            for n in my_notes:
+                rem = n.coin_amount_owed - n.filled_amount
+                pct = n.filled_amount / n.coin_amount_owed * 100 if n.coin_amount_owed else 0
+                my_str += (f'<div style="font-size:0.7rem;color:#4ade80;margin-top:4px;">'
+                           f'Your IOU: {rem:,.4f} remaining '
+                           f'<span style="color:#475569;">({pct:.0f}% filled)</span></div>')
+            debt_color = "#22c55e" if total_ow == 0 else "#f59e0b"
+            rows += f"""
+            <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:4px;">
+              <div style="color:#fbbf24;font-weight:bold;">{code}</div>
+              <div style="font-size:0.75rem;color:#94a3b8;">{cb.currency_name}</div>
+              <div style="font-size:0.72rem;margin-top:4px;">
+                <span style="color:#64748b;">On hand: </span><span style="color:#fbbf24;">{on_hand:,.4f}</span>
+              </div>
+              <div style="font-size:0.72rem;">
+                <span style="color:#64748b;">Outstanding IOUs: </span>
+                <span style="color:{debt_color};">{total_ow:,.4f}</span>
+                <span style="color:#475569;"> ({n_notes} note{"s" if n_notes!=1 else ""})</span>
+              </div>
+              {my_str}
+            </div>"""
+
+        if rows:
+            iou_html = f"""
+            <div class="card" style="border-left:3px solid #f59e0b;">
+              <h3 style="margin-top:0;">🪙 Coinage IOU Queue</h3>
+              <p class="mini" style="margin:0 0 10px 0;color:#64748b;">
+                Coin banks cannot issue coinage freely. When a player switches legal tender to a
+                coin currency, their existing balances are deposited to the bank and an IOU is
+                queued. The bank pays IOUs in order as coinage flows in via
+                {int(COIN_SEIGNIORAGE_RATE*100)}% seigniorage on each Mint run and demurrage
+                reclaimed from coin bonds.
+              </p>
+              <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;">
+                {rows}
+              </div>
+            </div>"""
+    except Exception:
+        pass
+
     body = f"""
     <a href="/" class="nav">← Dashboard</a>
     <h1>💱 Forex Market — Informational</h1>
@@ -612,6 +680,7 @@ def forex_dashboard(
 
     {reserves_html}
     {ib_html}
+    {iou_html}
     {fx_trades_html}
     """
     return _page("Forex Market", body, player.id)
