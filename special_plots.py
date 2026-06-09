@@ -235,15 +235,14 @@ def create_special_plot(
             db.close()
             return None, f"Plot {plot.id} is a Tutorial Reward and cannot be sacrificed"
 
-    terrain_types = set(plot.terrain_type for plot in plots)
-    if len(terrain_types) != 1:
+    # Mixed terrain is allowed — every sacrificed plot's terrain just has to be
+    # permitted by this institution type. The resulting plot takes the
+    # institution's own special terrain regardless of what went into it.
+    allowed = cfg["allowed_terrain"]
+    bad = sorted({p.terrain_type for p in plots if p.terrain_type not in allowed})
+    if bad:
         db.close()
-        return None, f"All plots must share the same terrain (found: {', '.join(sorted(terrain_types))})"
-
-    source_terrain = list(terrain_types)[0]
-    if source_terrain not in cfg["allowed_terrain"]:
-        db.close()
-        return None, f"{cfg['name']} cannot be built from {source_terrain} terrain"
+        return None, f"{cfg['name']} cannot be built from {', '.join(bad)} terrain"
 
     # ── Cost check ───────────────────────────────────────────────────────────
     sacrifice_cost = get_next_sacrifice_cost(player_id)

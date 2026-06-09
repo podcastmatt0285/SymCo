@@ -84,7 +84,6 @@ def special_plots_dashboard(
             SPECIAL_PLOT_TYPES,
         )
         from land import get_player_land
-        from reserve_banks import StateReserveBank, get_db as rb_get_db
 
         special_plots = get_player_special_plots(player.id)
         land_plots = get_player_land(player.id)
@@ -92,13 +91,6 @@ def special_plots_dashboard(
         plots_req = get_plots_required(player.id)
         sac_cost = get_next_sacrifice_cost(player.id)
         is_sub = is_pro(player)
-
-        # Load coin currency prices
-        rb_db = rb_get_db()
-        coin_banks = {b.currency_code: b for b in rb_db.query(StateReserveBank).filter(
-            StateReserveBank.currency_code.in_(list(_COIN_INFO.keys()))
-        ).all()}
-        rb_db.close()
 
         banner = ""
         if msg:
@@ -164,43 +156,24 @@ def special_plots_dashboard(
         </div>
         """
 
-        # Coin currency live prices
-        html += '<div class="card" style="background:#0f172a;border-left:4px solid #f59e0b;">'
-        html += '<h2 style="margin-top:0;color:#fbbf24;">💰 Coinage Live Prices</h2>'
-        html += '<p style="color:#64748b;font-size:0.8rem;margin-bottom:12px;">Metal-pegged exchange rates update each game tick. <strong style="color:#fbbf24;">Hard money:</strong> coinage is created <em>only</em> by minting — coinage bonds carry a negative (demurrage) yield and can never pay positive interest, so the supply can\'t be inflated.</p>'
-        html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;">'
-        for code, info in _COIN_INFO.items():
-            bank = coin_banks.get(code)
-            rate = bank.usd_per_unit if bank else 0.0
-            rate_str = f"${rate:,.2f}" if rate > 1 else f"${rate:.4f}"
-            html += f'''<div style="background:#1e293b;border-radius:6px;padding:10px;">
-              <div style="font-size:1.4rem;">{info["emoji"]}</div>
-              <div style="color:#e2e8f0;font-weight:bold;font-size:0.9rem;">{code}</div>
-              <div style="color:#94a3b8;font-size:0.75rem;">{info["name"]}</div>
-              <div style="color:#fbbf24;font-weight:bold;margin-top:4px;">{rate_str}</div>
-              <div style="color:#475569;font-size:0.68rem;">{info["alloy"]}</div>
-            </div>'''
-        html += '</div></div>'
-
-        # Existing special plots
+        # Your institutions — each card opens that institution's own dashboard.
+        # Only the owner's institutions are ever listed here.
         if special_plots:
             html += '<h2 style="color:#a78bfa;margin-top:32px;">🏛️ Your Institutions</h2>'
-            mint_types = get_mint_business_types()
             for sp in special_plots:
                 cfg = SPECIAL_PLOT_TYPES.get(sp.special_type, {})
                 plot_name = cfg.get("name", sp.special_type.title())
                 status = "OCCUPIED" if sp.occupied_by_business_id else "VACANT"
                 status_color = "#22c55e" if sp.occupied_by_business_id else "#64748b"
                 html += f'''
-                <div class="card" style="border-left:4px solid {status_color};">
+                <a href="/special-plots/{sp.id}" style="text-decoration:none;color:inherit;display:block;">
+                <div class="card" style="border-left:4px solid {status_color};cursor:pointer;">
                   <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:12px;">
                     <div>
                       <h3 style="margin:0;color:#a78bfa;">{plot_name}
                         <span style="background:{status_color};color:#020617;font-size:0.7rem;padding:2px 6px;border-radius:3px;margin-left:6px;">{status}</span>
                       </h3>
                       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:10px;">
-                        <div><div style="color:#64748b;font-size:0.7rem;">TERRAIN</div>
-                          <div style="color:#e5e7eb;font-size:0.85rem;">{sp.terrain_type.replace("_", " ").title()}</div></div>
                         <div><div style="color:#64748b;font-size:0.7rem;">SIZE</div>
                           <div style="color:#e5e7eb;font-size:0.85rem;">{sp.size:.1f} units</div></div>
                         <div><div style="color:#64748b;font-size:0.7rem;">PLOTS SACRIFICED</div>
@@ -209,11 +182,11 @@ def special_plots_dashboard(
                           <div style="color:#f59e0b;font-size:0.85rem;">{fmt_usd(sp.monthly_tax, disp, precision=0)}</div></div>
                       </div>
                     </div>
-                    <div>
-                      {"" if sp.occupied_by_business_id else f'<a href="/special-plots/{sp.id}/build" style="display:inline-block;padding:8px 16px;background:#7c3aed;color:#fff;border-radius:4px;text-decoration:none;font-size:0.9rem;">🏗️ Build Mint</a>'}
+                    <div style="align-self:center;">
+                      <span style="display:inline-block;padding:8px 16px;background:#7c3aed;color:#fff;border-radius:4px;font-size:0.9rem;">Open →</span>
                     </div>
                   </div>
-                </div>'''
+                </div></a>'''
         else:
             html += '<div class="card" style="background:#0f172a;text-align:center;padding:40px;color:#64748b;"><p style="margin:0;">No institutions yet. Create your first by sacrificing land.</p></div>'
 
@@ -258,9 +231,7 @@ def special_plots_create_page(session_token: Optional[str] = Cookie(None)):
 
     plot_options_html = ""
     for terrain, plist in sorted(terrain_groups.items()):
-        enough = len(plist) >= plots_req
-        col = "#22c55e" if enough else "#64748b"
-        plot_options_html += f'<div style="margin-bottom:14px;"><div style="color:{col};font-size:0.85rem;font-weight:bold;margin-bottom:6px;">{terrain.replace("_"," ").title()} ({len(plist)} available — need {plots_req})</div><div style="display:flex;flex-wrap:wrap;gap:6px;">'
+        plot_options_html += f'<div style="margin-bottom:14px;"><div style="color:#94a3b8;font-size:0.85rem;font-weight:bold;margin-bottom:6px;">{terrain.replace("_"," ").title()} ({len(plist)} available)</div><div style="display:flex;flex-wrap:wrap;gap:6px;">'
         for p in plist:
             occ = "★ occupied" if p.occupied_by_business_id else "empty"
             plot_options_html += f'<label style="cursor:pointer;"><input type="checkbox" name="plot_ids" value="{p.id}" data-terrain="{terrain}" class="sp-plot-cb" onchange="spUpdateSel()" style="margin-right:4px;"><span style="font-size:0.8rem;color:#94a3b8;">Plot #{p.id} {p.size:.1f}u ({occ})</span></label>'
@@ -280,7 +251,7 @@ def special_plots_create_page(session_token: Optional[str] = Cookie(None)):
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
         <div><div style="color:#64748b;font-size:0.75rem;">PLOTS TO SACRIFICE</div>
           <div style="color:#38bdf8;font-size:1.8rem;font-weight:bold;">{plots_req}</div>
-          <div style="color:#64748b;font-size:0.7rem;">Same terrain · empty OK</div></div>
+          <div style="color:#64748b;font-size:0.7rem;">Any terrain mix · empty OK</div></div>
         <div><div style="color:#64748b;font-size:0.75rem;">SACRIFICE COST</div>
           <div style="color:#f59e0b;font-size:1.8rem;font-weight:bold;">{fmt_usd(sac_cost, disp, precision=0)}</div></div>
         <div><div style="color:#64748b;font-size:0.75rem;">YOUR PLOTS</div>
@@ -298,7 +269,7 @@ def special_plots_create_page(session_token: Optional[str] = Cookie(None)):
 
       <div class="card">
         <h2 style="color:#a78bfa;margin-top:0;">2. Select {plots_req} Plots to Sacrifice</h2>
-        <p style="color:#64748b;font-size:0.85rem;margin-top:0;">All selected plots must share the same terrain type. Empty plots are allowed.</p>
+        <p style="color:#64748b;font-size:0.85rem;margin-top:0;">Plots from different terrains can be mixed freely. Empty plots are allowed.</p>
         {plot_options_html if plot_options_html else '<p style="color:#64748b;">No eligible plots found.</p>'}
       </div>
 
@@ -315,15 +286,11 @@ def special_plots_create_page(session_token: Optional[str] = Cookie(None)):
       function spUpdateSel() {{
         var boxes = document.querySelectorAll('.sp-plot-cb:checked');
         var n = boxes.length;
-        var terrains = {{}};
-        boxes.forEach(function(b) {{ terrains[b.dataset.terrain] = 1; }});
-        var nTerr = Object.keys(terrains).length;
         var status = document.getElementById('sp-sel-status');
         var btn = document.getElementById('sp-submit');
-        var ok = (n === SP_REQ && nTerr <= 1);
+        var ok = (n === SP_REQ);
         var msg = 'Selected: <strong>' + n + '</strong> / ' + SP_REQ;
-        if (nTerr > 1) msg += ' <span style="color:#f87171;">— mixed terrain not allowed</span>';
-        else if (n > SP_REQ) msg += ' <span style="color:#f87171;">— too many</span>';
+        if (n > SP_REQ) msg += ' <span style="color:#f87171;">— too many</span>';
         else if (n === SP_REQ) msg += ' <span style="color:#22c55e;">✓ ready</span>';
         status.innerHTML = msg;
         btn.disabled = !ok;
@@ -357,6 +324,141 @@ async def api_create_special_plot(
         url=f"/special-plots/create?err={err.replace(' ', '+')}",
         status_code=303,
     )
+
+
+# ── Per-institution dashboard ────────────────────────────────────────────────
+
+@router.get("/special-plots/{plot_id}", response_class=HTMLResponse)
+def institution_dashboard(
+    plot_id: int,
+    session_token: Optional[str] = Cookie(None),
+    msg: str = "",
+    err: str = "",
+):
+    player = _require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
+
+    try:
+        from special_plots import get_special_plot, SPECIAL_PLOT_TYPES
+
+        sp = get_special_plot(plot_id)
+        # Only the owner may view an institution's dashboard.
+        if not sp or sp.owner_id != player.id:
+            return RedirectResponse(url="/special-plots?err=Institution+not+found", status_code=303)
+
+        cfg = SPECIAL_PLOT_TYPES.get(sp.special_type, {})
+        plot_name = cfg.get("name", sp.special_type.title())
+        is_mint = sp.special_type == "mint"
+
+        banner = ""
+        if msg:
+            banner = f'<div style="padding:12px 16px;background:#052e16;border:1px solid #16a34a;color:#4ade80;margin:8px 0;border-radius:4px;">{msg}</div>'
+        elif err:
+            banner = f'<div style="padding:12px 16px;background:#1a0505;border:1px solid #dc2626;color:#f87171;margin:8px 0;border-radius:4px;">{err}</div>'
+
+        status = "OCCUPIED" if sp.occupied_by_business_id else "VACANT"
+        status_color = "#22c55e" if sp.occupied_by_business_id else "#64748b"
+
+        html = f"""
+        <a href="/special-plots" style="color:#38bdf8;font-size:0.85rem;">← Institutions</a>
+        <h1 style="margin:12px 0;">🏛️ {plot_name} #{sp.id}
+          <span style="background:{status_color};color:#020617;font-size:0.7rem;padding:2px 8px;border-radius:3px;vertical-align:middle;">{status}</span>
+        </h1>
+        {banner}
+
+        <div class="card" style="background:#0f172a;border-left:4px solid #7c3aed;">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:14px;">
+            <div><div style="color:#64748b;font-size:0.7rem;">TERRAIN</div>
+              <div style="color:#e5e7eb;font-size:0.95rem;">{sp.terrain_type.replace("_", " ").title()}</div></div>
+            <div><div style="color:#64748b;font-size:0.7rem;">SIZE</div>
+              <div style="color:#e5e7eb;font-size:0.95rem;">{sp.size:.1f} units</div></div>
+            <div><div style="color:#64748b;font-size:0.7rem;">PLOTS SACRIFICED</div>
+              <div style="color:#e5e7eb;font-size:0.95rem;">{sp.plots_merged}</div></div>
+            <div><div style="color:#64748b;font-size:0.7rem;">MONTHLY TAX</div>
+              <div style="color:#f59e0b;font-size:0.95rem;">{fmt_usd(sp.monthly_tax, disp, precision=0)}</div></div>
+          </div>
+        </div>
+        """
+
+        if not sp.occupied_by_business_id:
+            html += f'''
+            <div class="card" style="text-align:center;padding:32px;">
+              <p style="color:#94a3b8;margin:0 0 16px;">This institution is vacant. Build a facility to put it to work.</p>
+              <a href="/special-plots/{sp.id}/build" style="display:inline-block;padding:10px 24px;background:#7c3aed;color:#fff;border-radius:4px;text-decoration:none;font-weight:bold;">🏗️ Build Mint</a>
+            </div>'''
+        elif is_mint:
+            html += _mint_dashboard_html(sp)
+
+        return HTMLResponse(_shell(plot_name, html, 0.0, player.id))
+
+    except Exception as e:
+        import traceback
+        return HTMLResponse(_shell("Institution", f'<div style="color:#ef4444;">Error: {e}<pre style="font-size:0.75rem;color:#64748b;">{traceback.format_exc()}</pre></div>', 0.0, player.id))
+
+
+def _mint_dashboard_html(sp) -> str:
+    """Render the Mint dashboard: which coin this mint strikes + live coinage prices."""
+    from reserve_banks import StateReserveBank, get_db as rb_get_db
+    from business import Business, SessionLocal as biz_session
+
+    # Identify the coin this mint strikes from its occupying business type.
+    minted_code = ""
+    try:
+        bdb = biz_session()
+        biz = bdb.query(Business).filter(Business.id == sp.occupied_by_business_id).first()
+        bdb.close()
+        if biz:
+            minted_code = _MINT_TO_COIN.get(biz.business_type, "")
+    except Exception:
+        pass
+
+    # Load live coin prices for all coinage currencies.
+    coin_banks = {}
+    try:
+        rb_db = rb_get_db()
+        coin_banks = {b.currency_code: b for b in rb_db.query(StateReserveBank).filter(
+            StateReserveBank.currency_code.in_(list(_COIN_INFO.keys()))
+        ).all()}
+        rb_db.close()
+    except Exception:
+        pass
+
+    html = ''
+    if minted_code:
+        info = _COIN_INFO.get(minted_code, {})
+        bank = coin_banks.get(minted_code)
+        rate = bank.usd_per_unit if bank else 0.0
+        rate_str = f"${rate:,.2f}" if rate > 1 else f"${rate:.4f}"
+        html += f'''
+        <div class="card" style="background:linear-gradient(135deg,#3a2e0a 0%,#0f172a 100%);border-left:4px solid #f59e0b;">
+          <h2 style="margin-top:0;color:#fbbf24;">{info.get("emoji","💰")} This Mint strikes {minted_code}</h2>
+          <div style="color:#94a3b8;font-size:0.9rem;">{info.get("name","")} · {info.get("alloy","")}</div>
+          <div style="color:#fbbf24;font-weight:bold;font-size:1.6rem;margin-top:8px;">{rate_str} <span style="color:#64748b;font-size:0.8rem;font-weight:normal;">per coin (live peg)</span></div>
+        </div>'''
+
+    # Live coinage price board (full coinage market).
+    html += '<div class="card" style="background:#0f172a;border-left:4px solid #f59e0b;">'
+    html += '<h2 style="margin-top:0;color:#fbbf24;">💰 Coinage Live Prices</h2>'
+    html += '<p style="color:#64748b;font-size:0.8rem;margin-bottom:12px;">Metal-pegged exchange rates update each game tick. <strong style="color:#fbbf24;">Hard money:</strong> coinage is created <em>only</em> by minting — coinage bonds carry a negative (demurrage) yield and can never pay positive interest, so the supply can\'t be inflated.</p>'
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;">'
+    for code, info in _COIN_INFO.items():
+        bank = coin_banks.get(code)
+        rate = bank.usd_per_unit if bank else 0.0
+        rate_str = f"${rate:,.2f}" if rate > 1 else f"${rate:.4f}"
+        highlight = ';border:1px solid #f59e0b' if code == minted_code else ''
+        html += f'''<div style="background:#1e293b;border-radius:6px;padding:10px{highlight};">
+          <div style="font-size:1.4rem;">{info["emoji"]}</div>
+          <div style="color:#e2e8f0;font-weight:bold;font-size:0.9rem;">{code}</div>
+          <div style="color:#94a3b8;font-size:0.75rem;">{info["name"]}</div>
+          <div style="color:#fbbf24;font-weight:bold;margin-top:4px;">{rate_str}</div>
+          <div style="color:#475569;font-size:0.68rem;">{info["alloy"]}</div>
+        </div>'''
+    html += '</div></div>'
+    return html
 
 
 # ── Build mint on a special plot ─────────────────────────────────────────────
@@ -458,7 +560,7 @@ async def api_build_mint(
     from special_plots import create_mint_business
     biz, err = create_mint_business(player.id, plot_id, business_type)
     if biz:
-        return RedirectResponse(url="/special-plots?msg=Mint+built+successfully", status_code=303)
+        return RedirectResponse(url=f"/special-plots/{plot_id}?msg=Mint+built+successfully", status_code=303)
     return RedirectResponse(
         url=f"/special-plots/{plot_id}/build?err={err.replace(' ', '+')}",
         status_code=303,
