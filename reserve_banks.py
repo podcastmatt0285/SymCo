@@ -590,10 +590,34 @@ def credit_mint_coinage(player_id: int, currency_code: str, metal_usd_value: flo
         bank = db.query(StateReserveBank).filter(
             StateReserveBank.currency_code == currency_code
         ).first()
-        if not bank or bank.usd_per_unit <= 0:
-            print(f"[Mint] No active bank or zero rate for {currency_code}")
+        if not bank:
+            print(f"[Mint] No active bank for {currency_code}")
             return 0.0
-        amount = metal_usd_value / bank.usd_per_unit
+
+        # Compute the peg FRESH from live metal prices rather than reading the
+        # bank's usd_per_unit field (which only updates on the hourly peg tick).
+        # Because metal_usd_value is also computed from current prices in the same
+        # cycle, this makes `amount` exactly the metal-unit count and fully
+        # price-independent — no stale-rate arbitrage, no minting loss when the
+        # peg lags a price move. Fall back to the stored rate if pricing fails.
+        unit_rate = bank.usd_per_unit
+        composition = COIN_METAL_COMPOSITIONS.get(currency_code)
+        if composition:
+            try:
+                import market as _mkt
+                fresh = sum(
+                    frac * (_mkt.get_market_price(metal) or 0.0)
+                    for metal, frac in composition.items()
+                )
+                if fresh > 0:
+                    unit_rate = fresh
+            except Exception:
+                pass
+        if unit_rate <= 0:
+            print(f"[Mint] Zero rate for {currency_code}; cannot mint")
+            return 0.0
+
+        amount = metal_usd_value / unit_rate
         if amount <= 0:
             return 0.0
         _adjust_currency_balance(db, player_id, currency_code, amount)
@@ -604,11 +628,11 @@ def credit_mint_coinage(player_id: int, currency_code: str, metal_usd_value: flo
             from stats_ux import log_transaction
             log_transaction(player_id, "mint", "money", metal_usd_value,
                             f"Minted {amount:,.4f} {currency_code} "
-                            f"({bank.currency_symbol}{amount:,.4f}) @ ${bank.usd_per_unit:,.2f}/unit")
+                            f"({bank.currency_symbol}{amount:,.4f}) @ ${unit_rate:,.2f}/unit")
         except Exception:
             pass
         print(f"[Mint] Credited {amount:.6f} {currency_code} to player {player_id} "
-              f"(${metal_usd_value:.2f} metal value @ {bank.usd_per_unit:.2f}/unit)")
+              f"(${metal_usd_value:.2f} metal value @ {unit_rate:.2f}/unit)")
         return amount
     except Exception as e:
         db.rollback()

@@ -263,7 +263,7 @@ def special_plots_create_page(session_token: Optional[str] = Cookie(None)):
         plot_options_html += f'<div style="margin-bottom:14px;"><div style="color:{col};font-size:0.85rem;font-weight:bold;margin-bottom:6px;">{terrain.replace("_"," ").title()} ({len(plist)} available — need {plots_req})</div><div style="display:flex;flex-wrap:wrap;gap:6px;">'
         for p in plist:
             occ = "★ occupied" if p.occupied_by_business_id else "empty"
-            plot_options_html += f'<label style="cursor:pointer;"><input type="checkbox" name="plot_ids" value="{p.id}" style="margin-right:4px;"><span style="font-size:0.8rem;color:#94a3b8;">Plot #{p.id} {p.size:.1f}u ({occ})</span></label>'
+            plot_options_html += f'<label style="cursor:pointer;"><input type="checkbox" name="plot_ids" value="{p.id}" data-terrain="{terrain}" class="sp-plot-cb" onchange="spUpdateSel()" style="margin-right:4px;"><span style="font-size:0.8rem;color:#94a3b8;">Plot #{p.id} {p.size:.1f}u ({occ})</span></label>'
         plot_options_html += "</div></div>"
 
     type_opts = "".join(
@@ -304,11 +304,34 @@ def special_plots_create_page(session_token: Optional[str] = Cookie(None)):
 
       <div class="card">
         <p style="color:#f87171;font-size:0.85rem;margin-top:0;">⚠️ Sacrificed plots will be permanently destroyed. Any businesses on them will be removed with no refund.</p>
-        <button type="submit" style="padding:12px 28px;background:#7c3aed;color:#fff;border:none;border-radius:4px;font-size:1rem;font-weight:bold;cursor:pointer;">
+        <div id="sp-sel-status" style="font-size:0.9rem;margin-bottom:10px;color:#94a3b8;">Selected: <strong>0</strong> / {plots_req}</div>
+        <button id="sp-submit" type="submit" disabled style="padding:12px 28px;background:#3f3f46;color:#9ca3af;border:none;border-radius:4px;font-size:1rem;font-weight:bold;cursor:not-allowed;">
           ⚗️ Sacrifice Plots & Create Special Plot
         </button>
       </div>
     </form>
+    <script>
+      var SP_REQ = {plots_req};
+      function spUpdateSel() {{
+        var boxes = document.querySelectorAll('.sp-plot-cb:checked');
+        var n = boxes.length;
+        var terrains = {{}};
+        boxes.forEach(function(b) {{ terrains[b.dataset.terrain] = 1; }});
+        var nTerr = Object.keys(terrains).length;
+        var status = document.getElementById('sp-sel-status');
+        var btn = document.getElementById('sp-submit');
+        var ok = (n === SP_REQ && nTerr <= 1);
+        var msg = 'Selected: <strong>' + n + '</strong> / ' + SP_REQ;
+        if (nTerr > 1) msg += ' <span style="color:#f87171;">— mixed terrain not allowed</span>';
+        else if (n > SP_REQ) msg += ' <span style="color:#f87171;">— too many</span>';
+        else if (n === SP_REQ) msg += ' <span style="color:#22c55e;">✓ ready</span>';
+        status.innerHTML = msg;
+        btn.disabled = !ok;
+        btn.style.background = ok ? '#7c3aed' : '#3f3f46';
+        btn.style.color = ok ? '#fff' : '#9ca3af';
+        btn.style.cursor = ok ? 'pointer' : 'not-allowed';
+      }}
+    </script>
     """
     return HTMLResponse(_shell("Create Special Plot", html, 0.0, player.id))
 
@@ -362,11 +385,14 @@ def special_plot_build_page(
     mint_types = get_mint_business_types()
     cfg = SPECIAL_PLOT_TYPES.get(sp.special_type, {})
 
-    # Only show mint types compatible with this plot terrain
+    # Only show mint types compatible with this plot terrain.
+    # Guard the "_comment" key first: its value is a string (no .get) so the
+    # startswith check MUST short-circuit before we call v.get(...).
     compatible = {
         k: v for k, v in mint_types.items()
-        if sp.terrain_type in v.get("allowed_terrain", [])
-        and not k.startswith("_")
+        if not k.startswith("_")
+        and isinstance(v, dict)
+        and sp.terrain_type in v.get("allowed_terrain", [])
     }
 
     options_html = ""

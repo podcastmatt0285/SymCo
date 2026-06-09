@@ -258,68 +258,87 @@ def create_special_plot(
         db.close()
         return None, err
 
-    # ── Pay government ───────────────────────────────────────────────────────
+    # From here on the player has been charged. Any failure must REFUND them and
+    # close the session, otherwise they lose the sacrifice cost with no plot.
     try:
-        from auth import get_db as auth_get_db
-        adb2 = auth_get_db()
-        govt = adb2.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
-        if govt:
-            govt.cash_balance += sacrifice_cost
-        adb2.commit()
-        adb2.close()
-    except Exception:
-        pass
+        # ── Pay government ───────────────────────────────────────────────────
+        try:
+            from auth import get_db as auth_get_db
+            adb2 = auth_get_db()
+            try:
+                govt = adb2.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
+                if govt:
+                    govt.cash_balance += sacrifice_cost
+                adb2.commit()
+            finally:
+                adb2.close()
+        except Exception:
+            pass
 
-    try:
-        from stats_ux import log_transaction
-        log_transaction(player_id, "special_plot_creation", "money", -sacrifice_cost,
-                        f"Special plot sacrifice: {cfg['name']}")
-    except Exception:
-        pass
+        try:
+            from stats_ux import log_transaction
+            log_transaction(player_id, "special_plot_creation", "money", -sacrifice_cost,
+                            f"Special plot sacrifice: {cfg['name']}")
+        except Exception:
+            pass
 
-    # ── Remove businesses from occupied plots ────────────────────────────────
-    from business import Business, BusinessSale
-    for plot in plots:
-        if plot.occupied_by_business_id:
-            biz = db.query(Business).filter(Business.id == plot.occupied_by_business_id).first()
-            if biz:
-                sale = db.query(BusinessSale).filter(BusinessSale.business_id == biz.id).first()
-                if sale:
-                    db.delete(sale)
-                db.delete(biz)
-                print(f"[SpecialPlots] Removed business {biz.id} from plot {plot.id}")
+        # ── Remove businesses from occupied plots ────────────────────────────
+        from business import Business, BusinessSale
+        for plot in plots:
+            if plot.occupied_by_business_id:
+                biz = db.query(Business).filter(Business.id == plot.occupied_by_business_id).first()
+                if biz:
+                    sale = db.query(BusinessSale).filter(BusinessSale.business_id == biz.id).first()
+                    if sale:
+                        db.delete(sale)
+                    db.delete(biz)
+                    print(f"[SpecialPlots] Removed business {biz.id} from plot {plot.id}")
 
-    # ── Create special plot ──────────────────────────────────────────────────
-    total_size = sum(p.size for p in plots)
-    sp = SpecialPlot(
-        owner_id=player_id,
-        special_type=special_type,
-        terrain_type=cfg["special_terrain"],
-        size=total_size,
-        plots_merged=len(plots),
-        monthly_tax=cfg["base_tax"] * total_size,
-        source_plot_ids=",".join(str(p.id) for p in plots),
-    )
-    db.add(sp)
+        # ── Create special plot ──────────────────────────────────────────────
+        total_size = sum(p.size for p in plots)
+        sp = SpecialPlot(
+            owner_id=player_id,
+            special_type=special_type,
+            terrain_type=cfg["special_terrain"],
+            size=total_size,
+            plots_merged=len(plots),
+            monthly_tax=cfg["base_tax"] * total_size,
+            source_plot_ids=",".join(str(p.id) for p in plots),
+        )
+        db.add(sp)
 
-    for plot in plots:
-        db.delete(plot)
+        for plot in plots:
+            db.delete(plot)
 
-    # ── Update stats ─────────────────────────────────────────────────────────
-    stats = db.query(PlayerSpecialPlotStats).filter(
-        PlayerSpecialPlotStats.player_id == player_id
-    ).first()
-    if not stats:
-        stats = PlayerSpecialPlotStats(player_id=player_id)
-        db.add(stats)
-    stats.total_sacrifices_completed += 1
-    new_n = stats.total_sacrifices_completed
-    stats.current_sacrifice_cost = BASE_SACRIFICE_COST * (COST_MULTIPLIER ** new_n)
-    stats.last_sacrifice_date = datetime.utcnow()
+        # ── Update stats ──────────────────────────────────────────────────────
+        stats = db.query(PlayerSpecialPlotStats).filter(
+            PlayerSpecialPlotStats.player_id == player_id
+        ).first()
+        if not stats:
+            stats = PlayerSpecialPlotStats(player_id=player_id)
+            db.add(stats)
+        stats.total_sacrifices_completed += 1
+        new_n = stats.total_sacrifices_completed
+        stats.current_sacrifice_cost = BASE_SACRIFICE_COST * (COST_MULTIPLIER ** new_n)
+        stats.last_sacrifice_date = datetime.utcnow()
 
-    db.commit()
-    db.refresh(sp)
-    db.close()
+        db.commit()
+        db.refresh(sp)
+    except Exception as e:
+        db.rollback()
+        # Refund the player so they aren't charged for a plot that never existed
+        try:
+            from reserve_banks import credit_usd
+            credit_usd(player_id, sacrifice_cost)
+            print(f"[SpecialPlots] Refunded ${sacrifice_cost:,.0f} to player {player_id} after creation failure")
+        except Exception as _re:
+            print(f"[SpecialPlots] CRITICAL: refund failed for player {player_id}: {_re}")
+        return None, f"Special plot creation failed: {e}"
+    finally:
+        try:
+            db.close()
+        except Exception:
+            pass
 
     print(f"[SpecialPlots] Player {player_id} created {special_type} plot #{sp.id} "
           f"({len(plots)} plots sacrificed, ${sacrifice_cost:,.0f} paid)")
@@ -371,41 +390,56 @@ def create_mint_business(owner_id: int, special_plot_id: int, business_type: str
         db.close()
         return None, err
 
-    # Route mint startup fee to the federal government (same as district businesses)
+    # Player has been charged — any failure below must refund + close the session.
     try:
-        from reserve_banks import GOVERNMENT_PLAYER_ID as _GOV_ID, credit_usd as _credit_usd
-        _credit_usd(_GOV_ID, base_cost)
-        from govt_ledger import log_gov_event as _lge
-        _lge("special_plot_startup_fee", "in", base_cost, "USD",
-             counterparty=str(owner_id),
-             description=f"Mint construction: {business_type}")
-    except Exception as _gfe:
-        print(f"[SpecialPlots] Gov mint fee routing error (non-fatal): {_gfe}")
+        # Route mint startup fee to the federal government (same as district businesses)
+        try:
+            from reserve_banks import GOVERNMENT_PLAYER_ID as _GOV_ID, credit_usd as _credit_usd
+            _credit_usd(_GOV_ID, base_cost)
+            from govt_ledger import log_gov_event as _lge
+            _lge("special_plot_startup_fee", "in", base_cost, "USD",
+                 counterparty=str(owner_id),
+                 description=f"Mint construction: {business_type}")
+        except Exception as _gfe:
+            print(f"[SpecialPlots] Gov mint fee routing error (non-fatal): {_gfe}")
 
-    try:
-        from stats_ux import log_transaction
-        log_transaction(owner_id, "business_purchase", "money", -base_cost,
-                        f"Mint construction: {config['name']}")
-    except Exception:
-        pass
+        try:
+            from stats_ux import log_transaction
+            log_transaction(owner_id, "business_purchase", "money", -base_cost,
+                            f"Mint construction: {config['name']}")
+        except Exception:
+            pass
 
-    from business import Business
-    biz = Business(
-        owner_id=owner_id,
-        land_plot_id=None,
-        district_id=None,
-        special_plot_id=special_plot_id,
-        business_type=business_type,
-        is_active=True,
-        progress_ticks=0,
-    )
-    db.add(biz)
-    db.flush()
+        from business import Business
+        biz = Business(
+            owner_id=owner_id,
+            land_plot_id=None,
+            district_id=None,
+            special_plot_id=special_plot_id,
+            business_type=business_type,
+            is_active=True,
+            progress_ticks=0,
+        )
+        db.add(biz)
+        db.flush()
 
-    sp.occupied_by_business_id = biz.id
-    db.commit()
-    db.refresh(biz)
-    db.close()
+        sp.occupied_by_business_id = biz.id
+        db.commit()
+        db.refresh(biz)
+    except Exception as e:
+        db.rollback()
+        try:
+            from reserve_banks import credit_usd
+            credit_usd(owner_id, base_cost)
+            print(f"[SpecialPlots] Refunded ${base_cost:,.0f} to player {owner_id} after mint-build failure")
+        except Exception as _re:
+            print(f"[SpecialPlots] CRITICAL: mint refund failed for player {owner_id}: {_re}")
+        return None, f"Mint construction failed: {e}"
+    finally:
+        try:
+            db.close()
+        except Exception:
+            pass
 
     _fire_special_push(
         owner_id,
