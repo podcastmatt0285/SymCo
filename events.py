@@ -951,8 +951,16 @@ def _execute_foreign_land_sale(ev) -> str:
     # ── 2. Find the highest-value foreign reserve currency ───────────────────
     res_db = _rdb()
     try:
+        from reserve_banks import COIN_CURRENCY_CODES
         banks = res_db.query(_SRB).all()
-        foreign = [b for b in banks if b.currency_code != "USD"]
+        # HARD MONEY: precious-metal coinage (AU/AG/PT) can ONLY enter circulation
+        # via physical minting — never by government fiat. Exclude it from the
+        # "highest-value currency" pick, otherwise gold's huge usd_per_unit would
+        # always win and the event would conjure coinage out of nothing.
+        foreign = [
+            b for b in banks
+            if b.currency_code != "USD" and b.currency_code not in COIN_CURRENCY_CODES
+        ]
         best = max(foreign, key=lambda b: b.usd_per_unit) if foreign else (
             next((b for b in banks if b.currency_code == "USD"), None)
         )
