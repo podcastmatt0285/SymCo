@@ -193,6 +193,14 @@ def process_dismantling_tick(db):
                     plot = db.query(LandPlot).filter(LandPlot.id == biz.land_plot_id).first()
                     if plot:
                         plot.occupied_by_business_id = None
+                    # Free up a special plot (mints) — biz.land_plot_id is None for these,
+                    # so the LandPlot lookup above never clears them.
+                    if getattr(biz, 'special_plot_id', None):
+                        try:
+                            from special_plots import vacate_special_plot
+                            vacate_special_plot(biz.special_plot_id)
+                        except Exception as _vsp_e:
+                            print(f"[Business] could not vacate special plot {biz.special_plot_id}: {_vsp_e}")
                     db.delete(biz)
                     print(f"[Business] Dismantling complete for business {sale.business_id}")
 
@@ -546,6 +554,22 @@ def process_business_tick(db):
                             biz_name,
                             f"Out of {_fmt_item(req['item'])} — need {req['quantity']} to produce")
                         break
+
+                # Mint guard: coinage is backed 1:1 by metal market value, so a run
+                # only makes sense when every backing metal has a live price. If any
+                # is unpriced (empty book + no recent trade), skip BEFORE consuming
+                # inputs — otherwise the player would burn metal for zero coinage.
+                if line_can_run and config.get("class") == "mint":
+                    for req in effective_inputs:
+                        if req["item"] in ("energy", "paper", "water"):
+                            continue
+                        if not (market.get_market_price(req["item"]) or 0.0) > 0:
+                            line_can_run = False
+                            biz_name = config.get("name", biz.business_type)
+                            _fire_business_push(player.id, biz.id, f"mintprice-{req['item']}",
+                                biz_name,
+                                f"Mint paused — no live market price for {_fmt_item(req['item'])}")
+                            break
 
                 if line_can_run:
                     for req in effective_inputs:
