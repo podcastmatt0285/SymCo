@@ -1256,6 +1256,14 @@ def process_income_conversion(player_id: int, usd_amount: float) -> Tuple[float,
 
     code = get_player_legal_tender(player_id)
 
+    # HARD MONEY: precious-metal coinage can ONLY be created by physical minting.
+    # Never auto-convert USD income into coinage (that would let the bank "issue"
+    # Au/Ag/Pt with no mint, inflating the supply). A player may hold coinage as
+    # legal tender to SPEND minted coins, but income lands in USD — you must run a
+    # Mint to acquire more coinage. This is the in-game gold standard.
+    if code in COIN_CURRENCY_CODES:
+        code = "USD"
+
     if code == "USD":
         # USD is now a reserve currency stored in PlayerCurrencyBalance like all others.
         db = get_db()
