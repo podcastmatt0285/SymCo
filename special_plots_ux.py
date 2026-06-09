@@ -167,7 +167,7 @@ def special_plots_dashboard(
         # Coin currency live prices
         html += '<div class="card" style="background:#0f172a;border-left:4px solid #f59e0b;">'
         html += '<h2 style="margin-top:0;color:#fbbf24;">💰 Coinage Live Prices</h2>'
-        html += '<p style="color:#64748b;font-size:0.8rem;margin-bottom:12px;">Metal-pegged exchange rates update each game tick.</p>'
+        html += '<p style="color:#64748b;font-size:0.8rem;margin-bottom:12px;">Metal-pegged exchange rates update each game tick. <strong style="color:#fbbf24;">Hard money:</strong> coinage is created <em>only</em> by minting — coinage bonds carry a negative (demurrage) yield and can never pay positive interest, so the supply can\'t be inflated.</p>'
         html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;">'
         for code, info in _COIN_INFO.items():
             bank = coin_banks.get(code)
