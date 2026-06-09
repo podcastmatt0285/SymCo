@@ -28,6 +28,13 @@ _js_skins: set = set()
 _js_skins_ts: float = 0.0
 _JS_SKINS_TTL: float = 60.0  # refresh once per minute
 
+# Cache the set of Pro-tier skin names (parsed from each CSS header's "Tier: pro").
+# Used to re-gate equipped skins at render time so a Pro skin stops rendering once
+# the player loses Pro (e.g. subscription refund/expiry).
+_pro_skins: set = set()
+_pro_skins_ts: float = 0.0
+_PRO_SKINS_TTL: float = 60.0
+
 
 def _get_js_skins() -> set:
     """Return the set of skin names that have a companion .js effects file."""
@@ -41,6 +48,30 @@ def _get_js_skins() -> set:
         }
         _js_skins_ts = now
     return _js_skins
+
+
+def _get_pro_skins() -> set:
+    """Return the set of skin names whose CSS header declares 'Tier: pro'."""
+    global _pro_skins, _pro_skins_ts
+    now = _time.monotonic()
+    if (now - _pro_skins_ts) > _PRO_SKINS_TTL:
+        import glob as _glob
+        pro = set()
+        for path in _glob.glob("static/skins/*.css"):
+            fname = _os.path.basename(path)
+            if fname == "wadsworth-base.css":
+                continue
+            try:
+                with open(path, encoding="utf-8") as f:
+                    header = f.read(2000)
+                m = _re.search(r"Tier:\s*(\w+)", header)
+                if m and m.group(1).strip().lower() == "pro":
+                    pro.add(fname[:-4])
+            except Exception:
+                continue
+        _pro_skins = pro
+        _pro_skins_ts = now
+    return _pro_skins
 
 
 def skin_links(player_id: int = None, module: str = None) -> str:
@@ -64,6 +95,11 @@ def skin_links(player_id: int = None, module: str = None) -> str:
                 # XSS (value in a <script> setAttribute call) and path traversal.
                 if _SAFE_SKIN_RE.match(raw):
                     skin = raw
+                    # Re-gate Pro skins at render time: if this is a Pro-tier skin
+                    # but the player is no longer Pro (subscription refunded/expired),
+                    # fall back to default rather than letting the equipped skin leak.
+                    if skin in _get_pro_skins() and not is_pro(p):
+                        skin = "default"
         except Exception:
             pass
         finally:

@@ -188,9 +188,7 @@ def verify_play_subscription(purchase_token: str) -> dict:
     state = state_map.get(raw_state, "EXPIRED")
     log.info("verify_play_subscription: raw_state=%s → state=%s", raw_state, state)
 
-    # Entitlement continues through grace period and while first payment is pending
-    active = state in ("ACTIVE", "PENDING", "CANCELED", "IN_GRACE_PERIOD")
-
+    # Parse expiry FIRST — entitlement for a CANCELED sub depends on it.
     expiry = None
     items  = result.get("lineItems", [])
     if items:
@@ -200,6 +198,25 @@ def verify_play_subscription(purchase_token: str) -> dict:
                 expiry = datetime.fromisoformat(exp_str.replace("Z", "+00:00"))
             except ValueError:
                 pass
+
+    now = datetime.now(timezone.utc)
+    expiry_in_future = expiry is not None and expiry > now
+
+    # Entitlement rules:
+    #   ACTIVE / IN_GRACE_PERIOD / PENDING → entitled (payment current, in grace, or
+    #     first payment still processing).
+    #   CANCELED → entitled ONLY while the paid-through period hasn't ended. A refund
+    #     or revocation cancels the sub AND moves expiry into the past (or drops the
+    #     line item entirely), so a refunded token correctly resolves to inactive.
+    #     Without this expiry gate, the TWA re-verifying the cached (refunded) token
+    #     on every app launch would keep flipping subscriber back to True forever.
+    #   ON_HOLD / PAUSED / EXPIRED → not entitled (no current access).
+    if state in ("ACTIVE", "IN_GRACE_PERIOD", "PENDING"):
+        active = True
+    elif state == "CANCELED":
+        active = expiry_in_future
+    else:
+        active = False
 
     order_id = result.get("latestOrderId") or result.get("acknowledgementState")
 
@@ -339,18 +356,24 @@ async def api_play_rtdn(request: Request):
                  token[:20], notif_type)
         return JSONResponse({"ok": True, "skipped": "unknown_token"})
 
+    # REVOKED (type 12) = refund / chargeback → strip entitlement immediately,
+    # mid-cycle, regardless of what the re-verify returned (the Play API can lag).
+    revoked = notif_type == 12
+    final_active = False if revoked else info["active"]
+    final_state  = "EXPIRED" if revoked else info["state"]
+
     _upsert_subscription(
         player_id  = player_id,
         token      = token,
         product_id = _SUB_ID,
         order_id   = info["order_id"],
-        state      = info["state"],
+        state      = final_state,
         expiry     = info["expiry"],
     )
-    _set_subscriber(player_id, info["active"])
+    _set_subscriber(player_id, final_active)
 
-    log.info("RTDN: player %d sub_state=%s active=%s (notif_type=%d)",
-             player_id, info["state"], info["active"], notif_type)
+    log.info("RTDN: player %d sub_state=%s active=%s (notif_type=%d, revoked=%s)",
+             player_id, final_state, final_active, notif_type, revoked)
     return JSONResponse({"ok": True})
 
 
