@@ -752,8 +752,20 @@ def _execute_npc_currency_switch(db, ev: "GameEvent") -> str:
     Force all NPCs to switch to a new legal tender specified in effect_data.
 
     Bypasses subscriber and cooldown checks because NPCs are not human players.
-    Does NOT convert NPC balances — NPCs operate internally in USD regardless
-    of their legal tender, so no balance conversion or coin IOU is generated.
+
+    This is a REAL economic change, not cosmetic. The market settlement engine is
+    already tender-aware for NPCs: business/production income and market sell
+    proceeds route through convert_to_legal_tender(), and buys settle via
+    spend_player_funds(). After this switch a fiat-mandated NPC genuinely earns,
+    holds, spends and pays hoarding tax in the new currency, and its forex
+    conversions generate real demand signals that move that currency's exchange
+    rate and bond yields — which human players trade against. NPC decision logic
+    reads get_spendable_usd() so its cash-state reflects the new tender holdings.
+
+    Existing balances are NOT force-converted at switch time (that happens
+    organically as new income arrives). Coinage targets (AU24/AG999/…) remain
+    largely symbolic: the hard-money rule keeps income in USD since coinage can
+    only be created by minting, and NPCs hold no coinage to spend.
 
     Returns a broadcast body string describing what happened.
     """
