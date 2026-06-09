@@ -17,7 +17,7 @@ import secrets
 import hashlib
 from fastapi import APIRouter, Form, Cookie, Response, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
-from sqlalchemy import Column, String, DateTime, Integer, Boolean
+from sqlalchemy import Column, String, DateTime, Integer, Boolean, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 
