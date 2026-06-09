@@ -14583,6 +14583,20 @@ def api_widget_data(request: Request, session_token: Optional[str] = Cookie(None
                          "change": "", "up": None, "type": "bond"}
                 result["bonds"].append(entry)
                 result["tickers"].append(entry)
+
+            # ── Mint coinage live prices (metal-pegged) ───────────────────────
+            from reserve_banks import COIN_CURRENCY_CODES as _COINS
+            result["coins"] = []
+            for b in (r_db.query(StateReserveBank)
+                         .filter(StateReserveBank.currency_code.in_(list(_COINS)))
+                         .all()):
+                rate = b.usd_per_unit or 0.0
+                rate_str = f"${rate:,.2f}" if rate > 1 else f"${rate:.4f}"
+                entry = {"label": b.currency_code,
+                         "value": rate_str,
+                         "change": "", "up": None, "type": "coin"}
+                result["coins"].append(entry)
+                result["tickers"].append(entry)
         finally:
             r_db.close()
 

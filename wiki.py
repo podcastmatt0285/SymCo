@@ -27,6 +27,7 @@ WIKI_CATEGORIES = (
     "markets",
     "businesses",
     "districts",
+    "institutions",
     "cities",
     "advanced",
     "reference",
@@ -39,6 +40,7 @@ CATEGORY_LABELS = {
     "markets":         "Markets",
     "businesses":      "Businesses",
     "districts":       "Districts",
+    "institutions":    "Institutions & Mints",
     "cities":          "Cities & Counties",
     "advanced":        "Advanced",
     "reference":       "Reference",
@@ -77,6 +79,7 @@ def initialize():
     _seed_land_grant_entry()
     _seed_annuity_entries()
     _seed_index_challenge_entry()
+    _seed_institution_entries()
 
 
 def _seed_land_grant_entry():
@@ -219,6 +222,95 @@ def _seed_annuity_entries():
     except Exception as e:
         db.rollback()
         print(f"[Wiki] Seed annuity error: {e}")
+    finally:
+        db.close()
+
+
+def _seed_institution_entries():
+    _INSTITUTION_ENTRIES = [
+        (
+            "Institutions & Land Sacrifice",
+            "Institutions are subscriber-exclusive mega-facilities — the prestige tier above districts. "
+            "They are forged by permanently SACRIFICING land plots, not by buying them.\n\n"
+            "How it works:\n"
+            "• You sacrifice a number of plots set by a Fibonacci progression: 5, then 8, then 13, then 21…\n"
+            "• Each successive institution you build requires the next Fibonacci count of plots.\n"
+            "• Unlike district merges, the sacrificed plots may be EMPTY — they don't need a business on them.\n"
+            "• Plots from DIFFERENT terrains can be mixed freely in a single sacrifice.\n"
+            "• Tutorial-reward plots cannot be sacrificed.\n"
+            "• There is a cash cost too, which scales 1.25× with each institution you've already built.\n\n"
+            "The sacrificed land is destroyed and any businesses on it are removed with no refund, so plan "
+            "the sacrifice carefully. In exchange you receive a single large institution plot that hosts a "
+            "facility ordinary land can't — currently the Mint.\n\n"
+            "Requires an active Wadsworth Pro subscription. Build one at Land → Institutions.",
+        ),
+        (
+            "The Mint & Coinage",
+            "The Mint is the first Institution type. It strikes physical precious-metal coinage — real, "
+            "spendable in-game currencies whose value is pegged live to commodity-market metal prices.\n\n"
+            "Six coinages, one per Mint variant:\n"
+            "• AU24 — pure 24-karat gold (99.9% gold)\n"
+            "• AU22 — 22-karat gold (22 parts gold, 2 parts copper)\n"
+            "• AG999 — fine silver (99.9% silver)\n"
+            "• AG925 — sterling silver (92.5% silver, 7.5% copper)\n"
+            "• PT9995 — investment-grade platinum (99.95%)\n"
+            "• PT950 — 95% platinum, 5% copper\n\n"
+            "Each production cycle the Mint consumes the backing metals (plus energy and paper) and credits "
+            "the equivalent coinage straight into your currency balance. The amount minted equals the live "
+            "USD value of the metal consumed divided by the coin's metal peg — so 10 gold always strikes "
+            "exactly 10 AU24, regardless of the gold price at the time.\n\n"
+            "Build a Mint on a vacant institution at Land → Institutions → Open → Build Mint.",
+        ),
+        (
+            "Hard Money & Demurrage",
+            "Coinage is deliberately designed as HARD MONEY — its supply cannot be inflated.\n\n"
+            "The only way coinage is ever created is by physically minting it from real metals you own. "
+            "There is no other issuance path:\n"
+            "• USD income is never auto-converted into coinage — earnings always land in USD.\n"
+            "• Coinage bonds can never pay positive interest. Their yield band is capped at zero.\n"
+            "• In fact the default coinage bond yield is NEGATIVE (demurrage): holding a coinage bond slowly "
+            "costs you, exactly like paying to store physical bullion in a vault.\n\n"
+            "This is the in-game gold standard: to acquire more coinage you must run a Mint and consume "
+            "metal. No mint, no new coins. The result is a sound, scarce currency backed 1:1 by the metals "
+            "spent to create it.\n\n"
+            "Anyone may buy and trade coinage bonds, but only Pro subscribers can set a coinage as their "
+            "legal tender (the currency their income is paid and spent in).",
+        ),
+        (
+            "Institution Taxes",
+            "Like districts, every Institution pays a monthly tax to the federal government, charged "
+            "automatically when the in-game month rolls over.\n\n"
+            "• The tax scales with the institution's total size (the combined size of the sacrificed plots).\n"
+            "• Payment is taken in your legal tender and routed to the government reserve.\n"
+            "• Executive bonuses that reduce DISTRICT taxes also reduce institution taxes — a VP with the "
+            "right 'districts' or 'taxes' ability can cut the bill by up to 95%.\n"
+            "• If you can't afford the tax you'll get a push notification; keep your account funded to avoid "
+            "falling behind.\n\n"
+            "Every charge is recorded in your transaction ledger under the Institutions filter, and minting "
+            "events appear there too.",
+        ),
+    ]
+
+    db = _db()
+    try:
+        for title, description in _INSTITUTION_ENTRIES:
+            if db.query(WikiMedia).filter(WikiMedia.title == title).first():
+                continue
+            max_order = db.query(WikiMedia).count()
+            db.add(WikiMedia(
+                youtube_id="",
+                kind="video",
+                title=title,
+                description=description,
+                category="institutions",
+                sort_order=max_order,
+                pinned=False,
+            ))
+        db.commit()
+        print("[Wiki] Seeded institution entries")
+    except Exception as e:
+        db.rollback()
+        print(f"[Wiki] Seed institution error: {e}")
     finally:
         db.close()
 

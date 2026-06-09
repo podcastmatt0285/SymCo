@@ -631,7 +631,7 @@ def credit_mint_coinage(player_id: int, currency_code: str, metal_usd_value: flo
         # Ledger entry (USD-equivalent value of minted coinage)
         try:
             from stats_ux import log_transaction
-            log_transaction(player_id, "mint", "money", metal_usd_value,
+            log_transaction(player_id, "coin_mint", "money", metal_usd_value,
                             f"Minted {amount:,.4f} {currency_code} "
                             f"({bank.currency_symbol}{amount:,.4f}) @ ${unit_rate:,.2f}/unit")
         except Exception:
