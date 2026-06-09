@@ -404,7 +404,8 @@ def _mint_dashboard_html(sp, owner=None) -> str:
     """Render the full Mint institution dashboard: production status, progress, inputs, quick-buy, and coinage prices."""
     import json as _json
     from reserve_banks import (StateReserveBank, PlayerCurrencyBalance,
-                               get_db as rb_get_db, get_player_display_currency, fmt_usd)
+                               get_db as rb_get_db, get_player_display_currency, fmt_usd,
+                               COIN_SEIGNIORAGE_RATE)
     from business import Business, SessionLocal as biz_session
     from special_plots import get_mint_business_types
     from inventory import InventoryItem, SessionLocal as inv_session
@@ -559,6 +560,62 @@ def _mint_dashboard_html(sp, owner=None) -> str:
             </form>
         </div>{missing_row}{qb_panels}'''
 
+    # ── IOU queue stats for this bank ───────────────────────────────────────
+    iou_card = ""
+    if minted_code:
+        try:
+            from reserve_banks import (get_coin_iou_queue, get_coin_bank_own_reserve,
+                                       get_player_coin_iou_notes)
+            struck_bank = coin_banks.get(minted_code)
+            if struck_bank:
+                queue       = get_coin_iou_queue(struck_bank.id)
+                on_hand     = get_coin_bank_own_reserve(struck_bank.id, minted_code)
+                total_owed  = sum(n.coin_amount_owed - n.filled_amount for n in queue)
+                n_notes     = len(queue)
+                # Player's own unfulfilled note for this bank (if any)
+                my_notes = [n for n in get_player_coin_iou_notes(sp.owner_id)
+                            if n.bank_id == struck_bank.id and not n.is_fulfilled]
+                my_note_html = ""
+                for n in my_notes:
+                    remaining = n.coin_amount_owed - n.filled_amount
+                    pct = n.filled_amount / n.coin_amount_owed * 100 if n.coin_amount_owed > 0 else 0
+                    my_note_html += f'''
+                    <div style="background:#0a1a0a;border:1px solid #16a34a;border-radius:4px;padding:8px;margin-top:8px;">
+                      <div style="font-size:0.72rem;color:#4ade80;font-weight:bold;">Your IOU</div>
+                      <div style="font-size:0.82rem;color:#e2e8f0;margin-top:2px;">
+                        {n.filled_amount:,.4f} / {n.coin_amount_owed:,.4f} {minted_code} filled
+                        ({remaining:,.4f} remaining)
+                      </div>
+                      <div style="background:#1e293b;border-radius:3px;height:6px;margin-top:4px;overflow:hidden;">
+                        <div style="background:#22c55e;height:100%;width:{min(pct,100):.1f}%;"></div>
+                      </div>
+                    </div>'''
+                queue_color = "#22c55e" if total_owed == 0 else "#f59e0b"
+                iou_card = f'''
+                <div class="card" style="background:#0f172a;border-left:4px solid #f59e0b;">
+                  <div style="font-size:0.72rem;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">
+                    {minted_code} Bank · IOU Queue
+                  </div>
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;">
+                    <div style="background:#111827;border-radius:6px;padding:8px;">
+                      <div style="color:#64748b;font-size:0.68rem;">COINS ON HAND</div>
+                      <div style="color:#fbbf24;font-weight:bold;">{on_hand:,.4f}</div>
+                    </div>
+                    <div style="background:#111827;border-radius:6px;padding:8px;">
+                      <div style="color:#64748b;font-size:0.68rem;">OUTSTANDING IOUs</div>
+                      <div style="color:{queue_color};font-weight:bold;">{total_owed:,.4f}</div>
+                      <div style="color:#475569;font-size:0.65rem;">{n_notes} note{"s" if n_notes != 1 else ""} in queue</div>
+                    </div>
+                  </div>
+                  <div style="color:#64748b;font-size:0.72rem;margin-top:8px;">
+                    Each mint run contributes {int(COIN_SEIGNIORAGE_RATE*100)}% seigniorage to this queue.
+                    Demurrage on coin bonds also flows here.
+                  </div>
+                  {my_note_html}
+                </div>'''
+        except Exception:
+            pass
+
     # ── Live coin price for the struck coin ─────────────────────────────────
     coin_card = ""
     if minted_code:
@@ -625,6 +682,7 @@ def _mint_dashboard_html(sp, owner=None) -> str:
     </style>
 
     {coin_card}
+    {iou_card}
     {dormant_banner}
 
     <div class="card" style="background:#0f172a;border-left:4px solid #7c3aed;">

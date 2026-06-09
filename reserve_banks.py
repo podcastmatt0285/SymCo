@@ -87,6 +87,9 @@ BOND_ISSUANCE_FEE_RATE      = 0.0025 # 0.25% of face value on new bond → feder
 # Positive net flow (buys > redeems) → yield falls.
 YIELD_SENSITIVITY  = 0.00001       # yield change per $1 of net demand per tick
 
+# Coinage-specific constants
+COIN_SEIGNIORAGE_RATE = 0.02  # 2% of each mint run goes to the bank before crediting the operator
+
 # FX dynamics: each 1 % yield change causes a proportional FX movement.
 FX_YIELD_LINK      = 0.02          # usd_per_unit fractional change per 1 % yield Δ (4× more sensitive)
 
@@ -342,6 +345,36 @@ class BankDebt(Base):
     is_settled          = Column(Boolean, default=False)
 
 
+class CoinageRedemptionNote(Base):
+    """
+    An IOU issued by a coin reserve bank (AU24, AG999, etc.) when a requester
+    wants coinage but the bank's own-coin reserves are insufficient.
+
+    The requester's submitted currency is deposited into the bank's foreign
+    reserves immediately (no escrow — it belongs to the bank). The bank
+    then owes the requester a quantity of coins, paid out in FIFO order as
+    coinage flows into the bank via seigniorage, demurrage reclaim, and fees.
+
+    Partial fills are supported: filled_amount is incremented each time the
+    bank processes an inflow and is less than coin_amount_owed.
+    """
+    __tablename__ = "coinage_redemption_notes"
+
+    id               = Column(Integer, primary_key=True, index=True)
+    bank_id          = Column(Integer, index=True, nullable=False)
+    requester_type   = Column(String(16), nullable=False, default="player")  # player | government | city | bank
+    requester_id     = Column(Integer, index=True, nullable=False)
+    coin_amount_owed = Column(Float, nullable=False)
+    filled_amount    = Column(Float, default=0.0)
+    is_fulfilled     = Column(Boolean, default=False)
+    created_at       = Column(DateTime, default=datetime.utcnow)
+    fulfilled_at     = Column(DateTime, nullable=True)
+    __table_args__ = (
+        Index("ix_crn_bank_open",   "bank_id", "is_fulfilled"),
+        Index("ix_crn_requester",   "requester_type", "requester_id"),
+    )
+
+
 class InterbankTrade(Base):
     """
     Record of every bank-to-bank bond swap / currency settlement.
@@ -410,6 +443,20 @@ def initialize():
             "CREATE INDEX IF NOT EXISTS ix_pcb_lookup  ON player_currency_balances (player_id, currency_code)",
             "CREATE INDEX IF NOT EXISTS ix_brb_lookup  ON bank_reserve_balances (bank_id, currency_code)",
             "CREATE INDEX IF NOT EXISTS ix_byh_chart   ON bond_yield_history (bank_id, recorded_at DESC)",
+            # Coinage IOU queue
+            """CREATE TABLE IF NOT EXISTS coinage_redemption_notes (
+                id               SERIAL PRIMARY KEY,
+                bank_id          INTEGER NOT NULL,
+                requester_type   VARCHAR(16) NOT NULL DEFAULT 'player',
+                requester_id     INTEGER NOT NULL,
+                coin_amount_owed DOUBLE PRECISION NOT NULL,
+                filled_amount    DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+                is_fulfilled     BOOLEAN NOT NULL DEFAULT FALSE,
+                created_at       TIMESTAMP DEFAULT NOW(),
+                fulfilled_at     TIMESTAMP
+            )""",
+            "CREATE INDEX IF NOT EXISTS ix_crn_bank_open ON coinage_redemption_notes (bank_id, is_fulfilled)",
+            "CREATE INDEX IF NOT EXISTS ix_crn_requester ON coinage_redemption_notes (requester_type, requester_id)",
         ],
         admin_env_var="RESERVE_DATABASE_ADMIN_URL",
     )
@@ -519,13 +566,18 @@ def _accrue_interest(db, bank: StateReserveBank, now: datetime):
             bank.total_interest_paid += net
             _yield_tax_total         += _tax
         else:
-            # Negative-yield: deduct from player, no tax applied.
+            # Negative-yield (demurrage): deduct from player, reclaim to bank.
+            # The reclaimed coins drain the bank's IOU queue first, then go to
+            # own-coin reserves — they are NOT destroyed.
             actual_credit = _get_clamp_amount(db, bond.holder_player_id, bank.currency_code, hourly)
             _adjust_currency_balance(
                 db, bond.holder_player_id, bank.currency_code, hourly, floor=0.0
             )
+            reclaimed = abs(actual_credit)
+            if reclaimed > 0 and bank.currency_code in COIN_CURRENCY_CODES:
+                _coin_inflow(db, bank, reclaimed)
             bond.interest_accrued    += actual_credit
-            bank.total_interest_paid += abs(actual_credit)
+            bank.total_interest_paid += reclaimed
 
 
     if _yield_tax_total > 0:
@@ -625,20 +677,30 @@ def credit_mint_coinage(player_id: int, currency_code: str, metal_usd_value: flo
         amount = metal_usd_value / unit_rate
         if amount <= 0:
             return 0.0
-        _adjust_currency_balance(db, player_id, currency_code, amount)
+
+        # Seigniorage: a share of each mint run flows to the bank first.
+        # The bank uses these coins to drain its IOU queue (oldest requests first),
+        # then holds any surplus as own-coin reserves for future immediate fulfilments.
+        seigniorage    = amount * COIN_SEIGNIORAGE_RATE
+        player_amount  = amount - seigniorage
+
+        _adjust_currency_balance(db, player_id, currency_code, player_amount)
+        _coin_inflow(db, bank, seigniorage)           # drains IOU queue, then → reserves
         bank.total_face_value_wsc += metal_usd_value  # track total minted supply in USD equiv
         db.commit()
-        # Ledger entry (USD-equivalent value of minted coinage)
+        # Ledger entry (USD-equivalent value of minted coinage — operator's share only)
         try:
             from stats_ux import log_transaction
-            log_transaction(player_id, "coin_mint", "money", metal_usd_value,
-                            f"Minted {amount:,.4f} {currency_code} "
-                            f"({bank.currency_symbol}{amount:,.4f}) @ ${unit_rate:,.2f}/unit")
+            log_transaction(player_id, "coin_mint", "money", metal_usd_value * (1 - COIN_SEIGNIORAGE_RATE),
+                            f"Minted {player_amount:,.4f} {currency_code} "
+                            f"({bank.currency_symbol}{player_amount:,.4f}) @ ${unit_rate:,.2f}/unit"
+                            f" (2% seigniorage → bank)")
         except Exception:
             pass
-        print(f"[Mint] Credited {amount:.6f} {currency_code} to player {player_id} "
+        print(f"[Mint] Credited {player_amount:.6f} {currency_code} to player {player_id} "
+              f"+ {seigniorage:.6f} seigniorage → bank IOU queue "
               f"(${metal_usd_value:.2f} metal value @ {unit_rate:.2f}/unit)")
-        return amount
+        return player_amount
     except Exception as e:
         db.rollback()
         print(f"[Mint] Error crediting {currency_code} to player {player_id}: {e}")
@@ -975,6 +1037,83 @@ def _debit_bank_reserve(db, bank_id: int, currency_code: str, amount: float) -> 
         r.updated_at  = datetime.utcnow()
         return True
     return False
+
+
+# ==========================
+# COINAGE IOU QUEUE
+# ==========================
+
+def _drain_coin_iou_queue(db, bank: "StateReserveBank", available_coins: float) -> float:
+    """
+    Pay down the FIFO coinage IOU queue using available_coins.
+
+    Iterates unfulfilled CoinageRedemptionNote rows oldest-first, crediting
+    each requester's currency balance and marking notes fulfilled as they are
+    fully paid. Partial fills are recorded; a note may be filled across many
+    separate inflow events.
+
+    Returns the total coins consumed (≤ available_coins).
+    """
+    if available_coins <= 0:
+        return 0.0
+    notes = (
+        db.query(CoinageRedemptionNote)
+        .filter(
+            CoinageRedemptionNote.bank_id      == bank.id,
+            CoinageRedemptionNote.is_fulfilled == False,
+        )
+        .order_by(CoinageRedemptionNote.created_at.asc())
+        .all()
+    )
+    consumed = 0.0
+    for note in notes:
+        if available_coins <= 0:
+            break
+        remaining = note.coin_amount_owed - note.filled_amount
+        if remaining <= 0:
+            note.is_fulfilled = True
+            note.fulfilled_at = datetime.utcnow()
+            continue
+        pay = min(remaining, available_coins)
+        note.filled_amount += pay
+        available_coins    -= pay
+        consumed           += pay
+        _adjust_currency_balance(db, note.requester_id, bank.currency_code, pay)
+        if note.filled_amount >= note.coin_amount_owed - 1e-9:
+            note.is_fulfilled = True
+            note.fulfilled_at = datetime.utcnow()
+    return consumed
+
+
+def _coin_inflow(db, bank: "StateReserveBank", amount: float):
+    """
+    Route incoming coinage to the bank.
+
+    The queue is always serviced first (FIFO); any surplus after all IOUs
+    are satisfied is held as the bank's own-coin reserve balance for future
+    immediate fulfilments.
+    """
+    if amount <= 0:
+        return
+    consumed  = _drain_coin_iou_queue(db, bank, amount)
+    remainder = amount - consumed
+    if remainder > 0:
+        _add_bank_reserve(db, bank.id, bank.currency_code, remainder)
+
+
+def _try_drain_from_reserves(db, bank: "StateReserveBank"):
+    """
+    Attempt to drain the IOU queue using the bank's existing own-coin reserves.
+    Called immediately after a new IOU is created, so players with immediate
+    coin availability don't wait for the next inflow event.
+    """
+    reserve = _get_or_create_bank_reserve(db, bank.id, bank.currency_code)
+    if reserve.balance <= 0:
+        return
+    consumed = _drain_coin_iou_queue(db, bank, reserve.balance)
+    reserve.balance -= consumed
+    if reserve.balance < 0:
+        reserve.balance = 0.0
 
 
 def _record_bank_debt(db, debtor_bank_id: int, creditor_currency: str, amount: float):
@@ -1866,7 +2005,10 @@ def set_player_legal_tender(player_id: int, currency_code: str) -> Tuple[bool, s
             PlayerCurrencyBalance.balance   >  0,
         ).all()
 
+        is_coin_target = code in COIN_CURRENCY_CODES
+
         conversion_details = []
+        total_iou_coins    = 0.0   # accumulated only when switching to a coin currency
         for cb in all_balances:
             if cb.currency_code == code:
                 continue  # already in the target currency
@@ -1889,17 +2031,40 @@ def set_player_legal_tender(player_id: int, currency_code: str) -> Tuple[bool, s
             if src_bank:
                 _add_bank_reserve(db, src_bank.id, cb.currency_code, fee_native)
 
-            # Zero the old balance and credit new currency
+            # Deduct from player
             _adjust_currency_balance(db, player_id, cb.currency_code, -amt)
-            _adjust_currency_balance(db, player_id, code, new_amt)
 
-            conversion_details.append(
-                f"{cb.currency_code} {amt:,.2f} → {code} {new_amt:,.2f}"
-            )
+            if is_coin_target:
+                # Hard money: cannot conjure coins. Deposit the submitted currency
+                # into the bank's foreign reserves and queue an IOU for the coins.
+                _add_bank_reserve(db, new_bank.id, cb.currency_code, net_native)
+                total_iou_coins += new_amt
+                conversion_details.append(
+                    f"{cb.currency_code} {amt:,.4f} → {code} {new_amt:,.4f} (IOU queued)"
+                )
+            else:
+                # Non-coin target: standard synthetic conversion
+                _adjust_currency_balance(db, player_id, code, new_amt)
+                conversion_details.append(
+                    f"{cb.currency_code} {amt:,.2f} → {code} {new_amt:,.2f}"
+                )
 
         conversion_msg = ""
         if conversion_details:
             conversion_msg = " Converted: " + "; ".join(conversion_details) + "."
+
+        # ── Create IOU for coin-currency switches ─────────────────────────────
+        if is_coin_target and total_iou_coins > 0:
+            note = CoinageRedemptionNote(
+                bank_id          = new_bank.id,
+                requester_type   = "player",
+                requester_id     = player_id,
+                coin_amount_owed = total_iou_coins,
+                filled_amount    = 0.0,
+            )
+            db.add(note)
+            db.flush()
+            _try_drain_from_reserves(db, new_bank)   # fill immediately if bank has reserves
 
         # ── Persist the change ────────────────────────────────────────────────
         if row:
@@ -2576,6 +2741,53 @@ def get_interbank_trades(limit: int = 50) -> List[dict]:
         db.close()
 
 
+def get_coin_iou_queue(bank_id: int) -> list:
+    """Return all unfulfilled CoinageRedemptionNote rows for a bank, oldest first."""
+    db = get_db()
+    try:
+        return (
+            db.query(CoinageRedemptionNote)
+            .filter(
+                CoinageRedemptionNote.bank_id      == bank_id,
+                CoinageRedemptionNote.is_fulfilled == False,
+            )
+            .order_by(CoinageRedemptionNote.created_at.asc())
+            .all()
+        )
+    finally:
+        db.close()
+
+
+def get_player_coin_iou_notes(player_id: int) -> list:
+    """Return all CoinageRedemptionNote rows for a player (any bank, any status)."""
+    db = get_db()
+    try:
+        return (
+            db.query(CoinageRedemptionNote)
+            .filter(
+                CoinageRedemptionNote.requester_type == "player",
+                CoinageRedemptionNote.requester_id   == player_id,
+            )
+            .order_by(CoinageRedemptionNote.created_at.desc())
+            .all()
+        )
+    finally:
+        db.close()
+
+
+def get_coin_bank_own_reserve(bank_id: int, currency_code: str) -> float:
+    """Return the bank's own-coin reserve balance (coins on hand to fulfil IOUs immediately)."""
+    db = get_db()
+    try:
+        r = db.query(BankReserveBalance).filter(
+            BankReserveBalance.bank_id       == bank_id,
+            BankReserveBalance.currency_code == currency_code,
+        ).first()
+        return r.balance if r else 0.0
+    finally:
+        db.close()
+
+
 __all__ = [
     "initialize", "tick",
     "purchase_bond", "sell_bond",
@@ -2592,5 +2804,8 @@ __all__ = [
     "StateReserveBank", "ReserveBankBond", "PlayerLegalTender",
     "PlayerCurrencyBalance", "ForexTrade", "BondYieldHistory",
     "BankReserveBalance", "BankDebt", "InterbankTrade",
+    "CoinageRedemptionNote",
+    "get_coin_iou_queue", "get_player_coin_iou_notes", "get_coin_bank_own_reserve",
+    "COIN_SEIGNIORAGE_RATE",
     "get_db",
 ]
