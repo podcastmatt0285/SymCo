@@ -537,7 +537,8 @@ def _accrue_interest(db, bank: StateReserveBank, now: datetime):
         ReserveBankBond.bank_id == bank.id,
         ReserveBankBond.status  == "active",
     ).all()
-    _yield_tax_total = 0.0
+    _yield_tax_total  = 0.0
+    _total_reclaimed  = 0.0   # batch coin inflows — drain queue once after all bonds
     for bond in active_bonds:
         # Interbank bonds (holder_player_id == 0) carry no interest — they are
         # purely a reserve-management instrument and will be expired by _mature_bonds.
@@ -567,17 +568,21 @@ def _accrue_interest(db, bank: StateReserveBank, now: datetime):
             _yield_tax_total         += _tax
         else:
             # Negative-yield (demurrage): deduct from player, reclaim to bank.
-            # The reclaimed coins drain the bank's IOU queue first, then go to
-            # own-coin reserves — they are NOT destroyed.
+            # Accumulate reclaimed coins across all bonds and drain the IOU queue
+            # once after the loop — avoids one DB query per bond.
             actual_credit = _get_clamp_amount(db, bond.holder_player_id, bank.currency_code, hourly)
             _adjust_currency_balance(
                 db, bond.holder_player_id, bank.currency_code, hourly, floor=0.0
             )
             reclaimed = abs(actual_credit)
             if reclaimed > 0 and bank.currency_code in COIN_CURRENCY_CODES:
-                _coin_inflow(db, bank, reclaimed)
+                _total_reclaimed += reclaimed
             bond.interest_accrued    += actual_credit
             bank.total_interest_paid += reclaimed
+
+    # Drain IOU queue once with the full batch of reclaimed coins
+    if _total_reclaimed > 0:
+        _coin_inflow(db, bank, _total_reclaimed)
 
 
     if _yield_tax_total > 0:

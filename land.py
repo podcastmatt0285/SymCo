@@ -869,14 +869,16 @@ def _hoarding_fib_multiplier(excess_index: int) -> float:
     Multipliers: 1.0, 1.1, 1.2, 1.3, 1.5, 1.8, 2.3, 3.1, 4.4, ...
     The offset from 1.0 (×10) follows: 0, 1, 2, 3, 5, 8, 13, 21, 34, ...
     Seeds [0, 1, 2], then each value = sum of previous two.
+    Capped at index 200 to prevent float overflow (seq[1476] > float max).
     """
     if excess_index <= 0:
         return 1.0
-    # Build the offset sequence up to the needed index
+    # Cap at 200 — seq[200] ≈ 2.8e41, multiplier ≈ 2.8e40 — effectively infinite tax
+    safe_index = min(excess_index, 200)
     seq = [0, 1, 2]
-    while len(seq) <= excess_index:
+    while len(seq) <= safe_index:
         seq.append(seq[-1] + seq[-2])
-    return 1.0 + seq[excess_index] / 10.0
+    return 1.0 + seq[safe_index] / 10.0
 
 
 def calculate_player_hoarding_tax(plot_count: int) -> dict:
