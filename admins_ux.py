@@ -5542,8 +5542,10 @@ def admin_events(session_token: Optional[str] = Cookie(None),
       <div style="font-size:0.9rem;color:#a5b4fc;font-weight:800;margin-bottom:4px;">🏦 NPC Currency Mandate</div>
       <p style="font-size:0.74rem;color:#4c4880;margin:0 0 12px;line-height:1.45;">
         Forces all NPC businesses to switch their legal tender to the selected currency when the event starts.
-        NPCs stay on the new currency permanently — no revert on event end. Coin currencies are allowed;
-        NPC balances are <em>not</em> converted (NPCs operate internally in USD regardless of legal tender).
+        NPCs stay on the new currency permanently — no revert on event end. This is a <em>real</em> economic
+        change: fiat-mandated NPCs earn, hold, spend and pay hoarding tax in the new currency, and their forex
+        conversions generate live demand that moves that currency's exchange rate and bond yields. Coin
+        currencies are allowed but stay largely symbolic (hard-money rule keeps NPC income in USD).
       </p>
       <form method="post" action="/admin/events/create" onsubmit="return ncseBuild()">
         <input type="hidden" name="event_type" value="npc_currency_switch">
@@ -5622,7 +5624,9 @@ def admin_events(session_token: Optional[str] = Cookie(None),
           var code = document.getElementById('ncse_code').value;
           var name = _NCSE_LABELS[code] || code;
           var isCoin = !!_NCSE_COINS[code];
-          var note = isCoin ? ' <span style="color:#f97316;">[Hard money — coin IOU queue will service NPCs over time]</span>' : '';
+          var note = isCoin
+            ? ' <span style="color:#f97316;">[Hard money — symbolic only: NPC income stays in USD, no coinage is minted]</span>'
+            : ' <span style="color:#6ee7b7;">[Real: NPCs will earn, spend &amp; pay tax in ' + code + ', generating live forex demand]</span>';
           var prev = document.getElementById('ncse_preview');
           if (prev) prev.innerHTML = 'All NPC businesses will switch to <b>' + code + ' (' + name + ')</b> at event start.' + note;
         }}

@@ -976,11 +976,16 @@ def collect_hoarding_taxes():
         if not player:
             continue
 
-        from reserve_banks import get_usd_balance, debit_usd
-        current_balance = get_usd_balance(owner_id)
+        # Tender-aware: pay from the owner's legal tender first (NPCs mandated to a
+        # foreign currency hold no USD), falling back to USD. get_spendable_usd gives
+        # buying power expressed in USD across tender + USD balances.
+        from reserve_banks import get_spendable_usd, spend_player_funds
+        current_balance = get_spendable_usd(owner_id)
         actual_payment = min(hourly_payment, max(0, current_balance))
         if actual_payment > 0:
-            debit_usd(owner_id, actual_payment)
+            _paid_ok, _ = spend_player_funds(owner_id, actual_payment)
+            if not _paid_ok:
+                continue
             total_collected += actual_payment
             if actual_payment >= 100:
                 _fire_govt_push(

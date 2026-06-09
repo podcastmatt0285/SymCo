@@ -522,8 +522,13 @@ def _run_npc_cycle(player_id: int, cfg: dict):
     Called every NPC_TICK_INTERVAL ticks.
     """
     try:
-        from reserve_banks import get_usd_balance
-        cash  = get_usd_balance(player_id)
+        # Tender-aware buying power: an NPC mandated to a foreign currency earns and
+        # holds that currency (income routes through convert_to_legal_tender), so its
+        # USD balance drains to ~0. get_spendable_usd expresses tender + USD holdings
+        # in USD terms, so cash-state stays accurate after a currency mandate. For
+        # USD-tender NPCs this returns exactly the USD balance — no behavior change.
+        from reserve_banks import get_spendable_usd
+        cash  = get_spendable_usd(player_id)
         state = _cash_state(cash, cfg["cash_caps"])
         _manage_sell_orders(player_id, cfg, state)
         _manage_buy_orders(player_id, cfg, state)

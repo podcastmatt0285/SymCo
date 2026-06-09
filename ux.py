@@ -457,8 +457,8 @@ def _nav_loader_html() -> str:
             "Tip: Coinage value is pegged live to gold, silver, and platinum market prices.",
             "Tip: Sacrificed plots for Institutions can be empty — they don't need a business.",
             "Tip: Anyone can buy metal-coinage bonds; only subscribers can set coinage as legal tender.",
-            "Tip: Government events can mandate all NPC businesses to switch currencies — watch how market pricing shifts.",
-            "Tip: NPC legal tender affects how they report prices but they always settle internally in USD."
+            "Tip: Government events can mandate all NPC businesses to switch currencies — their forex demand moves exchange rates and bond yields you trade.",
+            "Tip: When NPCs are mandated to a currency, they actually earn, spend and pay tax in it — a mass switch is a real signal to hedge."
           ];
           var overlay = document.getElementById('nav-loader');
           var bar     = document.getElementById('nl-bar');
