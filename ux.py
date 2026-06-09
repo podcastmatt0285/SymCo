@@ -452,10 +452,10 @@ def _nav_loader_html() -> str:
             "Tip: Deferred annuities grow at 5% annual during accumulation — annuitize when ready.",
             "Tip: Surrender charges on annuities drop 1% each year — wait for the 8th year to surrender free.",
             "Tip: You can contribute to a deferred annuity any time — minimum deposit is just 100.",
-            "Tip: Wadsworth Pro lets you sacrifice land for a Special Plot, then build a Mint.",
+            "Tip: Wadsworth Pro lets you sacrifice land to create an Institution, then build a Mint.",
             "Tip: Mints strike metal-backed coinage — AU24, AG999, PT9995 and three karat alloys.",
             "Tip: Coinage value is pegged live to gold, silver, and platinum market prices.",
-            "Tip: Sacrificed plots for Special Plots can be empty — they don't need a business.",
+            "Tip: Sacrificed plots for Institutions can be empty — they don't need a business.",
             "Tip: Anyone can buy metal-coinage bonds; only subscribers can set coinage as legal tender."
           ];
           var overlay = document.getElementById('nav-loader');
@@ -2603,10 +2603,10 @@ def home(request: Request, session_token: Optional[str] = Cookie(None)):
             </a>
 
             <a href="/special-plots" class="dc" style="--c:#d4af37;--g:linear-gradient(90deg,#d4af37,#f5d76e);--glow:rgba(212,175,55,0.14);--btn:#d4af37;">
-                <span class="dc-ico">⚗️</span>
-                <div class="dc-t">Special Plots &amp; Mints <span style="font-size:0.7rem;background:#7c3aed;color:#fff;padding:1px 6px;border-radius:8px;vertical-align:middle;">PRO</span></div>
+                <span class="dc-ico">🏛️</span>
+                <div class="dc-t">Institutions <span style="font-size:0.7rem;background:#7c3aed;color:#fff;padding:1px 6px;border-radius:8px;vertical-align:middle;">PRO</span></div>
                 <div class="dc-d">Subscriber-exclusive facilities forged by sacrificing land (Fibonacci scaling — empty plots allowed). Build a Mint to strike precious-metal coinage: six gold, silver, and platinum currencies whose value is pegged live to the metals they're made from. Minting is the only way this hard-money coinage enters circulation.</div>
-                <span class="dc-btn">Open the Mint</span>
+                <span class="dc-btn">Open Institutions</span>
             </a>
 
             <a href="/inventory" class="dc" style="--c:#f5a855;--g:linear-gradient(90deg,#f5a855,#f5d76e);--glow:rgba(245,168,85,0.12);--btn:#f5a855;">
@@ -5838,7 +5838,7 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                 <a href="/land-market" class="btn-blue" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; text-decoration: none;">Buy Land</a>
                 <a href="/districts" class="btn-blue" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: #6366f1; text-decoration: none;">Districts</a>
-                <a href="/special-plots" class="btn-blue" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: #d4af37; color:#1a1a1a; text-decoration: none;">⚗️ Mints</a>
+                <a href="/special-plots" class="btn-blue" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: #d4af37; color:#1a1a1a; text-decoration: none;">🏛️ Institutions</a>
             </div>
         </div>'''
 

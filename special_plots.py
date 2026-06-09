@@ -523,13 +523,13 @@ def collect_special_plot_taxes(current_month: int):
                 except Exception:
                     pass
                 _fire_special_push(
-                    owner.id, "Special Plot Tax Collected",
-                    f"${effective_tax:,.0f} monthly tax charged for your {sp.special_type.title()} special plot",
+                    owner.id, "Institution Tax Collected",
+                    f"${effective_tax:,.0f} monthly tax charged for your {sp.special_type.title()} institution",
                 )
             else:
                 _fire_special_push(
-                    owner.id, "Special Plot Tax Payment Failed",
-                    f"Insufficient funds for ${effective_tax:,.0f} special plot tax — fund your account to avoid penalties",
+                    owner.id, "Institution Tax Payment Failed",
+                    f"Insufficient funds for ${effective_tax:,.0f} institution tax — fund your account to avoid penalties",
                 )
         db.commit()
         print(f"[SpecialPlots] Monthly special-plot tax collection: ${total:,.2f}")

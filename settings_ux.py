@@ -3094,8 +3094,8 @@ _PRO_PERKS_LIVE = [
      "Kawaii Night, Soul Vinyl Dark, and Soul Vinyl Light themes — apply them in Settings → Skins."),
     ("🏙️", "City Perk",
      "One-time choice on the Cities page: found a FREE city + mayoralship, OR pick up to 3 city-wide perks (output, fees, taxes, member slots & more). No city yet? Saved perks activate when you join one."),
-    ("⚗️", "Special Plots & Mints",
-     "Sacrifice land (Fibonacci scaling — empty plots OK) to forge a Special Plot, then build a Mint that strikes precious-metal coinage. Manage it on the Special Plots page."),
+    ("🏛️", "Institutions",
+     "Sacrifice land (Fibonacci scaling — empty plots OK) to forge an Institution, then build a Mint that strikes precious-metal coinage. Manage them on the Institutions page."),
     ("🪙", "Metal coinage legal tender",
      "Six mint-issued currencies — AU24, AU22 (gold), AG999, AG925 (silver), PT9995, PT950 (platinum) — pegged live to metal market prices. Subscribers can set one as their legal tender."),
 ]

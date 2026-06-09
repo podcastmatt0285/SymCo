@@ -839,7 +839,7 @@ def _player_pro_panel(pid, detail):
             sp_html = f"""
             <div style="margin-top:10px;border-top:1px solid #1e293b;padding-top:8px;">
               <div style="color:#a78bfa;font-size:0.75rem;font-weight:600;margin-bottom:4px;">
-                ⚗️ Special Plots ({len(sps)}) · sacrifices: {sp_stats.total_sacrifices_completed}</div>
+                🏛️ Institutions ({len(sps)}) · sacrifices: {sp_stats.total_sacrifices_completed}</div>
               {rows}
             </div>"""
     except Exception:

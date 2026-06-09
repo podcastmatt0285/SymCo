@@ -1610,7 +1610,7 @@ def login_page(session_token: Optional[str] = Cookie(None)):
                         <strong>Available now:</strong><br>
                         &bull; 3 exclusive cosmetic skins — <strong>Kawaii Night</strong>, <strong>Soul Vinyl Dark</strong>, and <strong>Soul Vinyl Light</strong><br>
                         &bull; <strong>City perk</strong> — a free city with mayoralship, or perks for your existing city<br>
-                        &bull; <strong>Special Plots &amp; Mints</strong> — sacrifice land to forge a Mint that strikes precious-metal coinage (fully backed by the metals you spend, so it's never wealth from nothing)<br>
+                        &bull; <strong>Institutions</strong> — sacrifice land to forge a Mint that strikes precious-metal coinage (fully backed by the metals you spend, so it's never wealth from nothing)<br>
                         &bull; <strong>Metal coinage legal tender</strong> — six gold/silver/platinum currencies pegged live to metal prices; subscribers can set one as their legal tender<br><br>
                         <strong>On the roadmap</strong> (planned supporter perks, not yet live):<br>
                         &bull; <strong>Forex Trading Floor</strong> — a currency-exchange dashboard<br>
