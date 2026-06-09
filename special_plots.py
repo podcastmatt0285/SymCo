@@ -1,17 +1,19 @@
 """
 special_plots.py
 
-Special Plots — subscriber-only mega-facilities created by land sacrifice.
-Currently only one special plot type is implemented: the Mint (precious metal
+Institutions — subscriber-only mega-facilities created by land sacrifice.
+(Internally still called "special plots"; user-facing name is "Institutions".)
+Currently only one institution type is implemented: the Mint (precious metal
 coin-strike facility).
 
 Fibonacci sacrifice sequence: 5, 8, 13, 21, 34, 55 ...
   - Empty plots ARE allowed (occupied status not required)
-  - All sacrificed plots must share the same terrain type
+  - Sacrificed plots may MIX terrains freely, provided each terrain is one the
+    institution type permits (the Mint permits every standard terrain)
   - Tutorial-reward plots cannot be sacrificed
   - Player must have an active Wadsworth Pro subscription
 
-Each special plot gets a unique terrain key ("special_mint") that only mint
+Each institution gets a unique terrain key ("special_mint") that only mint
 businesses are compatible with.
 """
 
@@ -193,7 +195,7 @@ def create_special_plot(
     from skin_utils import is_pro
 
     if special_type not in SPECIAL_PLOT_TYPES:
-        return None, f"Unknown special plot type: '{special_type}'"
+        return None, f"Unknown institution type: '{special_type}'"
 
     cfg = SPECIAL_PLOT_TYPES[special_type]
 
@@ -206,7 +208,7 @@ def create_special_plot(
         if not player_obj:
             return None, "Player not found"
         if cfg.get("subscriber_only") and not is_pro(player_obj):
-            return None, "Wadsworth Pro subscription required to create a special plot."
+            return None, "Wadsworth Pro subscription required to create an institution."
     except Exception as e:
         return None, f"Auth check failed: {e}"
 
@@ -214,7 +216,7 @@ def create_special_plot(
     required_count = get_plots_required(player_id)
     if len(plot_ids) != required_count:
         return None, (
-            f"Special plot creation requires exactly {required_count} plot"
+            f"Institution creation requires exactly {required_count} plot"
             f"{'s' if required_count != 1 else ''} "
             f"(you selected {len(plot_ids)})"
         )
@@ -250,7 +252,7 @@ def create_special_plot(
     get_usd_balance(player_id)
     if not can_afford_usd(player_id, sacrifice_cost):
         db.close()
-        return None, f"Insufficient funds — special plot creation costs ${sacrifice_cost:,.0f}"
+        return None, f"Insufficient funds — institution creation costs ${sacrifice_cost:,.0f}"
 
     ok, err = spend_player_funds(player_id, sacrifice_cost)
     if not ok:
@@ -277,7 +279,7 @@ def create_special_plot(
         try:
             from stats_ux import log_transaction
             log_transaction(player_id, "special_plot_creation", "money", -sacrifice_cost,
-                            f"Special plot sacrifice: {cfg['name']}")
+                            f"Institution land sacrifice: {cfg['name']}")
         except Exception:
             pass
 
@@ -332,7 +334,7 @@ def create_special_plot(
             print(f"[SpecialPlots] Refunded ${sacrifice_cost:,.0f} to player {player_id} after creation failure")
         except Exception as _re:
             print(f"[SpecialPlots] CRITICAL: refund failed for player {player_id}: {_re}")
-        return None, f"Special plot creation failed: {e}"
+        return None, f"Institution creation failed: {e}"
     finally:
         try:
             db.close()
@@ -358,13 +360,13 @@ def create_mint_business(owner_id: int, special_plot_id: int, business_type: str
     sp = db.query(SpecialPlot).filter(SpecialPlot.id == special_plot_id).first()
     if not sp:
         db.close()
-        return None, "Special plot not found"
+        return None, "Institution not found"
     if sp.owner_id != owner_id:
         db.close()
-        return None, "You don't own this special plot"
+        return None, "You don't own this institution"
     if sp.occupied_by_business_id is not None:
         db.close()
-        return None, "This special plot already has a mint"
+        return None, "This institution already has a mint"
 
     mint_types = get_mint_business_types()
     if business_type not in mint_types:
@@ -459,7 +461,7 @@ def _fire_special_push(player_id: int, title: str, body: str):
         try:
             from push_ux import send_push_notification
             send_push_notification(player_id, title, body, url="/special-plots",
-                                   notif_type="business",
+                                   notif_type="institutions",
                                    tag=f"special-{player_id}-{title[:20]}")
         except Exception as e:
             print(f"[SpecialPlots] Push error: {e}")
@@ -510,7 +512,7 @@ def collect_special_plot_taxes(current_month: int):
                 try:
                     from stats_ux import log_transaction
                     log_transaction(owner.id, "special_plot_tax", "money", -effective_tax,
-                                    f"Special plot tax: {sp.special_type}",
+                                    f"Institution tax: {sp.special_type.title()}",
                                     reference_id=f"special_{sp.id}")
                 except Exception:
                     pass
@@ -518,7 +520,7 @@ def collect_special_plot_taxes(current_month: int):
                     from govt_ledger import log_gov_event
                     log_gov_event("special_plot_tax", "in", effective_tax, "USD",
                                   counterparty=str(owner.id),
-                                  description=f"Special plot tax: {sp.special_type}")
+                                  description=f"Institution tax: {sp.special_type.title()}")
                 except Exception:
                     pass
                 _fire_special_push(

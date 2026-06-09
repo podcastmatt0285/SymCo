@@ -1358,6 +1358,11 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         "trophy_award": "🏆",
         "trophy_spend": "🏆",
         "land_grant_award": "🌍",
+        # Institutions (special plots) / Mint coinage
+        "special_plot_creation": "🏛️", "special_plot_tax": "🏛️",
+        "special_plot_startup_fee": "🏛️",
+        "business_purchase": "🏭",
+        "coin_mint": "🪙", "mint": "🪙",
     }
     TYPE_BADGE_COLORS = {
         # Market
@@ -1404,6 +1409,11 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         "trophy_award": "#a78bfa",
         "trophy_spend": "#f97316",
         "land_grant_award": "#4ade80",
+        # Institutions (special plots) / Mint coinage
+        "special_plot_creation": "#8b5cf6", "special_plot_tax": "#f59e0b",
+        "special_plot_startup_fee": "#8b5cf6",
+        "business_purchase": "#7c3aed",
+        "coin_mint": "#fbbf24", "mint": "#fbbf24",
     }
 
     # Maps filter-chip key → type-prefix tuples matching actual log_transaction() call sites.
@@ -1443,6 +1453,8 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         # Events / Trophies / Land Grant
         "trophies":        ("trophy_award", "trophy_spend"),
         "land_grant":      ("land_grant_award",),
+        # Institutions / Mint coinage
+        "institutions":    ("special_plot_", "business_purchase", "coin_mint"),
     }
     # Build a flat JSON map of type → category list for JS
     type_to_tabs: Dict[str, List[str]] = {}
@@ -1814,6 +1826,7 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         # — Events —
         ("annuities",       "Annuities",       count_by_tab.get("annuities", 0)),
         ("trophies",        "Trophies",        count_by_tab.get("trophies", 0)),
+        ("institutions",    "Institutions",    count_by_tab.get("institutions", 0)),
     ]
     def _chip(k, label, cnt):
         active_cls = " txchip-active" if k == "all" else ""

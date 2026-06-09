@@ -2147,6 +2147,7 @@ def _notifications_tab(player, from_tutorial: bool = False) -> str:
     push_corp = getattr(player, "notif_push_corporate",    True)
     push_govt = getattr(player, "notif_push_govt",         True)
     push_tevt = getattr(player, "notif_push_tasks_events", True)
+    push_inst = getattr(player, "notif_push_institutions", True)
 
     def _toggle(name: str, checked: bool, label: str, sub: str = "", disabled: bool = False) -> str:
         chk   = "checked" if checked else ""
@@ -2306,6 +2307,7 @@ def _notifications_tab(player, from_tutorial: bool = False) -> str:
   {_toggle("notif_push_corporate",    push_corp, "Corporate Alerts",   "Acquisition offers, counter-offers, diffuse notices, renegotiation proposals, buyout events, and income sweeps", disabled=not has_cco)}
   {_toggle("notif_push_govt",         push_govt, "Government Alerts",  "Hoard tax, district tax failure, liens, city membership changes",        disabled=not has_cco)}
   {_toggle("notif_push_tasks_events", push_tevt, "Tasks &amp; Events", "Task completions, event go-live / ended alerts, and trophy awards",      disabled=not has_cco)}
+  {_toggle("notif_push_institutions", push_inst, "Institution Alerts", "Mint built, monthly institution tax charged or failed",                  disabled=not has_cco)}
 </div>"""
 
     # ── Sounds ────────────────────────────────────────────────────────────────
@@ -2579,6 +2581,7 @@ def api_save_notifications(
     notif_push_corporate:    Optional[str] = Form(None),
     notif_push_govt:         Optional[str] = Form(None),
     notif_push_tasks_events: Optional[str] = Form(None),
+    notif_push_institutions: Optional[str] = Form(None),
     notif_sounds:            Optional[str] = Form(None),
     notif_badge:             Optional[str] = Form(None),
 ):
@@ -2615,6 +2618,7 @@ def api_save_notifications(
                 p.notif_push_corporate    = notif_push_corporate    == "on"
                 p.notif_push_govt         = notif_push_govt         == "on"
                 p.notif_push_tasks_events = notif_push_tasks_events == "on"
+                p.notif_push_institutions = notif_push_institutions == "on"
                 p.notif_sounds            = notif_sounds            == "on"
                 p.notif_badge             = notif_badge             == "on"
                 db.commit()
