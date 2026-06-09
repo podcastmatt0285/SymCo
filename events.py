@@ -747,6 +747,87 @@ def cancel_event_timers(event_id: int):
             t.cancel()
 
 
+def _execute_npc_currency_switch(db, ev: "GameEvent") -> str:
+    """
+    Force all NPCs to switch to a new legal tender specified in effect_data.
+
+    Bypasses subscriber and cooldown checks because NPCs are not human players.
+    Does NOT convert NPC balances — NPCs operate internally in USD regardless
+    of their legal tender, so no balance conversion or coin IOU is generated.
+
+    Returns a broadcast body string describing what happened.
+    """
+    import json as _json
+    from reserve_banks import PlayerLegalTender, get_db as _rdb, StateReserveBank
+
+    ed           = _json.loads(ev.effect_data or "{}")
+    target_code  = ed.get("currency_code", "USD").upper()
+
+    from npc import _NPC_PLAYERS
+    npc_ids = [pid for pid in _NPC_PLAYERS.keys() if isinstance(pid, int)]
+    if not npc_ids:
+        return f"No live NPCs found — no legal tender changes applied ({target_code})."
+
+    # Verify the target currency exists (must have a reserve bank, or be USD)
+    if target_code != "USD":
+        rdb = _rdb()
+        try:
+            bank = rdb.query(StateReserveBank).filter(
+                StateReserveBank.currency_code == target_code
+            ).first()
+        finally:
+            rdb.close()
+        if not bank:
+            return f"Currency '{target_code}' has no reserve bank — NPC switch aborted."
+
+    # Bulk-load existing legal-tender rows for all NPCs
+    existing_rows = {
+        r.player_id: r
+        for r in db.query(PlayerLegalTender).filter(
+            PlayerLegalTender.player_id.in_(npc_ids)
+        ).all()
+    }
+
+    switched = 0
+    skipped  = 0
+    now      = datetime.utcnow()
+    for npc_id in npc_ids:
+        row = existing_rows.get(npc_id)
+        if row:
+            if row.currency_code == target_code:
+                skipped += 1
+                continue
+            row.currency_code = target_code
+            row.changed_at    = now
+        else:
+            db.add(PlayerLegalTender(player_id=npc_id, currency_code=target_code))
+        switched += 1
+
+    db.flush()
+
+    # Persist result counts in effect_data so admins can see them
+    ed["switched_count"] = switched
+    ed["skipped_count"]  = skipped
+    ev.effect_data = _json.dumps(ed)
+
+    try:
+        from govt_ledger import log_gov_event
+        log_gov_event(
+            "npc_currency_switch", "in", 0.0, target_code,
+            "NPC Market Agents",
+            f"Event mandate: {switched} NPC(s) switched to {target_code}, "
+            f"{skipped} already on {target_code} (event '{ev.title}')",
+        )
+    except Exception:
+        pass
+
+    return (
+        f"By government mandate, {switched} NPC business"
+        f"{'es' if switched != 1 else ''} now operate in {target_code}. "
+        f"Market dynamics may shift as NPC trading patterns adjust."
+    )
+
+
 def _snapshot_index_challenge_members(db, ev: "GameEvent"):
     """Populate effect_data with the set of player_ids currently in the WBC-50 index.
 
@@ -1316,6 +1397,14 @@ def _on_event_live(event_id: int):
                 except Exception:
                     pass
                 invalidate_effects_cache()
+            elif ev.event_type == "npc_currency_switch":
+                try:
+                    _ncs_body = _execute_npc_currency_switch(db, ev)
+                    db.commit()
+                    body = _ncs_body
+                except Exception as _ncs_e:
+                    print(f"[Events] npc_currency_switch error: {_ncs_e}")
+                    body = "An NPC currency mandate has been issued by the government."
             elif ev.event_type == "foreign_land_sale":
                 try:
                     _fls_result = _execute_foreign_land_sale(ev)

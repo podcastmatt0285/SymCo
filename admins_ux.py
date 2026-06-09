@@ -4978,6 +4978,7 @@ def admin_events(session_token: Optional[str] = Cookie(None),
         "crypto_scam": "#fbbf24",
         "land_grant":  "#4ade80",
         "foreign_land_sale": "#dc2626",
+        "npc_currency_switch": "#818cf8",
     }
 
     event_cards = ""
@@ -5231,6 +5232,18 @@ def admin_events(session_token: Optional[str] = Cookie(None),
                 f'<span style="color:#4ade80;">🌍 {_lg_entrants} entrant(s) &nbsp;&middot;&nbsp; '
                 f'{_lg_resolved} resolved</span>'
             )
+        if ev.event_type == "npc_currency_switch":
+            _ncs_code = _ed.get("currency_code", "?")
+            _ncs_sw   = _ed.get("switched_count")
+            _ncs_sk   = _ed.get("skipped_count")
+            if _ncs_sw is not None:
+                _meta_parts.append(
+                    f'<span style="color:#818cf8;">🏦 {_ncs_code}: {_ncs_sw} switched, {_ncs_sk} already on {_ncs_code}</span>'
+                )
+            else:
+                _meta_parts.append(
+                    f'<span style="color:#818cf8;">🏦 target: <b>{_ncs_code}</b> — fires when event goes live</span>'
+                )
         _is_crisis = ev.event_type == "item_crisis"
         if _is_crisis:
             _ci = _ed.get("item_type", "?")
@@ -5524,6 +5537,107 @@ def admin_events(session_token: Optional[str] = Cookie(None),
         </button>
       </form>
     </div>
+
+    <div class="card" style="margin-bottom:18px;border:2px solid #4338ca;background:#05030f;">
+      <div style="font-size:0.9rem;color:#a5b4fc;font-weight:800;margin-bottom:4px;">🏦 NPC Currency Mandate</div>
+      <p style="font-size:0.74rem;color:#4c4880;margin:0 0 12px;line-height:1.45;">
+        Forces all NPC businesses to switch their legal tender to the selected currency when the event starts.
+        NPCs stay on the new currency permanently — no revert on event end. Coin currencies are allowed;
+        NPC balances are <em>not</em> converted (NPCs operate internally in USD regardless of legal tender).
+      </p>
+      <form method="post" action="/admin/events/create" onsubmit="return ncseBuild()">
+        <input type="hidden" name="event_type" value="npc_currency_switch">
+        <input type="hidden" name="duration_class" value="special">
+        <input type="hidden" name="task_metric" value="">
+        <input type="hidden" name="task_target" value="0">
+        <input type="hidden" name="trophy_reward" value="0">
+        <input type="hidden" name="title" id="ncse_title">
+        <input type="hidden" name="description" id="ncse_desc">
+        <input type="hidden" name="effect_data" id="ncse_eff">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
+          <div>
+            <div style="font-size:0.68rem;color:#4c4880;margin-bottom:3px;">Target Currency *</div>
+            <select id="ncse_code" style="{_inp}" onchange="ncseRefresh()">
+              <optgroup label="— Fiat —">
+                <option value="USD">🇺🇸 USD — US Dollar</option>
+                <option value="EUR">🇪🇺 EUR — Euro</option>
+                <option value="GBP">🇬🇧 GBP — Pound Sterling</option>
+                <option value="JPY">🇯🇵 JPY — Japanese Yen</option>
+                <option value="CHF">🇨🇭 CHF — Swiss Franc</option>
+                <option value="CNY">🇨🇳 CNY — Chinese Yuan</option>
+                <option value="INR">🇮🇳 INR — Indian Rupee</option>
+                <option value="RUB">🇷🇺 RUB — Russian Ruble</option>
+                <option value="KRW">🇰🇷 KRW — Korean Won</option>
+                <option value="MXP">🇲🇽 MXP — Mexican Peso</option>
+                <option value="BRL">🇧🇷 BRL — Brazilian Real</option>
+                <option value="ZAR">🇿🇦 ZAR — S. African Rand</option>
+                <option value="TRY">🇹🇷 TRY — Turkish Lira</option>
+                <option value="SAR">🇸🇦 SAR — Saudi Riyal</option>
+                <option value="AED">🇦🇪 AED — UAE Dirham</option>
+                <option value="ANA">🌿 ANA — Anacostia Blunt</option>
+              </optgroup>
+              <optgroup label="— Metal Coinage (hard money) —">
+                <option value="AU24">🥇 AU24 — Gold 24k</option>
+                <option value="AU22">🥇 AU22 — Gold 22k</option>
+                <option value="AG999">🥈 AG999 — Silver 999</option>
+                <option value="AG925">🥈 AG925 — Silver 925</option>
+                <option value="PT9995">🔩 PT9995 — Platinum 9995</option>
+                <option value="PT950">🔩 PT950 — Platinum 950</option>
+              </optgroup>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:0.68rem;color:#4c4880;margin-bottom:3px;">Start date/time (your local time)</div>
+            <input type="datetime-local" name="starts_at" style="{_inp}">
+          </div>
+          <div>
+            <div style="font-size:0.68rem;color:#4c4880;margin-bottom:3px;">End date/time (optional)</div>
+            <input type="datetime-local" name="ends_at" style="{_inp}">
+          </div>
+        </div>
+        <div id="ncse_preview" style="background:#0d0a1a;border:1px solid #4338ca;border-radius:4px;
+             padding:9px 11px;margin-bottom:10px;font-size:0.74rem;color:#a5b4fc;line-height:1.5;">&hellip;</div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button type="submit"
+                  style="background:#3730a3;color:#e0e7ff;border:1px solid #4338ca;border-radius:4px;
+                         padding:8px 20px;font-size:0.85rem;font-weight:800;cursor:pointer;">
+            🏦 Launch Currency Mandate
+          </button>
+          <label style="display:flex;align-items:center;gap:6px;color:#6366f1;font-size:0.78rem;cursor:pointer;">
+            <input type="checkbox" name="activate_now" value="1" style="width:auto;margin:0;" checked>
+            Active immediately
+          </label>
+        </div>
+        <script>
+        var _NCSE_LABELS = {{
+          "USD":"US Dollar","EUR":"Euro","GBP":"Pound Sterling","JPY":"Japanese Yen",
+          "CHF":"Swiss Franc","CNY":"Chinese Yuan","INR":"Indian Rupee","RUB":"Russian Ruble",
+          "KRW":"Korean Won","MXP":"Mexican Peso","BRL":"Brazilian Real","ZAR":"S. African Rand",
+          "TRY":"Turkish Lira","SAR":"Saudi Riyal","AED":"UAE Dirham","ANA":"Anacostia Blunt",
+          "AU24":"Gold 24k","AU22":"Gold 22k","AG999":"Silver 999","AG925":"Silver 925",
+          "PT9995":"Platinum 9995","PT950":"Platinum 950"
+        }};
+        var _NCSE_COINS = {{"AU24":1,"AU22":1,"AG999":1,"AG925":1,"PT9995":1,"PT950":1}};
+        function ncseRefresh() {{
+          var code = document.getElementById('ncse_code').value;
+          var name = _NCSE_LABELS[code] || code;
+          var isCoin = !!_NCSE_COINS[code];
+          var note = isCoin ? ' <span style="color:#f97316;">[Hard money — coin IOU queue will service NPCs over time]</span>' : '';
+          var prev = document.getElementById('ncse_preview');
+          if (prev) prev.innerHTML = 'All NPC businesses will switch to <b>' + code + ' (' + name + ')</b> at event start.' + note;
+        }}
+        function ncseBuild() {{
+          var code = document.getElementById('ncse_code').value;
+          var name = _NCSE_LABELS[code] || code;
+          document.getElementById('ncse_title').value = 'NPC Currency Mandate: ' + code;
+          document.getElementById('ncse_desc').value  = 'By government mandate, all NPC businesses now operate in ' + name + ' (' + code + ').';
+          document.getElementById('ncse_eff').value   = JSON.stringify({{currency_code: code}});
+          return true;
+        }}
+        document.addEventListener('DOMContentLoaded', function() {{ ncseRefresh(); }});
+        </script>
+      </form>
+    </div>
     {event_cards}
     <script>
     /* Event schedule times are entered in the admin's LOCAL time via
@@ -5760,7 +5874,7 @@ def admin_event_restart(
             edb.close()
         if ev:
             cancel_event_timers(event_id)
-            if ev.event_type == "foreign_land_sale":
+            if ev.event_type in ("foreign_land_sale", "npc_currency_switch"):
                 from events import _on_event_live as _fire_live
                 _fire_live(ev.id)
             else:
@@ -5898,11 +6012,10 @@ def admin_event_create(
                 broadcast_event_push(ev.id, f"📅 Upcoming: {ev.title}",
                                      ev.description or "A new event is coming — stay tuned!",
                                      tag=f"event-{ev.id}-scheduled")
-            elif event_type == "foreign_land_sale":
-                # Active one-shot effect: the work (and its own LIVE push with a
-                # summary) happens inside _on_event_live, which the immediate-
-                # activation path never schedules a timer for. Fire it directly
-                # so the sale actually executes on creation.
+            elif event_type in ("foreign_land_sale", "npc_currency_switch"):
+                # Active on-start effects: work happens inside _on_event_live.
+                # The immediate-activation path never schedules a timer, so fire
+                # it directly now so the effect executes on creation.
                 from events import _on_event_live as _fire_live
                 _fire_live(ev.id)
                 schedule_event_notifications(ev)
