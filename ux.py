@@ -2602,6 +2602,13 @@ def home(request: Request, session_token: Optional[str] = Cookie(None)):
                 <span class="dc-btn">Manage Districts</span>
             </a>
 
+            <a href="/special-plots" class="dc" style="--c:#d4af37;--g:linear-gradient(90deg,#d4af37,#f5d76e);--glow:rgba(212,175,55,0.14);--btn:#d4af37;">
+                <span class="dc-ico">⚗️</span>
+                <div class="dc-t">Special Plots &amp; Mints <span style="font-size:0.7rem;background:#7c3aed;color:#fff;padding:1px 6px;border-radius:8px;vertical-align:middle;">PRO</span></div>
+                <div class="dc-d">Subscriber-exclusive facilities forged by sacrificing land (Fibonacci scaling — empty plots allowed). Build a Mint to strike precious-metal coinage: six gold, silver, and platinum currencies whose value is pegged live to the metals they're made from. Minting is the only way this hard-money coinage enters circulation.</div>
+                <span class="dc-btn">Open the Mint</span>
+            </a>
+
             <a href="/inventory" class="dc" style="--c:#f5a855;--g:linear-gradient(90deg,#f5a855,#f5d76e);--glow:rgba(245,168,85,0.12);--btn:#f5a855;">
                 <span class="dc-ico">📦</span>
                 <div class="dc-t">Inventory</div>
@@ -5831,6 +5838,7 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                 <a href="/land-market" class="btn-blue" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; text-decoration: none;">Buy Land</a>
                 <a href="/districts" class="btn-blue" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: #6366f1; text-decoration: none;">Districts</a>
+                <a href="/special-plots" class="btn-blue" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: #d4af37; color:#1a1a1a; text-decoration: none;">⚗️ Mints</a>
             </div>
         </div>'''
 
