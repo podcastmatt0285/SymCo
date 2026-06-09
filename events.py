@@ -751,26 +751,34 @@ def _execute_npc_currency_switch(db, ev: "GameEvent") -> str:
     """
     Force all NPCs to switch to a new legal tender specified in effect_data.
 
-    Bypasses subscriber and cooldown checks because NPCs are not human players.
+    Each NPC is run through the SAME path a human player uses to change legal
+    tender — reserve_banks.set_player_legal_tender() — with admin_override=True
+    to bypass only the two human-player guardrails (the switch cooldown and the
+    Pro-subscriber requirement for coinage). Everything economic is identical to
+    a player switch:
 
-    This is a REAL economic change, not cosmetic. The market settlement engine is
-    already tender-aware for NPCs: business/production income and market sell
-    proceeds route through convert_to_legal_tender(), and buys settle via
-    spend_player_funds(). After this switch a fiat-mandated NPC genuinely earns,
-    holds, spends and pays hoarding tax in the new currency, and its forex
-    conversions generate real demand signals that move that currency's exchange
-    rate and bond yields — which human players trade against. NPC decision logic
-    reads get_spendable_usd() so its cash-state reflects the new tender holdings.
+      • A repatriation fee is charged on the outgoing balance.
+      • ALL of the NPC's existing currency balances are converted into the new
+        tender at the live forex rate, with forex fees paid to the banks.
+      • Coinage targets queue a CoinageRedemptionNote IOU (hard money — same as a
+        player switching to a coin currency).
+      • The forex activity is logged per NPC.
 
-    Existing balances are NOT force-converted at switch time (that happens
-    organically as new income arrives). Coinage targets (AU24/AG999/…) remain
-    largely symbolic: the hard-money rule keeps income in USD since coinage can
-    only be created by minting, and NPCs hold no coinage to spend.
+    Because the market settlement engine and NPC decision logic are already
+    tender-aware (income → convert_to_legal_tender, buys → spend_player_funds,
+    cash-state → get_spendable_usd), the switched NPC then genuinely earns,
+    holds, spends and pays hoarding tax in the new currency going forward. With
+    ~97 NPCs converting their reserves at once, the mandate generates real forex
+    demand that moves the currency's exchange rate and bond yields that human
+    players trade against.
 
     Returns a broadcast body string describing what happened.
     """
     import json as _json
-    from reserve_banks import PlayerLegalTender, get_db as _rdb, StateReserveBank
+    from reserve_banks import (
+        PlayerLegalTender, get_db as _rdb, StateReserveBank,
+        set_player_legal_tender,
+    )
 
     ed           = _json.loads(ev.effect_data or "{}")
     target_code  = ed.get("currency_code", "USD").upper()
@@ -792,9 +800,10 @@ def _execute_npc_currency_switch(db, ev: "GameEvent") -> str:
         if not bank:
             return f"Currency '{target_code}' has no reserve bank — NPC switch aborted."
 
-    # Bulk-load existing legal-tender rows for all NPCs
-    existing_rows = {
-        r.player_id: r
+    # Snapshot which NPCs already sit on the target tender — those are skipped,
+    # not switched (set_player_legal_tender would reject a no-op switch anyway).
+    existing_codes = {
+        r.player_id: r.currency_code
         for r in db.query(PlayerLegalTender).filter(
             PlayerLegalTender.player_id.in_(npc_ids)
         ).all()
@@ -802,59 +811,47 @@ def _execute_npc_currency_switch(db, ev: "GameEvent") -> str:
 
     switched = 0
     skipped  = 0
-    now      = datetime.utcnow()
+    failed   = 0
     for npc_id in npc_ids:
-        row = existing_rows.get(npc_id)
-        if row:
-            if row.currency_code == target_code:
-                skipped += 1
-                continue
-            row.currency_code = target_code
-            row.changed_at    = now
-        else:
-            db.add(PlayerLegalTender(player_id=npc_id, currency_code=target_code))
-        switched += 1
-
-    db.flush()
+        if existing_codes.get(npc_id, "USD") == target_code:
+            skipped += 1
+            continue
+        try:
+            ok, _msg = set_player_legal_tender(npc_id, target_code, admin_override=True)
+            if ok:
+                switched += 1
+            else:
+                failed += 1
+                print(f"[Events] NPC {npc_id} currency switch rejected: {_msg}")
+        except Exception as _e:
+            failed += 1
+            print(f"[Events] NPC {npc_id} currency switch error: {_e}")
 
     # Persist result counts in effect_data so admins can see them
     ed["switched_count"] = switched
     ed["skipped_count"]  = skipped
+    if failed:
+        ed["failed_count"] = failed
     ev.effect_data = _json.dumps(ed)
+    db.flush()
 
     try:
         from govt_ledger import log_gov_event
         log_gov_event(
             "npc_currency_switch", "in", 0.0, target_code,
             "NPC Market Agents",
-            f"Event mandate: {switched} NPC(s) switched to {target_code}, "
-            f"{skipped} already on {target_code} (event '{ev.title}')",
+            f"Event mandate: {switched} NPC(s) converted to {target_code}, "
+            f"{skipped} already on {target_code}"
+            + (f", {failed} failed" if failed else "")
+            + f" (event '{ev.title}')",
         )
-    except Exception:
-        pass
-
-    # Log a transaction entry for each switched NPC so their ledger reflects the change
-    try:
-        from stats_ux import log_transaction as _lt
-        for npc_id in npc_ids:
-            row = existing_rows.get(npc_id)
-            if row and row.currency_code == target_code:
-                continue  # was already on target — skipped, nothing to log
-            try:
-                _lt(
-                    npc_id, "event_mandate", "money", 0.0,
-                    f"Legal tender switched to {target_code} by government mandate: {ev.title}",
-                    reference_id=f"event-{ev.id}",
-                )
-            except Exception:
-                pass
     except Exception:
         pass
 
     return (
         f"By government mandate, {switched} NPC business"
-        f"{'es' if switched != 1 else ''} now operate in {target_code}. "
-        f"Market dynamics may shift as NPC trading patterns adjust."
+        f"{'es' if switched != 1 else ''} converted their reserves and now operate "
+        f"in {target_code}. Their forex demand may move exchange rates and bond yields."
     )
 
 

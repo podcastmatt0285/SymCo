@@ -5542,10 +5542,11 @@ def admin_events(session_token: Optional[str] = Cookie(None),
       <div style="font-size:0.9rem;color:#a5b4fc;font-weight:800;margin-bottom:4px;">🏦 NPC Currency Mandate</div>
       <p style="font-size:0.74rem;color:#4c4880;margin:0 0 12px;line-height:1.45;">
         Forces all NPC businesses to switch their legal tender to the selected currency when the event starts.
-        NPCs stay on the new currency permanently — no revert on event end. This is a <em>real</em> economic
-        change: fiat-mandated NPCs earn, hold, spend and pay hoarding tax in the new currency, and their forex
-        conversions generate live demand that moves that currency's exchange rate and bond yields. Coin
-        currencies are allowed but stay largely symbolic (hard-money rule keeps NPC income in USD).
+        NPCs stay on the new currency permanently — no revert on event end. Each NPC switches through the exact
+        same path a player uses: their existing reserves are converted into the new currency (repatriation +
+        forex fees apply), and they then earn, hold, spend and pay hoarding tax in it. With ~97 NPCs converting
+        at once, their forex demand visibly moves the currency's exchange rate and bond yields. Coin targets
+        queue a redemption IOU just like a player coinage switch (future income stays USD — hard-money rule).
       </p>
       <form method="post" action="/admin/events/create" onsubmit="return ncseBuild()">
         <input type="hidden" name="event_type" value="npc_currency_switch">
@@ -5625,8 +5626,8 @@ def admin_events(session_token: Optional[str] = Cookie(None),
           var name = _NCSE_LABELS[code] || code;
           var isCoin = !!_NCSE_COINS[code];
           var note = isCoin
-            ? ' <span style="color:#f97316;">[Hard money — symbolic only: NPC income stays in USD, no coinage is minted]</span>'
-            : ' <span style="color:#6ee7b7;">[Real: NPCs will earn, spend &amp; pay tax in ' + code + ', generating live forex demand]</span>';
+            ? ' <span style="color:#f97316;">[Hard money — existing reserves convert to a coin IOU like a player switch; future income stays USD]</span>'
+            : ' <span style="color:#6ee7b7;">[Real switch: reserves convert to ' + code + '; NPCs then earn, spend &amp; pay tax in it, generating live forex demand]</span>';
           var prev = document.getElementById('ncse_preview');
           if (prev) prev.innerHTML = 'All NPC businesses will switch to <b>' + code + ' (' + name + ')</b> at event start.' + note;
         }}

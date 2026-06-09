@@ -1914,7 +1914,8 @@ def get_player_legal_tender(player_id: int) -> str:
         db.close()
 
 
-def set_player_legal_tender(player_id: int, currency_code: str) -> Tuple[bool, str]:
+def set_player_legal_tender(player_id: int, currency_code: str,
+                            admin_override: bool = False) -> Tuple[bool, str]:
     """
     Change a player's legal tender.
 
@@ -1925,6 +1926,14 @@ def set_player_legal_tender(player_id: int, currency_code: str) -> Tuple[bool, s
        TENDER_SWITCH_FEE_RATE of the current foreign-currency balance (taken by
        the reserve bank as a conversion/exit cost).
     3. The new currency must have an active reserve bank (or be USD).
+
+    admin_override
+    ==============
+    When True, bypasses the two human-player guardrails — the switch cooldown and
+    the Pro-subscriber requirement for coinage — while keeping ALL of the economic
+    machinery (repatriation fee, full balance conversion, forex fees, coin IOU
+    queue, transaction logging). Used by the NPC Currency Mandate event so a
+    mandated NPC switches exactly like a player does.
     """
     code = currency_code.upper()
 
@@ -1940,7 +1949,7 @@ def set_player_legal_tender(player_id: int, currency_code: str) -> Tuple[bool, s
                 return False, f"No reserve bank found for '{code}'. Available: {_available_codes(db)}"
 
         # ── Coin currencies: subscriber-only legal tender selection ───────────
-        if code in COIN_CURRENCY_CODES:
+        if code in COIN_CURRENCY_CODES and not admin_override:
             try:
                 from auth import get_db as _auth_db, Player as _Player
                 from skin_utils import is_pro as _is_pro
@@ -1966,7 +1975,7 @@ def set_player_legal_tender(player_id: int, currency_code: str) -> Tuple[bool, s
             return False, f"Your legal tender is already {code}."
 
         # ── Cooldown check ────────────────────────────────────────────────────
-        if row and row.changed_at:
+        if row and row.changed_at and not admin_override:
             days_since = (datetime.utcnow() - row.changed_at).total_seconds() / 86400
             if days_since < TENDER_SWITCH_COOLDOWN_DAYS:
                 days_left = TENDER_SWITCH_COOLDOWN_DAYS - days_since
