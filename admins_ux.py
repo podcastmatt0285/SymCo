@@ -1629,18 +1629,30 @@ def post_balance(pid: int, session_token: Optional[str] = Cookie(None), new_bala
 def post_set_currency(
     pid: int,
     session_token: Optional[str] = Cookie(None),
-    currency_code: str = Form(...),
-    new_balance: float = Form(...),
+    currency_code: Optional[str] = Form(default=None),
+    new_balance: Optional[str]   = Form(default=None),
     tab: str = Form("info"),
 ):
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
+    if not currency_code or new_balance is None:
+        return RedirectResponse(
+            url=f"/admin/player/{pid}?tab={tab}&err=currency_code+and+new_balance+are+required",
+            status_code=303,
+        )
+    try:
+        balance_float = float(new_balance)
+    except (ValueError, TypeError):
+        return RedirectResponse(
+            url=f"/admin/player/{pid}?tab={tab}&err=invalid+balance+value",
+            status_code=303,
+        )
     from admins import admin_set_currency_balance
-    result = admin_set_currency_balance(admin.id, pid, currency_code, new_balance)
+    result = admin_set_currency_balance(admin.id, pid, currency_code, balance_float)
     if result["ok"]:
         return RedirectResponse(
-            url=f"/admin/player/{pid}?tab={tab}&msg={currency_code}+set+to+{new_balance:.4f}",
+            url=f"/admin/player/{pid}?tab={tab}&msg={currency_code}+set+to+{balance_float:.4f}",
             status_code=303,
         )
     return RedirectResponse(
