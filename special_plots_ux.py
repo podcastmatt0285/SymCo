@@ -391,7 +391,7 @@ def institution_dashboard(
               <a href="/special-plots/{sp.id}/build" style="display:inline-block;padding:10px 24px;background:#7c3aed;color:#fff;border-radius:4px;text-decoration:none;font-weight:bold;">🏗️ Build Mint</a>
             </div>'''
         elif is_mint:
-            html += _mint_dashboard_html(sp)
+            html += _mint_dashboard_html(sp, player)
 
         return HTMLResponse(_shell(plot_name, html, 0.0, player.id))
 
@@ -400,15 +400,18 @@ def institution_dashboard(
         return HTMLResponse(_shell("Institution", f'<div style="color:#ef4444;">Error: {e}<pre style="font-size:0.75rem;color:#64748b;">{traceback.format_exc()}</pre></div>', 0.0, player.id))
 
 
-def _mint_dashboard_html(sp) -> str:
+def _mint_dashboard_html(sp, owner=None) -> str:
     """Render the full Mint institution dashboard: production status, progress, inputs, quick-buy, and coinage prices."""
     import json as _json
-    from reserve_banks import StateReserveBank, get_db as rb_get_db, get_player_display_currency, fmt_usd
+    from reserve_banks import (StateReserveBank, PlayerCurrencyBalance,
+                               get_db as rb_get_db, get_player_display_currency, fmt_usd)
     from business import Business, SessionLocal as biz_session
     from special_plots import get_mint_business_types
     from inventory import InventoryItem, SessionLocal as inv_session
+    from skin_utils import is_pro
 
     disp = get_player_display_currency(sp.owner_id)
+    owner_pro = bool(owner) and is_pro(owner)
 
     # ── Load the Business record ────────────────────────────────────────────
     biz = None
@@ -440,17 +443,36 @@ def _mint_dashboard_html(sp) -> str:
 
     # ── Load live coin prices ───────────────────────────────────────────────
     coin_banks = {}
+    # Current holdings of the struck coin (the player's live coinage balance).
+    holdings = 0.0
     try:
         rb_db = rb_get_db()
         coin_banks = {b.currency_code: b for b in rb_db.query(StateReserveBank).filter(
             StateReserveBank.currency_code.in_(list(_COIN_INFO.keys()))
         ).all()}
+        if minted_code:
+            bal = rb_db.query(PlayerCurrencyBalance).filter(
+                PlayerCurrencyBalance.player_id == sp.owner_id,
+                PlayerCurrencyBalance.currency_code == minted_code,
+            ).first()
+            holdings = bal.balance if bal else 0.0
         rb_db.close()
     except Exception:
         pass
 
-    status_label = "ACTIVE" if biz.is_active else "PAUSED"
-    status_color = "#22c55e" if biz.is_active else "#f59e0b"
+    total_minted = getattr(biz, "total_minted", 0.0) or 0.0
+
+    # Status is subscription-driven: a Mint is permanent but goes dormant when the
+    # owner's Wadsworth Pro subscription lapses (and reactivates on resubscribe).
+    if not owner_pro:
+        status_label = "DORMANT"
+        status_color = "#ef4444"
+    elif biz.is_active:
+        status_label = "ACTIVE"
+        status_color = "#22c55e"
+    else:
+        status_label = "PAUSED"
+        status_color = "#f59e0b"
     toggle_lbl   = "Pause" if biz.is_active else "Resume"
     toggle_cls   = "btn-sm-orange" if biz.is_active else "btn-sm-green"
     paused_line_idxs = set(_json.loads(biz.paused_lines or "[]"))
@@ -575,6 +597,23 @@ def _mint_dashboard_html(sp) -> str:
 
     wage_str = fmt_usd(base_wage, disp)
 
+    # Coinage counts (not USD — display in coin units alongside the code).
+    minted_str   = f"{total_minted:,.4f} {minted_code}" if minted_code else f"{total_minted:,.4f}"
+    holdings_str = f"{holdings:,.4f} {minted_code}" if minted_code else f"{holdings:,.4f}"
+
+    # Dormant banner — shown only when the subscription has lapsed.
+    dormant_banner = ""
+    if not owner_pro:
+        dormant_banner = '''
+        <div class="card" style="background:#1a0505;border-left:4px solid #ef4444;">
+          <div style="color:#fca5a5;font-weight:bold;">⚠️ This Mint is dormant</div>
+          <div style="color:#f87171;font-size:0.85rem;margin-top:4px;">
+            Your Wadsworth Pro subscription has lapsed, so this Mint is not striking coinage.
+            The Mint is <strong>permanent</strong> and your coinage holdings are safe — minting resumes
+            automatically as soon as you resubscribe.
+          </div>
+        </div>'''
+
     html = f'''
     <style>
     .btn-sm{{display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;border:none;cursor:pointer;font-size:0.78rem;font-weight:600;}}
@@ -586,6 +625,7 @@ def _mint_dashboard_html(sp) -> str:
     </style>
 
     {coin_card}
+    {dormant_banner}
 
     <div class="card" style="background:#0f172a;border-left:4px solid #7c3aed;">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;">
@@ -604,11 +644,19 @@ def _mint_dashboard_html(sp) -> str:
             <input type="hidden" name="business_id" value="{biz.id}">
             <button type="submit" class="btn-sm {toggle_cls}">{toggle_lbl}</button>
           </form>
-          <form action="/api/business/dismantle" method="post" style="display:inline;"
-            onsubmit="return confirm('Dismantle this Mint? You receive 50% of startup cost paid over 100 ticks.')">
-            <input type="hidden" name="business_id" value="{biz.id}">
-            <button type="submit" class="btn-sm btn-sm-red">Dismantle</button>
-          </form>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:14px;">
+        <div style="background:#111827;border-radius:6px;padding:10px;">
+          <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;letter-spacing:.05em;">Total Minted</div>
+          <div style="color:#fbbf24;font-weight:bold;font-size:1.05rem;margin-top:2px;">{minted_str}</div>
+          <div style="color:#475569;font-size:0.65rem;">struck by this Mint, all time</div>
+        </div>
+        <div style="background:#111827;border-radius:6px;padding:10px;">
+          <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;letter-spacing:.05em;">Current Holdings</div>
+          <div style="color:#4ade80;font-weight:bold;font-size:1.05rem;margin-top:2px;">{holdings_str}</div>
+          <div style="color:#475569;font-size:0.65rem;">your live {minted_code or "coinage"} balance</div>
         </div>
       </div>
 

@@ -63,6 +63,7 @@ class Business(Base):
     paused_lines = Column(String, default="[]")      # e.g. "[0, 2]"
     paused_products = Column(String, default="[]")   # e.g. '["bread", "milk"]'
     is_tutorial_reward = Column(Boolean, default=False)  # True → permanently wage-free
+    total_minted = Column(Float, default=0.0)  # cumulative coinage struck (mints only)
 
 class RetailPrice(Base):
     __tablename__ = "retail_prices"
@@ -107,6 +108,7 @@ def initialize():
         "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS paused_products TEXT DEFAULT '[]'",
         "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS is_tutorial_reward BOOLEAN DEFAULT FALSE",
         "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS special_plot_id INTEGER DEFAULT NULL",
+        "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS total_minted DOUBLE PRECISION DEFAULT 0.0",
     ])
     load_business_config()
     print("[Business] Module initialized with production patches and dismantling system")
@@ -401,6 +403,19 @@ def process_business_tick(db):
             else:
                 config = BUSINESS_TYPES.get(biz.business_type, {})
 
+            # Mints are dormant without an active Wadsworth Pro subscription.
+            # The mint is permanent and reactivates automatically on resubscribe —
+            # while dormant it neither advances progress nor produces coinage.
+            if getattr(biz, 'special_plot_id', None) and config.get("class") == "mint":
+                _owner = _players_by_id.get(biz.owner_id)
+                try:
+                    from skin_utils import is_pro
+                    _owner_pro = bool(_owner) and is_pro(_owner)
+                except Exception:
+                    _owner_pro = bool(_owner)
+                if not _owner_pro:
+                    continue
+
             cycles = config.get("cycles_to_complete", 1)
             # Apply city cycle-speed buff (reduces effective cycles_to_complete)
             try:
@@ -614,6 +629,8 @@ def process_business_tick(db):
                             try:
                                 from reserve_banks import credit_mint_coinage
                                 _minted = credit_mint_coinage(player.id, _currency_code, _metal_usd)
+                                if _minted > 0:
+                                    biz.total_minted = (biz.total_minted or 0.0) + _minted
                                 if player.id > 0 and _minted > 0:
                                     _biz_name = config.get("name", biz.business_type)
                                     _fire_business_push(player.id, biz.id, "mint-run",
