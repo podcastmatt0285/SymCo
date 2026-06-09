@@ -817,7 +817,9 @@ def _execute_npc_currency_switch(db, ev: "GameEvent") -> str:
             skipped += 1
             continue
         try:
-            ok, _msg = set_player_legal_tender(npc_id, target_code, admin_override=True)
+            ok, _msg = set_player_legal_tender(
+                npc_id, target_code, admin_override=True, record_forex=True
+            )
             if ok:
                 switched += 1
             else:

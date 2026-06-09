@@ -1915,7 +1915,8 @@ def get_player_legal_tender(player_id: int) -> str:
 
 
 def set_player_legal_tender(player_id: int, currency_code: str,
-                            admin_override: bool = False) -> Tuple[bool, str]:
+                            admin_override: bool = False,
+                            record_forex: bool = False) -> Tuple[bool, str]:
     """
     Change a player's legal tender.
 
@@ -1934,6 +1935,17 @@ def set_player_legal_tender(player_id: int, currency_code: str,
     machinery (repatriation fee, full balance conversion, forex fees, coin IOU
     queue, transaction logging). Used by the NPC Currency Mandate event so a
     mandated NPC switches exactly like a player does.
+
+    record_forex
+    ============
+    When True, every non-coin balance conversion also emits the SAME market signal
+    that process_income_conversion() does: a ForexTrade audit record (so the swap
+    shows on the /reserve-banks/forex feed) and a net_demand_wsc bump on the target
+    bank (+inflow) and source bank (-outflow) — so the conversion actually moves
+    exchange rates and bond yields instead of being invisible. The NPC Currency
+    Mandate passes this True so ~97 NPCs rotating their reserves produces a real,
+    visible, market-moving event. Player-initiated switches leave it False, keeping
+    their existing behaviour unchanged.
     """
     code = currency_code.upper()
 
@@ -2021,6 +2033,14 @@ def set_player_legal_tender(player_id: int, currency_code: str,
 
         is_coin_target = code in COIN_CURRENCY_CODES
 
+        # Resolve the target bank up front for demand signalling. USD has a bank
+        # row too, so a switch *to* USD can still register inflow demand.
+        target_bank = new_bank
+        if record_forex and target_bank is None and code == "USD":
+            target_bank = db.query(StateReserveBank).filter(
+                StateReserveBank.currency_code == "USD"
+            ).first()
+
         conversion_details = []
         total_iou_coins    = 0.0   # accumulated only when switching to a coin currency
         for cb in all_balances:
@@ -2062,6 +2082,25 @@ def set_player_legal_tender(player_id: int, currency_code: str,
                 conversion_details.append(
                     f"{cb.currency_code} {amt:,.2f} → {code} {new_amt:,.2f}"
                 )
+
+                if record_forex:
+                    # Same market signal as process_income_conversion(): capital
+                    # rotates OUT of the source currency and INTO the target, so
+                    # bump demand on both banks and leave a ForexTrade audit row
+                    # (which surfaces the swap on the /reserve-banks/forex feed).
+                    if target_bank is not None:
+                        target_bank.net_demand_wsc += usd_val
+                    if src_bank is not None:
+                        src_bank.net_demand_wsc -= usd_val
+                    db.add(ForexTrade(
+                        player_id     = player_id,
+                        from_currency = cb.currency_code,
+                        to_currency   = code,
+                        amount_from   = amt,
+                        amount_to     = new_amt,
+                        exchange_rate = (new_amt / amt) if amt else 0.0,
+                        fee_usd       = fee_native * usd_per_from,
+                    ))
 
         conversion_msg = ""
         if conversion_details:
