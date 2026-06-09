@@ -1,0 +1,138 @@
+{
+  "_comment": "Mint business types — only buildable on special_mint terrain (subscriber special plots).",
+
+  "mint_au24": {
+    "name": "Gold Mint (24-karat)",
+    "description": "Converts pure gold into AU24 coinage — 24-karat gold at 100% fineness. Each production run mints gold directly into circulating AU24 currency.",
+    "class": "mint",
+    "coin_currency": "AU24",
+    "allowed_terrain": ["special_mint"],
+    "startup_cost": 5000000,
+    "base_wage_cost": 250.0,
+    "cycles_to_complete": 720,
+    "production_lines": [
+      {
+        "output_item": "AU24",
+        "output_qty": 1,
+        "inputs": [
+          {"item": "gold",   "quantity": 10},
+          {"item": "energy", "quantity": 8000},
+          {"item": "paper",  "quantity": 5}
+        ]
+      }
+    ]
+  },
+
+  "mint_au22": {
+    "name": "Gold Mint (22-karat)",
+    "description": "Mints AU22 — 22-karat gold alloyed with copper for durability. 11 parts gold to 1 part copper per 12 AU22 coins.",
+    "class": "mint",
+    "coin_currency": "AU22",
+    "allowed_terrain": ["special_mint"],
+    "startup_cost": 4500000,
+    "base_wage_cost": 230.0,
+    "cycles_to_complete": 720,
+    "production_lines": [
+      {
+        "output_item": "AU22",
+        "output_qty": 1,
+        "inputs": [
+          {"item": "gold",   "quantity": 11},
+          {"item": "copper", "quantity": 1},
+          {"item": "energy", "quantity": 8000},
+          {"item": "paper",  "quantity": 5}
+        ]
+      }
+    ]
+  },
+
+  "mint_ag999": {
+    "name": "Silver Mint (999-fine)",
+    "description": "Produces AG999 — fine silver at 99.9% purity. Pure silver coinage with no alloy additions.",
+    "class": "mint",
+    "coin_currency": "AG999",
+    "allowed_terrain": ["special_mint"],
+    "startup_cost": 2000000,
+    "base_wage_cost": 150.0,
+    "cycles_to_complete": 480,
+    "production_lines": [
+      {
+        "output_item": "AG999",
+        "output_qty": 1,
+        "inputs": [
+          {"item": "silver", "quantity": 10},
+          {"item": "energy", "quantity": 4000},
+          {"item": "paper",  "quantity": 5}
+        ]
+      }
+    ]
+  },
+
+  "mint_ag925": {
+    "name": "Silver Mint (925 Sterling)",
+    "description": "Mints AG925 — sterling silver at 92.5% silver alloyed with copper. The traditional standard for silver coinage.",
+    "class": "mint",
+    "coin_currency": "AG925",
+    "allowed_terrain": ["special_mint"],
+    "startup_cost": 1800000,
+    "base_wage_cost": 140.0,
+    "cycles_to_complete": 480,
+    "production_lines": [
+      {
+        "output_item": "AG925",
+        "output_qty": 1,
+        "inputs": [
+          {"item": "silver", "quantity": 37},
+          {"item": "copper", "quantity": 3},
+          {"item": "energy", "quantity": 4000},
+          {"item": "paper",  "quantity": 5}
+        ]
+      }
+    ]
+  },
+
+  "mint_pt9995": {
+    "name": "Platinum Mint (9995-fine)",
+    "description": "Produces PT9995 — investment-grade platinum at 99.95% fineness. Rare and valuable.",
+    "class": "mint",
+    "coin_currency": "PT9995",
+    "allowed_terrain": ["special_mint"],
+    "startup_cost": 8000000,
+    "base_wage_cost": 400.0,
+    "cycles_to_complete": 960,
+    "production_lines": [
+      {
+        "output_item": "PT9995",
+        "output_qty": 1,
+        "inputs": [
+          {"item": "platinum", "quantity": 10},
+          {"item": "energy",   "quantity": 12000},
+          {"item": "paper",    "quantity": 5}
+        ]
+      }
+    ]
+  },
+
+  "mint_pt950": {
+    "name": "Platinum Mint (950)",
+    "description": "Mints PT950 — 95% platinum alloyed with copper for coinage. Widely used in premium industrial and monetary applications.",
+    "class": "mint",
+    "coin_currency": "PT950",
+    "allowed_terrain": ["special_mint"],
+    "startup_cost": 7500000,
+    "base_wage_cost": 380.0,
+    "cycles_to_complete": 960,
+    "production_lines": [
+      {
+        "output_item": "PT950",
+        "output_qty": 1,
+        "inputs": [
+          {"item": "platinum", "quantity": 19},
+          {"item": "copper",   "quantity": 1},
+          {"item": "energy",   "quantity": 12000},
+          {"item": "paper",    "quantity": 5}
+        ]
+      }
+    ]
+  }
+}

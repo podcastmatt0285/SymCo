@@ -969,6 +969,13 @@ try:
     print("Play Billing routes registered")
 except ModuleNotFoundError:
     pass
+
+try:
+    from special_plots_ux import router as special_plots_router
+    app.include_router(special_plots_router)
+    print("Special Plots routes registered")
+except ModuleNotFoundError:
+    pass
 except Exception as _pb_err:
     # Billing is non-critical — never let a billing/init failure crash startup
     # (which would take the whole game down, tick loop included).

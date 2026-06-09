@@ -122,7 +122,9 @@ TERRAIN_TYPES = {
     "district_prison_complex": {"description": "Prison facility and support services", "base_tax": 500.0},
     "district_research_campus": {"description": "University and research facility district", "base_tax": 800.0},
     "district_seaport": {"description": "Seaport shipping and trade district", "base_tax": 750.0},
-    "district_tech_park": {"description": "Technology park and data center district", "base_tax": 850.0}
+    "district_tech_park": {"description": "Technology park and data center district", "base_tax": 850.0},
+    # ── Subscriber special plot terrains ──────────────────────────────────────
+    "special_mint": {"description": "Precious metal minting facility (subscriber special plot)", "base_tax": 1200.0},
 }
 
 # Proximity features - special attributes (can have multiple)
@@ -481,6 +483,13 @@ BUSINESS_COMPATIBILITY = {
     "prison_supply_factory":          {"allowed_terrain": ["district_prison_complex", "district_prison"], "allowed_proximity": ["remote", "road"]},
     # ── Neighborhood district ─────────────────────────────────────────────────
     "neighborhood_district":          {"allowed_terrain": ["district_neighborhood"],                     "allowed_proximity": ["urban", "road"]},
+    # ── Subscriber special plots: mint businesses ─────────────────────────────
+    "mint_au24":   {"allowed_terrain": ["special_mint"], "allowed_proximity": []},
+    "mint_au22":   {"allowed_terrain": ["special_mint"], "allowed_proximity": []},
+    "mint_ag999":  {"allowed_terrain": ["special_mint"], "allowed_proximity": []},
+    "mint_ag925":  {"allowed_terrain": ["special_mint"], "allowed_proximity": []},
+    "mint_pt9995": {"allowed_terrain": ["special_mint"], "allowed_proximity": []},
+    "mint_pt950":  {"allowed_terrain": ["special_mint"], "allowed_proximity": []},
 }
 
 # ==========================
