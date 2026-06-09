@@ -220,7 +220,29 @@ def verify_play_subscription(purchase_token: str) -> dict:
 
     order_id = result.get("latestOrderId") or result.get("acknowledgementState")
 
-    return {"state": state, "expiry": expiry, "order_id": order_id, "active": active}
+    # ── CRITICAL: acknowledge the purchase ──────────────────────────────────
+    # Google Play AUTO-REFUNDS and revokes any purchase that isn't acknowledged
+    # within 3 days. The server must acknowledge active purchases here or every
+    # subscription gets clawed back ("user never used it"). Idempotent-guarded
+    # on ACKNOWLEDGEMENT_STATE_PENDING so we never re-ack an already-acked token.
+    ack_state = result.get("acknowledgementState", "")
+    if active and ack_state == "ACKNOWLEDGEMENT_STATE_PENDING":
+        prod = (items[0].get("productId") if items else None) or _SUB_ID
+        try:
+            svc.purchases().subscriptions().acknowledge(
+                packageName=_PACKAGE, subscriptionId=prod,
+                token=purchase_token, body={},
+            ).execute()
+            log.info("verify: ACKNOWLEDGED subscription token %.12s (product %s)",
+                     purchase_token, prod)
+        except Exception as exc:
+            # Don't fail verification if ack fails — log loudly; the next verify
+            # (app launch / sweep / RTDN) retries while still inside the 3-day window.
+            log.error("verify: ACKNOWLEDGE FAILED token %.12s product %s: %s",
+                      purchase_token, prod, exc)
+
+    return {"state": state, "expiry": expiry, "order_id": order_id,
+            "active": active, "ack_state": ack_state}
 
 
 # ---------------------------------------------------------------------------
