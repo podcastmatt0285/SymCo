@@ -140,14 +140,19 @@ DEFAULT_BANKS = [
     ("AED", "Central Bank of Wadsworth UAE",     "د.إ","🇦🇪", 0.040,  0.272,  -0.010, 0.25),
     ("ANA", "Sovereign Reserve Blunt Spliff of Anacostia", "Ɉ", "🌿", 0.00,  10.00, -99999.00, 420420.00),
     # ── Precious-metal coinage (subscriber Mint special plots) ────────────────
-    # usd_per_unit is overwritten each tick by the metal-peg; initial value is a
-    # rough seed so bonds have a sane starting rate.
-    ("AU24",   "Wadsworth Gold Reserve (24-karat)",      "Au",  "🥇", 0.01, 1900.0, 0.0, 0.15),
-    ("AU22",   "Wadsworth Gold Reserve (22-karat)",      "Au",  "🥇", 0.01, 1740.0, 0.0, 0.15),
-    ("AG999",  "Wadsworth Silver Reserve (999-fine)",    "Ag",  "🥈", 0.02,   24.0, 0.0, 0.20),
-    ("AG925",  "Wadsworth Silver Reserve (925 Sterling)","Ag",  "🥈", 0.02,   22.0, 0.0, 0.20),
-    ("PT9995", "Wadsworth Platinum Reserve (9995-fine)", "Pt",  "🔩", 0.01,  960.0, 0.0, 0.15),
-    ("PT950",  "Wadsworth Platinum Reserve (950)",       "Pt",  "🔩", 0.01,  912.0, 0.0, 0.15),
+    # HARD MONEY: yield band is capped at 0 (max_yield = 0) so coin bonds can NEVER
+    # pay positive interest — minting is the ONLY way new coinage enters circulation.
+    # The default yield is negative (demurrage): holding a coinage bond slowly costs
+    # you, just like storing physical bullion in a vault. Demand can push the rate
+    # further negative (down to min_yield) but never above zero.
+    # usd_per_unit is overwritten each tick by the metal-peg; the seed is a rough
+    # starting value. Format: (code, name, sym, flag, init_yield, usd_rate, min_y, max_y)
+    ("AU24",   "Wadsworth Gold Reserve (24-karat)",      "Au",  "🥇", -0.01, 1900.0, -0.05, 0.0),
+    ("AU22",   "Wadsworth Gold Reserve (22-karat)",      "Au",  "🥇", -0.01, 1740.0, -0.05, 0.0),
+    ("AG999",  "Wadsworth Silver Reserve (999-fine)",    "Ag",  "🥈", -0.01,   24.0, -0.05, 0.0),
+    ("AG925",  "Wadsworth Silver Reserve (925 Sterling)","Ag",  "🥈", -0.01,   22.0, -0.05, 0.0),
+    ("PT9995", "Wadsworth Platinum Reserve (9995-fine)", "Pt",  "🔩", -0.01,  960.0, -0.05, 0.0),
+    ("PT950",  "Wadsworth Platinum Reserve (950)",       "Pt",  "🔩", -0.01,  912.0, -0.05, 0.0),
 ]
 
 # Alloy compositions for the six coin currencies.
@@ -756,9 +761,15 @@ def _peg_coin_to_metals(db, bank: StateReserveBank):
 
     usd_per_unit = Σ (alloy_fraction × market_price_of_metal)
 
-    Yield still adjusts with bond demand (so bonds remain attractive/unattractive
-    depending on whether people buy them), but the exchange rate is commodity-driven,
-    not interest-rate-driven — just like real gold standards.
+    HARD MONEY:
+      - The exchange rate is commodity-driven, not interest-rate-driven (gold standard).
+      - The yield band is capped at 0 (max_yield = 0), so the rate can NEVER turn
+        positive — coin bonds never pay positive interest, so minting stays the only
+        way coinage is created.
+      - We deliberately DO NOT apply the upward "mean-reversion" drift that the other
+        currencies use to attract bond buyers — that would work against hard money.
+        Idle coin yields simply hold at their demurrage level; demand still pushes
+        them further negative (down to min_yield) but never above the 0 ceiling.
     """
     composition = COIN_METAL_COMPOSITIONS.get(bank.currency_code, {})
     try:
@@ -772,13 +783,10 @@ def _peg_coin_to_metals(db, bank: StateReserveBank):
     except Exception as _e:
         print(f"[ReserveBanks] Metal peg error for {bank.currency_code}: {_e}")
 
-    # Yield still responds to bond demand (identical logic, just no FX link)
-    old_yield = bank.yield_rate
+    # Demand still moves yield (net buying → more negative), but no upward reversion
+    # and a hard 0 ceiling from max_yield. Net buyers can't pull it positive.
     demand    = bank.net_demand_wsc
-    delta_yield = -demand * YIELD_SENSITIVITY
-    new_yield   = old_yield + delta_yield
-    if demand == 0.0:
-        new_yield += (bank.max_yield - new_yield) * YIELD_REVERSION_RATE
+    new_yield = bank.yield_rate + (-demand * YIELD_SENSITIVITY)
     bank.yield_rate     = max(bank.min_yield, min(bank.max_yield, new_yield))
     bank.net_demand_wsc = 0.0
 
