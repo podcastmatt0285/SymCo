@@ -786,8 +786,9 @@ def create_government_auction(from_land_bank: bool = False, bank_entry: Optional
         print(f"[LandMarket] Re-auctioning plot {plot.id} (attempt #{bank_entry.times_auctioned + 1})")
     else:
         # Creating new land from economic growth
-        # Pick random terrain (exclude district terrains - those are only created via merge)
-        base_terrains = [t for t in TERRAIN_TYPES.keys() if not t.startswith("district_")]
+        # Pick random terrain (exclude district and institution terrains — those are player-created only)
+        base_terrains = [t for t in TERRAIN_TYPES.keys()
+                         if not t.startswith("district_") and not t.startswith("special_")]
         terrain = random.choice(base_terrains)
         
         # Generate random proximity features

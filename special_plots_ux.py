@@ -401,22 +401,44 @@ def institution_dashboard(
 
 
 def _mint_dashboard_html(sp) -> str:
-    """Render the Mint dashboard: which coin this mint strikes + live coinage prices."""
-    from reserve_banks import StateReserveBank, get_db as rb_get_db
+    """Render the full Mint institution dashboard: production status, progress, inputs, quick-buy, and coinage prices."""
+    import json as _json
+    from reserve_banks import StateReserveBank, get_db as rb_get_db, get_player_display_currency, fmt_usd
     from business import Business, SessionLocal as biz_session
+    from special_plots import get_mint_business_types
+    from inventory import InventoryItem, SessionLocal as inv_session
 
-    # Identify the coin this mint strikes from its occupying business type.
-    minted_code = ""
+    disp = get_player_display_currency(sp.owner_id)
+
+    # ── Load the Business record ────────────────────────────────────────────
+    biz = None
     try:
         bdb = biz_session()
         biz = bdb.query(Business).filter(Business.id == sp.occupied_by_business_id).first()
         bdb.close()
-        if biz:
-            minted_code = _MINT_TO_COIN.get(biz.business_type, "")
+    except Exception:
+        pass
+    if not biz:
+        return '<div class="card" style="color:#f87171;">Error loading mint business data.</div>'
+
+    minted_code = _MINT_TO_COIN.get(biz.business_type, "")
+    mint_cfg    = get_mint_business_types().get(biz.business_type, {})
+    biz_name    = mint_cfg.get("name", biz.business_type.replace("_", " ").title())
+    cycles_total = mint_cfg.get("cycles_to_complete", 1)
+    base_wage    = mint_cfg.get("base_wage_cost", 0.0)
+    progress_pct = min(100.0, biz.progress_ticks / cycles_total * 100) if cycles_total > 0 else 0.0
+
+    # ── Load player inventory ───────────────────────────────────────────────
+    inv: dict = {}
+    try:
+        idb = inv_session()
+        for ii in idb.query(InventoryItem).filter(InventoryItem.player_id == sp.owner_id).all():
+            inv[ii.item_type] = ii.quantity
+        idb.close()
     except Exception:
         pass
 
-    # Load live coin prices for all coinage currencies.
+    # ── Load live coin prices ───────────────────────────────────────────────
     coin_banks = {}
     try:
         rb_db = rb_get_db()
@@ -427,37 +449,224 @@ def _mint_dashboard_html(sp) -> str:
     except Exception:
         pass
 
-    html = ''
+    status_label = "ACTIVE" if biz.is_active else "PAUSED"
+    status_color = "#22c55e" if biz.is_active else "#f59e0b"
+    toggle_lbl   = "Pause" if biz.is_active else "Resume"
+    toggle_cls   = "btn-sm-orange" if biz.is_active else "btn-sm-green"
+    paused_line_idxs = set(_json.loads(biz.paused_lines or "[]"))
+
+    # ── Production lines with input check + quick-buy ───────────────────────
+    def _qb_panel_html(item_type: str, panel_id: str, default_qty: int) -> str:
+        iname = item_type.replace("_", " ").title()
+        return (
+            f'<div class="qb-panel" id="{panel_id}" data-item="{item_type}"'
+            f' style="display:none;background:#0f172a;border:1px solid #334155;border-radius:6px;padding:10px;margin-top:6px;">'
+            f'<div style="font-size:0.72rem;color:#64748b;margin-bottom:8px;">Quick Buy: <b style="color:#e2e8f0;">{iname}</b></div>'
+            f'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">'
+            f'<div><div style="font-size:0.65rem;color:#64748b;margin-bottom:2px;">Quantity</div>'
+            f'<input type="number" class="qb-input qb-qty" value="{default_qty}" min="1" step="1"'
+            f' oninput="mintQbSchedule(this)"></div>'
+            f'<div><div style="font-size:0.65rem;color:#64748b;margin-bottom:2px;">Cap price ({disp["code"]})</div>'
+            f'<input type="number" class="qb-input qb-cap" min="0.000001" step="any" placeholder="auto"'
+            f' oninput="mintQbSchedule(this)"></div></div>'
+            f'<div class="qb-preview" style="margin-top:8px;min-height:30px;"></div>'
+            f'<form method="post" action="/api/market/quick-buy/execute" style="margin-top:8px;"'
+            f' onsubmit="return mintQbSubmit(this)">'
+            f'<input type="hidden" name="item_type" value="{item_type}">'
+            f'<input type="hidden" name="quantity" value="{default_qty}">'
+            f'<input type="hidden" name="cap_price" value="">'
+            f'<div style="display:flex;gap:6px;">'
+            f'<button type="submit" class="btn-sm btn-sm-blue" style="font-size:0.7rem;">Confirm Buy</button>'
+            f'<button type="button" class="btn-sm" style="background:#1e293b;color:#94a3b8;font-size:0.7rem;"'
+            f' onclick="document.getElementById(\'{panel_id}\').style.display=\'none\'">Cancel</button>'
+            f'</div></form></div>'
+        )
+
+    lines_html = ""
+    for li, line in enumerate(mint_cfg.get("production_lines", [])):
+        if not isinstance(line, dict):
+            continue
+        inp_parts = [f"{req['quantity']:,}× {req['item'].replace('_',' ').title()}" for req in line.get("inputs", [])]
+        inp_str   = " + ".join(inp_parts) if inp_parts else "No inputs"
+        out_str   = f"{line.get('output_qty',1):,}× {line.get('output_item','?').replace('_',' ').title()}"
+        lp        = li in paused_line_idxs
+
+        missing_items = []
+        for req in line.get("inputs", []):
+            have = inv.get(req["item"], 0)
+            need = req["quantity"]
+            if have < need:
+                missing_items.append((req["item"], have, need))
+
+        if not missing_items:
+            dot = '<span style="color:#22c55e;font-size:0.85rem;flex-shrink:0;" title="All inputs available">●</span>'
+        else:
+            tip = "Missing — " + " | ".join(f"{i.replace('_',' ').title()}: {h:,.0f}/{n:,}" for i,h,n in missing_items)
+            dot = f'<span style="color:#ef4444;font-size:0.85rem;flex-shrink:0;" title="{tip}">●</span>'
+
+        missing_html = ""
+        qb_panels    = ""
+        for item, have, need in missing_items:
+            safe  = item.replace("'","").replace('"',"")
+            pid   = f"mqbp-{biz.id}-{li}-{safe}"
+            dqty  = max(1, int(need * 5 - have))
+            iname = item.replace("_"," ").title()
+            missing_html += (
+                f'<span style="font-size:0.68rem;color:#f59e0b;">{iname} {have:,.0f}/{need:,}</span>'
+                f'<button type="button" class="btn-sm btn-sm-blue" style="font-size:0.62rem;padding:2px 5px;"'
+                f' onclick="document.getElementById(\'mqbp-{biz.id}-{li}-{safe}\').style.display=\'block\'">Buy</button> '
+            )
+            qb_panels += _qb_panel_html(item, pid, dqty)
+
+        missing_row = (
+            f'<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;'
+            f'padding:3px 8px 3px;background:#0a0e1a;border-radius:0 0 3px 3px;'
+            f'margin-top:-4px;margin-bottom:4px;">'
+            f'<span style="font-size:0.62rem;color:#475569;">Missing:</span> {missing_html}</div>'
+        ) if missing_html else ""
+
+        lines_html += f'''<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;
+            background:#111827;border-radius:4px;margin-bottom:4px;flex-wrap:wrap;">
+            {dot}
+            <span style="font-size:0.78rem;color:#94a3b8;flex:1;">{inp_str} → <strong style="color:#fbbf24;">{out_str}</strong></span>
+            <form action="/api/business/toggle-line" method="post" style="flex-shrink:0;display:inline;">
+                <input type="hidden" name="business_id" value="{biz.id}">
+                <input type="hidden" name="line_index" value="{li}">
+                <button type="submit" class="btn-sm {'btn-sm-green' if lp else 'btn-sm-orange'}">{'Resume' if lp else 'Pause'}</button>
+            </form>
+        </div>{missing_row}{qb_panels}'''
+
+    # ── Live coin price for the struck coin ─────────────────────────────────
+    coin_card = ""
     if minted_code:
         info = _COIN_INFO.get(minted_code, {})
         bank = coin_banks.get(minted_code)
-        rate = bank.usd_per_unit if bank else 0.0
-        rate_str = f"${rate:,.2f}" if rate > 1 else f"${rate:.4f}"
-        html += f'''
-        <div class="card" style="background:linear-gradient(135deg,#3a2e0a 0%,#0f172a 100%);border-left:4px solid #f59e0b;">
-          <h2 style="margin-top:0;color:#fbbf24;">{info.get("emoji","💰")} This Mint strikes {minted_code}</h2>
-          <div style="color:#94a3b8;font-size:0.9rem;">{info.get("name","")} · {info.get("alloy","")}</div>
-          <div style="color:#fbbf24;font-weight:bold;font-size:1.6rem;margin-top:8px;">{rate_str} <span style="color:#64748b;font-size:0.8rem;font-weight:normal;">per coin (live peg)</span></div>
+        rate = (bank.usd_per_unit or 0.0) if bank else 0.0
+        rate_str = fmt_usd(rate, disp)
+        coin_card = f'''<div class="card" style="background:linear-gradient(135deg,#3a2e0a 0%,#0f172a 100%);border-left:4px solid #f59e0b;">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span style="font-size:2rem;">{info.get("emoji","💰")}</span>
+            <div>
+              <div style="color:#fbbf24;font-weight:bold;font-size:1.1rem;">Strikes {minted_code} — {info.get("name","")}</div>
+              <div style="color:#94a3b8;font-size:0.82rem;">{info.get("alloy","")}</div>
+            </div>
+            <div style="margin-left:auto;text-align:right;">
+              <div style="color:#fbbf24;font-weight:bold;font-size:1.5rem;">{rate_str}</div>
+              <div style="color:#64748b;font-size:0.72rem;">per coin · live metal peg</div>
+            </div>
+          </div>
         </div>'''
 
-    # Live coinage price board (full coinage market).
-    html += '<div class="card" style="background:#0f172a;border-left:4px solid #f59e0b;">'
-    html += '<h2 style="margin-top:0;color:#fbbf24;">💰 Coinage Live Prices</h2>'
-    html += '<p style="color:#64748b;font-size:0.8rem;margin-bottom:12px;">Metal-pegged exchange rates update each game tick. <strong style="color:#fbbf24;">Hard money:</strong> coinage is created <em>only</em> by minting — coinage bonds carry a negative (demurrage) yield and can never pay positive interest, so the supply can\'t be inflated.</p>'
-    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;">'
+    # ── Full coinage price board ─────────────────────────────────────────────
+    price_board = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;">'
     for code, info in _COIN_INFO.items():
         bank = coin_banks.get(code)
-        rate = bank.usd_per_unit if bank else 0.0
-        rate_str = f"${rate:,.2f}" if rate > 1 else f"${rate:.4f}"
-        highlight = ';border:1px solid #f59e0b' if code == minted_code else ''
-        html += f'''<div style="background:#1e293b;border-radius:6px;padding:10px{highlight};">
-          <div style="font-size:1.4rem;">{info["emoji"]}</div>
+        rate = (bank.usd_per_unit or 0.0) if bank else 0.0
+        rate_str = fmt_usd(rate, disp)
+        highlight = ';border:2px solid #f59e0b' if code == minted_code else ''
+        price_board += f'''<div style="background:#1e293b;border-radius:6px;padding:10px{highlight};">
+          <div style="font-size:1.2rem;">{info["emoji"]}</div>
           <div style="color:#e2e8f0;font-weight:bold;font-size:0.9rem;">{code}</div>
-          <div style="color:#94a3b8;font-size:0.75rem;">{info["name"]}</div>
+          <div style="color:#94a3b8;font-size:0.72rem;">{info["name"]}</div>
           <div style="color:#fbbf24;font-weight:bold;margin-top:4px;">{rate_str}</div>
-          <div style="color:#475569;font-size:0.68rem;">{info["alloy"]}</div>
+          <div style="color:#475569;font-size:0.65rem;">{info["alloy"]}</div>
         </div>'''
-    html += '</div></div>'
+    price_board += '</div>'
+
+    wage_str = fmt_usd(base_wage, disp)
+
+    html = f'''
+    <style>
+    .btn-sm{{display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;border:none;cursor:pointer;font-size:0.78rem;font-weight:600;}}
+    .btn-sm-orange{{background:#f59e0b;color:#000;}}
+    .btn-sm-green{{background:#22c55e;color:#000;}}
+    .btn-sm-red{{background:#ef4444;color:#fff;}}
+    .btn-sm-blue{{background:#3b82f6;color:#fff;}}
+    .qb-panel{{display:none;}}
+    </style>
+
+    {coin_card}
+
+    <div class="card" style="background:#0f172a;border-left:4px solid #7c3aed;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span style="font-weight:bold;font-size:1.05rem;">{biz_name}</span>
+            <span class="badge" style="background:{status_color};color:#020617;font-size:0.72rem;padding:2px 8px;">{status_label}</span>
+            <span class="badge" style="background:#7c3aed;color:#fff;font-size:0.72rem;padding:2px 8px;">MINT</span>
+          </div>
+          <div style="font-size:0.75rem;color:#64748b;margin-top:4px;">
+            Institution #{sp.id} · Business #{biz.id} · Wage {wage_str}/cycle
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <form action="/api/business/toggle" method="post" style="display:inline;">
+            <input type="hidden" name="business_id" value="{biz.id}">
+            <button type="submit" class="btn-sm {toggle_cls}">{toggle_lbl}</button>
+          </form>
+          <form action="/api/business/dismantle" method="post" style="display:inline;"
+            onsubmit="return confirm('Dismantle this Mint? You receive 50% of startup cost paid over 100 ticks.')">
+            <input type="hidden" name="business_id" value="{biz.id}">
+            <button type="submit" class="btn-sm btn-sm-red">Dismantle</button>
+          </form>
+        </div>
+      </div>
+
+      <div style="margin-top:14px;">
+        <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:#94a3b8;margin-bottom:4px;">
+          <span>Minting Progress</span>
+          <span>{biz.progress_ticks:,} / {cycles_total:,} ticks ({progress_pct:.1f}%)</span>
+        </div>
+        <div style="background:#1e293b;border-radius:4px;height:10px;overflow:hidden;">
+          <div style="background:#f59e0b;height:100%;width:{min(progress_pct,100):.1f}%;transition:width 0.3s;"></div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;">
+        <div style="font-size:0.72rem;color:#64748b;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">Production Lines</div>
+        {lines_html or '<span style="color:#475569;font-size:0.82rem;">No production lines configured.</span>'}
+      </div>
+    </div>
+
+    <div class="card" style="background:#0f172a;border-left:4px solid #f59e0b;">
+      <h3 style="margin-top:0;color:#fbbf24;">💰 Coinage Live Prices</h3>
+      <p style="color:#64748b;font-size:0.8rem;margin-bottom:12px;">
+        Metal-pegged exchange rates update each game tick.
+        <strong style="color:#fbbf24;">Hard money:</strong> coinage enters circulation only by minting —
+        coinage bonds carry a negative demurrage yield and can never pay positive interest.
+      </p>
+      {price_board}
+    </div>
+
+    <script>
+    function mintQbSchedule(inp) {{
+        var panel = inp.closest('.qb-panel');
+        if (!panel) return;
+        var qty = panel.querySelector('.qb-qty').value;
+        var cap = panel.querySelector('.qb-cap').value;
+        var item = panel.dataset.item;
+        if (!qty || qty <= 0) return;
+        var params = new URLSearchParams({{item_type: item, quantity: qty}});
+        if (cap) params.append('cap_price', cap);
+        fetch('/api/market/quick-buy/preview?' + params)
+            .then(function(r){{return r.json();}})
+            .then(function(d){{
+                var pv = panel.querySelector('.qb-preview');
+                if (pv) pv.innerHTML = d.html || '';
+                var form = panel.querySelector('form');
+                if (form) {{
+                    form.querySelector('[name=quantity]').value = qty;
+                    if (cap) form.querySelector('[name=cap_price]').value = cap;
+                }}
+            }}).catch(function(){{}});
+    }}
+    function mintQbSubmit(form) {{
+        var qty = form.querySelector('[name=quantity]').value;
+        if (!qty || qty <= 0) return false;
+        return true;
+    }}
+    </script>
+    '''
     return html
 
 
