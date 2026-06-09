@@ -114,13 +114,13 @@ def special_plots_dashboard(
 
         html = f"""
         <a href="/land" style="color:#38bdf8;font-size:0.85rem;">← Land Portfolio</a>
-        <h1 style="margin:12px 0;">⚗️ Special Plots{sub_badge}</h1>
+        <h1 style="margin:12px 0;">🏛️ Institutions{sub_badge}</h1>
         {banner}
 
         <div class="card" style="background:linear-gradient(135deg,#1e1b4b 0%,#0f172a 100%);border-left:4px solid #7c3aed;">
-          <h2 style="margin-top:0;color:#a78bfa;">What are Special Plots?</h2>
+          <h2 style="margin-top:0;color:#a78bfa;">What are Institutions?</h2>
           <p style="color:#94a3b8;font-size:0.9rem;margin:0 0 8px;">
-            Special Plots are subscriber-exclusive mega-facilities created by sacrificing
+            Institutions are subscriber-exclusive mega-facilities created by sacrificing
             regular land plots using the Fibonacci progression (5, 8, 13, 21…).
             Unlike district merges, sacrificed plots <strong>do not need to be occupied</strong>.
           </p>
@@ -135,7 +135,7 @@ def special_plots_dashboard(
           <h2 style="margin-top:0;color:#a78bfa;">📊 Your Status</h2>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-top:12px;">
             <div>
-              <div style="color:#64748b;font-size:0.75rem;">SPECIAL PLOTS OWNED</div>
+              <div style="color:#64748b;font-size:0.75rem;">INSTITUTIONS OWNED</div>
               <div style="font-size:2rem;font-weight:bold;color:#7c3aed;">{len(special_plots)}</div>
             </div>
             <div>
@@ -158,8 +158,8 @@ def special_plots_dashboard(
             </div>
           </div>
           <div style="margin-top:16px;">
-            {"" if not is_sub else f'<a href="/special-plots/create" class="btn-blue" style="display:inline-block;padding:10px 20px;background:#7c3aed;color:#fff;border-radius:4px;text-decoration:none;font-weight:bold;">⚗️ Create Special Plot</a>'}
-            {"" if is_sub else '<span style="color:#64748b;font-size:0.85rem;">Subscribe to Wadsworth Pro to create special plots.</span>'}
+            {"" if not is_sub else f'<a href="/special-plots/create" class="btn-blue" style="display:inline-block;padding:10px 20px;background:#7c3aed;color:#fff;border-radius:4px;text-decoration:none;font-weight:bold;">🏛️ Create Institution</a>'}
+            {"" if is_sub else '<span style="color:#64748b;font-size:0.85rem;">Subscribe to Wadsworth Pro to create institutions.</span>'}
           </div>
         </div>
         """
@@ -184,7 +184,7 @@ def special_plots_dashboard(
 
         # Existing special plots
         if special_plots:
-            html += '<h2 style="color:#a78bfa;margin-top:32px;">⚗️ Your Special Plots</h2>'
+            html += '<h2 style="color:#a78bfa;margin-top:32px;">🏛️ Your Institutions</h2>'
             mint_types = get_mint_business_types()
             for sp in special_plots:
                 cfg = SPECIAL_PLOT_TYPES.get(sp.special_type, {})
@@ -215,13 +215,13 @@ def special_plots_dashboard(
                   </div>
                 </div>'''
         else:
-            html += '<div class="card" style="background:#0f172a;text-align:center;padding:40px;color:#64748b;"><p style="margin:0;">No special plots yet. Create your first by sacrificing land.</p></div>'
+            html += '<div class="card" style="background:#0f172a;text-align:center;padding:40px;color:#64748b;"><p style="margin:0;">No institutions yet. Create your first by sacrificing land.</p></div>'
 
-        return HTMLResponse(_shell("Special Plots", html, 0.0, player.id))
+        return HTMLResponse(_shell("Institutions", html, 0.0, player.id))
 
     except Exception as e:
         import traceback
-        return HTMLResponse(_shell("Special Plots", f'<div style="color:#ef4444;">Error: {e}<pre style="font-size:0.75rem;color:#64748b;">{traceback.format_exc()}</pre></div>', 0.0, player.id))
+        return HTMLResponse(_shell("Institutions", f'<div style="color:#ef4444;">Error: {e}<pre style="font-size:0.75rem;color:#64748b;">{traceback.format_exc()}</pre></div>', 0.0, player.id))
 
 
 # ── Creation wizard ──────────────────────────────────────────────────────────
@@ -272,8 +272,8 @@ def special_plots_create_page(session_token: Optional[str] = Cookie(None)):
     )
 
     html = f"""
-    <a href="/special-plots" style="color:#38bdf8;font-size:0.85rem;">← Special Plots</a>
-    <h1 style="margin:12px 0;">⚗️ Create Special Plot</h1>
+    <a href="/special-plots" style="color:#38bdf8;font-size:0.85rem;">← Institutions</a>
+    <h1 style="margin:12px 0;">🏛️ Create Institution</h1>
 
     <div class="card" style="background:#1e1b4b;border-left:4px solid #7c3aed;">
       <h2 style="color:#a78bfa;margin-top:0;">Requirements</h2>
@@ -306,7 +306,7 @@ def special_plots_create_page(session_token: Optional[str] = Cookie(None)):
         <p style="color:#f87171;font-size:0.85rem;margin-top:0;">⚠️ Sacrificed plots will be permanently destroyed. Any businesses on them will be removed with no refund.</p>
         <div id="sp-sel-status" style="font-size:0.9rem;margin-bottom:10px;color:#94a3b8;">Selected: <strong>0</strong> / {plots_req}</div>
         <button id="sp-submit" type="submit" disabled style="padding:12px 28px;background:#3f3f46;color:#9ca3af;border:none;border-radius:4px;font-size:1rem;font-weight:bold;cursor:not-allowed;">
-          ⚗️ Sacrifice Plots & Create Special Plot
+          🏛️ Sacrifice Plots & Create Institution
         </button>
       </div>
     </form>
@@ -333,7 +333,7 @@ def special_plots_create_page(session_token: Optional[str] = Cookie(None)):
       }}
     </script>
     """
-    return HTMLResponse(_shell("Create Special Plot", html, 0.0, player.id))
+    return HTMLResponse(_shell("Create Institution", html, 0.0, player.id))
 
 
 @router.post("/api/special-plots/create")
@@ -350,7 +350,7 @@ async def api_create_special_plot(
     sp, err = create_special_plot(player.id, special_type, plot_ids)
     if sp:
         return RedirectResponse(
-            url=f"/special-plots?msg=Special+plot+created+successfully",
+            url=f"/special-plots?msg=Institution+created+successfully",
             status_code=303,
         )
     return RedirectResponse(
@@ -421,13 +421,13 @@ def special_plot_build_page(
     err_html = f'<div style="color:#f87171;margin-bottom:12px;">{err}</div>' if err else ""
 
     html = f"""
-    <a href="/special-plots" style="color:#38bdf8;font-size:0.85rem;">← Special Plots</a>
-    <h1 style="margin:12px 0;">🏗️ Build Mint on Special Plot #{sp.id}</h1>
+    <a href="/special-plots" style="color:#38bdf8;font-size:0.85rem;">← Institutions</a>
+    <h1 style="margin:12px 0;">🏗️ Build Mint on Institution #{sp.id}</h1>
     {err_html}
 
     <div class="card" style="background:#1e293b;">
       <div style="color:#64748b;font-size:0.75rem;">PLOT</div>
-      <div style="color:#e2e8f0;">Special Plot #{sp.id} · {sp.terrain_type.replace("_"," ").title()} · {sp.size:.1f} units</div>
+      <div style="color:#e2e8f0;">Institution #{sp.id} · {sp.terrain_type.replace("_"," ").title()} · {sp.size:.1f} units</div>
     </div>
 
     <form action="/api/special-plots/{sp.id}/build" method="post">
