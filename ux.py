@@ -6656,7 +6656,7 @@ def _land_market_page_impl(session_token: Optional[str] = None, sort: str = "pri
             _terrain_opts = "".join(
                 f'<option value="{t}">{t.replace("_"," ").title()}</option>'
                 for t in sorted(TERRAIN_TYPES.keys())
-                if not t.startswith("district_")
+                if not t.startswith("district_") and not t.startswith("special_")
             )
             _prox_opts = "".join(
                 f'<option value="{p}">{PROXIMITY_FEATURES[p].get("name", p.replace("_"," ").title())}</option>'
