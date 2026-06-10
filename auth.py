@@ -1582,7 +1582,7 @@ def login_page(session_token: Optional[str] = Cookie(None)):
                         <summary>How do push notifications work? <span class="faq-icon">+</span></summary>
                         <div class="faq-answer">Two separate notification systems run in parallel:<br><br>
                         <strong>In-game notifications</strong>: stored in your feed automatically. Triggered by bond maturity and call events, executive events (hiring, aging, retirement, late payment), land efficiency floor warnings, government announcements, P2P contract updates, and major transaction events. These cannot be disabled and accumulate while you&rsquo;re offline.<br><br>
-                        <strong>Android / web push notifications</strong>: optional device alerts delivered via the Web Push API when the app is backgrounded or closed. Subscribe via Settings. You receive real-time alerts for the same major events. Opt out anytime in Settings. The Android app (currently in closed beta) delivers these as native Android notifications.</div>
+                        <strong>Android / web push notifications</strong>: optional device alerts delivered via the Web Push API when the app is backgrounded or closed. Subscribe via Settings. You receive real-time alerts for the same major events. Opt out anytime in Settings. The Android app (free on Google Play) delivers these as native Android notifications.</div>
                     </details>
 
                     <details class="faq-item">
@@ -1764,7 +1764,7 @@ def login_page(session_token: Optional[str] = Cookie(None)):
 
                     <details class="faq-item">
                         <summary>Is there a mobile app? <span class="faq-icon">+</span></summary>
-                        <div class="faq-answer">Yes. Wadsworth is available as an Android app (Trusted Web Activity) on Google Play. The app is currently in closed testing while the game is in beta. The full game runs in any modern browser — Chrome, Firefox, Safari, and Edge are all supported. The game is mobile-responsive, so the browser version works well on phones and tablets without the app.</div>
+                        <div class="faq-answer">Yes. Wadsworth is available as an Android app (Trusted Web Activity) on Google Play. The app is free on Google Play — join as a tester via the Founding Operative event. The full game also runs in any modern browser — Chrome, Firefox, Safari, and Edge are all supported. The game is mobile-responsive, so the browser version works well on phones and tablets without the app.</div>
                     </details>
 
                     <details class="faq-item">
@@ -2297,9 +2297,9 @@ async def register(
 def founding_page():
     """Public landing page for the Founding Operative beta program — no login required."""
     from beta import (
-        PLAY_STORE_URL, GOOGLE_GROUP_URL,
+        PLAY_STORE_URL, GOOGLE_GROUP_URL, TESTER_OPTIN_URL,
         FOUNDING_OPERATIVE_TROPHIES, POCKET_EMPIRE_TROPHIES, ACTIVE_DUTY_TROPHIES,
-        get_available_count, get_total_count,
+        SUB_TRIAL_DAYS, get_available_count, get_total_count,
     )
     try:
         _available = get_available_count()
@@ -2309,34 +2309,47 @@ def founding_page():
         _slots_html = f'''
             <div class="fo-meter-wrap">
                 <div class="fo-meter-bar"><div class="fo-meter-fill" style="width:{_slots_pct}%;"></div></div>
-                <div class="fo-meter-label">{_assigned} / {_total} slots claimed</div>
+                <div class="fo-meter-label">{_assigned} / {_total} Pro bonus slots claimed</div>
             </div>'''
         if _available == 0:
-            _cta_html = '<div class="fo-full-msg">All founding slots have been filled. Thank you to everyone who joined!</div>'
+            _cta_html = f'''
+            <a href="{TESTER_OPTIN_URL}" class="fo-btn fo-btn-gold" target="_blank" rel="noopener">
+                📲&nbsp; Opt In as Tester
+            </a>
+            <a href="{PLAY_STORE_URL}" class="fo-btn fo-btn-primary" target="_blank" rel="noopener">
+                ▶&nbsp; Download FREE on Google Play
+            </a>
+            <div class="fo-full-msg" style="margin-top:0;">All Pro bonus slots have been filled — but you can still download the free app and join as a tester!</div>'''
         else:
             _cta_html = f'''
-            <a href="{PLAY_STORE_URL}" class="fo-btn fo-btn-primary" target="_blank" rel="noopener">
-                ▶&nbsp; Get the Android App
+            <a href="{TESTER_OPTIN_URL}" class="fo-btn fo-btn-gold" target="_blank" rel="noopener">
+                📲&nbsp; Opt In as Tester
             </a>
-            <a href="{GOOGLE_GROUP_URL}" class="fo-btn fo-btn-gold" target="_blank" rel="noopener">
+            <a href="{PLAY_STORE_URL}" class="fo-btn fo-btn-primary" target="_blank" rel="noopener">
+                ▶&nbsp; Download FREE on Google Play
+            </a>
+            <a href="{GOOGLE_GROUP_URL}" class="fo-btn fo-btn-secondary" target="_blank" rel="noopener">
                 Join the Google Group
             </a>
             <a href="/login" class="fo-btn fo-btn-secondary">
-                Log In &amp; Submit Email
+                Log In &amp; Submit Email for Pro Bonus
             </a>'''
     except Exception:
         _available = 0
         _total     = 48
         _slots_html = ""
         _cta_html = f'''
-            <a href="{PLAY_STORE_URL}" class="fo-btn fo-btn-primary" target="_blank" rel="noopener">
-                ▶&nbsp; Get the Android App
+            <a href="{TESTER_OPTIN_URL}" class="fo-btn fo-btn-gold" target="_blank" rel="noopener">
+                📲&nbsp; Opt In as Tester
             </a>
-            <a href="{GOOGLE_GROUP_URL}" class="fo-btn fo-btn-gold" target="_blank" rel="noopener">
+            <a href="{PLAY_STORE_URL}" class="fo-btn fo-btn-primary" target="_blank" rel="noopener">
+                ▶&nbsp; Download FREE on Google Play
+            </a>
+            <a href="{GOOGLE_GROUP_URL}" class="fo-btn fo-btn-secondary" target="_blank" rel="noopener">
                 Join the Google Group
             </a>
             <a href="/login" class="fo-btn fo-btn-secondary">
-                Log In &amp; Submit Email
+                Log In &amp; Submit Email for Pro Bonus
             </a>'''
 
     return f"""<!DOCTYPE html>
@@ -2345,17 +2358,17 @@ def founding_page():
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Founding Operative · Wadsworth Tycoon</title>
-    <meta name="description" content="Join the Wadsworth Economic Tycoon Simulator as a Founding Tester. Get an exclusive Google Play promo code, earn 150 trophies, and unlock the permanent Founding Tester badge.">
+    <meta name="description" content="Join the Wadsworth Economic Tycoon Simulator as a Founding Tester. The app is FREE — download it, earn 150 trophies, get a permanent badge, and claim 30 days of Wadsworth Pro FREE.">
 
     <!-- Open Graph / Reddit / Discord rich preview -->
     <meta property="og:type"        content="website">
     <meta property="og:title"       content="🎖️ Founding Operative — Wadsworth Tycoon">
-    <meta property="og:description" content="Become a Founding Tester of Wadsworth. Free Android download · 150 trophy reward · permanent badge · 30 days of Pro FREE. {_available} slots remaining.">
+    <meta property="og:description" content="Wadsworth Android is FREE. Join the closed beta, earn 150 trophies, get a permanent Founding Tester badge + {_available} Pro bonus slots remaining.">
     <meta property="og:image"       content="/static/icons/apple-touch-icon.png">
     <meta property="og:url"         content="/founding">
     <meta name="twitter:card"       content="summary">
     <meta name="twitter:title"      content="🎖️ Founding Operative — Wadsworth Tycoon">
-    <meta name="twitter:description" content="Join the closed Android beta. Free promo code · 150 trophies · exclusive badge · 30 days of Pro FREE. {_available} slots left.">
+    <meta name="twitter:description" content="Wadsworth Android is FREE to download. 150 trophies · exclusive badge · 30 days of Pro FREE. {_available} Pro slots left.">
 
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#020617">
@@ -2553,9 +2566,9 @@ def founding_page():
 
             <p class="fo-subtitle">
                 Be among the first to build your empire on Android.
-                Join the closed beta, get a <strong style="color:#e5c88a;font-style:normal;">free promo code</strong>,
-                earn a permanent Founding Tester badge — and get
-                <strong style="color:#c4b5fd;font-style:normal;">30 days of Wadsworth Pro FREE</strong>.
+                The app is <strong style="color:#e5c88a;font-style:normal;">FREE to download</strong> —
+                join the closed beta, earn a permanent Founding Tester badge,
+                and claim <strong style="color:#c4b5fd;font-style:normal;">{SUB_TRIAL_DAYS} days of Wadsworth Pro FREE</strong>.
             </p>
 
             <div class="fo-rewards">
@@ -2621,9 +2634,9 @@ def founding_page():
                 <summary>Step 2 — Join the Google Group <span class="fo-step-icon">+</span></summary>
                 <div class="fo-step-body">
                     Visit <a href="{GOOGLE_GROUP_URL}" target="_blank" rel="noopener">groups.google.com/g/wadstycoon</a>
-                    and click <strong>Join group</strong> with your Google account. This is how
-                    Google Play verifies you as a tester. The group is free to join and you can
-                    leave at any time after receiving your code.
+                    and click <strong>Join group</strong> with your Google account. Google Play
+                    uses this group to manage the closed-testing roster — membership is required
+                    for the tester download link to work. The group is free to join.
                 </div>
             </details>
 
@@ -2633,21 +2646,21 @@ def founding_page():
                     Log in, go to <strong>Events &amp; Tasks</strong>, and find the
                     <strong>Founding Operative</strong> event. Submit the Google account email
                     you used to join the group. An admin will verify your membership —
-                    usually within a few hours — and deliver <strong>two codes</strong> via
-                    in-game notification: your free app download code, plus a bonus code for
-                    <strong style="color:#c4b5fd;">30 days of the Wadsworth Pro supporters
-                    subscription, free</strong>.
+                    usually within a few hours — and send you a dashboard notification with the
+                    tester download link <strong>plus a bonus code for
+                    <span style="color:#c4b5fd;">{SUB_TRIAL_DAYS} days of Wadsworth Pro FREE</span></strong>.
                 </div>
             </details>
 
             <details class="fo-step">
-                <summary>Step 4 — Redeem on Google Play <span class="fo-step-icon">+</span></summary>
+                <summary>Step 4 — Opt in as a tester &amp; download the free app <span class="fo-step-icon">+</span></summary>
                 <div class="fo-step-body">
-                    Open the <a href="{PLAY_STORE_URL}" target="_blank" rel="noopener">Wadsworth listing on Google Play</a>,
-                    tap <strong>Redeem</strong> and enter your code. The app installs free.
-                    It's a Trusted Web Activity (TWA) — a thin native shell around the
-                    same game you already play in the browser, with full Android notification
-                    support and a home-screen widget.
+                    Visit <a href="{TESTER_OPTIN_URL}" target="_blank" rel="noopener">the tester opt-in page</a>
+                    and tap <strong>Become a tester</strong>. After that, the
+                    <a href="{PLAY_STORE_URL}" target="_blank" rel="noopener">Play Store listing</a>
+                    will show a free <strong>Install</strong> button. The app is a Trusted Web
+                    Activity (TWA) — the same game you play in the browser, wrapped with native
+                    Android notifications and a home-screen widget.
                 </div>
             </details>
 
@@ -2670,7 +2683,7 @@ def founding_page():
         <a href="/banks/indices/unloggedin">Market Indices</a> &nbsp;·&nbsp;
         <a href="{PLAY_STORE_URL}" target="_blank" rel="noopener">Google Play</a>
         <br><br>
-        Wadsworth Economic Tycoon Simulator — closed Android beta
+        Wadsworth Economic Tycoon Simulator — Android closed testing
     </div>
 
 </div>
