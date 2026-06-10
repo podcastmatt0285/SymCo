@@ -1557,7 +1557,23 @@ def buy_crypto_with_cash(player_id: int, crypto_symbol: str, cash_amount: float)
         net_cash = cash_amount - fee
         crypto_amount = net_cash / price
 
-        # Deduct cash from player (supports foreign legal tender)
+        # Validate EVERYTHING before taking the player's money.
+        # spend_player_funds() commits immediately in the reserve DB — a
+        # rollback of this session cannot un-spend it, so any return after
+        # the spend that doesn't refund permanently burns the player's cash
+        # (observed: $10k vanished on a "not enough supply" rejection).
+
+        # Gas is deducted from the tokens being received (buyer pays gas from their inbound amount)
+        gas_fee = max(county.gas_price or BASE_GAS_PRICE, BASE_GAS_PRICE) * GAS_UNITS_EXCHANGE
+        net_crypto = crypto_amount - gas_fee
+        if net_crypto <= 0:
+            return False, f"Transaction too small to cover gas fee ({gas_fee:.6f} {crypto_symbol})"
+
+        remaining = get_remaining_supply(county)
+        if crypto_amount > remaining:
+            return False, f"Not enough supply remaining. Only {remaining:,.6f} {crypto_symbol} left to mint (max supply: {(county.max_supply or MAX_TOKEN_SUPPLY):,.0f})"
+
+        # All checks passed — deduct cash from player (supports foreign legal tender)
         ok, err = spend_player_funds(player.id, cash_amount)
         if not ok:
             return False, f"Payment failed: {err}"
@@ -1578,19 +1594,6 @@ def buy_crypto_with_cash(player_id: int, crypto_symbol: str, cash_amount: float)
             db.add(wallet)
             db.flush()
 
-        # Gas is deducted from the tokens being received (buyer pays gas from their inbound amount)
-        gas_fee = max(county.gas_price or BASE_GAS_PRICE, BASE_GAS_PRICE) * GAS_UNITS_EXCHANGE
-        net_crypto = crypto_amount - gas_fee
-        if net_crypto <= 0:
-            db.rollback()
-            return False, f"Transaction too small to cover gas fee ({gas_fee:.6f} {crypto_symbol})"
-
-        # Supply check and minted-counter update BEFORE crediting the wallet so
-        # that an early return cannot leave tokens in a player's wallet without
-        # the corresponding supply counter increment being committed.
-        remaining = get_remaining_supply(county)
-        if crypto_amount > remaining:
-            return False, f"Not enough supply remaining. Only {remaining:,.6f} {crypto_symbol} left to mint (max supply: {(county.max_supply or MAX_TOKEN_SUPPLY):,.0f})"
         county.total_crypto_minted += crypto_amount
 
         county.mining_energy_pool = (county.mining_energy_pool or 0.0) + gas_fee
