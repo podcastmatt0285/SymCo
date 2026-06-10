@@ -128,7 +128,12 @@ class EconomicMilestone(Base):
 
 AUCTION_DURATION_TICKS = 4000
 PRICE_DROP_RATE = 0.15  # Price drops to 35% every hour
-ECONOMIC_THRESHOLD = 10000000  # $1M triggers 1 new plot
+ECONOMIC_THRESHOLD = 10_000_000_000  # $10B of total economy cash triggers 1 new plot
+# Was $10M — with ~97 NPCs seeded with $36B+ combined, the milestone engine
+# minted 3,635 plots (89% of all land sat government-owned). At $10B the
+# existing 3,635 triggered milestones already cover the current economy
+# (~$36B → milestone 3), so no new land until total cash crosses $40B —
+# no migration needed, the old milestone rows simply stand.
 LAND_BANK_ID = -1  # Special owner ID for land bank
 GOVERNMENT_ID = 0  # Government owner ID
 LAND_BANK_MAX_SLOTS = 1000  # Maximum plots the land bank can hold
@@ -687,22 +692,57 @@ def remove_from_land_bank(land_plot_id: int) -> bool:
 # GOVERNMENT AUCTIONS
 # ==========================
 
+def _total_economy_cash_usd() -> float:
+    """Total cash held by every player account, valued in USD.
+
+    One batch query over PlayerCurrencyBalance with live forex rates instead
+    of the old per-player get_usd_balance() loop, which (a) issued ~200
+    sequential queries every 2.5 minutes inside the tick and (b) counted ONLY
+    the USD balance row — an NPC Currency Mandate (e.g. all NPCs on TRY)
+    would make the entire NPC cash pile invisible to the milestone engine.
+    """
+    try:
+        from sqlalchemy import func as _f
+        from database import ReserveSessionLocal
+        from reserve_banks import PlayerCurrencyBalance, StateReserveBank
+        from auth import get_db as get_auth_db, Player
+
+        auth_db = get_auth_db()
+        try:
+            player_ids = [r[0] for r in auth_db.query(Player.id).all()]
+        finally:
+            auth_db.close()
+        if not player_ids:
+            return 0.0
+
+        rdb = ReserveSessionLocal()
+        try:
+            rates = {b.currency_code: float(b.usd_per_unit or 0.0)
+                     for b in rdb.query(StateReserveBank).all()}
+            rates.setdefault("USD", 1.0)
+            rows = (rdb.query(PlayerCurrencyBalance.currency_code,
+                              _f.sum(PlayerCurrencyBalance.balance))
+                    .filter(PlayerCurrencyBalance.player_id.in_(player_ids),
+                            PlayerCurrencyBalance.balance > 0)
+                    .group_by(PlayerCurrencyBalance.currency_code)
+                    .all())
+            return sum(float(amt or 0.0) * rates.get(code, 0.0)
+                       for code, amt in rows)
+        finally:
+            rdb.close()
+    except Exception as e:
+        print(f"[LandMarket] total cash error: {e}")
+        return 0.0
+
+
 def check_economic_triggers() -> int:
     """
     Check if economy has grown enough to warrant new land.
     Returns number of plots to create.
     Uses milestone tracking to prevent duplicate creation.
     """
-    from auth import get_db as get_auth_db, Player
-    from reserve_banks import get_usd_balance
+    total_cash = _total_economy_cash_usd()
 
-    auth_db = get_auth_db()
-    try:
-        players = auth_db.query(Player).all()
-        total_cash = sum(get_usd_balance(p.id) for p in players)
-    finally:
-        auth_db.close()
-    
     # Calculate current milestone level
     current_milestone = int(total_cash / ECONOMIC_THRESHOLD)
     
@@ -1113,15 +1153,7 @@ def tick(current_tick: int, now: datetime):
             print(f"[LandMarket] Economy expanded! Creating {plots_needed} new auction(s)")
 
             # Get current milestone level
-            from auth import get_db as get_auth_db, Player
-            from reserve_banks import get_usd_balance
-            auth_db = get_auth_db()
-            try:
-                players = auth_db.query(Player).all()
-                total_cash = sum(get_usd_balance(p.id) for p in players)
-            finally:
-                auth_db.close()
-            
+            total_cash = _total_economy_cash_usd()
             current_milestone = int(total_cash / ECONOMIC_THRESHOLD)
             
             # Find which milestones need creation
