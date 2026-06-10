@@ -2524,35 +2524,31 @@ def home(request: Request, session_token: Optional[str] = Cookie(None)):
             _pn_title   = _pn["title"]
             _pn_body    = _pn["body"]
             _pn_payload = _pn.get("payload", {})
-            _pn_code    = _pn_payload.get("code", "")
-            _pn_ps_url  = _pn_payload.get("play_store", "")
-            _pn_grp_url = _pn_payload.get("group_url", "")
-            _pn_sub     = _pn_payload.get("sub_code", "")
-            _pn_sub_url = _pn_payload.get("sub_redeem", "")
+            _pn_ps_url   = _pn_payload.get("play_store", "")
+            _pn_optin    = _pn_payload.get("optin_url", "")
+            _pn_grp_url  = _pn_payload.get("group_url", "")
+            _pn_sub      = _pn_payload.get("sub_code", "")
+            _pn_sub_url  = _pn_payload.get("sub_redeem", "")
             _pn_sub_days = _pn_payload.get("sub_days", 30)
 
+            # App is free — show download buttons
             _code_block = ""
-            if _pn_code:
+            if _pn_ps_url or _pn_optin:
+                _step_hint = ""
+                if _pn_optin:
+                    _step_hint = (
+                        f'<div style="font-size:0.75rem;color:#78350f;margin-top:8px;">'
+                        f'Step 1: <a href="{_pn_optin}" target="_blank" rel="noopener" style="color:#fbbf24;">Opt in as a tester</a>'
+                        f' &nbsp;→&nbsp; Step 2: <a href="{_pn_ps_url}" target="_blank" rel="noopener" style="color:#fbbf24;">Open Play Store</a>'
+                        f' (free download) &nbsp;→&nbsp; Step 3: Log in from the app to earn your badge!'
+                        f'</div>'
+                    )
                 _code_block = f"""
-                <div style="margin:14px 0 10px;background:#0a0f1e;border:1px solid #f59e0b;
-                            border-radius:8px;padding:12px 16px;display:flex;align-items:center;
-                            justify-content:space-between;gap:12px;flex-wrap:wrap;">
-                    <div>
-                        <div style="font-size:0.65rem;color:#92400e;letter-spacing:.1em;
-                                    text-transform:uppercase;margin-bottom:4px;">Your Promo Code</div>
-                        <div id="pn-code-{_pn_id}" style="font-size:1.1rem;font-weight:800;
-                             color:#fbbf24;letter-spacing:.15em;font-family:monospace;">{_pn_code}</div>
-                    </div>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                        <button onclick="navigator.clipboard.writeText('{_pn_code}');this.textContent='Copied!';setTimeout(()=>this.textContent='Copy Code',1500)"
-                                style="background:#f59e0b;color:#020617;border:none;border-radius:6px;
-                                       padding:8px 16px;font-size:0.78rem;font-weight:700;cursor:pointer;">
-                            Copy Code
-                        </button>
-                        {'<a href="' + _pn_ps_url + '" target="_blank" rel="noopener" style="background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:6px;padding:8px 16px;font-size:0.78rem;font-weight:600;text-decoration:none;">Open Play Store ↗</a>' if _pn_ps_url else ''}
-                    </div>
+                <div style="margin:14px 0 10px;display:flex;gap:8px;flex-wrap:wrap;">
+                    {'<a href="' + _pn_optin + '" target="_blank" rel="noopener" style="background:#f59e0b;color:#020617;border:none;border-radius:6px;padding:10px 18px;font-size:0.82rem;font-weight:700;text-decoration:none;">📲 Opt In as Tester ↗</a>' if _pn_optin else ''}
+                    {'<a href="' + _pn_ps_url + '" target="_blank" rel="noopener" style="background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:6px;padding:10px 18px;font-size:0.82rem;font-weight:600;text-decoration:none;">▶ Google Play (FREE) ↗</a>' if _pn_ps_url else ''}
                 </div>
-                {'<div style="font-size:0.75rem;color:#78350f;margin-top:6px;">Step 1: <a href="' + _pn_grp_url + '" target="_blank" rel="noopener" style="color:#fbbf24;">Join the Google Group</a> &nbsp;→&nbsp; Step 2: Copy the code above &nbsp;→&nbsp; Step 3: Open the Play Store link and redeem the code &nbsp;→&nbsp; Step 4: Log in from the app to earn your Founding Tester badge!</div>' if _pn_grp_url else ''}"""
+                {_step_hint}"""
 
             if _pn_sub:
                 _code_block += f"""
@@ -17694,7 +17690,7 @@ def events_page(request: Request,
         from beta import (get_available_count, get_total_count, get_player_request,
                           FOUNDING_OPERATIVE_TROPHIES, POCKET_EMPIRE_TROPHIES,
                           ACTIVE_DUTY_TROPHIES, PLAY_STORE_URL, GOOGLE_GROUP_URL,
-                          has_pocket_empire)
+                          TESTER_OPTIN_URL, has_pocket_empire)
         _avail = get_available_count()
         _total = get_total_count()
         _used  = _total - _avail
@@ -17740,7 +17736,7 @@ def events_page(request: Request,
 
         # Founding Operative status
         if _req and _req.status == "approved":
-            _ev1_status = '<span style="color:#4ade80;font-weight:700;">✓ Completed — check your dashboard notification for your promo code!</span>'
+            _ev1_status = '<span style="color:#4ade80;font-weight:700;">✓ Verified — check your dashboard for the free app download link!</span>'
         elif _req and _req.status == "pending":
             _ev1_status = '<span style="color:#fbbf24;">⏳ Verification pending — we\'ll notify you in-game once approved.</span>'
         elif _req and _req.status == "rejected":
@@ -17756,21 +17752,22 @@ def events_page(request: Request,
                 <button type="submit"
                         style="background:#f59e0b;color:#020617;border:none;border-radius:6px;
                                padding:8px 16px;font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;">
-                    Request Code
+                    Submit Email
                 </button>
             </form>
             <div style="font-size:0.72rem;color:#475569;margin-top:6px;">
                 First <a href="{GOOGLE_GROUP_URL}" target="_blank" rel="noopener" style="color:#fbbf24;">join the Wadsworth Tycoon group</a>,
-                then enter the Google account email you used to join. We'll verify your membership and send your code.
+                then enter the Google account email you used to join. We'll verify your membership and send you
+                the free tester download link + a 30-day Wadsworth Pro bonus.
             </div>"""
 
         # Pocket Empire status
         if _has_badge:
             _ev2_status = '<span style="color:#4ade80;font-weight:700;">✓ Completed — Founding Tester badge unlocked!</span>'
         elif _req and _req.status == "approved":
-            _ev2_status = f'<a href="{PLAY_STORE_URL}" target="_blank" rel="noopener" style="color:#38bdf8;font-weight:600;">Download the app ↗</a><span style="color:#475569;"> then log in from it to complete this event.</span>'
+            _ev2_status = f'<a href="{TESTER_OPTIN_URL}" target="_blank" rel="noopener" style="color:#f59e0b;font-weight:600;">Opt in as a tester ↗</a><span style="color:#475569;"> then </span><a href="{PLAY_STORE_URL}" target="_blank" rel="noopener" style="color:#38bdf8;font-weight:600;">download the free app ↗</a><span style="color:#475569;"> and log in to complete this event.</span>'
         else:
-            _ev2_status = '<span style="color:#475569;">Complete Founding Operative first to unlock your promo code.</span>'
+            _ev2_status = '<span style="color:#475569;">Complete Founding Operative first to get your download link.</span>'
 
         # Active Duty (daily) — check today's login
         try:
@@ -17796,10 +17793,11 @@ def events_page(request: Request,
             {_slots_bar}
             {_beta_ev_card("🕵️", "Founding Operative", FOUNDING_OPERATIVE_TROPHIES,
                 "Join the Wadsworth Tycoon Google Group and submit your Google account email. "
-                "We'll verify your membership and deliver an exclusive promo code to your dashboard.",
+                "We'll verify your membership and send you the free tester download link "
+                "plus a bonus 30 days of Wadsworth Pro.",
                 _ev1_status, "#f59e0b")}
             {_beta_ev_card("📱", "Pocket Empire", POCKET_EMPIRE_TROPHIES,
-                "Download the Wadsworth Android app using your promo code and log in from it for the first time. "
+                "Download the FREE Wadsworth Android app (opt in as a tester first) and log in from it for the first time. "
                 "Earns you permanent Founding Tester status visible on your contact card.",
                 _ev2_status, "#38bdf8")}
             {_beta_ev_card("⚔️", "Active Duty", ACTIVE_DUTY_TROPHIES,
