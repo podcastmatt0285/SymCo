@@ -429,40 +429,49 @@ def initialize():
     print(f"[Banks] System initialized with {len(BANK_MODULES)} active bank(s)")
 
 
-async def tick(current_tick: int, now: datetime):
+def tick(current_tick: int, now: datetime):
     """
     Banking system tick handler.
-    
+
     Handles:
     - Reserve tax collection
     - Share price updates
     - Coordinated tick for all bank modules
+
+    SYNC on purpose: app.py dispatches sync ticks via run_in_threadpool, so
+    all the DB work below runs in a worker thread. The previous async version
+    executed every bank's queries directly on the event loop, blocking all
+    HTTP requests each tick. The bank modules' tick() functions are async in
+    signature only (zero awaits), so each is driven to completion here with
+    asyncio.run() inside the worker thread.
     """
+    import asyncio
+
     # Update cache every 60 ticks (1 minute)
     if current_tick % 60 == 0:
         update_bank_cache()
-    
+
     # Process each registered bank
     for bank_id, module in BANK_MODULES.items():
         try:
             # Apply reserve tax
             apply_reserve_tax(bank_id, current_tick)
-            
+
             # Get fresh bank entity
             bank_entity = get_bank_entity(bank_id)
-            
+
             if not bank_entity:
                 continue
-            
-            # Call bank's tick handler
-            await module.tick(current_tick, now, bank_entity)
-            
+
+            # Call bank's tick handler (async signature, sync body)
+            asyncio.run(module.tick(current_tick, now, bank_entity))
+
             # Update share price based on latest NAV
             update_share_price(bank_id)
-            
+
         except Exception as e:
             print(f"[Banks] ERROR in {bank_id} tick: {e}")
-    
+
     # Log system stats every hour
     if current_tick % 3600 == 0:
         log_banking_stats()

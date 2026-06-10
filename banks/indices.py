@@ -2592,5 +2592,11 @@ async def tick(tick_number: int, now: datetime):
     _tick_counter += 1
     if _tick_counter >= SAMPLE_EVERY:
         _tick_counter = 0
-        calculate_all_indices()
-        _check_index_alerts()
+        # Run the snapshot cycle in a worker thread. calculate_all_indices()
+        # is seconds of synchronous DB work across 19 calculators — running
+        # it inline on the event loop froze every HTTP request (and tripped
+        # the SLOW-module warning) once every 10 minutes.
+        import asyncio
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, calculate_all_indices)
+        await loop.run_in_executor(None, _check_index_alerts)

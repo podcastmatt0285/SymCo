@@ -986,12 +986,25 @@ def get_market_price(item_type: str) -> Optional[float]:
             # the price downward, which is safe), and only use a lone bid as a
             # last resort when there is no trade history at all.
             cutoff = datetime.utcnow() - timedelta(days=_PRICE_STALENESS_DAYS)
+            # Prefer trades involving at least one HUMAN player. Pure NPC↔NPC
+            # trades can wash-ratchet each other to absurd prices (two grocer
+            # NPCs ping-ponged jam to $110B/unit); they must not set the
+            # reference price the rest of the economy keys off. Fall back to
+            # any trade only when no human has traded the item in the window.
             last_trade = (
                 db.query(Trade)
-                .filter(Trade.item_type == item_type, Trade.executed_at >= cutoff)
+                .filter(Trade.item_type == item_type, Trade.executed_at >= cutoff,
+                        (Trade.buyer_id > 0) | (Trade.seller_id > 0))
                 .order_by(Trade.executed_at.desc())
                 .first()
             )
+            if not last_trade:
+                last_trade = (
+                    db.query(Trade)
+                    .filter(Trade.item_type == item_type, Trade.executed_at >= cutoff)
+                    .order_by(Trade.executed_at.desc())
+                    .first()
+                )
             if last_trade:
                 price = last_trade.price
             elif best_ask:
@@ -1075,6 +1088,23 @@ def tick(current_tick: int, now: datetime):
                 MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED])
             ).count()
             print(f"[Market] Hourly Stats: {get_market_stats()} | Open orders: {total}")
+            # Prune dead orders (filled/cancelled/expired > 30 days old). They
+            # serve no purpose — trades carry the price history — but every
+            # NPC cycle and order-book scan wades through them; at ~50% of the
+            # table they were a major part of the 10s NPC tick.
+            try:
+                _prune_cutoff = now - timedelta(days=30)
+                _pruned = db.query(MarketOrder).filter(
+                    MarketOrder.status.in_([OrderStatus.FILLED, OrderStatus.CANCELLED,
+                                            OrderStatus.EXPIRED]),
+                    MarketOrder.created_at < _prune_cutoff,
+                ).delete(synchronize_session=False)
+                db.commit()
+                if _pruned:
+                    print(f"[Market] Pruned {_pruned} dead orders (>30 days).")
+            except Exception as _pe:
+                db.rollback()
+                print(f"[Market] Order prune error: {_pe}")
     except Exception as e:
         print(f"[Market] Tick error: {e}")
     finally:
