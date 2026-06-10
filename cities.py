@@ -794,7 +794,7 @@ def process_application_approval(application_id: int) -> Tuple[bool, str]:
         if not mayor:
             return False, "Mayor not found"
         
-        from reserve_banks import spend_player_funds, can_afford_usd, convert_to_legal_tender
+        from reserve_banks import spend_player_funds, can_afford_usd, convert_to_legal_tender, credit_usd
         if not can_afford_usd(application.applicant_id, application.calculated_fee):
             application.status = "rejected"
             db.commit()
@@ -807,11 +807,11 @@ def process_application_approval(application_id: int) -> Tuple[bool, str]:
             return False, f"Fee payment failed: {_err}"
 
         try:
-            _amt, _code = convert_to_legal_tender(mayor.id, application.calculated_fee)
-            if _code == "USD":
-                mayor.cash_balance += _amt
+            # convert_to_legal_tender credits the mayor's PlayerCurrencyBalance
+            # internally — no legacy cash_balance write needed.
+            convert_to_legal_tender(mayor.id, application.calculated_fee)
         except Exception:
-            mayor.cash_balance += application.calculated_fee
+            credit_usd(mayor.id, application.calculated_fee)
         # Log application fee transactions
         log_transaction(
             application.applicant_id,
@@ -1020,16 +1020,14 @@ def process_banishment(city_id: int, player_id: int) -> Tuple[bool, str]:
                 # Mayor pays in their own tender; player receives in theirs
                 ok, _err = spend_player_funds(mayor.id, reimbursement)
                 if ok:
-                    _amt, _code = _clt(player_id, reimbursement)
-                    if _code == "USD":
-                        player.cash_balance += _amt
+                    # _clt credits the player's PlayerCurrencyBalance internally.
+                    _clt(player_id, reimbursement)
                     print(f"[Cities] Mayor paid {reimbursement:,.2f} reimbursement for banished Player {player_id}")
             elif bank and bank.cash_reserves >= reimbursement:
                 # City bank covers it
                 bank.cash_reserves -= reimbursement
-                _amt, _code = _clt(player_id, reimbursement)
-                if _code == "USD":
-                    player.cash_balance += _amt
+                # _clt credits the player's PlayerCurrencyBalance internally.
+                _clt(player_id, reimbursement)
                 print(f"[Cities] City bank paid ${reimbursement:,.2f} reimbursement for banished Player {player_id}")
             else:
                 # Insufficient funds in both — proceed without reimbursement
@@ -1365,11 +1363,12 @@ def pay_production_subsidy(player_id: int, business_id: int, production_cost: fl
         bank.cash_reserves -= subsidy
         try:
             from reserve_banks import convert_to_legal_tender
-            _amt, _code = convert_to_legal_tender(player.id, subsidy)
-            if _code == "USD":
-                player.cash_balance += _amt
+            # convert_to_legal_tender credits the player's PlayerCurrencyBalance
+            # internally — no legacy cash_balance write needed.
+            convert_to_legal_tender(player.id, subsidy)
         except Exception:
-            player.cash_balance += subsidy
+            from reserve_banks import credit_usd
+            credit_usd(player.id, subsidy)
         # Log the subsidy transaction
         log_transaction(
             player_id,
@@ -1445,11 +1444,12 @@ def exchange_currency_for_member(player_id: int, quantity: float) -> Tuple[bool,
         inventory.remove_item(player_id, bank.currency_type, quantity)
         try:
             from reserve_banks import convert_to_legal_tender
-            _amt, _code = convert_to_legal_tender(player.id, total_value)
-            if _code == "USD":
-                player.cash_balance += _amt
+            # convert_to_legal_tender credits the player's PlayerCurrencyBalance
+            # internally — no legacy cash_balance write needed.
+            convert_to_legal_tender(player.id, total_value)
         except Exception:
-            player.cash_balance += total_value
+            from reserve_banks import credit_usd
+            credit_usd(player.id, total_value)
         bank.cash_reserves -= total_value
         bank.currency_quantity += quantity
         
@@ -1777,7 +1777,8 @@ def process_loan_repayments(current_tick: int):
     Process loan installment payments from city banks to government.
     """
     from auth import Player
-    
+    from reserve_banks import credit_usd
+
     db = get_db()
     
     try:
@@ -1801,7 +1802,7 @@ def process_loan_repayments(current_tick: int):
             if bank.cash_reserves >= payment:
                 # Make payment
                 bank.cash_reserves -= payment
-                government.cash_balance += payment
+                credit_usd(GOVERNMENT_PLAYER_ID, payment)
                 loan.amount_paid += payment
                 loan.installments_remaining -= 1
 
@@ -1821,7 +1822,7 @@ def process_loan_repayments(current_tick: int):
                 partial_payment = bank.cash_reserves
                 if partial_payment > 0:
                     bank.cash_reserves = 0.0
-                    government.cash_balance += partial_payment
+                    credit_usd(GOVERNMENT_PLAYER_ID, partial_payment)
                     loan.amount_paid += partial_payment
                 # This installment cycle is counted regardless of whether it was fully paid.
                 loan.installments_remaining -= 1
@@ -2300,7 +2301,8 @@ def handle_outsider_trade(buyer_id: int, seller_id: int, item_type: str, quantit
         if government:
             gov_share = customs_fee * 0.5  # 50% of customs to gov
             bank.cash_reserves -= gov_share
-            government.cash_balance += gov_share
+            from reserve_banks import credit_usd
+            credit_usd(GOVERNMENT_PLAYER_ID, gov_share)
             try:
                 from govt_ledger import log_gov_event
                 log_gov_event("petrodollar_customs", "in", gov_share, "USD",
