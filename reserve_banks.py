@@ -2157,6 +2157,97 @@ def _available_codes(db) -> List[str]:
     return ["USD"] + [b.currency_code for b in db.query(StateReserveBank).all()]
 
 
+def convert_all_balances_to_tender(player_id: int,
+                                   record_forex: bool = False) -> Tuple[float, int]:
+    """
+    Convert every non-tender currency balance the player holds into their
+    CURRENT legal tender, using the same forex-fee / demand-signal machinery
+    as a tender switch. No repatriation fee (the tender itself is unchanged)
+    and no cooldown.
+
+    Heals "half-switched" players whose legal-tender row points at one currency
+    while their balances still sit in another — NPCs left in that state by the
+    early NPC Currency Mandate implementation, which flipped the tender row
+    without converting balances. The mandate event calls this for NPCs that are
+    already on the target tender, making the event idempotent and repairing the
+    legacy state.
+
+    Coin tenders are skipped entirely and coin balances are never auto-converted
+    (hard money cannot be synthesised or melted by a rebalance).
+
+    Returns (usd_value_converted, number_of_conversions).
+    """
+    db = get_db()
+    try:
+        row = db.query(PlayerLegalTender).filter(
+            PlayerLegalTender.player_id == player_id
+        ).first()
+        code = row.currency_code if row else "USD"
+        if code in COIN_CURRENCY_CODES:
+            return 0.0, 0
+
+        target_bank = db.query(StateReserveBank).filter(
+            StateReserveBank.currency_code == code
+        ).first()
+        if code != "USD" and not target_bank:
+            return 0.0, 0
+
+        usd_per_new = _get_usd_rate(db, code)
+        balances = db.query(PlayerCurrencyBalance).filter(
+            PlayerCurrencyBalance.player_id     == player_id,
+            PlayerCurrencyBalance.currency_code != code,
+            PlayerCurrencyBalance.balance       >  0,
+        ).all()
+
+        total_usd   = 0.0
+        conversions = 0
+        for cb in balances:
+            if cb.currency_code in COIN_CURRENCY_CODES:
+                continue
+            amt          = cb.balance
+            usd_per_from = _get_usd_rate(db, cb.currency_code)
+            fee_native   = amt * FOREX_FEE_RATE
+            net_native   = amt - fee_native
+            usd_val      = net_native * usd_per_from
+            new_amt      = usd_val / usd_per_new if usd_per_new > 0 else 0.0
+
+            src_bank = db.query(StateReserveBank).filter(
+                StateReserveBank.currency_code == cb.currency_code
+            ).first()
+            if src_bank:
+                _add_bank_reserve(db, src_bank.id, cb.currency_code, fee_native)
+
+            _adjust_currency_balance(db, player_id, cb.currency_code, -amt)
+            _adjust_currency_balance(db, player_id, code, new_amt)
+
+            if record_forex:
+                if target_bank is not None:
+                    target_bank.net_demand_wsc += usd_val
+                if src_bank is not None:
+                    src_bank.net_demand_wsc -= usd_val
+                db.add(ForexTrade(
+                    player_id     = player_id,
+                    from_currency = cb.currency_code,
+                    to_currency   = code,
+                    amount_from   = amt,
+                    amount_to     = new_amt,
+                    exchange_rate = (new_amt / amt) if amt else 0.0,
+                    fee_usd       = fee_native * usd_per_from,
+                ))
+
+            total_usd   += usd_val
+            conversions += 1
+
+        db.commit()
+        return total_usd, conversions
+    except Exception as e:
+        db.rollback()
+        print(f"[ReserveBanks] convert_all_balances_to_tender error for {player_id}: {e}")
+        return 0.0, 0
+    finally:
+        db.close()
+
+
 def get_player_display_currency(player_id: int) -> dict:
     """
     Returns display formatting info for a player's legal tender.

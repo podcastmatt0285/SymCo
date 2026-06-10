@@ -5237,9 +5237,17 @@ def admin_events(session_token: Optional[str] = Cookie(None),
             _ncs_code = _ed.get("currency_code", "?")
             _ncs_sw   = _ed.get("switched_count")
             _ncs_sk   = _ed.get("skipped_count")
+            _ncs_rb   = _ed.get("rebalanced_count", 0)
+            _ncs_usd  = _ed.get("capital_rotated_usd")
             if _ncs_sw is not None:
+                _ncs_bits = f"{_ncs_sw} switched"
+                if _ncs_rb:
+                    _ncs_bits += f", {_ncs_rb} rebalanced"
+                _ncs_bits += f", {_ncs_sk} already on {_ncs_code}"
+                if _ncs_usd:
+                    _ncs_bits += f" · ${_ncs_usd:,.0f} rotated"
                 _meta_parts.append(
-                    f'<span style="color:#818cf8;">🏦 {_ncs_code}: {_ncs_sw} switched, {_ncs_sk} already on {_ncs_code}</span>'
+                    f'<span style="color:#818cf8;">🏦 {_ncs_code}: {_ncs_bits}</span>'
                 )
             else:
                 _meta_parts.append(

@@ -778,6 +778,7 @@ def _execute_npc_currency_switch(db, ev: "GameEvent") -> str:
     from reserve_banks import (
         PlayerLegalTender, PlayerCurrencyBalance, get_db as _rdb,
         StateReserveBank, set_player_legal_tender, _get_usd_rate,
+        convert_all_balances_to_tender,
     )
 
     ed           = _json.loads(ev.effect_data or "{}")
@@ -833,13 +834,29 @@ def _execute_npc_currency_switch(db, ev: "GameEvent") -> str:
     finally:
         rdb.close()
 
-    switched = 0
-    skipped  = 0
-    failed   = 0
+    switched   = 0
+    skipped    = 0
+    rebalanced = 0
+    failed     = 0
     rotated_usd = 0.0
     for npc_id in npc_ids:
         if existing_codes.get(npc_id, "USD") == target_code:
-            skipped += 1
+            # Tender row already points at the target — but the NPC may still
+            # hold balances in OTHER currencies (the early mandate version
+            # flipped tender rows without converting balances). Convert those
+            # now so the mandate is idempotent and heals half-switched NPCs.
+            try:
+                usd_moved, n_conv = convert_all_balances_to_tender(
+                    npc_id, record_forex=True
+                )
+                if n_conv > 0:
+                    rebalanced  += 1
+                    rotated_usd += usd_moved
+                else:
+                    skipped += 1
+            except Exception as _re:
+                skipped += 1
+                print(f"[Events] NPC {npc_id} rebalance error: {_re}")
             continue
         try:
             ok, _msg = set_player_legal_tender(
@@ -858,6 +875,7 @@ def _execute_npc_currency_switch(db, ev: "GameEvent") -> str:
     # Persist result counts in effect_data so admins can see them
     ed["switched_count"] = switched
     ed["skipped_count"]  = skipped
+    ed["rebalanced_count"] = rebalanced
     ed["capital_rotated_usd"] = round(rotated_usd, 2)
     if failed:
         ed["failed_count"] = failed
@@ -871,17 +889,19 @@ def _execute_npc_currency_switch(db, ev: "GameEvent") -> str:
         log_gov_event(
             "npc_currency_switch", "in", rotated_usd, "USD",
             "NPC Market Agents",
-            f"Event mandate: {switched} NPC(s) converted ~${rotated_usd:,.0f} "
-            f"to {target_code}, {skipped} already on {target_code}"
+            f"Event mandate: {switched} NPC(s) switched and {rebalanced} rebalanced "
+            f"~${rotated_usd:,.0f} into {target_code}, {skipped} already fully on "
+            f"{target_code}"
             + (f", {failed} failed" if failed else "")
             + f" (event '{ev.title}')",
         )
     except Exception:
         pass
 
+    _affected = switched + rebalanced
     return (
-        f"By government mandate, {switched} NPC business"
-        f"{'es' if switched != 1 else ''} converted roughly ${rotated_usd:,.0f} of "
+        f"By government mandate, {_affected} NPC business"
+        f"{'es' if _affected != 1 else ''} converted roughly ${rotated_usd:,.0f} of "
         f"reserves and now operate in {target_code}. Their forex demand may move "
         f"exchange rates and bond yields."
     )
