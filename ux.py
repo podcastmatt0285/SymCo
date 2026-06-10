@@ -2527,6 +2527,9 @@ def home(request: Request, session_token: Optional[str] = Cookie(None)):
             _pn_code    = _pn_payload.get("code", "")
             _pn_ps_url  = _pn_payload.get("play_store", "")
             _pn_grp_url = _pn_payload.get("group_url", "")
+            _pn_sub     = _pn_payload.get("sub_code", "")
+            _pn_sub_url = _pn_payload.get("sub_redeem", "")
+            _pn_sub_days = _pn_payload.get("sub_days", 30)
 
             _code_block = ""
             if _pn_code:
@@ -2550,6 +2553,28 @@ def home(request: Request, session_token: Optional[str] = Cookie(None)):
                     </div>
                 </div>
                 {'<div style="font-size:0.75rem;color:#78350f;margin-top:6px;">Step 1: <a href="' + _pn_grp_url + '" target="_blank" rel="noopener" style="color:#fbbf24;">Join the Google Group</a> &nbsp;→&nbsp; Step 2: Copy the code above &nbsp;→&nbsp; Step 3: Open the Play Store link and redeem the code &nbsp;→&nbsp; Step 4: Log in from the app to earn your Founding Tester badge!</div>' if _pn_grp_url else ''}"""
+
+            if _pn_sub:
+                _code_block += f"""
+                <div style="margin:14px 0 10px;background:#120a1e;border:1px solid #7c3aed;
+                            border-radius:8px;padding:12px 16px;display:flex;align-items:center;
+                            justify-content:space-between;gap:12px;flex-wrap:wrap;">
+                    <div>
+                        <div style="font-size:0.65rem;color:#7c3aed;letter-spacing:.1em;
+                                    text-transform:uppercase;margin-bottom:4px;">👑 {_pn_sub_days} Days of Wadsworth Pro — FREE</div>
+                        <div id="pn-sub-{_pn_id}" style="font-size:1.1rem;font-weight:800;
+                             color:#c4b5fd;letter-spacing:.15em;font-family:monospace;">{_pn_sub}</div>
+                    </div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button onclick="navigator.clipboard.writeText('{_pn_sub}');this.textContent='Copied!';setTimeout(()=>this.textContent='Copy Code',1500)"
+                                style="background:#7c3aed;color:#f5f3ff;border:none;border-radius:6px;
+                                       padding:8px 16px;font-size:0.78rem;font-weight:700;cursor:pointer;">
+                            Copy Code
+                        </button>
+                        {'<a href="' + _pn_sub_url + '" target="_blank" rel="noopener" style="background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:6px;padding:8px 16px;font-size:0.78rem;font-weight:600;text-decoration:none;">Redeem on Play ↗</a>' if _pn_sub_url else ''}
+                    </div>
+                </div>
+                <div style="font-size:0.75rem;color:#6d28d9;margin-top:6px;">Redeem this second code on Google Play to activate your free Basic-tier supporters subscription — exclusive skins, Institutions, and all supporter perks for {_pn_sub_days} days.</div>"""
 
             _persist_notif_html += f"""
             <div style="background:linear-gradient(135deg,#1c1008,#1a0f00);border:2px solid #f59e0b;

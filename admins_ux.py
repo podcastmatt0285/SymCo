@@ -5122,6 +5122,7 @@ def admin_events(session_token: Optional[str] = Cookie(None),
                 kpis = " &nbsp;·&nbsp; ".join([
                     f'<span style="color:#22c55e;">{bs["available"]} codes left</span>',
                     f'<span style="color:#fbbf24;">{bs["assigned"]} out</span>',
+                    f'<span style="color:#a78bfa;">{bs.get("sub_available", 0)} Pro sub codes left</span>',
                     f'<span style="color:#f59e0b;">{bs["pending"]} pending</span>',
                     f'<span style="color:#38bdf8;">{bs["twa_today"]} app logins today</span>',
                 ])
