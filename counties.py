@@ -1456,15 +1456,14 @@ def sell_crypto_for_cash(player_id: int, crypto_symbol: str, amount: float) -> T
         income_code = "USD"
         try:
             from reserve_banks import convert_to_legal_tender
+            # convert_to_legal_tender credits the player's PlayerCurrencyBalance
+            # internally (for USD and non-USD tenders alike) — no legacy
+            # cash_balance write needed.
             _amt, _code = convert_to_legal_tender(player.id, net_value)
             income_amt, income_code = _amt, _code
-            if _code == "USD":
-                # USD players: credit cash_balance directly (non-USD players have
-                # their balance credited inside convert_to_legal_tender via
-                # PlayerCurrencyBalance — no further action needed here)
-                player.cash_balance += _amt
         except Exception:
-            player.cash_balance += net_value
+            from reserve_banks import credit_usd
+            credit_usd(player.id, net_value)
 
         # Cash comes FROM the county treasury (only net_value — fee is exchange revenue, not a treasury expense)
         county.treasury_balance -= net_value
@@ -1478,11 +1477,12 @@ def sell_crypto_for_cash(player_id: int, crypto_symbol: str, amount: float) -> T
             gov_fee = fee * EXCHANGE_FEE_TO_GOV_PERCENT
             try:
                 from reserve_banks import convert_to_legal_tender as _clf
-                _g_amt, _g_code = _clf(GOVERNMENT_PLAYER_ID, gov_fee)
-                if _g_code == "USD":
-                    gov.cash_balance += _g_amt
+                # _clf credits the government's PlayerCurrencyBalance internally
+                # — no legacy cash_balance write needed.
+                _clf(GOVERNMENT_PLAYER_ID, gov_fee)
             except Exception:
-                gov.cash_balance += gov_fee
+                from reserve_banks import credit_usd
+                credit_usd(GOVERNMENT_PLAYER_ID, gov_fee)
 
         # Record the order
         order = CryptoExchangeOrder(
@@ -1608,11 +1608,12 @@ def buy_crypto_with_cash(player_id: int, crypto_symbol: str, cash_amount: float)
             gov_fee = fee * EXCHANGE_FEE_TO_GOV_PERCENT
             try:
                 from reserve_banks import convert_to_legal_tender as _clf
-                _g_amt, _g_code = _clf(GOVERNMENT_PLAYER_ID, gov_fee)
-                if _g_code == "USD":
-                    gov.cash_balance += _g_amt
+                # _clf credits the government's PlayerCurrencyBalance internally
+                # — no legacy cash_balance write needed.
+                _clf(GOVERNMENT_PLAYER_ID, gov_fee)
             except Exception:
-                gov.cash_balance += gov_fee
+                from reserve_banks import credit_usd
+                credit_usd(GOVERNMENT_PLAYER_ID, gov_fee)
 
         # Record the order
         order = CryptoExchangeOrder(
@@ -1754,11 +1755,12 @@ def swap_crypto(player_id: int, sell_symbol: str, buy_symbol: str, sell_amount: 
             gov_fee = fee * EXCHANGE_FEE_TO_GOV_PERCENT
             try:
                 from reserve_banks import convert_to_legal_tender as _clf
-                _g_amt, _g_code = _clf(GOVERNMENT_PLAYER_ID, gov_fee)
-                if _g_code == "USD":
-                    gov.cash_balance += _g_amt
+                # _clf credits the government's PlayerCurrencyBalance internally
+                # — no legacy cash_balance write needed.
+                _clf(GOVERNMENT_PLAYER_ID, gov_fee)
             except Exception:
-                gov.cash_balance += gov_fee
+                from reserve_banks import credit_usd
+                credit_usd(GOVERNMENT_PLAYER_ID, gov_fee)
 
         # Record the order
         order = CryptoExchangeOrder(
@@ -2376,11 +2378,12 @@ def _execute_passed_proposal(db, county: "County", proposal: "GovernanceProposal
                     county.treasury_balance -= value
                     try:
                         from reserve_banks import convert_to_legal_tender
-                        _amt, _code = convert_to_legal_tender(player.id, value)
-                        if _code == "USD":
-                            player.cash_balance += _amt
+                        # convert_to_legal_tender credits the player's
+                        # PlayerCurrencyBalance internally — no legacy write.
+                        convert_to_legal_tender(player.id, value)
                     except Exception:
-                        player.cash_balance += value
+                        from reserve_banks import credit_usd
+                        credit_usd(player.id, value)
                     log_transaction(
                         target_player_id, "treasury_grant", "money", value,
                         f"County treasury grant from {county.name}",

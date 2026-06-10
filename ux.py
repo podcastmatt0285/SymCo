@@ -464,7 +464,12 @@ def _nav_loader_html() -> str:
             "Tip: Watch RBYC (Reserve Bank Yield Composite) before buying bonds — a falling composite means yields are compressing.",
             "Tip: SEED and BEE lead the Agricultural Staples Index — upstream shortages hit food prices weeks later.",
             "Tip: Rising WEI (Water & Energy) plus rising AMP means an inflationary squeeze — raise your retail prices.",
-            "Tip: Every index card has 30-day candlestick charts, volatility, and composition breakdowns — tap any index to drill in."
+            "Tip: Every index card has 30-day candlestick charts, volatility, and composition breakdowns — tap any index to drill in.",
+            "Tip: Found your own city by claiming 10 districts — or skip the grind with a Wadsworth Pro free-city founding.",
+            "Tip: Cities can petition to form a county — once enough cities sign on, a new county is born with its own government.",
+            "Tip: County crypto mining: deposit energy into the mining pool and earn block rewards in the county's coin.",
+            "Tip: Launch your own meme-coin by burning native tokens — supply burned at launch sets the float.",
+            "Tip: WSC is the Wadsworth stablecoin — reserve banks back it with bonds to hold the peg."
           ];
           var overlay = document.getElementById('nav-loader');
           var bar     = document.getElementById('nl-bar');

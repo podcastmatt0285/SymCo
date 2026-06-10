@@ -658,6 +658,7 @@ async def sitemap_xml():
         "/executives",
         "/cities",
         "/counties",
+        "/memecoins",
         "/exchange",
         "/estate",
         "/estate/deceased",
