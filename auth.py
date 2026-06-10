@@ -2350,12 +2350,12 @@ def founding_page():
     <!-- Open Graph / Reddit / Discord rich preview -->
     <meta property="og:type"        content="website">
     <meta property="og:title"       content="🎖️ Founding Operative — Wadsworth Tycoon">
-    <meta property="og:description" content="Become a Founding Tester of Wadsworth. Free Android download · 150 trophy reward · permanent badge. {_available} slots remaining.">
+    <meta property="og:description" content="Become a Founding Tester of Wadsworth. Free Android download · 150 trophy reward · permanent badge · 30 days of Pro FREE. {_available} slots remaining.">
     <meta property="og:image"       content="/static/icons/apple-touch-icon.png">
     <meta property="og:url"         content="/founding">
     <meta name="twitter:card"       content="summary">
     <meta name="twitter:title"      content="🎖️ Founding Operative — Wadsworth Tycoon">
-    <meta name="twitter:description" content="Join the closed Android beta. Free promo code · 150 trophies · exclusive badge. {_available} slots left.">
+    <meta name="twitter:description" content="Join the closed Android beta. Free promo code · 150 trophies · exclusive badge · 30 days of Pro FREE. {_available} slots left.">
 
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#020617">
@@ -2554,7 +2554,8 @@ def founding_page():
             <p class="fo-subtitle">
                 Be among the first to build your empire on Android.
                 Join the closed beta, get a <strong style="color:#e5c88a;font-style:normal;">free promo code</strong>,
-                and earn a permanent Founding Tester badge visible to every player.
+                earn a permanent Founding Tester badge — and get
+                <strong style="color:#c4b5fd;font-style:normal;">30 days of Wadsworth Pro FREE</strong>.
             </p>
 
             <div class="fo-rewards">
@@ -2584,6 +2585,13 @@ def founding_page():
                     <div class="fo-reward-text">
                         <div class="fo-reward-title">Permanent Badge</div>
                         <div class="fo-reward-sub">Visible on your contact card</div>
+                    </div>
+                </div>
+                <div class="fo-reward-pill" style="border-color:rgba(124,58,237,.45);">
+                    <span class="fo-reward-icon">👑</span>
+                    <div class="fo-reward-text">
+                        <div class="fo-reward-title" style="color:#c4b5fd;">30 Days of Pro — FREE</div>
+                        <div class="fo-reward-sub">Basic-tier supporters subscription</div>
                     </div>
                 </div>
             </div>
@@ -2625,8 +2633,10 @@ def founding_page():
                     Log in, go to <strong>Events &amp; Tasks</strong>, and find the
                     <strong>Founding Operative</strong> event. Submit the Google account email
                     you used to join the group. An admin will verify your membership —
-                    usually within a few hours — and deliver your promo code via
-                    in-game notification.
+                    usually within a few hours — and deliver <strong>two codes</strong> via
+                    in-game notification: your free app download code, plus a bonus code for
+                    <strong style="color:#c4b5fd;">30 days of the Wadsworth Pro supporters
+                    subscription, free</strong>.
                 </div>
             </details>
 

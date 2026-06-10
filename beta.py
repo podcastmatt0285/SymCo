@@ -26,10 +26,12 @@ Base = declarative_base()
 TWA_PACKAGE = "cc.notifly.wadsworth.twa"
 PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=cc.notifly.wadsworth.twa"
 GOOGLE_GROUP_URL = "https://groups.google.com/g/wadstycoon"
+PLAY_REDEEM_URL = "https://play.google.com/redeem?code="
 
 FOUNDING_OPERATIVE_TROPHIES = 50
 POCKET_EMPIRE_TROPHIES      = 100
 ACTIVE_DUTY_TROPHIES        = 10
+SUB_TRIAL_DAYS              = 30
 
 # Raw promo codes loaded from CSV
 _RAW_CODES = [
@@ -59,6 +61,35 @@ _RAW_CODES = [
     "5GN3WWNBPRYX6ATQEVHVT11", "9RM86CS05HJD9UF4ZENXEUE",
 ]
 
+# Subscription promo codes — 30-day free Basic-tier (wads_basic) supporters
+# subscription on Google Play. One is given to every approved founder.
+_RAW_SUB_CODES = [
+    "MEN01YAHT1N6JW1Y61BJ9BU", "Y7VR2AEFWPWZKEMQ53HN9YL",
+    "QBBG09VJAX4FLW9ZGYAAD42", "MJEJV4NHSKBAQ630FRAVAFF",
+    "0F3ZJ659G7QF4TVC6GRH24Y", "9NCC55N9XJ7UZDMLW6DGNZL",
+    "GJHEEH27CWZAXBJYS3LQ1B0", "DZ7H9CVW3BZM92HSYVEK942",
+    "UCQVHJ7W15T414HUR4UG1BJ", "5DBNXBRXE1YW7F31PU34XYD",
+    "0JU6EX23PP0GGX7QVE2Y79X", "PJMLKSJ3BULTZM2L5U25G49",
+    "DHB8N1AE05GTUV6TCQNSV2N", "BTQBG8ST2TTZ4YBTR63V0ME",
+    "GC20E9FJQD6MURXCJ4UCJ73", "1F7NBAU229DXNY2FTQ44DLZ",
+    "3RZQSWEUN56MXK9UYRDN79D", "7ZUU8KDAE0W3LTFWN5LFL6U",
+    "T0TBJQNAKX6X3GAAKBXX2G6", "QP33YGH5CRSV6A5H5KGHZNC",
+    "10J267UA018S73U2GPV346B", "1XTBWDR0PT2ZS9E0BHQ652Q",
+    "69Y631VJ6QTHDU0W7BV74ZQ", "UAEE1HNHY7F47KG7UGXQ8RE",
+    "B1FXUR1G8RWWU0MSV0FZLW8", "Y5EGTC0R6005QRP64GVJNCA",
+    "P3HA1ENLMQQNAZ6TMHFSTC5", "D82YSU6SHZJFJT2N4V5UAMT",
+    "K0XGB96ADSVQ27VCJELZ181", "T4Q2WF637GR3KF9ERVQXCLE",
+    "Z119R4MQKPS2AF3ZXJSCRFC", "M0STPS679VXK2JH5RLF14L3",
+    "STP3CXYSK5UJM0DLF76HRC6", "2EVPWZHSGZSV6VWDFVQCH8N",
+    "7ZLU69C8MSKDYJKVV93X5FQ", "0LKMZX03EAAU30QT0MNGX3J",
+    "D3Y805L0HKCGQZ9HYKWA8AD", "39EC5H5BGHA54QHCQ01JRWA",
+    "GGFG6TBM9CT20SRT690PCA8", "HQ3KAQG6MB8W2TY8Q1EV0YJ",
+    "ZQSCFFF1DVN8WNY4E0D59XP", "VZR78GQZ1UMGXS2XSLUCQFV",
+    "PC9GWWMJ3CFUUB6ENBADP9P", "3VJXXJS5DNH9SLMEB6GS5WW",
+    "5JJ0WBND07F5YM77G20BSBJ", "8PQHZFUZ39NER9QQDSDTLKB",
+    "3XL5YU2FRS5EHU4XQACR0QX", "K4FE0PW5U7ZVVA3EN7G13T9",
+]
+
 # ── Models ────────────────────────────────────────────────────────────────────
 
 class PromoCode(Base):
@@ -66,6 +97,7 @@ class PromoCode(Base):
 
     id                    = Column(Integer, primary_key=True)
     code                  = Column(String, unique=True, nullable=False)
+    code_type             = Column(String, default="app")        # app | sub_30d
     status                = Column(String, default="available")  # available | assigned
     assigned_to_player_id = Column(Integer, nullable=True, index=True)
     assigned_at           = Column(DateTime, nullable=True)
@@ -215,9 +247,13 @@ def _push_notify(player_id: int, title: str, body: str):
 # ── Public API ────────────────────────────────────────────────────────────────
 
 def get_available_count() -> int:
+    """Available APP codes only — these define the founding slot count."""
     db = _get_db()
     try:
-        return db.query(PromoCode).filter(PromoCode.status == "available").count()
+        return db.query(PromoCode).filter(
+            PromoCode.status == "available",
+            PromoCode.code_type == "app",
+        ).count()
     finally:
         db.close()
 
@@ -225,7 +261,18 @@ def get_available_count() -> int:
 def get_total_count() -> int:
     db = _get_db()
     try:
-        return db.query(PromoCode).count()
+        return db.query(PromoCode).filter(PromoCode.code_type == "app").count()
+    finally:
+        db.close()
+
+
+def get_available_sub_count() -> int:
+    db = _get_db()
+    try:
+        return db.query(PromoCode).filter(
+            PromoCode.status == "available",
+            PromoCode.code_type == "sub_30d",
+        ).count()
     finally:
         db.close()
 
@@ -337,9 +384,10 @@ def approve_request(request_id: int, admin_id: int) -> tuple[bool, str]:
         if req.status != "pending":
             return False, f"Request is already {req.status}."
 
-        # Grab an available code
+        # Grab an available app code
         code_row = (db.query(PromoCode)
-                    .filter(PromoCode.status == "available")
+                    .filter(PromoCode.status == "available",
+                            PromoCode.code_type == "app")
                     .first())
         if not code_row:
             return False, "No promo codes remaining — all slots are filled."
@@ -348,17 +396,36 @@ def approve_request(request_id: int, admin_id: int) -> tuple[bool, str]:
         code_row.assigned_to_player_id = req.player_id
         code_row.assigned_at           = datetime.utcnow()
 
+        # Also grab a 30-day Pro subscription code (best-effort — approval
+        # still goes through if the sub pool is exhausted)
+        sub_row = (db.query(PromoCode)
+                   .filter(PromoCode.status == "available",
+                           PromoCode.code_type == "sub_30d")
+                   .first())
+        if sub_row:
+            sub_row.status                = "assigned"
+            sub_row.assigned_to_player_id = req.player_id
+            sub_row.assigned_at           = datetime.utcnow()
+
         req.status        = "approved"
         req.promo_code_id = code_row.id
         req.reviewed_at   = datetime.utcnow()
         req.reviewed_by   = admin_id
 
-        # Persistent notification with the code
+        # Persistent notification with the code(s)
         notif_payload = json.dumps({
             "code":        code_row.code,
             "play_store":  PLAY_STORE_URL,
             "group_url":   GOOGLE_GROUP_URL,
+            "sub_code":    sub_row.code if sub_row else "",
+            "sub_redeem":  (PLAY_REDEEM_URL + sub_row.code) if sub_row else "",
+            "sub_days":    SUB_TRIAL_DAYS,
         })
+        _sub_line = (
+            f" As a founder you also get {SUB_TRIAL_DAYS} days of Wadsworth Pro "
+            "(Basic-tier supporters subscription) FREE — redeem your second code below."
+            if sub_row else ""
+        )
         notif = PersistentNotification(
             player_id  = req.player_id,
             notif_type = "promo_code",
@@ -367,6 +434,7 @@ def approve_request(request_id: int, admin_id: int) -> tuple[bool, str]:
                 "You've been verified as a Founding Operative of Wadsworth. "
                 "Use your exclusive Google Play promo code to download the Android app for free. "
                 "Log in from the app to unlock the Pocket Empire badge and bonus trophies!"
+                + _sub_line
             ),
             payload_json = notif_payload,
         )
@@ -542,9 +610,13 @@ def get_beta_stats() -> dict:
     """Summary stats for admin dashboard."""
     db = _get_db()
     try:
-        total     = db.query(PromoCode).count()
-        available = db.query(PromoCode).filter(PromoCode.status == "available").count()
+        total     = db.query(PromoCode).filter(PromoCode.code_type == "app").count()
+        available = db.query(PromoCode).filter(
+            PromoCode.status == "available", PromoCode.code_type == "app").count()
         assigned  = total - available
+        sub_total     = db.query(PromoCode).filter(PromoCode.code_type == "sub_30d").count()
+        sub_available = db.query(PromoCode).filter(
+            PromoCode.status == "available", PromoCode.code_type == "sub_30d").count()
         pending   = db.query(BetaRequest).filter(BetaRequest.status == "pending").count()
         approved  = db.query(BetaRequest).filter(BetaRequest.status == "approved").count()
         rejected  = db.query(BetaRequest).filter(BetaRequest.status == "rejected").count()
@@ -553,6 +625,8 @@ def get_beta_stats() -> dict:
         ).count()
         return {
             "total": total, "available": available, "assigned": assigned,
+            "sub_total": sub_total, "sub_available": sub_available,
+            "sub_assigned": sub_total - sub_available,
             "pending": pending, "approved": approved, "rejected": rejected,
             "twa_today": twa_today,
         }
@@ -633,23 +707,93 @@ def _seed_events():
         print(f"[Beta] Event seed error: {_e}")
 
 
+def _backfill_founder_sub_codes():
+    """Give every already-approved founder a 30-day Pro sub code if they
+    don't have one yet. Idempotent — keyed on assigned_to_player_id."""
+    db = _get_db()
+    try:
+        approved = db.query(BetaRequest).filter(BetaRequest.status == "approved").all()
+        granted = 0
+        for req in approved:
+            already = db.query(PromoCode).filter(
+                PromoCode.code_type == "sub_30d",
+                PromoCode.assigned_to_player_id == req.player_id,
+            ).first()
+            if already:
+                continue
+            sub_row = db.query(PromoCode).filter(
+                PromoCode.code_type == "sub_30d",
+                PromoCode.status == "available",
+            ).first()
+            if not sub_row:
+                print("[Beta] Sub-code backfill: pool exhausted.")
+                break
+            sub_row.status                = "assigned"
+            sub_row.assigned_to_player_id = req.player_id
+            sub_row.assigned_at           = datetime.utcnow()
+            db.add(PersistentNotification(
+                player_id  = req.player_id,
+                notif_type = "promo_code",
+                title      = "👑 Founder Bonus — 30 Days of Wadsworth Pro FREE!",
+                body       = (
+                    f"Thank you for being a Founding Operative! Here's {SUB_TRIAL_DAYS} days "
+                    "of the Basic-tier Wadsworth Pro supporters subscription, on the house. "
+                    "Redeem the code on Google Play to unlock supporter perks — exclusive "
+                    "skins, Institutions, and everything on the supporters roadmap."
+                ),
+                payload_json = json.dumps({
+                    "sub_code":   sub_row.code,
+                    "sub_redeem": PLAY_REDEEM_URL + sub_row.code,
+                    "sub_days":   SUB_TRIAL_DAYS,
+                }),
+            ))
+            db.commit()
+            granted += 1
+            _push_notify(req.player_id,
+                         "👑 Founder Bonus Unlocked",
+                         f"{SUB_TRIAL_DAYS} days of Wadsworth Pro FREE — your code is on your dashboard!")
+        if granted:
+            print(f"[Beta] Backfilled {granted} founder Pro sub codes.")
+    except Exception as _e:
+        db.rollback()
+        print(f"[Beta] Sub-code backfill error: {_e}")
+    finally:
+        db.close()
+
+
 def initialize():
     Base.metadata.create_all(bind=engine)
 
+    # code_type column for pre-existing installs (existing rows become 'app')
+    from database import run_ddl_migration
+    run_ddl_migration(engine, [
+        "ALTER TABLE beta_promo_codes ADD COLUMN IF NOT EXISTS code_type TEXT NOT NULL DEFAULT 'app'",
+    ])
+
     db = _get_db()
     try:
-        existing = db.query(PromoCode).count()
+        existing = db.query(PromoCode).filter(PromoCode.code_type == "app").count()
         if existing == 0:
             for code in _RAW_CODES:
-                db.add(PromoCode(code=code))
+                db.add(PromoCode(code=code, code_type="app"))
             db.commit()
-            print(f"[Beta] Seeded {len(_RAW_CODES)} promo codes.")
+            print(f"[Beta] Seeded {len(_RAW_CODES)} app promo codes.")
         else:
-            print(f"[Beta] {existing} promo codes already in DB.")
+            print(f"[Beta] {existing} app promo codes already in DB.")
+
+        sub_existing = db.query(PromoCode).filter(PromoCode.code_type == "sub_30d").count()
+        if sub_existing == 0:
+            for code in _RAW_SUB_CODES:
+                db.add(PromoCode(code=code, code_type="sub_30d"))
+            db.commit()
+            print(f"[Beta] Seeded {len(_RAW_SUB_CODES)} Pro subscription promo codes.")
+        else:
+            print(f"[Beta] {sub_existing} Pro subscription codes already in DB.")
     finally:
         db.close()
 
     _seed_events()
+    _backfill_founder_sub_codes()
     print("[Beta] Initialized.")
 
 
