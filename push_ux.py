@@ -593,6 +593,10 @@ def send_push_notification(
             print(f"[Push] institution notifications disabled for player {player_id} — skipping")
             db.close()
             return
+        if notif_type == "indices" and not getattr(player, "notif_push_indices", True):
+            print(f"[Push] index notifications disabled for player {player_id} — skipping")
+            db.close()
+            return
 
         # Also write an in-game banner (same preference gates above already passed)
         try:

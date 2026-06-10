@@ -664,6 +664,8 @@ async def sitemap_xml():
         "/notifications",
         "/events/land-grant",
         "/banks/indices",
+        "/banks/indices/unloggedin",
+        "/founding",
         "/wiki",
         "/wallet",
         "/reserve-banks",
