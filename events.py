@@ -776,8 +776,8 @@ def _execute_npc_currency_switch(db, ev: "GameEvent") -> str:
     """
     import json as _json
     from reserve_banks import (
-        PlayerLegalTender, get_db as _rdb, StateReserveBank,
-        set_player_legal_tender,
+        PlayerLegalTender, PlayerCurrencyBalance, get_db as _rdb,
+        StateReserveBank, set_player_legal_tender, _get_usd_rate,
     )
 
     ed           = _json.loads(ev.effect_data or "{}")
@@ -788,30 +788,55 @@ def _execute_npc_currency_switch(db, ev: "GameEvent") -> str:
     if not npc_ids:
         return f"No live NPCs found — no legal tender changes applied ({target_code})."
 
-    # Verify the target currency exists (must have a reserve bank, or be USD)
-    if target_code != "USD":
-        rdb = _rdb()
-        try:
+    # PlayerLegalTender / PlayerCurrencyBalance live in the RESERVE BANKS
+    # database — they must be read through a reserve session, NOT the events
+    # session (`db`, bound to the main game DB). Querying them through `db`
+    # raises "relation does not exist", which the dispatcher swallows — the
+    # event then looks like it ran while not a single NPC actually switched.
+    rdb = _rdb()
+    try:
+        # Verify the target currency exists (must have a reserve bank, or be USD)
+        if target_code != "USD":
             bank = rdb.query(StateReserveBank).filter(
                 StateReserveBank.currency_code == target_code
             ).first()
-        finally:
-            rdb.close()
-        if not bank:
-            return f"Currency '{target_code}' has no reserve bank — NPC switch aborted."
+            if not bank:
+                return f"Currency '{target_code}' has no reserve bank — NPC switch aborted."
 
-    # Snapshot which NPCs already sit on the target tender — those are skipped,
-    # not switched (set_player_legal_tender would reject a no-op switch anyway).
-    existing_codes = {
-        r.player_id: r.currency_code
-        for r in db.query(PlayerLegalTender).filter(
-            PlayerLegalTender.player_id.in_(npc_ids)
-        ).all()
-    }
+        # Snapshot which NPCs already sit on the target tender — those are
+        # skipped, not switched (set_player_legal_tender would reject a no-op
+        # switch anyway).
+        existing_codes = {
+            r.player_id: r.currency_code
+            for r in rdb.query(PlayerLegalTender).filter(
+                PlayerLegalTender.player_id.in_(npc_ids)
+            ).all()
+        }
+
+        # Pre-compute each NPC's total holdings in USD so the mandate can report
+        # how much capital actually rotated into the target currency.
+        _rate_cache: dict = {}
+        def _usd_rate(code: str) -> float:
+            if code not in _rate_cache:
+                _rate_cache[code] = _get_usd_rate(rdb, code)
+            return _rate_cache[code]
+
+        npc_usd_value: dict = {}
+        for cb in rdb.query(PlayerCurrencyBalance).filter(
+            PlayerCurrencyBalance.player_id.in_(npc_ids),
+            PlayerCurrencyBalance.balance > 0,
+        ).all():
+            npc_usd_value[cb.player_id] = (
+                npc_usd_value.get(cb.player_id, 0.0)
+                + cb.balance * _usd_rate(cb.currency_code)
+            )
+    finally:
+        rdb.close()
 
     switched = 0
     skipped  = 0
     failed   = 0
+    rotated_usd = 0.0
     for npc_id in npc_ids:
         if existing_codes.get(npc_id, "USD") == target_code:
             skipped += 1
@@ -822,6 +847,7 @@ def _execute_npc_currency_switch(db, ev: "GameEvent") -> str:
             )
             if ok:
                 switched += 1
+                rotated_usd += npc_usd_value.get(npc_id, 0.0)
             else:
                 failed += 1
                 print(f"[Events] NPC {npc_id} currency switch rejected: {_msg}")
@@ -832,6 +858,7 @@ def _execute_npc_currency_switch(db, ev: "GameEvent") -> str:
     # Persist result counts in effect_data so admins can see them
     ed["switched_count"] = switched
     ed["skipped_count"]  = skipped
+    ed["capital_rotated_usd"] = round(rotated_usd, 2)
     if failed:
         ed["failed_count"] = failed
     ev.effect_data = _json.dumps(ed)
@@ -839,11 +866,13 @@ def _execute_npc_currency_switch(db, ev: "GameEvent") -> str:
 
     try:
         from govt_ledger import log_gov_event
+        # log_gov_event silently drops zero amounts — pass the real USD value
+        # of the capital that rotated so the mandate shows on /government.
         log_gov_event(
-            "npc_currency_switch", "in", 0.0, target_code,
+            "npc_currency_switch", "in", rotated_usd, "USD",
             "NPC Market Agents",
-            f"Event mandate: {switched} NPC(s) converted to {target_code}, "
-            f"{skipped} already on {target_code}"
+            f"Event mandate: {switched} NPC(s) converted ~${rotated_usd:,.0f} "
+            f"to {target_code}, {skipped} already on {target_code}"
             + (f", {failed} failed" if failed else "")
             + f" (event '{ev.title}')",
         )
@@ -852,8 +881,9 @@ def _execute_npc_currency_switch(db, ev: "GameEvent") -> str:
 
     return (
         f"By government mandate, {switched} NPC business"
-        f"{'es' if switched != 1 else ''} converted their reserves and now operate "
-        f"in {target_code}. Their forex demand may move exchange rates and bond yields."
+        f"{'es' if switched != 1 else ''} converted roughly ${rotated_usd:,.0f} of "
+        f"reserves and now operate in {target_code}. Their forex demand may move "
+        f"exchange rates and bond yields."
     )
 
 
