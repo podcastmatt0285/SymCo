@@ -66,6 +66,14 @@ Base = declarative_base()
 # CONSTANTS
 # ==========================
 EFFICIENCY_DECAY_PER_TICK = 100.0 / (14 * 24 * 720)  # 100% over 14 days; 1 tick = 5s → 720 ticks/hr
+# Apply decay in batches of N ticks instead of rewriting every plot row every
+# 5 seconds. The every-tick bulk UPDATE created ~17,280 row-versions per plot
+# per day (~69M dead tuples/day at 4k plots) — autovacuum couldn't keep up,
+# land_plots and its indexes bloated, and the UPDATE crept from milliseconds
+# to ~100 s/tick, starving the whole tick loop. Decay amount is scaled by the
+# batch size so total decay per day is IDENTICAL; a 1-minute step on a
+# 14-day-to-zero curve is imperceptible in-game.
+EFFICIENCY_DECAY_BATCH_TICKS = 60   # once a minute
 STARTING_EFFICIENCY = 100.0  # All land starts at 100% efficiency
 
 # Land hoarding tax - discourages accumulating excessive plots
@@ -763,22 +771,30 @@ def create_starter_plot(player_id: int) -> LandPlot:
 def degrade_efficiency(current_tick: int):
     """
     Degrade efficiency of all land plots.
-    Called every tick.
-    Efficiency decreases by 0.00001% per minute (per 60 ticks).
-    Uses a single bulk SQL UPDATE instead of loading all rows into Python.
+
+    Runs once every EFFICIENCY_DECAY_BATCH_TICKS ticks (not every tick) and
+    applies the accumulated decay for the whole batch in a single bulk UPDATE.
+    Same total decay per day as the old per-tick version, with 1/60th of the
+    row churn — rewriting every plot row every 5 seconds is what bloated
+    land_plots into a ~100 s/tick UPDATE on production.
     """
     global last_efficiency_update_tick
 
+    if current_tick % EFFICIENCY_DECAY_BATCH_TICKS != 0:
+        return
+
     db = get_db()
 
-    # Single bulk UPDATE: subtract decay from all plots with efficiency > 0
-    # Tutorial reward plots and actively-restoring plots are excluded.
+    # Single bulk UPDATE: subtract one batch worth of decay from all plots
+    # with efficiency > 0. Tutorial reward plots and actively-restoring
+    # plots are excluded.
+    _batch_decay = EFFICIENCY_DECAY_PER_TICK * EFFICIENCY_DECAY_BATCH_TICKS
     db.query(LandPlot).filter(
         LandPlot.efficiency > 0,
         LandPlot.is_tutorial_reward == False,
         LandPlot.is_restoring == False,
     ).update(
-        {LandPlot.efficiency: func.greatest(0, LandPlot.efficiency - EFFICIENCY_DECAY_PER_TICK)},
+        {LandPlot.efficiency: func.greatest(0, LandPlot.efficiency - _batch_decay)},
         synchronize_session=False
     )
 
