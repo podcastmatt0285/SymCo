@@ -34,7 +34,7 @@ Order cancel: evaluate each open order individually — never bulk-nuke.
 
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional, Tuple, Type
 
 from database import engine, SessionLocal
@@ -183,6 +183,73 @@ def _get_market_price(item_type: str, market_key: str = "regular") -> Optional[f
         return None
 
 
+def _human_anchor(item_type: str, market_key: str = "regular") -> Optional[float]:
+    """Average price of recent trades involving at least one HUMAN player
+    (buyer_id > 0 or seller_id > 0), last 90 days.
+
+    This is the wash-proof price reference: NPC↔NPC trades cannot move it.
+    The plain rolling average is useless as a runaway guard because the wash
+    loop raises the average itself — the 5× cap then climbs with the disease
+    it's meant to stop (observed: two grocer NPCs ratcheting jam from $4.86
+    to $110 BILLION/unit by ping-ponging it at +5-10% per round trip).
+
+    Fallback when NO human traded the item in the window: 4× the 90-day
+    MINIMUM trade price. Wash trading only ever pushes prices UP, so the
+    minimum is the one statistic the ratchet cannot poison. (With the 5×
+    cap applied on top, NPC references stay within 20× of the pre-ratchet
+    floor until a human trade re-anchors the item at its real level.)
+    Returns None only when the item has no trades at all.
+    """
+    try:
+        from sqlalchemy import func as _f
+        Trade = _trade_class(market_key)
+        db = SessionLocal()
+        try:
+            cutoff = datetime.utcnow() - timedelta(days=90)
+            rows = (
+                db.query(Trade.price)
+                .filter(
+                    Trade.item_type == item_type,
+                    Trade.executed_at >= cutoff,
+                    (Trade.buyer_id > 0) | (Trade.seller_id > 0),
+                )
+                .order_by(Trade.executed_at.desc())
+                .limit(PRICE_ROLLING_WINDOW)
+                .all()
+            )
+            if rows:
+                return sum(r[0] for r in rows) / len(rows)
+            min_px = (
+                db.query(_f.min(Trade.price))
+                .filter(Trade.item_type == item_type,
+                        Trade.executed_at >= cutoff,
+                        Trade.price > 0)
+                .scalar()
+            )
+            if min_px and min_px > 0:
+                return float(min_px) * 4
+            return None
+        finally:
+            db.close()
+    except Exception:
+        return None
+
+
+def _tame_reference_price(item_type: str, market_key: str,
+                          market_price: Optional[float]) -> Optional[float]:
+    """Clamp a market-price reference to 5× the human-anchored average.
+
+    Every downstream NPC decision (cancel thresholds, bid prices, ask prices)
+    keys off this reference; clamping it once here means a wash-ratcheted
+    midpoint/last-trade can never drag NPC pricing along with it."""
+    if not market_price:
+        return market_price
+    anchor = _human_anchor(item_type, market_key)
+    if anchor and anchor > 0 and market_price > anchor * 5:
+        return anchor * 5
+    return market_price
+
+
 # ===========================
 # UNIT COST CALCULATION
 # ===========================
@@ -275,7 +342,8 @@ def _manage_sell_orders(player_id: int, cfg: dict, state: str):
             if want_to_sell <= 0:
                 continue
 
-            market_price = _get_market_price(item_type, market_key)
+            market_price = _tame_reference_price(
+                item_type, market_key, _get_market_price(item_type, market_key))
             MarketOrder, OrderType, OrderStatus, _ = _order_classes(market_key)
 
             # --- Step 1: evaluate existing orders, cancel where warranted ---
@@ -397,7 +465,8 @@ def _manage_buy_orders(player_id: int, cfg: dict, state: str):
             max_mult   = buy_cfg.get("max_price_multiplier", 1.10)
 
             current_inv  = inv.get_item_quantity(player_id, item_type)
-            market_price = _get_market_price(item_type, market_key)
+            market_price = _tame_reference_price(
+                item_type, market_key, _get_market_price(item_type, market_key))
             MarketOrder, OrderType, OrderStatus, _ = _order_classes(market_key)
 
             # --- Step 1: evaluate and cancel stale buy orders ---
@@ -1206,6 +1275,45 @@ def initialize():
 
     print(f"[NPC] Configs loaded: {len(_NPC_CONFIGS)} NPC(s). "
           "Background seeding will start shortly.")
+
+    _cancel_runaway_npc_orders()
+
+
+def _cancel_runaway_npc_orders():
+    """Startup hygiene: cancel active NPC orders priced beyond 5× the
+    human-anchored reference — leftovers from the NPC↔NPC wash-trade ratchet
+    (jam asks at $110B etc.). Idempotent; only touches offending NPC orders.
+    Human players' orders are never touched."""
+    try:
+        from market import MarketOrder, OrderStatus
+        db = SessionLocal()
+        try:
+            rows = (
+                db.query(MarketOrder)
+                .filter(
+                    MarketOrder.player_id < 0,
+                    MarketOrder.status.in_([OrderStatus.ACTIVE,
+                                            OrderStatus.PARTIALLY_FILLED]),
+                )
+                .all()
+            )
+            anchors: dict = {}
+            cancelled = 0
+            for o in rows:
+                if o.item_type not in anchors:
+                    anchors[o.item_type] = _human_anchor(o.item_type)
+                anchor = anchors[o.item_type]
+                if anchor and anchor > 0 and o.price and o.price > anchor * 5:
+                    o.status = OrderStatus.CANCELLED
+                    cancelled += 1
+            db.commit()
+            if cancelled:
+                print(f"[NPC] Hygiene: cancelled {cancelled} runaway NPC order(s) "
+                      f"priced beyond 5× the human-anchored reference.")
+        finally:
+            db.close()
+    except Exception as e:
+        print(f"[NPC] Runaway-order hygiene error: {e}")
 
 
 def tick(current_tick: int, now: datetime):
