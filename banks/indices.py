@@ -62,7 +62,7 @@ INDICES: dict[str, dict] = {
     "GLVI": {
         "name": "Global Land Valuation Index",
         "code": "GLVI",
-        "desc": "Average value of all player-owned real estate (monthly_tax × 120).",
+        "desc": "Total value of all player-owned real estate — raw plots + districts (monthly_tax × 120).",
         "unit": "USD", "icon": "🏘️", "color": "#22c55e",
     },
     "CCC": {
@@ -98,7 +98,7 @@ INDICES: dict[str, dict] = {
     "GSI": {
         "name": "Global Solvency Index",
         "code": "GSI",
-        "desc": "Combined cash reserves and asset value of the automated banking sector.",
+        "desc": "Combined reserves of the banking system: ETF/automated banks, the Brokerage, and the 16 State Reserve Banks (multi-currency reserves valued in USD).",
         "unit": "USD", "icon": "🛡️", "color": "#34d399",
     },
     "PCVI": {
@@ -305,24 +305,55 @@ def calc_WBC50() -> tuple[float, dict]:
 
 
 def calc_GLVI() -> tuple[float, dict]:
-    """Average land value (monthly_tax × 120)."""
+    """TOTAL value of all non-government real estate (monthly_tax × 120):
+    raw land plots plus merged districts. The per-plot average is kept in
+    meta for the detail page."""
     try:
         from land import LandPlot
         db = _get_db()
         try:
-            rows = (db.query(LandPlot.terrain_type, func.avg(LandPlot.monthly_tax))
+            rows = (db.query(LandPlot.terrain_type,
+                             func.sum(LandPlot.monthly_tax),
+                             func.count(LandPlot.id))
                     .filter(LandPlot.is_government_owned == False)
                     .group_by(LandPlot.terrain_type)
                     .all())
-            total_avg_row = db.query(func.avg(LandPlot.monthly_tax)).filter(
+            avg_tax_row = db.query(func.avg(LandPlot.monthly_tax)).filter(
                 LandPlot.is_government_owned == False).scalar()
         finally:
             db.close()
-        avg_tax = float(total_avg_row or 0.0)
-        avg_value = avg_tax * 120
-        breakdown = [{"label": r[0], "value": round(float(r[1]) * 120, 2)} for r in rows]
+
+        total_value = 0.0
+        plot_count  = 0
+        breakdown = []
+        for terrain, tax_sum, cnt in rows:
+            val = float(tax_sum or 0.0) * 120
+            total_value += val
+            plot_count  += int(cnt or 0)
+            breakdown.append({"label": terrain, "value": round(val, 2)})
+
+        # Districts are real estate too — merged plots leave the LandPlot pool
+        try:
+            from districts import District
+            ddb = _get_db()
+            try:
+                d_sum, d_cnt = ddb.query(
+                    func.sum(District.monthly_tax), func.count(District.id)
+                ).first()
+            finally:
+                ddb.close()
+            d_val = float(d_sum or 0.0) * 120
+            if d_val > 0:
+                total_value += d_val
+                breakdown.append({"label": "districts", "value": round(d_val, 2)})
+        except Exception:
+            pass
+
         breakdown.sort(key=lambda x: x["value"], reverse=True)
-        return avg_value, {"breakdown": breakdown, "avg_value": avg_value}
+        avg_value = float(avg_tax_row or 0.0) * 120
+        return total_value, {"breakdown": breakdown, "total_value": total_value,
+                             "avg_value": round(avg_value, 2),
+                             "plot_count": plot_count}
     except Exception as e:
         print(f"[Indices] GLVI error: {e}")
         return 0.0, {}
@@ -485,16 +516,50 @@ def calc_GSI() -> tuple[float, dict]:
             total += nav
             breakdown.append({"label": ent.bank_id.replace("_", " ").title(),
                                "value": round(nav, 2)})
-        # Include brokerage firm reserves
+        # NOTE: the Brokerage Firm is deliberately EXCLUDED. It is seeded with
+        # STARTING_CAPITAL = 1e26 as an infinite-liquidity market maker — a
+        # design sentinel, not real solvency. Including it flattened GSI into
+        # a meaningless ~1e19 constant that drowned every real bank.
+
+        # Include the 16 State Reserve Banks. Their reserves are held in
+        # FOREIGN currencies (one BankReserveBalance row per bank+currency),
+        # so each balance is converted to USD at the live usd_per_unit rate —
+        # this is the multi-currency leg of the banking system's solvency.
         try:
-            from banks.brokerage_firm import get_firm_entity
-            firm = get_firm_entity()
-            if firm:
-                total += firm.cash_reserves
-                breakdown.append({"label": "Brokerage Firm",
-                                   "value": round(firm.cash_reserves, 2)})
-        except Exception:
-            pass
+            from database import ReserveSessionLocal
+            from reserve_banks import StateReserveBank, BankReserveBalance
+            rdb = ReserveSessionLocal()
+            try:
+                banks_rows = rdb.query(StateReserveBank).all()
+                rates = {b.currency_code: float(b.usd_per_unit or 0.0)
+                         for b in banks_rows}
+                rates.setdefault("USD", 1.0)
+                name_by_id = {b.id: b.currency_code for b in banks_rows}
+                res_rows = (rdb.query(BankReserveBalance.bank_id,
+                                      BankReserveBalance.currency_code,
+                                      func.sum(BankReserveBalance.balance))
+                            .filter(BankReserveBalance.balance > 0)
+                            .group_by(BankReserveBalance.bank_id,
+                                      BankReserveBalance.currency_code)
+                            .all())
+                reserve_usd_by_bank: dict = {}
+                for bank_id, ccode, bal in res_rows:
+                    reserve_usd_by_bank[bank_id] = (
+                        reserve_usd_by_bank.get(bank_id, 0.0)
+                        + float(bal or 0.0) * rates.get(ccode, 0.0)
+                    )
+                reserve_total = 0.0
+                for bank_id, usd_val in reserve_usd_by_bank.items():
+                    reserve_total += usd_val
+                if reserve_total > 0:
+                    total += reserve_total
+                    breakdown.append({"label": "State Reserve Banks (16)",
+                                      "value": round(reserve_total, 2)})
+            finally:
+                rdb.close()
+        except Exception as _rbe:
+            print(f"[Indices] GSI reserve-bank leg error: {_rbe}")
+
         breakdown.sort(key=lambda x: x["value"], reverse=True)
         return total, {"breakdown": breakdown, "total": total}
     except Exception as e:
@@ -503,7 +568,12 @@ def calc_GSI() -> tuple[float, dict]:
 
 
 def calc_PCVI() -> tuple[float, dict]:
-    """Total value of active P2P delivery contracts."""
+    """Total value of active P2P delivery contracts.
+
+    Contract prices are USD-denominated by design — the Contract model has no
+    currency column; multi-currency only enters at settlement time, where the
+    tender-aware payment machinery converts for each party. No conversion
+    needed here."""
     try:
         from p2p import Contract, ContractItem
         db = _get_db()
