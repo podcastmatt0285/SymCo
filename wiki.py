@@ -81,6 +81,7 @@ def initialize():
     _seed_index_challenge_entry()
     _seed_institution_entries()
     _seed_npc_currency_mandate_entry()
+    _seed_market_indices_entry()
 
 
 def _seed_land_grant_entry():
@@ -576,5 +577,98 @@ def move_entry(entry_id: int, direction: int):
                 entries[swap_idx].sort_order, entries[idx].sort_order
             )
             db.commit()
+    finally:
+        db.close()
+
+
+def _seed_market_indices_entry():
+    db = _db()
+    try:
+        if db.query(WikiMedia).filter(WikiMedia.title == "The 19 Market Indices Explained").first():
+            return
+        max_order = db.query(WikiMedia).count()
+        db.add(WikiMedia(
+            youtube_id="",
+            kind="video",
+            title="The 19 Market Indices Explained",
+            description=(
+                "Wadsworth tracks 19 live composite indices that update every 10 minutes. They are "
+                "viewable by everyone — even logged-out visitors — from the Market Indices page "
+                "(/banks/indices). Every index has 30-day history, candlestick charts, a composition "
+                "breakdown, and related-index links. All dollar values are computed in USD and shown "
+                "in your chosen display currency.\n\n"
+                "EQUITY & CORPORATE\n"
+                "• WBC-50 (Wadsworth Blue-Chip 50) — combined market capitalization of the 50 most "
+                "valuable enterprises: public companies (shares outstanding × share price) plus NPC "
+                "private businesses (all currency holdings valued in USD + land value). The flagship "
+                "index; the WBC-50 Index Fund ETF tracks it, and the monthly Index Challenge event "
+                "rewards entering or exiting it.\n"
+                "• CDI (Corporate Dilution Index) — ratio of new shares issued to shares bought back. "
+                "Rising CDI means companies are diluting shareholders; falling means buybacks dominate.\n"
+                "• GSI (Global Solvency Index) — aggregate health of the banking system: total bank "
+                "net asset value (cash reserves + assets). Falling GSI warns of systemic stress.\n\n"
+                "LAND & REAL ESTATE\n"
+                "• GLVI (Global Land Valuation Index) — the AVERAGE value of a player-owned plot "
+                "(monthly tax × 120). Rising GLVI = land is appreciating across the map.\n"
+                "• REGI (Real Estate Gentrification Index) — ratio of raw plots to merged district "
+                "plots. Falling REGI means more land is being upgraded into districts.\n"
+                "• NSCI (Neighborhood Services Cost Index) — average price of district-market "
+                "services (hotel nights, casino packages, port leases…). The cost-of-living gauge.\n\n"
+                "CURRENCY, CRYPTO & BANKING\n"
+                "• RBYC (Reserve Bank Yield Composite) — average bond yield across all 16 State "
+                "Reserve Banks. The economy's interest-rate dial: NPC currency mandates and heavy "
+                "bond buying move it.\n"
+                "• CCC (County Crypto Composite) — total market cap of all county layer-1 tokens.\n"
+                "• WMRI (WSC Minting Rate Index) — WSC stablecoin supply: total minted, circulating, "
+                "and pool distribution.\n\n"
+                "LABOR & CONTRACTS\n"
+                "• EPI (Executive Payroll Index) — average hourly wage of the executive workforce. "
+                "Wage inflation gauge; raises from aging executives push it up.\n"
+                "• PCVI (P2P Contract Velocity Index) — total value flowing through player-to-player "
+                "contracts. High PCVI = an active deal-making economy.\n\n"
+                "COMMODITIES & PRODUCTION\n"
+                "• AMP (Average Market Price) — broad average of commodity market prices. The "
+                "headline inflation number.\n"
+                "• ASI (Agricultural Staples Index) — basket of farm staples (wheat, corn, etc.).\n"
+                "• SEED (Seed Inventory Index) — seed stock across the economy; a leading indicator "
+                "of future agricultural output.\n"
+                "• BEE (Bee Index) — total bee inventory. Bees pollinate; collapse here precedes "
+                "crop problems.\n"
+                "• GPI (Grass & Pollen Index) — grass and pollen stocks, the inputs to the "
+                "pollination chain.\n"
+                "• WEI (Water & Energy Index) — water and energy prices, the universal production "
+                "inputs. Rising WEI squeezes every manufacturer's margins.\n"
+                "• GDSI (Global Defense Spending Index) — military hardware market activity "
+                "(weapons, vehicles, aircraft, naval).\n\n"
+                "SENTIMENT\n"
+                "• GFI (Greed & Fear Index) — a 0–100 sentiment gauge built from five live signals: "
+                "WBC-50 momentum vs its 30-day average, market breadth (share of companies above IPO "
+                "price), corporate actions (buybacks vs issuance), P2P velocity, and 24-hour trade "
+                "volume. Below 25 = Extreme Fear, 25–44 Fear, 45–55 Neutral, 56–75 Greed, above 75 "
+                "= Extreme Greed. A contrarian indicator — extreme fear has historically preceded "
+                "recoveries.\n\n"
+                "READING THE PAGE\n"
+                "• Each card shows the current value, 24-hour change, and a sparkline.\n"
+                "• Detail pages add 24h/7d/30d performance chips, hourly candlesticks, volatility, "
+                "and the index's composition breakdown.\n"
+                "• Index values are recalculated every 10 minutes from live game data — nothing is "
+                "simulated or random.\n\n"
+                "STRATEGY\n"
+                "• Watch RBYC before buying bonds: a falling composite means yields are compressing.\n"
+                "• Rising WEI + rising AMP = inflationary squeeze; raise your retail prices.\n"
+                "• GFI extremes are entry/exit signals for the stock market.\n"
+                "• SEED and BEE lead ASI: shortages upstream show up in food prices weeks later.\n"
+                "• The Index Challenge event (monthly) pays trophies for crossing the WBC-50 boundary "
+                "in either direction — grow market cap to enter, or divest to exit."
+            ),
+            category="banks",
+            sort_order=max_order,
+            pinned=False,
+        ))
+        db.commit()
+        print("[Wiki] Seeded Market Indices entry")
+    except Exception as e:
+        db.rollback()
+        print(f"[Wiki] Seed market indices error: {e}")
     finally:
         db.close()

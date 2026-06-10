@@ -580,6 +580,7 @@ def admin_dashboard(
         <a href="/admin/p2p" class="link-card"><div class="lc-icon">📋</div><div class="lc-title">P2P Contracts</div><div class="lc-desc">View activity</div></a>
         <a href="/admin/landbank" class="link-card"><div class="lc-icon">🏦</div><div class="lc-title">Land Bank</div><div class="lc-desc">Manage plots</div></a>
         <a href="/admin/etf" class="link-card"><div class="lc-icon">📈</div><div class="lc-title">ETF Banks</div><div class="lc-desc">Share audit &amp; repair</div></a>
+        <a href="/admin/indices" class="link-card"><div class="lc-icon">📊</div><div class="lc-title">Market Indices</div><div class="lc-desc">Snapshot health &amp; force-refresh</div></a>
         <a href="/admin/annuities" class="link-card"><div class="lc-icon">📋</div><div class="lc-title">Annuities</div><div class="lc-desc">Contracts &amp; liability</div></a>
         <a href="/admin/logs" class="link-card"><div class="lc-icon">📜</div><div class="lc-title">Audit Log</div><div class="lc-desc">Admin actions</div></a>
         <a href="/admin/wiki" class="link-card"><div class="lc-icon">📖</div><div class="lc-title">Wiki / Media</div><div class="lc-desc">Tutorial videos &amp; audio</div></a>
@@ -6185,3 +6186,90 @@ def admin_land_grant_resolve(
             return RedirectResponse(f"/admin/events?err={urllib.parse.quote(err[:120])}", status_code=303)
     except Exception as e:
         return RedirectResponse(f"/admin/events?err={urllib.parse.quote(str(e)[:120])}", status_code=303)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# MARKET INDICES — snapshot health & force-refresh
+# ─────────────────────────────────────────────────────────────────────────────
+
+@router.get("/admin/indices", response_class=HTMLResponse)
+def admin_indices(session_token: Optional[str] = Cookie(None),
+                  msg: Optional[str] = Query(None)):
+    admin = require_admin(session_token)
+    if isinstance(admin, RedirectResponse):
+        return admin
+
+    from banks.indices import INDICES, _get_latest, SAMPLE_EVERY
+    now = datetime.utcnow()
+    rows_html = ""
+    stale_count = 0
+    for code, meta in INDICES.items():
+        snap = _get_latest(code)
+        if snap:
+            age_min = (now - snap.timestamp).total_seconds() / 60
+            # snapshots land every (SAMPLE_EVERY × 5s) = 10 min; >2 cycles = stale
+            stale = age_min > (SAMPLE_EVERY * 5 / 60) * 2 + 1
+            if stale:
+                stale_count += 1
+            age_str  = f"{age_min:.0f} min ago"
+            age_col  = "#ef4444" if stale else "#4ade80"
+            val_str  = f"{snap.value:,.2f}"
+        else:
+            stale_count += 1
+            age_str, age_col, val_str = "never", "#ef4444", "—"
+        rows_html += (
+            f"<tr>"
+            f"<td>{meta['icon']} <b style='color:{meta['color']};'>{code}</b></td>"
+            f"<td style='color:#94a3b8;'>{meta['name']}</td>"
+            f"<td style='text-align:right;color:#e2e8f0;'>{val_str}</td>"
+            f"<td style='text-align:right;color:{age_col};'>{age_str}</td>"
+            f"<td><a href='/banks/indices/{code}' style='color:#38bdf8;font-size:0.72rem;'>view →</a></td>"
+            f"</tr>"
+        )
+
+    health = ('<span style="color:#4ade80;font-weight:700;">✓ All indices healthy</span>'
+              if stale_count == 0 else
+              f'<span style="color:#ef4444;font-weight:700;">⚠ {stale_count} stale '
+              f'(no snapshot in 2+ cycles — check server logs for "[Indices]" errors)</span>')
+
+    _msg_html = (f'<div style="background:#06281b;border:1px solid #22c55e;border-radius:8px;'
+                 f'padding:10px 14px;margin-bottom:14px;color:#4ade80;font-size:0.8rem;">'
+                 f'{urllib.parse.unquote(msg)}</div>') if msg else ""
+
+    body = f"""
+    <a href="/admin" style="color:#64748b;font-size:0.85rem;text-decoration:none;">← Admin</a>
+    <h2 style="margin:10px 0 4px;">📊 Market Indices Health</h2>
+    <p style="color:#64748b;font-size:0.8rem;margin-bottom:14px;">
+        Snapshots are taken every 10 minutes by the tick loop. {health}
+    </p>
+    {_msg_html}
+    <form method="post" action="/admin/indices/force-snapshot" style="margin-bottom:16px;">
+        <button type="submit"
+                style="background:#7c3aed;color:#f5f3ff;border:none;border-radius:6px;
+                       padding:9px 18px;font-size:0.82rem;font-weight:700;cursor:pointer;">
+            ⚡ Force Snapshot Now (all 19)
+        </button>
+    </form>
+    <div class="card">
+        <div class="table-wrap"><table style="width:100%;font-size:0.8rem;">
+            <tr><th style="text-align:left;">Code</th><th style="text-align:left;">Name</th>
+                <th style="text-align:right;">Latest Value</th><th style="text-align:right;">Snapshot Age</th><th></th></tr>
+            {rows_html}
+        </table></div>
+    </div>"""
+    return HTMLResponse(admin_shell("Market Indices", body, admin.business_name,
+                                    "/admin", player_id=admin.id))
+
+
+@router.post("/admin/indices/force-snapshot")
+def admin_indices_force_snapshot(session_token: Optional[str] = Cookie(None)):
+    admin = require_admin(session_token)
+    if isinstance(admin, RedirectResponse):
+        return admin
+    try:
+        from banks.indices import calculate_all_indices
+        calculate_all_indices()
+        m = urllib.parse.quote("Snapshot cycle completed for all indices.")
+    except Exception as e:
+        m = urllib.parse.quote(f"Snapshot error: {str(e)[:120]}")
+    return RedirectResponse(f"/admin/indices?msg={m}", status_code=303)

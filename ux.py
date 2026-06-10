@@ -458,7 +458,13 @@ def _nav_loader_html() -> str:
             "Tip: Sacrificed plots for Institutions can be empty — they don't need a business.",
             "Tip: Anyone can buy metal-coinage bonds; only subscribers can set coinage as legal tender.",
             "Tip: Government events can mandate all NPC businesses to switch currencies — their forex demand moves exchange rates and bond yields you trade.",
-            "Tip: When NPCs are mandated to a currency, they actually earn, spend and pay tax in it — a mass switch is a real signal to hedge."
+            "Tip: When NPCs are mandated to a currency, they actually earn, spend and pay tax in it — a mass switch is a real signal to hedge.",
+            "Tip: 19 live Market Indices update every 10 minutes — find them under Banks → Market Indices.",
+            "Tip: The Greed & Fear Index is contrarian — Extreme Fear has historically preceded recoveries.",
+            "Tip: Watch RBYC (Reserve Bank Yield Composite) before buying bonds — a falling composite means yields are compressing.",
+            "Tip: SEED and BEE lead the Agricultural Staples Index — upstream shortages hit food prices weeks later.",
+            "Tip: Rising WEI (Water & Energy) plus rising AMP means an inflationary squeeze — raise your retail prices.",
+            "Tip: Every index card has 30-day candlestick charts, volatility, and composition breakdowns — tap any index to drill in."
           ];
           var overlay = document.getElementById('nav-loader');
           var bar     = document.getElementById('nl-bar');
@@ -14511,7 +14517,9 @@ def api_widget_data(request: Request, session_token: Optional[str] = Cookie(None
                 pass
 
             # ── Indices ───────────────────────────────────────────────────────
-            INDEX_CODES = ["WBC50","GLVI","CCC","EPI","CDI","REGI","BEE","WEI","GPI","SEED"]
+            INDEX_CODES = ["WBC50","GFI","AMP","RBYC","GLVI","CCC","EPI","CDI",
+                           "REGI","GSI","PCVI","NSCI","ASI","GDSI","WMRI",
+                           "BEE","WEI","GPI","SEED"]
             for code in INDEX_CODES:
                 snap = (db.query(IndexSnapshot)
                           .filter(IndexSnapshot.index_code == code)
@@ -14529,8 +14537,17 @@ def api_widget_data(request: Request, session_token: Optional[str] = Cookie(None
                     pct   = (snap.value - prev.value) / prev.value * 100
                     change = f"{'+'if pct>=0 else ''}{pct:.2f}%"
                     up     = pct >= 0
+                if code == "GFI":
+                    # 0–100 sentiment score, not a price — label the zone
+                    _g = snap.value
+                    _zone = ("Ext. Fear" if _g <= 24 else "Fear" if _g <= 44
+                             else "Neutral" if _g <= 55 else "Greed" if _g <= 75
+                             else "Ext. Greed")
+                    _val_str = f"{_g:.0f} {_zone}"
+                else:
+                    _val_str = f"{snap.value:,.2f}"
                 entry = {"label": code.replace("WBC50","WBC-50"),
-                         "value": f"{snap.value:,.2f}",
+                         "value": _val_str,
                          "change": change, "up": up, "type": "index"}
                 result["indices"].append(entry)
                 result["tickers"].append(entry)

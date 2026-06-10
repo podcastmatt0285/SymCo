@@ -242,7 +242,6 @@ def calc_WBC50() -> tuple[float, dict]:
         try:
             from auth import Player
             from land import LandPlot
-            from reserve_banks import get_usd_balance
             db_main = _get_db()
             try:
                 npc_players = db_main.query(Player).filter(Player.is_npc == True).all()
@@ -253,8 +252,36 @@ def calc_WBC50() -> tuple[float, dict]:
                                  .filter(LandPlot.owner_id.in_(npc_ids))
                                  .group_by(LandPlot.owner_id).all())
                     land_by_id = {row[0]: float(row[1] or 0.0) for row in land_rows}
+
+                    # Value ALL currency holdings in USD, not just the USD row.
+                    # get_usd_balance() only reads the USD balance — an NPC whose
+                    # legal tender was mandated to TRY/JPY/etc. would otherwise
+                    # appear worthless and silently drop out of the index. One
+                    # batch query instead of ~97 sequential sessions per snapshot.
+                    cash_by_id: dict = {}
+                    from database import ReserveSessionLocal
+                    from reserve_banks import PlayerCurrencyBalance, StateReserveBank
+                    rdb = ReserveSessionLocal()
+                    try:
+                        rates = {b.currency_code: float(b.usd_per_unit or 0.0)
+                                 for b in rdb.query(StateReserveBank).all()}
+                        rates.setdefault("USD", 1.0)
+                        bal_rows = (rdb.query(PlayerCurrencyBalance.player_id,
+                                              PlayerCurrencyBalance.currency_code,
+                                              func.sum(PlayerCurrencyBalance.balance))
+                                    .filter(PlayerCurrencyBalance.player_id.in_(npc_ids),
+                                            PlayerCurrencyBalance.balance > 0)
+                                    .group_by(PlayerCurrencyBalance.player_id,
+                                              PlayerCurrencyBalance.currency_code)
+                                    .all())
+                        for pid, ccode, amt in bal_rows:
+                            cash_by_id[pid] = (cash_by_id.get(pid, 0.0)
+                                               + float(amt or 0.0) * rates.get(ccode, 0.0))
+                    finally:
+                        rdb.close()
+
                     for npc in npc_players:
-                        npc_val = get_usd_balance(npc.id) + land_by_id.get(npc.id, 0.0)
+                        npc_val = cash_by_id.get(npc.id, 0.0) + land_by_id.get(npc.id, 0.0)
                         if npc_val > 0:
                             caps.append({"label": npc.business_name,
                                          "name": npc.business_name,
@@ -841,6 +868,26 @@ def calculate_all_indices():
                 pass
         finally:
             db.close()
+
+    # Prune snapshots beyond the longest charted window (30 days) plus margin.
+    # Without this the table grows ~82k rows/month forever.
+    db = _get_db()
+    try:
+        cutoff = datetime.utcnow() - timedelta(days=90)
+        deleted = (db.query(IndexSnapshot)
+                   .filter(IndexSnapshot.timestamp < cutoff)
+                   .delete(synchronize_session=False))
+        db.commit()
+        if deleted:
+            print(f"[Indices] Pruned {deleted} snapshots older than 90 days.")
+    except Exception as e:
+        print(f"[Indices] Prune error: {e}")
+        try:
+            db.rollback()
+        except Exception:
+            pass
+    finally:
+        db.close()
 
 
 def _get_latest(code: str) -> Optional[IndexSnapshot]:
@@ -2372,6 +2419,88 @@ def _gfi_gauge(meta: dict) -> str:
 _tick_counter = 0
 SAMPLE_EVERY  = 120   # 120 ticks × 5 s = 10 minutes
 
+# ── Index push alerts (GFI zone transitions, large WBC-50 daily moves) ────────
+
+WBC50_ALERT_PCT = 5.0    # alert when |24h move| reaches this percentage
+
+_last_gfi_zone: Optional[str] = None     # zone at the previous snapshot
+_last_wbc50_alert_day: Optional[str] = None   # UTC date of the last WBC-50 alert
+
+
+def _gfi_zone(score: float) -> str:
+    if score <= 24: return "Extreme Fear"
+    if score <= 44: return "Fear"
+    if score <= 55: return "Neutral"
+    if score <= 75: return "Greed"
+    return "Extreme Greed"
+
+
+def _broadcast_index_alert(title: str, body: str, tag: str) -> None:
+    """Push an index alert to every subscribed player (respects the
+    notif_push_indices preference via send_push_notification)."""
+    try:
+        from push_ux import send_push_notification
+        from auth import get_db as _adb, PushSubscription
+        adb = _adb()
+        try:
+            pids = [r[0] for r in adb.query(PushSubscription.player_id).distinct().all()]
+        finally:
+            adb.close()
+        for pid in pids:
+            try:
+                send_push_notification(pid, title, body, url="/banks/indices",
+                                       notif_type="indices", tag=tag)
+            except Exception:
+                pass
+    except Exception as e:
+        print(f"[Indices] alert broadcast failed: {e}")
+
+
+def _check_index_alerts():
+    """Run after each snapshot cycle. Fires:
+    • GFI alert when sentiment TRANSITIONS into an extreme zone.
+    • WBC-50 alert when the 24h move first reaches ±WBC50_ALERT_PCT (max once/day).
+    State is in-memory; a server restart at most repeats one alert (same push tag
+    collapses duplicates on the device)."""
+    global _last_gfi_zone, _last_wbc50_alert_day
+    try:
+        # ── GFI zone transition ───────────────────────────────────────────────
+        gfi = _get_latest("GFI")
+        if gfi:
+            zone = _gfi_zone(gfi.value)
+            if _last_gfi_zone is None:
+                _last_gfi_zone = zone   # baseline only — no alert on first cycle
+            elif zone != _last_gfi_zone:
+                if zone in ("Extreme Fear", "Extreme Greed"):
+                    emoji = "🚨" if zone == "Extreme Fear" else "🔥"
+                    _broadcast_index_alert(
+                        f"{emoji} Market Sentiment: {zone}",
+                        f"The Greed & Fear Index hit {gfi.value:.0f} — {zone}. "
+                        + ("Extreme fear has historically preceded recoveries."
+                           if zone == "Extreme Fear" else
+                           "Markets may be overheated — consider taking profits."),
+                        tag=f"gfi-{zone.lower().replace(' ', '-')}",
+                    )
+                _last_gfi_zone = zone
+
+        # ── WBC-50 large 24h move ─────────────────────────────────────────────
+        today = datetime.utcnow().strftime("%Y-%m-%d")
+        if _last_wbc50_alert_day != today:
+            snaps = _get_history("WBC50", 1)
+            if len(snaps) >= 2 and snaps[0].value:
+                pct = (snaps[-1].value - snaps[0].value) / abs(snaps[0].value) * 100
+                if abs(pct) >= WBC50_ALERT_PCT:
+                    arrow = "📈" if pct > 0 else "📉"
+                    _broadcast_index_alert(
+                        f"{arrow} WBC-50 {'+' if pct > 0 else ''}{pct:.1f}% in 24h",
+                        f"The Wadsworth Blue-Chip 50 moved {pct:+.1f}% over the last "
+                        f"24 hours to {_fmt(snaps[-1].value, 'USD')}.",
+                        tag=f"wbc50-move-{today}",
+                    )
+                    _last_wbc50_alert_day = today
+    except Exception as e:
+        print(f"[Indices] alert check error: {e}")
+
 
 def initialize():
     """Create table and take an initial snapshot if none exist."""
@@ -2394,3 +2523,4 @@ async def tick(tick_number: int, now: datetime):
     if _tick_counter >= SAMPLE_EVERY:
         _tick_counter = 0
         calculate_all_indices()
+        _check_index_alerts()
