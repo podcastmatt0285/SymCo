@@ -2293,6 +2293,381 @@ async def register(
 
     return redirect
 
+@router.get("/founding", response_class=HTMLResponse)
+def founding_page():
+    """Public landing page for the Founding Operative beta program — no login required."""
+    from beta import (
+        PLAY_STORE_URL, GOOGLE_GROUP_URL,
+        FOUNDING_OPERATIVE_TROPHIES, POCKET_EMPIRE_TROPHIES, ACTIVE_DUTY_TROPHIES,
+        get_available_count, get_total_count,
+    )
+    try:
+        _available = get_available_count()
+        _total     = get_total_count()
+        _assigned  = _total - _available
+        _slots_pct = int((_assigned / _total) * 100) if _total else 0
+        _slots_html = f'''
+            <div class="fo-meter-wrap">
+                <div class="fo-meter-bar"><div class="fo-meter-fill" style="width:{_slots_pct}%;"></div></div>
+                <div class="fo-meter-label">{_assigned} / {_total} slots claimed</div>
+            </div>'''
+        if _available == 0:
+            _cta_html = '<div class="fo-full-msg">All founding slots have been filled. Thank you to everyone who joined!</div>'
+        else:
+            _cta_html = f'''
+            <a href="{PLAY_STORE_URL}" class="fo-btn fo-btn-primary" target="_blank" rel="noopener">
+                ▶&nbsp; Get the Android App
+            </a>
+            <a href="{GOOGLE_GROUP_URL}" class="fo-btn fo-btn-gold" target="_blank" rel="noopener">
+                Join the Google Group
+            </a>
+            <a href="/login" class="fo-btn fo-btn-secondary">
+                Log In &amp; Submit Email
+            </a>'''
+    except Exception:
+        _available = 0
+        _total     = 48
+        _slots_html = ""
+        _cta_html = f'''
+            <a href="{PLAY_STORE_URL}" class="fo-btn fo-btn-primary" target="_blank" rel="noopener">
+                ▶&nbsp; Get the Android App
+            </a>
+            <a href="{GOOGLE_GROUP_URL}" class="fo-btn fo-btn-gold" target="_blank" rel="noopener">
+                Join the Google Group
+            </a>
+            <a href="/login" class="fo-btn fo-btn-secondary">
+                Log In &amp; Submit Email
+            </a>'''
+
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Founding Operative · Wadsworth Tycoon</title>
+    <meta name="description" content="Join the Wadsworth Economic Tycoon Simulator as a Founding Tester. Get an exclusive Google Play promo code, earn 150 trophies, and unlock the permanent Founding Tester badge.">
+
+    <!-- Open Graph / Reddit / Discord rich preview -->
+    <meta property="og:type"        content="website">
+    <meta property="og:title"       content="🎖️ Founding Operative — Wadsworth Tycoon">
+    <meta property="og:description" content="Become a Founding Tester of Wadsworth. Free Android download · 150 trophy reward · permanent badge. {_available} slots remaining.">
+    <meta property="og:image"       content="/static/icons/apple-touch-icon.png">
+    <meta property="og:url"         content="/founding">
+    <meta name="twitter:card"       content="summary">
+    <meta name="twitter:title"      content="🎖️ Founding Operative — Wadsworth Tycoon">
+    <meta name="twitter:description" content="Join the closed Android beta. Free promo code · 150 trophies · exclusive badge. {_available} slots left.">
+
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#020617">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=EB+Garamond:ital@0;1&display=swap" rel="stylesheet">
+
+    <style>
+        *{{ margin:0; padding:0; box-sizing:border-box; }}
+        body{{
+            font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+            background:#0b1220; color:#e5e7eb;
+            min-height:100vh; display:flex; flex-direction:column; align-items:center;
+            padding:32px 16px 80px;
+        }}
+        .fo-wrap{{ max-width:560px; width:100%; }}
+
+        /* ── Game title + logo ── */
+        .fo-game-title{{
+            text-align:center; margin-bottom:12px;
+            font-size:18px; font-weight:700; letter-spacing:0.04em; line-height:1.25;
+            background:linear-gradient(90deg,#B08D57,#e5c88a,#B08D57);
+            -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+        }}
+        .fo-logo{{ text-align:center; margin-bottom:20px; }}
+        .fo-logo img{{ width:80px; height:auto; }}
+
+        /* ── Hero card (same aesthetic as login hero) ── */
+        .fo-card{{
+            position:relative; padding:40px 28px 36px; text-align:center;
+            border-radius:16px; overflow:hidden;
+            background:radial-gradient(ellipse at 50% 0%,rgba(202,138,4,.10) 0%,rgba(12,10,9,0) 60%),
+                        linear-gradient(160deg,#14100c 0%,#0c0a09 55%,#14100c 100%);
+            border:1px solid rgba(176,141,87,0.28);
+            box-shadow:0 22px 60px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,225,170,.06);
+        }}
+        .fo-gear{{
+            position:absolute; opacity:0.055; fill:#eab308;
+            pointer-events:none; z-index:0;
+        }}
+        .fo-gear.g1{{ top:-54px; left:-50px;  width:200px; height:200px;
+                      animation:fo-gear-rotate 26s linear infinite; }}
+        .fo-gear.g2{{ bottom:-60px; right:-56px; width:240px; height:240px;
+                      animation:fo-gear-rotate 46s linear infinite reverse; }}
+        @keyframes fo-gear-rotate{{ from{{transform:rotate(0deg)}} to{{transform:rotate(360deg)}} }}
+        @media(prefers-reduced-motion:reduce){{ .fo-gear{{animation:none}} }}
+        .fo-inner{{ position:relative; z-index:1; }}
+
+        .fo-kicker{{
+            font-family:'Cinzel',serif; font-size:0.62rem; font-weight:700;
+            letter-spacing:0.38em; text-transform:uppercase;
+            color:rgba(202,138,4,.78); margin-bottom:14px;
+        }}
+        .fo-title{{
+            font-family:'Cinzel',serif; font-weight:900;
+            font-size:clamp(2rem,8vw,2.8rem); line-height:1.0;
+            text-transform:uppercase; letter-spacing:0.01em;
+            background:linear-gradient(90deg,#ca8a04 0%,#ca8a04 40%,#fef08a 50%,#ca8a04 60%,#ca8a04 100%);
+            background-size:200% auto;
+            -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+            filter:drop-shadow(0 0 2px rgba(253,224,71,.4));
+            animation:fo-gold-shine 3.4s linear infinite;
+        }}
+        @keyframes fo-gold-shine{{ to{{background-position:200% center}} }}
+
+        .fo-divider{{
+            display:flex; align-items:center; justify-content:center; gap:14px; margin:22px 0;
+        }}
+        .fo-divider .hd-line{{
+            height:1px; width:56px; background:linear-gradient(90deg,transparent,rgba(234,179,8,.75));
+        }}
+        .fo-divider .hd-line.right{{
+            background:linear-gradient(90deg,rgba(234,179,8,.75),transparent);
+        }}
+        .fo-divider .hd-diamond{{
+            width:9px; height:9px; transform:rotate(45deg);
+            border:1px solid #facc15; background:rgba(202,138,4,.4);
+        }}
+
+        .fo-subtitle{{
+            font-family:'EB Garamond',Georgia,serif; font-style:italic;
+            font-size:1.12rem; line-height:1.6; color:#e7e2d8;
+            margin:0 auto; max-width:380px; text-shadow:0 1px 6px rgba(0,0,0,.5);
+        }}
+
+        /* ── Trophy reward pills ── */
+        .fo-rewards{{
+            display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin:24px 0 0;
+        }}
+        .fo-reward-pill{{
+            display:flex; align-items:center; gap:7px;
+            background:rgba(30,41,59,.7); border:1px solid rgba(176,141,87,.22);
+            border-radius:999px; padding:8px 14px;
+        }}
+        .fo-reward-icon{{ font-size:1.1rem; }}
+        .fo-reward-text{{ font-size:0.78rem; line-height:1.3; text-align:left; }}
+        .fo-reward-title{{ font-weight:700; color:#e5c88a; }}
+        .fo-reward-sub{{ color:#94a3b8; font-size:0.7rem; }}
+
+        /* ── Slot meter ── */
+        .fo-meter-wrap{{ margin:22px 0 0; }}
+        .fo-meter-bar{{
+            height:6px; background:rgba(255,255,255,.08); border-radius:3px; overflow:hidden;
+        }}
+        .fo-meter-fill{{
+            height:100%; background:linear-gradient(90deg,#B08D57,#e5c88a);
+            border-radius:3px; transition:width .6s ease;
+        }}
+        .fo-meter-label{{
+            font-size:0.72rem; color:#94a3b8; margin-top:6px; text-align:center;
+        }}
+
+        /* ── CTA buttons ── */
+        .fo-cta{{ display:flex; flex-direction:column; gap:12px; margin-top:24px; }}
+        .fo-btn{{
+            display:block; width:100%; padding:14px 20px;
+            border:none; border-radius:10px; font-size:0.92rem; font-weight:700;
+            font-family:inherit; cursor:pointer; text-decoration:none; text-align:center;
+            transition:opacity .2s, transform .1s;
+        }}
+        .fo-btn:hover{{ opacity:.88; transform:translateY(-1px); }}
+        .fo-btn-primary{{ background:#38bdf8; color:#020617; }}
+        .fo-btn-gold{{ background:linear-gradient(90deg,#B08D57,#e5c88a); color:#14100c; }}
+        .fo-btn-secondary{{
+            background:transparent; color:#94a3b8;
+            border:1px solid rgba(176,141,87,.25);
+        }}
+        .fo-btn-secondary:hover{{ color:#e5c88a; border-color:rgba(176,141,87,.5); }}
+        .fo-full-msg{{
+            margin-top:20px; padding:14px; border-radius:8px;
+            background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.25);
+            color:#fca5a5; font-size:0.85rem; text-align:center;
+        }}
+
+        /* ── Steps accordion ── */
+        .fo-steps{{
+            margin-top:36px; border-top:1px solid rgba(176,141,87,.18);
+            padding-top:28px; text-align:left;
+        }}
+        .fo-steps-heading{{
+            font-family:'Cinzel',serif; font-size:0.72rem; font-weight:700;
+            letter-spacing:0.3em; text-transform:uppercase;
+            color:rgba(202,138,4,.82); text-align:center; margin-bottom:22px;
+        }}
+        .fo-step{{
+            border-bottom:1px solid rgba(255,255,255,.055);
+        }}
+        .fo-step summary{{
+            padding:13px 2px; cursor:pointer; font-size:0.87rem; font-weight:600;
+            color:#e2e8f0; list-style:none;
+            display:flex; justify-content:space-between; align-items:flex-start;
+            gap:10px; transition:color .15s; user-select:none;
+        }}
+        .fo-step summary::-webkit-details-marker{{ display:none; }}
+        .fo-step summary:hover{{ color:#fef08a; }}
+        .fo-step-icon{{
+            flex-shrink:0; margin-top:1px; font-size:1rem; font-weight:300;
+            color:rgba(202,138,4,.7); transition:transform .2s; line-height:1;
+        }}
+        .fo-step[open] .fo-step-icon{{ transform:rotate(45deg); }}
+        .fo-step-body{{
+            padding:2px 4px 16px; font-size:0.82rem; color:#94a3b8; line-height:1.72;
+        }}
+        .fo-step-body strong{{ color:#cbd5e1; }}
+        .fo-step-body a{{ color:#38bdf8; }}
+
+        /* ── Footer ── */
+        .fo-footer{{
+            margin-top:36px; text-align:center; font-size:0.72rem; color:#334155;
+            padding-top:20px; border-top:1px solid rgba(255,255,255,.04);
+        }}
+        .fo-footer a{{ color:#38bdf8; text-decoration:none; }}
+    </style>
+</head>
+<body>
+<div class="fo-wrap">
+
+    <div class="fo-game-title">Wadsworth Economic Tycoon Simulator</div>
+    <div class="fo-logo"><img src="/static/logo.png?v=3" alt="Wadsworth"></div>
+
+    <div class="fo-card">
+        <!-- decorative gears -->
+        <svg class="fo-gear g1" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.92c.04-.34.07-.69.07-1.08s-.03-.74-.07-1.08l2.32-1.81c.21-.16.27-.45.13-.68l-2.2-3.81c-.13-.23-.42-.31-.65-.23l-2.74 1.1c-.57-.44-1.18-.81-1.86-1.08L14 2.42A.517.517 0 0 0 13.5 2h-4.4a.517.517 0 0 0-.5.42l-.41 2.42c-.68.27-1.3.64-1.87 1.08l-2.73-1.1c-.24-.08-.52 0-.65.23L.74 8.86c-.14.23-.08.52.13.68l2.32 1.81C3.15 11.69 3.12 12 3.12 12s.03.69.07 1.08L.87 14.89c-.21.16-.27.45-.13.68l2.2 3.81c.13.23.41.31.65.23l2.73-1.1c.57.44 1.19.81 1.87 1.08l.41 2.42c.07.23.28.42.5.42H13.5c.23 0 .44-.19.5-.42l.41-2.42c.68-.27 1.29-.64 1.86-1.08l2.74 1.1c.23.08.52 0 .65-.23l2.2-3.81c.14-.23.08-.52-.13-.68l-2.3-1.81z"/></svg>
+        <svg class="fo-gear g2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.92c.04-.34.07-.69.07-1.08s-.03-.74-.07-1.08l2.32-1.81c.21-.16.27-.45.13-.68l-2.2-3.81c-.13-.23-.42-.31-.65-.23l-2.74 1.1c-.57-.44-1.18-.81-1.86-1.08L14 2.42A.517.517 0 0 0 13.5 2h-4.4a.517.517 0 0 0-.5.42l-.41 2.42c-.68.27-1.3.64-1.87 1.08l-2.73-1.1c-.24-.08-.52 0-.65.23L.74 8.86c-.14.23-.08.52.13.68l2.32 1.81C3.15 11.69 3.12 12 3.12 12s.03.69.07 1.08L.87 14.89c-.21.16-.27.45-.13.68l2.2 3.81c.13.23.41.31.65.23l2.73-1.1c.57.44 1.19.81 1.87 1.08l.41 2.42c.07.23.28.42.5.42H13.5c.23 0 .44-.19.5-.42l.41-2.42c.68-.27 1.29-.64 1.86-1.08l2.74 1.1c.23.08.52 0 .65-.23l2.2-3.81c.14-.23.08-.52-.13-.68l-2.3-1.81z"/></svg>
+
+        <div class="fo-inner">
+            <div class="fo-kicker">Limited Program</div>
+            <h1 class="fo-title">Founding<br>Operative</h1>
+
+            <div class="fo-divider">
+                <div class="hd-line"></div>
+                <div class="hd-diamond"></div>
+                <div class="hd-line right"></div>
+            </div>
+
+            <p class="fo-subtitle">
+                Be among the first to build your empire on Android.
+                Join the closed beta, get a <strong style="color:#e5c88a;font-style:normal;">free promo code</strong>,
+                and earn a permanent Founding Tester badge visible to every player.
+            </p>
+
+            <div class="fo-rewards">
+                <div class="fo-reward-pill">
+                    <span class="fo-reward-icon">🎖️</span>
+                    <div class="fo-reward-text">
+                        <div class="fo-reward-title">{FOUNDING_OPERATIVE_TROPHIES} Trophies</div>
+                        <div class="fo-reward-sub">Founding Operative</div>
+                    </div>
+                </div>
+                <div class="fo-reward-pill">
+                    <span class="fo-reward-icon">📱</span>
+                    <div class="fo-reward-text">
+                        <div class="fo-reward-title">{POCKET_EMPIRE_TROPHIES} Trophies</div>
+                        <div class="fo-reward-sub">Pocket Empire (first login)</div>
+                    </div>
+                </div>
+                <div class="fo-reward-pill">
+                    <span class="fo-reward-icon">⚔️</span>
+                    <div class="fo-reward-text">
+                        <div class="fo-reward-title">{ACTIVE_DUTY_TROPHIES} Trophies / day</div>
+                        <div class="fo-reward-sub">Active Duty (daily login)</div>
+                    </div>
+                </div>
+                <div class="fo-reward-pill">
+                    <span class="fo-reward-icon">✨</span>
+                    <div class="fo-reward-text">
+                        <div class="fo-reward-title">Permanent Badge</div>
+                        <div class="fo-reward-sub">Visible on your contact card</div>
+                    </div>
+                </div>
+            </div>
+
+            {_slots_html}
+
+            <div class="fo-cta">
+                {_cta_html}
+            </div>
+        </div>
+
+        <!-- steps -->
+        <div class="fo-steps">
+            <div class="fo-steps-heading">How It Works</div>
+
+            <details class="fo-step">
+                <summary>Step 1 — Create a free account <span class="fo-step-icon">+</span></summary>
+                <div class="fo-step-body">
+                    <a href="/login">Register at the game</a> — it's free, no credit card needed.
+                    You'll start as a new tycoon in the Wadsworth economy with your own land,
+                    businesses, and market access. The game runs entirely in the browser; no app
+                    required for step 1.
+                </div>
+            </details>
+
+            <details class="fo-step">
+                <summary>Step 2 — Join the Google Group <span class="fo-step-icon">+</span></summary>
+                <div class="fo-step-body">
+                    Visit <a href="{GOOGLE_GROUP_URL}" target="_blank" rel="noopener">groups.google.com/g/wadstycoon</a>
+                    and click <strong>Join group</strong> with your Google account. This is how
+                    Google Play verifies you as a tester. The group is free to join and you can
+                    leave at any time after receiving your code.
+                </div>
+            </details>
+
+            <details class="fo-step">
+                <summary>Step 3 — Submit your Google email in-game <span class="fo-step-icon">+</span></summary>
+                <div class="fo-step-body">
+                    Log in, go to <strong>Events &amp; Tasks</strong>, and find the
+                    <strong>Founding Operative</strong> event. Submit the Google account email
+                    you used to join the group. An admin will verify your membership —
+                    usually within a few hours — and deliver your promo code via
+                    in-game notification.
+                </div>
+            </details>
+
+            <details class="fo-step">
+                <summary>Step 4 — Redeem on Google Play <span class="fo-step-icon">+</span></summary>
+                <div class="fo-step-body">
+                    Open the <a href="{PLAY_STORE_URL}" target="_blank" rel="noopener">Wadsworth listing on Google Play</a>,
+                    tap <strong>Redeem</strong> and enter your code. The app installs free.
+                    It's a Trusted Web Activity (TWA) — a thin native shell around the
+                    same game you already play in the browser, with full Android notification
+                    support and a home-screen widget.
+                </div>
+            </details>
+
+            <details class="fo-step">
+                <summary>Step 5 — Log in from the app &amp; earn your badge <span class="fo-step-icon">+</span></summary>
+                <div class="fo-step-body">
+                    The first time you load the game from the Android app, the
+                    <strong>Pocket Empire</strong> event automatically completes —
+                    awarding {POCKET_EMPIRE_TROPHIES} trophies and stamping your permanent
+                    <em>Founding Tester</em> badge onto your contact card.
+                    From that point on, every daily login from the app earns
+                    <strong>{ACTIVE_DUTY_TROPHIES} Active Duty trophies</strong>.
+                </div>
+            </details>
+        </div>
+    </div>
+
+    <div class="fo-footer">
+        <a href="/login">Play in browser</a> &nbsp;·&nbsp;
+        <a href="/banks/indices/unloggedin">Market Indices</a> &nbsp;·&nbsp;
+        <a href="{PLAY_STORE_URL}" target="_blank" rel="noopener">Google Play</a>
+        <br><br>
+        Wadsworth Economic Tycoon Simulator — closed Android beta
+    </div>
+
+</div>
+</body>
+</html>"""
+
+
 @router.get("/api/logout")
 async def logout(session_token: Optional[str] = Cookie(None)):
     """Handle logout."""
