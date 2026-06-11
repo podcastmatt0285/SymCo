@@ -48,6 +48,11 @@ Base = declarative_base()
 # ==========================
 # CONSTANTS
 # ==========================
+# DESIGN NOTE — INTENTIONAL TAX HAVEN: crypto and meme-coin activity is
+# deliberately invisible to the government tax/fee system. No portion of any
+# crypto transaction routes to government ledgers. This is a core strategic
+# feature (players can shelter wealth in county tokens), not a missing
+# integration. Do NOT "fix" this by adding government fee routing.
 MEME_CREATION_FEE_NATIVE = 30.0        # Native tokens burned to create a meme coin
 MEME_FOUNDER_ALLOCATION_PCT = 0.10     # 10% to creator immediately
 MEME_MINING_ALLOCATION_PCT = 0.90      # 90% to mining pool
@@ -625,6 +630,17 @@ def launch_meme_coin(
 
         db.commit()
 
+        try:
+            from stats_ux import log_transaction as _log
+            _log(
+                player_id, "meme_launch", "crypto", -creation_burn_native,
+                f"Launched '{name}' ({symbol}): burned {creation_burn_native:.2f} "
+                f"{native_symbol}, received {founder_alloc:,.2f} founder tokens",
+                item_type=symbol, quantity=founder_alloc,
+            )
+        except Exception:
+            pass
+
         # Return the symbol string (not the ORM object) — accessing meme attributes
         # after db.close() in the finally block would raise DetachedInstanceError.
         initial_backing = creation_burn_native / max(founder_alloc, 1.0)
@@ -1030,6 +1046,35 @@ def place_order(
 
         db.commit()
         county_db.commit()
+
+        # Ledger entries for every fill this order produced — both sides, after
+        # commit so only settled trades are logged. Amounts are in native tokens
+        # (category "crypto"), mirroring the mining-reward logging pattern.
+        try:
+            from stats_ux import log_transaction as _log
+            fills = db.query(MemeCoinTrade).filter(
+                (MemeCoinTrade.buy_order_id == order.id) |
+                (MemeCoinTrade.sell_order_id == order.id)
+            ).all()
+            for t in fills:
+                if t.buyer_id and t.buyer_id > 0:
+                    _log(
+                        t.buyer_id, "meme_buy", "crypto", -t.native_volume,
+                        f"Bought {t.quantity:.6f} {meme_symbol} @ {t.price:.6f} {native_symbol}",
+                        reference_id=str(t.id), item_type=meme_symbol,
+                        quantity=t.quantity, unit_price=t.price,
+                    )
+                if t.seller_id and t.seller_id > 0:
+                    _log(
+                        t.seller_id, "meme_sell", "crypto",
+                        t.native_volume - (t.fee_native or 0.0),
+                        f"Sold {t.quantity:.6f} {meme_symbol} @ {t.price:.6f} {native_symbol} "
+                        f"(fee {t.fee_native or 0.0:.6f} {native_symbol})",
+                        reference_id=str(t.id), item_type=meme_symbol,
+                        quantity=t.quantity, unit_price=t.price,
+                    )
+        except Exception:
+            pass
 
         # Track meme buy volume in USD for weekly task progress — AFTER commit so
         # we only record progress for trades that actually settled.

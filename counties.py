@@ -58,7 +58,7 @@ MINING_PAYOUT_INTERVAL_TICKS = 720  # Every hour (720 ticks * 5s = 3600s)
 MINING_ENERGY_CONSUMPTION_RATE = 0.10  # 10% of deposits consumed per payout cycle
 MINING_REWARD_MULTIPLIER = 1.0  # Crypto minted per unit of consumed energy value
 EXCHANGE_FEE_PERCENT = 0.02  # 2% fee on all exchange transactions
-EXCHANGE_FEE_TO_GOV_PERCENT = 0.50  # 50% of fees go to government
+EXCHANGE_FEE_TO_GOV_PERCENT = 0.0  # INTENTIONAL: crypto is a tax haven — the government never sees crypto fees
 
 # Dynamic gas fee system
 BASE_GAS_PRICE      = 0.001   # Minimum gas price in native tokens per gas unit
@@ -1471,18 +1471,11 @@ def sell_crypto_for_cash(player_id: int, crypto_symbol: str, amount: float) -> T
         # Burn the sold crypto (reducing circulating supply)
         county.total_crypto_burned += amount
 
-        # Fee distribution
-        gov = db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
-        if gov:
-            gov_fee = fee * EXCHANGE_FEE_TO_GOV_PERCENT
-            try:
-                from reserve_banks import convert_to_legal_tender as _clf
-                # _clf credits the government's PlayerCurrencyBalance internally
-                # — no legacy cash_balance write needed.
-                _clf(GOVERNMENT_PLAYER_ID, gov_fee)
-            except Exception:
-                from reserve_banks import credit_usd
-                credit_usd(GOVERNMENT_PLAYER_ID, gov_fee)
+        # DESIGN NOTE — INTENTIONAL TAX HAVEN: no portion of any crypto fee
+        # routes to the government. The full exchange fee stays in the county
+        # treasury (only net amounts ever leave it). Crypto is deliberately
+        # invisible to the government tax system — do NOT "fix" this by
+        # re-adding government fee routing.
 
         # Record the order
         order = CryptoExchangeOrder(
@@ -1605,18 +1598,11 @@ def buy_crypto_with_cash(player_id: int, crypto_symbol: str, cash_amount: float)
         wallet.balance += net_crypto
         wallet.total_bought += net_crypto
 
-        # Fee distribution
-        gov = db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
-        if gov:
-            gov_fee = fee * EXCHANGE_FEE_TO_GOV_PERCENT
-            try:
-                from reserve_banks import convert_to_legal_tender as _clf
-                # _clf credits the government's PlayerCurrencyBalance internally
-                # — no legacy cash_balance write needed.
-                _clf(GOVERNMENT_PLAYER_ID, gov_fee)
-            except Exception:
-                from reserve_banks import credit_usd
-                credit_usd(GOVERNMENT_PLAYER_ID, gov_fee)
+        # DESIGN NOTE — INTENTIONAL TAX HAVEN: no portion of any crypto fee
+        # routes to the government. The full exchange fee stays in the county
+        # treasury (only net amounts ever leave it). Crypto is deliberately
+        # invisible to the government tax system — do NOT "fix" this by
+        # re-adding government fee routing.
 
         # Record the order
         order = CryptoExchangeOrder(
@@ -1752,18 +1738,11 @@ def swap_crypto(player_id: int, sell_symbol: str, buy_symbol: str, sell_amount: 
         buy_county.total_crypto_minted += net_buy_amount
         buy_county.treasury_balance = buy_treasury - net_cash
 
-        # Fee distribution
-        gov = db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
-        if gov:
-            gov_fee = fee * EXCHANGE_FEE_TO_GOV_PERCENT
-            try:
-                from reserve_banks import convert_to_legal_tender as _clf
-                # _clf credits the government's PlayerCurrencyBalance internally
-                # — no legacy cash_balance write needed.
-                _clf(GOVERNMENT_PLAYER_ID, gov_fee)
-            except Exception:
-                from reserve_banks import credit_usd
-                credit_usd(GOVERNMENT_PLAYER_ID, gov_fee)
+        # DESIGN NOTE — INTENTIONAL TAX HAVEN: no portion of any crypto fee
+        # routes to the government. The full exchange fee stays in the county
+        # treasury (only net amounts ever leave it). Crypto is deliberately
+        # invisible to the government tax system — do NOT "fix" this by
+        # re-adding government fee routing.
 
         # Record the order
         order = CryptoExchangeOrder(
