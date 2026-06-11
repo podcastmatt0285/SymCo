@@ -1501,6 +1501,15 @@ def sell_crypto_for_cash(player_id: int, crypto_symbol: str, amount: float) -> T
 
         gross_value = amount * price
         effective_fee_rate = county.transaction_fee_percent if county.transaction_fee_percent is not None else EXCHANGE_FEE_PERCENT
+        # Executive crypto bonus reduces the exchange fee (CTO/CIO/etc.)
+        try:
+            from executive import get_player_job_bonus as _gjb, get_db as _edb_fn
+            _edb = _edb_fn()
+            _exec_bonus = _gjb(_edb, player_id, "crypto")
+            _edb.close()
+            effective_fee_rate = max(0.0, effective_fee_rate * (1.0 - _exec_bonus))
+        except Exception:
+            pass
         fee = gross_value * effective_fee_rate
         net_value = gross_value - fee
 
@@ -1612,6 +1621,15 @@ def buy_crypto_with_cash(player_id: int, crypto_symbol: str, cash_amount: float)
             return False, "Crypto has no value"
 
         effective_fee_rate = county.transaction_fee_percent if county.transaction_fee_percent is not None else EXCHANGE_FEE_PERCENT
+        # Executive crypto bonus reduces the exchange fee
+        try:
+            from executive import get_player_job_bonus as _gjb, get_db as _edb_fn
+            _edb = _edb_fn()
+            _exec_bonus = _gjb(_edb, player_id, "crypto")
+            _edb.close()
+            effective_fee_rate = max(0.0, effective_fee_rate * (1.0 - _exec_bonus))
+        except Exception:
+            pass
         fee = cash_amount * effective_fee_rate
         net_cash = cash_amount - fee
         crypto_amount = net_cash / price
@@ -1755,6 +1773,15 @@ def swap_crypto(player_id: int, sell_symbol: str, buy_symbol: str, sell_amount: 
         # Calculate swap — use the sell county's governance fee rate
         gross_cash = sell_amount * sell_price
         effective_fee_rate = sell_county.transaction_fee_percent if sell_county.transaction_fee_percent is not None else EXCHANGE_FEE_PERCENT
+        # Executive crypto bonus reduces the swap fee
+        try:
+            from executive import get_player_job_bonus as _gjb, get_db as _edb_fn
+            _edb = _edb_fn()
+            _exec_bonus = _gjb(_edb, player_id, "crypto")
+            _edb.close()
+            effective_fee_rate = max(0.0, effective_fee_rate * (1.0 - _exec_bonus))
+        except Exception:
+            pass
         fee = gross_cash * effective_fee_rate
         net_cash = gross_cash - fee
         buy_amount = net_cash / buy_price
@@ -2110,6 +2137,17 @@ def cast_governance_vote(
         else:
             # token_weighted (default): 1 token = 1 vote
             effective_weight = tokens_to_burn
+
+        # Executive crypto bonus amplifies governance vote weight (same CTO/CIO bonus)
+        try:
+            from executive import get_player_job_bonus as _gjb, get_db as _edb_fn
+            _edb = _edb_fn()
+            _gov_bonus = _gjb(_edb, player_id, "crypto")
+            _edb.close()
+            if _gov_bonus > 0:
+                effective_weight = effective_weight * (1.0 + _gov_bonus)
+        except Exception:
+            pass
 
         # Burn tokens from wallet (only the voter's own tokens are burned)
         wallet.balance -= tokens_to_burn

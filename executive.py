@@ -333,14 +333,14 @@ EXEC_ABILITIES = {
     "county_exemption":    {"name": "County Exemption",        "desc": "All taxes −20%",                                       "effect": "taxes",  "value": 0.20},
     # ── CRYPTO ────────────────────────────────────────────────────────────────
     # Hookpoint: wallet.py yield farming + memecoins.py mining payout * (1 + crypto_bonus)
-    "blockchain_native":   {"name": "Blockchain Native",       "desc": "WSC yield farming returns +20%",                       "effect": "crypto",  "value": 0.20},
-    "defi_specialist":     {"name": "DeFi Specialist",         "desc": "WSC yield farming returns +15%",                       "effect": "crypto",  "value": 0.15},
-    "security_hard":       {"name": "Security Hardening",      "desc": "WSC yield farming returns +10%",                       "effect": "crypto",  "value": 0.10},
-    "algo_trading":        {"name": "Algorithmic Trading",     "desc": "WSC yield farming returns +5%",                        "effect": "crypto",  "value": 0.05},
-    "smart_contract_aud":  {"name": "Smart Contract Auditing", "desc": "Meme coin / WSC yield +20%",                           "effect": "crypto",  "value": 0.20},
-    "data_analytics":      {"name": "Data Analytics",          "desc": "Meme coin / WSC yield +8%",                            "effect": "crypto",  "value": 0.08},
-    "web3_native":         {"name": "Web3 Native",             "desc": "Meme coin / WSC yield +8%",                            "effect": "crypto",  "value": 0.08},
-    "token_strategy":      {"name": "Token Strategy",          "desc": "Meme coin / WSC yield +10%",                           "effect": "crypto",  "value": 0.10},
+    "blockchain_native":   {"name": "Blockchain Native",       "desc": "Mining yield +20%, exchange fee -20%, governance weight +20%",  "effect": "crypto",  "value": 0.20},
+    "defi_specialist":     {"name": "DeFi Specialist",         "desc": "Mining yield +15%, exchange fee -15%, governance weight +15%",  "effect": "crypto",  "value": 0.15},
+    "security_hard":       {"name": "Security Hardening",      "desc": "Mining yield +10%, exchange fee -10%, governance weight +10%",  "effect": "crypto",  "value": 0.10},
+    "algo_trading":        {"name": "Algorithmic Trading",     "desc": "Mining yield +5%, exchange fee -5%, governance weight +5%",     "effect": "crypto",  "value": 0.05},
+    "smart_contract_aud":  {"name": "Smart Contract Auditing", "desc": "Mining yield +20%, exchange fee -20%, governance weight +20%",  "effect": "crypto",  "value": 0.20},
+    "data_analytics":      {"name": "Data Analytics",          "desc": "Mining yield +8%, exchange fee -8%, governance weight +8%",     "effect": "crypto",  "value": 0.08},
+    "web3_native":         {"name": "Web3 Native",             "desc": "Mining yield +8%, exchange fee -8%, governance weight +8%",     "effect": "crypto",  "value": 0.08},
+    "token_strategy":      {"name": "Token Strategy",          "desc": "Mining yield +10%, exchange fee -10%, governance weight +10%",  "effect": "crypto",  "value": 0.10},
     # ── LAND ──────────────────────────────────────────────────────────────────
     # Hookpoints: land.py hoarding tax * (1 - land_bonus), land_market.py asking_price * (1 - land_bonus)
     "land_survey_exp":     {"name": "Land Survey Expertise",   "desc": "Land purchase prices and hoarding taxes −20%",         "effect": "land", "value": 0.20},

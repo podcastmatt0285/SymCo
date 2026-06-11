@@ -14602,6 +14602,31 @@ def api_widget_data(request: Request, session_token: Optional[str] = Cookie(None
                 except Exception:
                     pass
 
+            # ── County native tokens ───────────────────────────────────────────
+            try:
+                from counties import County as _County, calculate_crypto_price as _ccp, get_db as _cdb_fn
+                _cdb = _cdb_fn()
+                try:
+                    for _county in (_cdb.query(_County)
+                                        .filter(_County.crypto_symbol.isnot(None))
+                                        .order_by(_County.id.asc()).all()):
+                        try:
+                            _tok_price = _ccp(_county.id) or 0.0
+                        except Exception:
+                            _tok_price = 0.0
+                        if _tok_price <= 0:
+                            continue
+                        entry = {
+                            "label": _county.crypto_symbol,
+                            "value": fmt_usd(_tok_price, _disp, precision=6),
+                            "change": "", "up": None, "type": "crypto",
+                        }
+                        result["tickers"].append(entry)
+                finally:
+                    _cdb.close()
+            except Exception:
+                pass
+
             # ── Memecoins ─────────────────────────────────────────────────────
             for m in (db.query(MemeCoin)
                         .filter(MemeCoin.is_active == True, MemeCoin.last_price > 0)
