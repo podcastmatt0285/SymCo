@@ -44,6 +44,30 @@ import random
 from database import engine, SessionLocal
 Base = declarative_base()
 
+
+def _notify_crypto(player_id: int, title: str, body: str, url: str = "/counties",
+                   tag: str = "crypto", cooldown_key: str = None, cooldown_secs: float = 0):
+    """In-game + Android push notification under the 'crypto' toggle. Never raises."""
+    try:
+        from push_ux import create_game_notification, send_push_notification
+        create_game_notification(player_id, title, body, url, notif_type="crypto",
+                                 cooldown_key=cooldown_key, cooldown_secs=cooldown_secs)
+        # Push throttle: hourly mining payouts shouldn't buzz the phone every
+        # hour — only one push per cooldown window per key; in-game notifs
+        # above use create_game_notification's own cooldown.
+        if cooldown_key and cooldown_secs > 0:
+            now = datetime.utcnow().timestamp()
+            last = _PUSH_THROTTLE.get((player_id, cooldown_key), 0)
+            if now - last < cooldown_secs:
+                return
+            _PUSH_THROTTLE[(player_id, cooldown_key)] = now
+        send_push_notification(player_id, title, body, url, notif_type="crypto", tag=tag)
+    except Exception as e:
+        print(f"[Counties] notify failed for player {player_id}: {e}")
+
+
+_PUSH_THROTTLE: dict = {}  # (player_id, cooldown_key) → last push unix time
+
 # ==========================
 # CONSTANTS
 # ==========================
@@ -177,6 +201,10 @@ class County(Base):
     # Dynamic gas fee system (EIP-1559-like)
     gas_price = Column(Float, default=BASE_GAS_PRICE)   # Current gas price in native tokens
     recent_tx_count = Column(Integer, default=0)         # Tx count since last hourly decay
+
+    # Admin emergency controls
+    mining_frozen  = Column(Boolean, default=False)  # Pause mining payouts for this county
+    trading_frozen = Column(Boolean, default=False)  # Freeze exchange buy/sell/swap
 
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -914,6 +942,12 @@ def process_gov_review(petition_id: int) -> Tuple[bool, str]:
                 notify_county_created(county.name, county.id, petition.city_id)
             except Exception:
                 pass
+            _notify_crypto(
+                petition.mayor_id, "🏛️ County Formed",
+                f"Your petition passed government review — county '{county.name}' "
+                f"is live with its own {county.crypto_symbol} blockchain.",
+                "/counties", tag=f"petition-{petition.id}",
+            )
             return True, f"County '{county.name}' formed successfully!"
 
         else:
@@ -923,6 +957,9 @@ def process_gov_review(petition_id: int) -> Tuple[bool, str]:
             if not target:
                 petition.status = CountyPetitionStatus.GOV_REJECTED
                 db.commit()
+                _notify_crypto(petition.mayor_id, "🗳️ Petition Rejected",
+                               "Your county petition was rejected — the target county no longer exists.",
+                               "/counties", tag=f"petition-{petition.id}")
                 return False, "Target county no longer exists"
 
             city_count = db.query(CountyCity).filter(
@@ -931,6 +968,9 @@ def process_gov_review(petition_id: int) -> Tuple[bool, str]:
             if city_count >= MAX_COUNTY_CITIES:
                 petition.status = CountyPetitionStatus.GOV_REJECTED
                 db.commit()
+                _notify_crypto(petition.mayor_id, "🗳️ Petition Rejected",
+                               "Your county petition was rejected — the target county is now full.",
+                               "/counties", tag=f"petition-{petition.id}")
                 return False, "Target county is now full"
 
             # Create a poll for county members to vote
@@ -951,6 +991,12 @@ def process_gov_review(petition_id: int) -> Tuple[bool, str]:
             city = db.query(City).filter(City.id == petition.city_id).first()
             city_name = city.name if city else f"City {petition.city_id}"
             print(f"[Counties] Poll started: Should county '{target.name}' admit city '{city_name}'?")
+            _notify_crypto(
+                petition.mayor_id, "🗳️ Petition Advanced",
+                f"Government approved your petition — county '{target.name}' members "
+                f"are now voting on admitting '{city_name}'.",
+                "/counties", tag=f"petition-{petition.id}",
+            )
             return True, "Government approved. County members are now voting."
 
     except Exception as e:
@@ -1100,6 +1146,13 @@ def close_county_poll(poll_id: int) -> Tuple[bool, str]:
         if petition:
             petition.status = CountyPetitionStatus.POLL_PASSED if passed else CountyPetitionStatus.POLL_FAILED
             db2.commit()
+            _notify_crypto(
+                petition.mayor_id,
+                "🗳️ Petition Passed" if passed else "🗳️ Petition Failed",
+                f"County members voted {'YES' if passed else 'NO'} on your city joining "
+                f"({yes_votes} yes / {no_votes} no).",
+                "/counties", tag=f"petition-{petition.id}",
+            )
         db2.close()
 
         print(f"[Counties] Poll {poll_id} closed: {'PASSED' if passed else 'FAILED'} (YES: {yes_votes}, NO: {no_votes})")
@@ -1264,6 +1317,9 @@ def process_mining_payouts(current_tick: int):
         _all_rewards: list = []  # (player_id, reward, symbol) — logged after commit
 
         for county in counties:
+            if getattr(county, "mining_frozen", False):
+                continue  # Admin emergency freeze
+
             energy_to_consume = county.mining_energy_pool * MINING_ENERGY_CONSUMPTION_RATE
             if energy_to_consume <= 0:
                 continue
@@ -1348,6 +1404,12 @@ def process_mining_payouts(current_tick: int):
                 f"Mining reward: {_amt:.6f} {_sym}",
                 item_type=_sym, quantity=_amt,
             )
+            _notify_crypto(
+                _pid, "⛏️ Mining Payout",
+                f"You mined {_amt:.6f} {_sym}.",
+                "/counties", tag=f"mining-{_sym}",
+                cooldown_key=f"county_mine_{_sym}", cooldown_secs=6 * 3600,
+            )
 
     except Exception as e:
         db.rollback()
@@ -1414,6 +1476,8 @@ def sell_crypto_for_cash(player_id: int, crypto_symbol: str, amount: float) -> T
         county = db.query(County).filter(County.crypto_symbol == crypto_symbol).first()
         if not county:
             return False, "Token not found"
+        if getattr(county, "trading_frozen", False):
+            return False, "Trading is temporarily suspended for this county."
         if (county.mining_energy_pool or 0) <= 0:
             return False, f"The {county.name} blockchain has no energy. Mining nodes must be powered before any transactions can occur."
 
@@ -1531,6 +1595,8 @@ def buy_crypto_with_cash(player_id: int, crypto_symbol: str, cash_amount: float)
         county = db.query(County).filter(County.crypto_symbol == crypto_symbol).first()
         if not county:
             return False, "Token not found"
+        if getattr(county, "trading_frozen", False):
+            return False, "Trading is temporarily suspended for this county."
         if (county.mining_energy_pool or 0) <= 0:
             return False, f"The {county.name} blockchain has no energy. Mining nodes must be powered before any transactions can occur."
 
@@ -1654,6 +1720,8 @@ def swap_crypto(player_id: int, sell_symbol: str, buy_symbol: str, sell_amount: 
         buy_county = db.query(County).filter(County.crypto_symbol == buy_symbol).first()
         if not sell_county or not buy_county:
             return False, "One or both tokens not found"
+        if getattr(sell_county, "trading_frozen", False) or getattr(buy_county, "trading_frozen", False):
+            return False, "Trading is temporarily suspended for one or both counties."
         if (sell_county.mining_energy_pool or 0) <= 0:
             return False, f"The {sell_county.name} blockchain has no energy. Mining nodes must be powered."
         if (buy_county.mining_energy_pool or 0) <= 0:
@@ -2672,6 +2740,8 @@ def initialize():
         "ALTER TABLE governance_proposals ADD COLUMN IF NOT EXISTS proposal_target TEXT",
         f"ALTER TABLE counties ADD COLUMN IF NOT EXISTS gas_price REAL DEFAULT {BASE_GAS_PRICE}",
         "ALTER TABLE counties ADD COLUMN IF NOT EXISTS recent_tx_count INTEGER DEFAULT 0",
+        "ALTER TABLE counties ADD COLUMN IF NOT EXISTS mining_frozen BOOLEAN DEFAULT FALSE",
+        "ALTER TABLE counties ADD COLUMN IF NOT EXISTS trading_frozen BOOLEAN DEFAULT FALSE",
     ])
 
     db = get_db()

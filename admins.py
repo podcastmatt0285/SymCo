@@ -2831,6 +2831,178 @@ def cleanup_orphan_shares(admin_id: int) -> dict:
 
 
 # ==========================
+# ==========================
+# COUNTY CRYPTO ADMIN TOOLS
+# ==========================
+
+def admin_get_county_crypto_detail(county_id: int) -> dict:
+    """Return treasury, token supply, exchange stats, and meme coins for a county."""
+    try:
+        from counties import (County, CryptoWallet, CryptoExchangeOrder,
+                               MiningDeposit, get_db as county_get_db)
+        from memecoins import MemeCoin, get_db as meme_get_db
+        db = county_get_db()
+        try:
+            county = db.query(County).filter(County.id == county_id).first()
+            if not county:
+                return {"ok": False, "error": "County not found"}
+            holders = db.query(CryptoWallet).filter(
+                CryptoWallet.crypto_symbol == county.crypto_symbol,
+                CryptoWallet.balance > 0,
+            ).count()
+            stakers = db.query(MiningDeposit).filter(
+                MiningDeposit.crypto_symbol == county.crypto_symbol,
+                MiningDeposit.consumed == False,
+            ).count()
+            result = {
+                "ok": True,
+                "county_id": county.id,
+                "county_name": county.name,
+                "crypto_symbol": county.crypto_symbol,
+                "crypto_name": county.crypto_name,
+                "treasury_balance": county.treasury_balance or 0.0,
+                "total_crypto_minted": county.total_crypto_minted or 0.0,
+                "total_crypto_burned": county.total_crypto_burned or 0.0,
+                "max_supply": county.max_supply or 21_000_000,
+                "mining_energy_pool": county.mining_energy_pool or 0.0,
+                "gas_price": county.gas_price or 0.0,
+                "total_mining_payouts": county.total_mining_payouts or 0,
+                "mining_frozen": getattr(county, "mining_frozen", False),
+                "trading_frozen": getattr(county, "trading_frozen", False),
+                "holders": holders,
+                "active_stakers": stakers,
+            }
+        finally:
+            db.close()
+        mdb = meme_get_db()
+        try:
+            memes = mdb.query(MemeCoin).filter(MemeCoin.county_id == county_id).all()
+            result["meme_coins"] = [
+                {
+                    "id": m.id, "symbol": m.symbol, "name": m.name,
+                    "total_supply": m.total_supply, "minted_supply": m.minted_supply or 0.0,
+                    "last_price": m.last_price or 0.0, "is_active": m.is_active,
+                    "mining_enabled": m.mining_enabled, "total_trades": m.total_trades or 0,
+                }
+                for m in memes
+            ]
+        finally:
+            mdb.close()
+        return result
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def admin_freeze_county_mining(admin_id: int, county_id: int, freeze: bool) -> dict:
+    """Pause or resume mining payouts for a county."""
+    try:
+        from counties import County, get_db as county_get_db
+        db = county_get_db()
+        try:
+            county = db.query(County).filter(County.id == county_id).first()
+            if not county:
+                return {"ok": False, "error": "County not found"}
+            # Use a flag column; fall back gracefully if column not yet migrated
+            try:
+                county.mining_frozen = freeze
+                db.commit()
+            except Exception:
+                db.rollback()
+                return {"ok": False, "error": "mining_frozen column not yet in schema — run migrations"}
+        finally:
+            db.close()
+        action = "freeze_county_mining" if freeze else "unfreeze_county_mining"
+        log_action(admin_id, action, None, f"County #{county_id} mining {'frozen' if freeze else 'unfrozen'}")
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def admin_freeze_county_trading(admin_id: int, county_id: int, freeze: bool) -> dict:
+    """Pause or resume all crypto exchange trades for a county."""
+    try:
+        from counties import County, get_db as county_get_db
+        db = county_get_db()
+        try:
+            county = db.query(County).filter(County.id == county_id).first()
+            if not county:
+                return {"ok": False, "error": "County not found"}
+            try:
+                county.trading_frozen = freeze
+                db.commit()
+            except Exception:
+                db.rollback()
+                return {"ok": False, "error": "trading_frozen column not yet in schema — run migrations"}
+        finally:
+            db.close()
+        action = "freeze_county_trading" if freeze else "unfreeze_county_trading"
+        log_action(admin_id, action, None, f"County #{county_id} trading {'frozen' if freeze else 'unfrozen'}")
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def admin_freeze_meme_trading(admin_id: int, meme_symbol: str, freeze: bool) -> dict:
+    """Freeze or unfreeze a specific meme coin's order book."""
+    try:
+        from memecoins import MemeCoin, get_db as meme_get_db
+        db = meme_get_db()
+        try:
+            meme = db.query(MemeCoin).filter(MemeCoin.symbol == meme_symbol).first()
+            if not meme:
+                return {"ok": False, "error": f"{meme_symbol} not found"}
+            meme.is_active = not freeze
+            db.commit()
+        finally:
+            db.close()
+        action = "freeze_meme_trading" if freeze else "unfreeze_meme_trading"
+        log_action(admin_id, action, None, f"Meme coin {meme_symbol} {'frozen' if freeze else 'unfrozen'}")
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def admin_freeze_meme_mining(admin_id: int, meme_symbol: str, freeze: bool) -> dict:
+    """Pause or resume mining payouts for a specific meme coin."""
+    try:
+        from memecoins import MemeCoin, get_db as meme_get_db
+        db = meme_get_db()
+        try:
+            meme = db.query(MemeCoin).filter(MemeCoin.symbol == meme_symbol).first()
+            if not meme:
+                return {"ok": False, "error": f"{meme_symbol} not found"}
+            meme.mining_enabled = not freeze
+            db.commit()
+        finally:
+            db.close()
+        action = "freeze_meme_mining" if freeze else "unfreeze_meme_mining"
+        log_action(admin_id, action, None, f"Meme coin {meme_symbol} mining {'frozen' if freeze else 'unfrozen'}")
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def admin_drain_county_mining_pool(admin_id: int, county_id: int) -> dict:
+    """Zero out the mining energy pool (emergency drain — stops payout this cycle)."""
+    try:
+        from counties import County, get_db as county_get_db
+        db = county_get_db()
+        try:
+            county = db.query(County).filter(County.id == county_id).first()
+            if not county:
+                return {"ok": False, "error": "County not found"}
+            old = county.mining_energy_pool or 0.0
+            county.mining_energy_pool = 0.0
+            db.commit()
+        finally:
+            db.close()
+        log_action(admin_id, "drain_county_mining_pool", None,
+                   f"County #{county_id} energy pool drained (was {old:.4f})")
+        return {"ok": True, "drained": old}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
 # TICK
 # ==========================
 

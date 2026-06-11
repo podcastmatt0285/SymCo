@@ -1656,6 +1656,42 @@ function calcBurnMint() {{
     }}
 }}
 </script>
+<script>
+/* AJAX order placement — no reload on buy/sell */
+(function() {{
+    function _toast(msg, ok) {{
+        var d = document.createElement('div');
+        d.textContent = msg;
+        d.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);' +
+            'padding:10px 18px;border-radius:8px;font-size:0.85rem;z-index:9999;max-width:90%;text-align:center;' +
+            'background:' + (ok ? '#15803d' : '#991b1b') + ';color:#fff;box-shadow:0 4px 12px rgba(0,0,0,0.4);';
+        document.body.appendChild(d);
+        setTimeout(function() {{ d.remove(); }}, 3800);
+    }}
+    document.querySelectorAll('form[action*="/api/memecoins/"][action*="/order"]').forEach(function(form) {{
+        form.addEventListener('submit', function(e) {{
+            e.preventDefault();
+            var btn = form.querySelector('button[type=submit]') || form.querySelector('button');
+            var orig = btn ? btn.textContent : '';
+            if (btn) {{ btn.disabled = true; btn.textContent = '…'; }}
+            var data = new FormData(form);
+            data.set('_ajax', '1');
+            fetch(form.action, {{method:'POST', body: new URLSearchParams(data)}})
+                .then(function(r) {{ return r.json(); }})
+                .then(function(d) {{
+                    _toast(d.message || (d.ok ? 'Order placed' : 'Error'), d.ok);
+                    if (d.ok) {{
+                        form.querySelectorAll('input[type=number]').forEach(function(i) {{ i.value = ''; }});
+                        var cd = document.getElementById('buy-cost-display') || document.getElementById('sell-cost-display');
+                        if (cd) cd.textContent = '';
+                    }}
+                }})
+                .catch(function() {{ _toast('Network error', false); }})
+                .finally(function() {{ if (btn) {{ btn.disabled = false; btn.textContent = orig; }} }});
+        }});
+    }});
+}})();
+</script>
 {_nav_loader()}
 </body>
 </html>"""
@@ -1778,10 +1814,14 @@ async def api_meme_order(
     order_mode: str = Form(...),
     quantity: float = Form(...),
     price: Optional[float] = Form(None),
+    _ajax: Optional[str] = Form(None),
     session_token: Optional[str] = Cookie(None),
 ):
+    from fastapi.responses import JSONResponse as _JSON
     player = get_current_player(session_token)
     if not player:
+        if _ajax:
+            return _JSON({"ok": False, "error": "Not authenticated"}, status_code=401)
         return RedirectResponse(url="/login", status_code=303)
 
     from memecoins import place_order
@@ -1794,13 +1834,16 @@ async def api_meme_order(
         quantity=quantity,
         price=price if order_mode == "limit" else None,
     )
-    if order and order.status != "cancelled":
+    ok = order is not None and order.status != "cancelled"
+    if ok:
         from market_ws import push_market_snapshot_now
         import asyncio
         asyncio.create_task(push_market_snapshot_now())
+    if _ajax:
+        return _JSON({"ok": ok, "message": message})
+    if ok:
         return RedirectResponse(url=f"/memecoins/{sym}?tab=trade&msg={message.replace(' ', '+')}", status_code=303)
-    else:
-        return RedirectResponse(url=f"/memecoins/{sym}?tab=trade&error={message.replace(' ', '+')}", status_code=303)
+    return RedirectResponse(url=f"/memecoins/{sym}?tab=trade&error={message.replace(' ', '+')}", status_code=303)
 
 
 # ==========================

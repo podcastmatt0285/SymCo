@@ -82,6 +82,9 @@ def initialize():
     _seed_institution_entries()
     _seed_npc_currency_mandate_entry()
     _seed_market_indices_entry()
+    _seed_cities_counties_entries()
+    _seed_crypto_entries()
+    _seed_wsc_entries()
 
 
 def _seed_land_grant_entry():
@@ -672,5 +675,340 @@ def _seed_market_indices_entry():
     except Exception as e:
         db.rollback()
         print(f"[Wiki] Seed market indices error: {e}")
+    finally:
+        db.close()
+
+
+# ===========================================================================
+# CITIES & COUNTIES
+# ===========================================================================
+
+def _seed_cities_counties_entries():
+    _ENTRIES = [
+        (
+            "Cities — Founding & Governance",
+            "cities",
+            "A city is a player-run collective that pools resources, earns shared tax revenue, "
+            "and unlocks county-level features.\n\n"
+            "REQUIREMENTS TO FOUND A CITY\n"
+            "• Net worth ≥ $10 million.\n"
+            "• Own at least 10 land plots across at least 3 different district types.\n"
+            "• Pay a one-time founding fee (deducted from your balance on success).\n\n"
+            "HOW CITIES WORK\n"
+            "• The founder becomes Mayor automatically.\n"
+            "• Other players join by applying; the Mayor approves or rejects.\n"
+            "• Each city has a shared treasury fed by a configurable income-tax rate on members.\n"
+            "• Mayors can grant or revoke tax exemptions, set the rate, and spend treasury funds "
+            "on city projects.\n"
+            "• City members earn perks (stat bonuses chosen at join-time) and can vote on projects.\n\n"
+            "CITY PROJECTS\n"
+            "Projects are one-time investments that upgrade the whole city — better resource yields, "
+            "reduced fees, production bonuses. Some projects require a minimum member count to unlock.\n\n"
+            "CITY MILESTONES\n"
+            "Reach treasury and member thresholds to tier up your city, unlocking higher project "
+            "slots and larger bonuses.\n\n"
+            "TAXES & REVENUE\n"
+            "• The city income tax is deducted from members automatically each tick.\n"
+            "• A portion of market transactions made inside the city flows to the city treasury.\n"
+            "• Treasury funds can only be spent by the Mayor on approved projects or grants.",
+        ),
+        (
+            "Counties — Formation & Blockchain",
+            "cities",
+            "A county is a federation of cities that launches its own layer-1 blockchain token. "
+            "Counties are the gateway to crypto, meme coins, and decentralised governance.\n\n"
+            "HOW A COUNTY FORMS\n"
+            "1. A city Mayor files a petition — either to create a brand-new county (requires "
+            "enough districts and treasury balance) or to join an existing one.\n"
+            "2. The petition enters a 24-hour government review.\n"
+            "3a. New county: auto-approved, county is created immediately.\n"
+            "3b. Joining existing: all current county members vote; simple majority decides.\n"
+            "Each county may contain up to the configured maximum number of cities.\n\n"
+            "THE COUNTY TOKEN\n"
+            "Every county mints exactly one native cryptocurrency (you name it at petition time).\n"
+            "Token supply is capped at 21 million, following Bitcoin's halving schedule — the "
+            "block reward halves every 500 000 tokens minted. After all coins are mined, no new "
+            "supply is ever created.\n\n"
+            "COUNTY TREASURY\n"
+            "Exchange fees on the county's crypto stay inside the county treasury — they are "
+            "never shared with the national government. This makes the county treasury the primary "
+            "self-funding mechanism for county governance projects.\n\n"
+            "COUNTY GOVERNANCE\n"
+            "County members can propose and vote on on-chain governance proposals: fee changes, "
+            "token supply tweaks, treasury grants. Proposals that pass are executed automatically. "
+            "Voting power is proportional to the native tokens burned in the vote.",
+        ),
+        (
+            "Petitions — Filing & Results",
+            "cities",
+            "A petition is the formal mechanism for a city to enter the county system.\n\n"
+            "FILING A PETITION\n"
+            "• Only the city Mayor can file.\n"
+            "• Choose: form a brand-new county (name + token details) OR apply to join an existing one.\n"
+            "• The petition costs a small filing fee from the city treasury.\n\n"
+            "PETITION LIFECYCLE\n"
+            "1. PENDING GOVERNMENT REVIEW — waits up to 24 hours.\n"
+            "2a. GOV APPROVED (new county) — county created, token launched. Mayor receives a "
+            "push notification instantly.\n"
+            "2b. POLL ACTIVE (joining) — county members vote for 24 hours.\n"
+            "3a. POLL PASSED — city is admitted, all existing county members keep their tokens; "
+            "the new city's members can now mine and trade. Mayor notified.\n"
+            "3b. POLL FAILED / GOV REJECTED — petition closes, a new one can be filed after the "
+            "cooldown. Mayor notified with the reason.\n\n"
+            "NOTIFICATIONS\n"
+            "All petition state changes trigger a push notification to the petitioning Mayor "
+            "(enable Crypto Alerts in Settings to receive them on your Android device).",
+        ),
+    ]
+
+    db = _db()
+    try:
+        for title, category, description in _ENTRIES:
+            if db.query(WikiMedia).filter(WikiMedia.title == title).first():
+                continue
+            max_order = db.query(WikiMedia).count()
+            db.add(WikiMedia(
+                youtube_id="", kind="video",
+                title=title, description=description,
+                category=category, sort_order=max_order, pinned=False,
+            ))
+        db.commit()
+        print("[Wiki] Seeded cities/counties entries")
+    except Exception as e:
+        db.rollback()
+        print(f"[Wiki] Seed cities/counties error: {e}")
+    finally:
+        db.close()
+
+
+# ===========================================================================
+# CRYPTO — COUNTY TOKEN, MINING, STAKING, MEME COINS
+# ===========================================================================
+
+def _seed_crypto_entries():
+    _ENTRIES = [
+        (
+            "County Crypto — Buying, Selling & Swapping",
+            "cities",
+            "Every county runs its own blockchain with a finite-supply native token. "
+            "Any player in that county can buy, sell, or swap tokens on the county exchange.\n\n"
+            "BUYING TOKENS\n"
+            "• Pay USD → receive native tokens at the current market price.\n"
+            "• The buy price is derived from the county treasury's backing ratio: "
+            "total USD ever deposited divided by circulating supply.\n"
+            "• A 2% exchange fee is deducted from the crypto amount you receive.\n\n"
+            "SELLING TOKENS\n"
+            "• Pay native tokens → receive USD from the county treasury.\n"
+            "• The same 2% fee applies, deducted before crediting your balance.\n\n"
+            "SWAPPING TOKENS\n"
+            "• Trade one county's token directly for another's in a single atomic swap.\n"
+            "• Both legs are priced at their respective market prices; the fee is applied once.\n\n"
+            "EXCHANGE FEES & THE TREASURY\n"
+            "Exchange fees stay inside the county — the government has no visibility into "
+            "crypto transactions of any kind. The treasury grows from fees, providing a "
+            "deeper backing pool over time.\n\n"
+            "GAS FEES\n"
+            "Every transaction also charges a small dynamic gas fee (EIP-1559 style) that "
+            "goes into the county mining energy pool, increasing mining rewards for that cycle. "
+            "Gas rises with transaction volume and drops back to base when activity is low.",
+        ),
+        (
+            "Mining — How to Earn County Tokens",
+            "cities",
+            "Mining is the primary way to earn county native tokens without spending USD.\n\n"
+            "HOW IT WORKS\n"
+            "1. You stake native tokens into the county mining pool (this is a deposit, not a burn).\n"
+            "2. Every mining cycle (roughly every hour) the pool distributes a block reward.\n"
+            "3. Your share of the reward is proportional to your stake vs the total pool.\n"
+            "4. Rewards land directly in your crypto wallet.\n\n"
+            "BLOCK REWARD & HALVING\n"
+            "The block reward follows a Bitcoin-style halving schedule tied to tokens minted, "
+            "not time. Every 500 000 tokens minted the reward halves. This means early miners "
+            "earn far more per cycle than late ones — the supply curve is deflationary by design.\n\n"
+            "UNSTAKING\n"
+            "You can unstake at any time; there is no lock-up period. Unstaked tokens return "
+            "to your wallet immediately.\n\n"
+            "EXECUTIVE BONUS\n"
+            "A CTO or CIO executive with a crypto specialisation increases your mining yield "
+            "by their bonus percentage. Hire one from the Executives page to amplify returns.\n\n"
+            "NOTIFICATIONS\n"
+            "Enable Crypto Alerts in Settings → Notifications to receive a push notification "
+            "when your mining payout lands (throttled to at most once every 6 hours).",
+        ),
+        (
+            "Meme Coins — Launching & Trading",
+            "cities",
+            "Meme coins are player-created micro-tokens launched on a county blockchain. "
+            "They are separate from the county native token and have their own order book.\n\n"
+            "LAUNCHING A MEME COIN\n"
+            "• You must hold the county native token (minimum 30 tokens burned as creation fee).\n"
+            "• Choose a name, ticker (3–6 chars), total supply, and description.\n"
+            "• 10% of supply goes to you as a founder allocation immediately.\n"
+            "• 90% is reserved for mining by stakers of the native token.\n"
+            "• An SVG logo is generated automatically from the symbol.\n\n"
+            "BACKING PRICE\n"
+            "The implicit value floor of a meme coin is determined by how many native tokens "
+            "have been burned into it (creation fee + direct burns). "
+            "backing_price = total_burned / circulating_minted_supply.\n\n"
+            "TRADING\n"
+            "• Buy/sell via limit or market orders on the per-coin order book.\n"
+            "• A 2% fee is split: 50% to the coin creator, 25% to the county treasury, 25% burned.\n"
+            "• All trades appear in your transaction ledger under category 'crypto'.\n\n"
+            "MEME COIN MINING\n"
+            "Stake native tokens in the meme coin mining pool to earn the coin each cycle, "
+            "following the same halving schedule as the county token but per-coin.\n\n"
+            "TAX STATUS — INTENTIONAL DESIGN\n"
+            "Crypto and meme coin activity is completely invisible to the national government's "
+            "tax and fee system. No government fee is ever taken from any crypto transaction. "
+            "This is a deliberate feature — county tokens are a tax shelter. Players who "
+            "accumulate wealth in crypto avoid the income tax that USD-denominated activity "
+            "incurs. The county treasury benefits instead.\n\n"
+            "DISCOVERY\n"
+            "Browse all active meme coins across every county at /memecoins. The Android "
+            "widget also has a paginated Meme Coin feed showing price, 24h change, volume, "
+            "holders, backing price, and mining pool data for every token in the game.",
+        ),
+        (
+            "Meme Coin Mining — Staking for Yield",
+            "cities",
+            "Besides mining the county native token, you can mine specific meme coins by "
+            "staking native tokens into that coin's mining pool.\n\n"
+            "SETUP\n"
+            "1. Navigate to a meme coin's detail page.\n"
+            "2. Stake any amount of the county native token.\n"
+            "3. Rewards pay out every mining cycle in the meme coin itself.\n\n"
+            "REWARD SCHEDULE\n"
+            "Each meme coin has its own halving interval based on its total supply. "
+            "The block reward shrinks over time as more of the mining allocation is minted. "
+            "Mining ends automatically when the mining allocation is exhausted.\n\n"
+            "UNSTAKING\n"
+            "Unstake at any time. Your staked native tokens return immediately; "
+            "any pending rewards are paid out in the same transaction.\n\n"
+            "STRATEGY\n"
+            "• Early-stage coins pay the highest rewards — the block reward is at its peak.\n"
+            "• Watch the mining_minted_pct on the widget feed; once it nears 100% "
+            "mining returns collapse to zero.\n"
+            "• Coins with many stakers dilute your share — smaller pools are more lucrative "
+            "if you can be an early staker.",
+        ),
+        (
+            "Crypto Tax Haven — How It Works",
+            "cities",
+            "One of Wadsworth's most strategic mechanics: the national government has zero "
+            "visibility into any crypto activity.\n\n"
+            "WHAT THIS MEANS\n"
+            "• Buying, selling, swapping county tokens → no government fee, ever.\n"
+            "• Trading or launching meme coins → no government fee.\n"
+            "• Mining rewards → no income tax deducted.\n"
+            "• County exchange fees stay in the county treasury, not the federal coffers.\n\n"
+            "WHY THIS EXISTS\n"
+            "The county system is designed to be a parallel shadow economy. Players who "
+            "build wealth through the county layer pay effectively 0% tax — all activity "
+            "flows through the county treasury, which is governed by its own members.\n\n"
+            "STRATEGIC IMPLICATIONS\n"
+            "• High-income players can park USD in county tokens to avoid income tax on "
+            "future gains (buy once, hold as crypto, sell back to USD only when needed).\n"
+            "• County treasuries grow purely from internal fees — counties with high trading "
+            "volume become self-funding for governance projects.\n"
+            "• The national government's only levers are on USD-denominated activity. "
+            "If enough wealth migrates to crypto, the tax base shrinks — a real political "
+            "dynamic that players can influence.\n\n"
+            "NOTE FOR DEVELOPERS\n"
+            "This is an intentional game design decision, not a bug or missing integration. "
+            "Government fee routing was deliberately removed from all county exchange and "
+            "meme coin paths. Do not re-add it.",
+        ),
+    ]
+
+    db = _db()
+    try:
+        for title, category, description in _ENTRIES:
+            if db.query(WikiMedia).filter(WikiMedia.title == title).first():
+                continue
+            max_order = db.query(WikiMedia).count()
+            db.add(WikiMedia(
+                youtube_id="", kind="video",
+                title=title, description=description,
+                category=category, sort_order=max_order, pinned=False,
+            ))
+        db.commit()
+        print("[Wiki] Seeded crypto entries")
+    except Exception as e:
+        db.rollback()
+        print(f"[Wiki] Seed crypto error: {e}")
+    finally:
+        db.close()
+
+
+# ===========================================================================
+# WSC STABLECOIN
+# ===========================================================================
+
+def _seed_wsc_entries():
+    _ENTRIES = [
+        (
+            "WSC — The Wadsworth Stablecoin",
+            "economy",
+            "WSC (Wadsworth Stable Coin) is the in-game algorithmic stablecoin. "
+            "It is pegged 1:1 to USD and earns yield through farming pools.\n\n"
+            "HOW WSC IS MINTED\n"
+            "• Deposit USD at any WSC Wallet endpoint to receive an equal amount of WSC.\n"
+            "• WSC is not backed by a reserve — it is algorithmic and maintained by "
+            "community demand and the yield-farming incentive.\n\n"
+            "YIELD FARMING\n"
+            "• Lock WSC into one of the available farming pools for a set duration.\n"
+            "• At maturity, you receive your WSC back plus an APY reward paid in WSC.\n"
+            "• APY rates vary by pool duration and current protocol reserves.\n\n"
+            "CROSS-CHAIN SWAPS\n"
+            "• WSC can be swapped directly for any county native token at market rate.\n"
+            "• Swaps are settled atomically — no counterparty needed.\n\n"
+            "MINTING RATE INDEX (WMRI)\n"
+            "The WMRI market index tracks total WSC minted, circulating supply, and pool "
+            "distribution. Watch it under Market Indices to gauge stablecoin demand.\n\n"
+            "CTO / CIO BONUS\n"
+            "A CTO or CIO executive with a smart-contract specialisation boosts your WSC "
+            "yield-farming APY by their bonus percentage.\n\n"
+            "FAUCET & AIRDROPS\n"
+            "Small amounts of WSC can be claimed periodically from the faucet (rate-limited). "
+            "Occasional community airdrops distribute WSC to active players — watch the "
+            "Updates channel for announcements.",
+        ),
+        (
+            "WSC Wallet — Features & Rewards",
+            "economy",
+            "The WSC Wallet page (/wsc-wallet or via the Crypto section) is your dashboard "
+            "for all stablecoin activity.\n\n"
+            "DASHBOARD PANELS\n"
+            "• Balance — current WSC holdings and USD equivalent.\n"
+            "• Yield Farms — open and completed farming positions, APY, and maturity dates.\n"
+            "• Swap — instant WSC ↔ county token exchange at live prices.\n"
+            "• Airdrop History — log of all WSC airdrops you have received.\n"
+            "• Faucet — claim your next drip (timer shown when on cooldown).\n\n"
+            "LIVE TICKER\n"
+            "The wallet page embeds the same live price ticker as the main trading floor, "
+            "filtered to crypto and WSC instruments.\n\n"
+            "TRANSACTION LEDGER\n"
+            "All WSC activity (minting, farming, swaps, faucet claims) appears in your "
+            "transaction ledger under category 'crypto'. Because crypto is a tax haven, "
+            "none of these transactions generate a government tax event.",
+        ),
+    ]
+
+    db = _db()
+    try:
+        for title, category, description in _ENTRIES:
+            if db.query(WikiMedia).filter(WikiMedia.title == title).first():
+                continue
+            max_order = db.query(WikiMedia).count()
+            db.add(WikiMedia(
+                youtube_id="", kind="video",
+                title=title, description=description,
+                category=category, sort_order=max_order, pinned=False,
+            ))
+        db.commit()
+        print("[Wiki] Seeded WSC entries")
+    except Exception as e:
+        db.rollback()
+        print(f"[Wiki] Seed WSC error: {e}")
     finally:
         db.close()

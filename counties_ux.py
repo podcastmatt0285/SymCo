@@ -1841,6 +1841,53 @@ async def crypto_exchange(
             }}
             </script>
 
+            <script>
+            /* AJAX form handling — eliminates full-page reloads on exchange actions */
+            (function() {{
+                function _toast(msg, ok) {{
+                    var d = document.createElement('div');
+                    d.textContent = msg;
+                    d.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);' +
+                        'padding:10px 18px;border-radius:8px;font-size:0.85rem;z-index:9999;max-width:90%;text-align:center;' +
+                        'background:' + (ok ? '#15803d' : '#991b1b') + ';color:#fff;box-shadow:0 4px 12px rgba(0,0,0,0.4);';
+                    document.body.appendChild(d);
+                    setTimeout(function() {{ d.remove(); }}, 3500);
+                }}
+                function _ajaxForm(formEl) {{
+                    formEl.addEventListener('submit', function(e) {{
+                        e.preventDefault();
+                        var btn = formEl.querySelector('button[type=submit]') || formEl.querySelector('button');
+                        var origText = btn ? btn.textContent : '';
+                        if (btn) {{ btn.disabled = true; btn.textContent = '…'; }}
+                        var data = new FormData(formEl);
+                        data.set('_ajax', '1');
+                        fetch(formEl.action, {{method:'POST', body: new URLSearchParams(data)}})
+                            .then(function(r) {{ return r.json(); }})
+                            .then(function(d) {{
+                                _toast(d.message || (d.ok ? 'Done' : 'Error'), d.ok);
+                                if (d.ok) {{
+                                    // Reset input fields on success
+                                    formEl.querySelectorAll('input[type=number]').forEach(function(i) {{ i.value = ''; }});
+                                    // Re-hide gas previews
+                                    formEl.querySelectorAll('[id$="-gas-preview"]').forEach(function(p) {{ p.style.display = 'none'; }});
+                                }}
+                            }})
+                            .catch(function() {{ _toast('Network error — please try again.', false); }})
+                            .finally(function() {{
+                                if (btn) {{ btn.disabled = false; btn.textContent = origText; }}
+                            }});
+                    }});
+                }}
+                // Wire up all exchange and mining deposit forms
+                ['form[action="/api/exchange/buy"]',
+                 'form[action="/api/exchange/sell"]',
+                 'form[action="/api/exchange/swap"]',
+                 'form[action="/api/county/mining/deposit"]'].forEach(function(sel) {{
+                    document.querySelectorAll(sel).forEach(_ajaxForm);
+                }});
+            }})();
+            </script>
+
             <div class="card">
                 <h2>Market Overview &nbsp;<a href="/gas-tracker" style="font-size:12px;color:#38bdf8;font-weight:400;">⛽ Gas Tracker ↗</a></h2>
                 <p style="color: #94a3b8; font-size: 13px; margin-bottom: 12px;">
@@ -2417,17 +2464,22 @@ async def api_county_vote(
 async def api_mining_deposit(
     county_id: int = Form(...),
     quantity: float = Form(...),
+    _ajax: Optional[str] = Form(None),
     session_token: Optional[str] = Cookie(None),
 ):
-    """Deposit city currency into the mining node."""
+    """Deposit native tokens into the mining node."""
+    from fastapi.responses import JSONResponse as _JSON
     player = get_current_player(session_token)
     if not player:
+        if _ajax:
+            return _JSON({"ok": False, "error": "Not authenticated"}, status_code=401)
         return RedirectResponse(url="/login", status_code=303)
 
     from counties import deposit_to_mining_node
-
     success, message = deposit_to_mining_node(player.id, county_id, quantity)
 
+    if _ajax:
+        return _JSON({"ok": success, "message": message})
     return RedirectResponse(
         url=f"/county/{county_id}/mining?msg={message.replace(' ', '+')}",
         status_code=303,
@@ -2438,18 +2490,20 @@ async def api_mining_deposit(
 async def api_exchange_buy(
     crypto_symbol: str = Form(...),
     cash_amount: float = Form(...),
+    _ajax: Optional[str] = Form(None),
     session_token: Optional[str] = Cookie(None),
 ):
     """Buy crypto with cash. cash_amount is in the player's legal tender (auto-converted to USD)."""
+    from fastapi.responses import JSONResponse as _JSON
     player = get_current_player(session_token)
     if not player:
+        if _ajax:
+            return _JSON({"ok": False, "error": "Not authenticated"}, status_code=401)
         return RedirectResponse(url="/login", status_code=303)
 
     from counties import buy_crypto_with_cash
     from reserve_banks import get_player_legal_tender
 
-    # Convert from player's legal tender to USD so buy_crypto_with_cash always
-    # receives a USD-denominated amount (its price calculations are in USD).
     tender = get_player_legal_tender(player.id)
     usd_amount = cash_amount
     if tender != "USD":
@@ -2464,31 +2518,36 @@ async def api_exchange_buy(
 
     success, message = buy_crypto_with_cash(player.id, crypto_symbol, usd_amount)
 
+    if _ajax:
+        return _JSON({"ok": success, "message": message})
     if success:
         return RedirectResponse(url=f"/exchange?msg={message.replace(' ', '+')}", status_code=303)
-    else:
-        return RedirectResponse(url=f"/exchange?error={message.replace(' ', '+')}", status_code=303)
+    return RedirectResponse(url=f"/exchange?error={message.replace(' ', '+')}", status_code=303)
 
 
 @router.post("/api/exchange/sell")
 async def api_exchange_sell(
     crypto_symbol: str = Form(...),
     amount: float = Form(...),
+    _ajax: Optional[str] = Form(None),
     session_token: Optional[str] = Cookie(None),
 ):
     """Sell crypto for cash."""
+    from fastapi.responses import JSONResponse as _JSON
     player = get_current_player(session_token)
     if not player:
+        if _ajax:
+            return _JSON({"ok": False, "error": "Not authenticated"}, status_code=401)
         return RedirectResponse(url="/login", status_code=303)
 
     from counties import sell_crypto_for_cash
-
     success, message = sell_crypto_for_cash(player.id, crypto_symbol, amount)
 
+    if _ajax:
+        return _JSON({"ok": success, "message": message})
     if success:
         return RedirectResponse(url=f"/exchange?msg={message.replace(' ', '+')}", status_code=303)
-    else:
-        return RedirectResponse(url=f"/exchange?error={message.replace(' ', '+')}", status_code=303)
+    return RedirectResponse(url=f"/exchange?error={message.replace(' ', '+')}", status_code=303)
 
 
 @router.post("/api/exchange/swap")
@@ -2496,24 +2555,30 @@ async def api_exchange_swap(
     sell_symbol: str = Form(...),
     sell_amount: float = Form(...),
     buy_symbol: str = Form(...),
+    _ajax: Optional[str] = Form(None),
     session_token: Optional[str] = Cookie(None),
 ):
     """Swap one crypto for another."""
+    from fastapi.responses import JSONResponse as _JSON
     player = get_current_player(session_token)
     if not player:
+        if _ajax:
+            return _JSON({"ok": False, "error": "Not authenticated"}, status_code=401)
         return RedirectResponse(url="/login", status_code=303)
 
     from counties import swap_crypto
-
     if sell_symbol == buy_symbol:
+        if _ajax:
+            return _JSON({"ok": False, "message": "Cannot swap a token for itself"})
         return RedirectResponse(url="/exchange?error=Cannot+swap+a+crypto+for+itself", status_code=303)
 
     success, message = swap_crypto(player.id, sell_symbol, buy_symbol, sell_amount)
 
+    if _ajax:
+        return _JSON({"ok": success, "message": message})
     if success:
         return RedirectResponse(url=f"/exchange?msg={message.replace(' ', '+')}", status_code=303)
-    else:
-        return RedirectResponse(url=f"/exchange?error={message.replace(' ', '+')}", status_code=303)
+    return RedirectResponse(url=f"/exchange?error={message.replace(' ', '+')}", status_code=303)
 
 
 # ==========================
@@ -3085,6 +3150,42 @@ async def county_governance(
         }});
     }});
     </script>
+    <script>
+    /* AJAX governance votes — no reload */
+    (function() {{
+        function _toast(msg, ok) {{
+            var d = document.createElement('div');
+            d.textContent = msg;
+            d.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);' +
+                'padding:10px 18px;border-radius:8px;font-size:0.85rem;z-index:9999;max-width:90%;text-align:center;' +
+                'background:' + (ok ? '#15803d' : '#991b1b') + ';color:#fff;box-shadow:0 4px 12px rgba(0,0,0,0.4);';
+            document.body.appendChild(d);
+            setTimeout(function() {{ d.remove(); }}, 3500);
+        }}
+        document.querySelectorAll('form[action="/api/county/governance/vote"]').forEach(function(form) {{
+            form.addEventListener('submit', function(e) {{
+                e.preventDefault();
+                var btn = form.querySelector('button[type=submit]') || form.querySelector('button');
+                var orig = btn ? btn.textContent : '';
+                if (btn) {{ btn.disabled = true; btn.textContent = '…'; }}
+                var data = new FormData(form);
+                data.set('_ajax', '1');
+                fetch(form.action, {{method:'POST', body: new URLSearchParams(data)}})
+                    .then(function(r) {{ return r.json(); }})
+                    .then(function(d) {{
+                        _toast(d.message || (d.ok ? 'Vote cast' : 'Error'), d.ok);
+                        if (d.ok) {{
+                            form.querySelectorAll('input[type=number]').forEach(function(i) {{ i.value = ''; }});
+                            var pw = form.closest('[id^="weight-preview"]') || document.getElementById('weight-preview-' + (form.querySelector('[id^="burn-"]')||{{}}).id);
+                            if (pw) pw.textContent = '';
+                        }}
+                    }})
+                    .catch(function() {{ _toast('Network error', false); }})
+                    .finally(function() {{ if (btn) {{ btn.disabled = false; btn.textContent = orig; }} }});
+            }});
+        }});
+    }})();
+    </script>
     </body>
     </html>
     """
@@ -3141,11 +3242,15 @@ async def api_governance_vote(
     proposal_id: int = Form(...),
     vote: str = Form(...),
     tokens_to_burn: float = Form(...),
+    _ajax: Optional[str] = Form(None),
     session_token: Optional[str] = Cookie(None),
 ):
     """Cast a governance vote by burning tokens."""
+    from fastapi.responses import JSONResponse as _JSON
     player = get_current_player(session_token)
     if not player:
+        if _ajax:
+            return _JSON({"ok": False, "error": "Not authenticated"}, status_code=401)
         return RedirectResponse(url="/login", status_code=303)
 
     from counties import cast_governance_vote, GovernanceProposal, get_db
@@ -3159,22 +3264,22 @@ async def api_governance_vote(
         current_tick=app_module.current_tick,
     )
 
-    # Get county_id from proposal for redirect
     db = get_db()
     proposal = db.query(GovernanceProposal).filter(GovernanceProposal.id == proposal_id).first()
     county_id = proposal.county_id if proposal else 0
     db.close()
 
+    if _ajax:
+        return _JSON({"ok": success, "message": message})
     if success:
         return RedirectResponse(
             url=f"/county/{county_id}/governance?msg={message.replace(' ', '+')}",
             status_code=303,
         )
-    else:
-        return RedirectResponse(
-            url=f"/county/{county_id}/governance?error={message.replace(' ', '+')}",
-            status_code=303,
-        )
+    return RedirectResponse(
+        url=f"/county/{county_id}/governance?error={message.replace(' ', '+')}",
+        status_code=303,
+    )
 
 
 @router.post("/api/county/governance/delegate")

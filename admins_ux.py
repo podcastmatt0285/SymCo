@@ -55,6 +55,11 @@ from admins import (
     admin_add_city_to_county, admin_remove_city_from_county,
     admin_get_county_polls, admin_resolve_county_poll,
     admin_delete_county,
+    # County crypto admin
+    admin_get_county_crypto_detail,
+    admin_freeze_county_mining, admin_freeze_county_trading,
+    admin_freeze_meme_trading, admin_freeze_meme_mining,
+    admin_drain_county_mining_pool,
     # Moderator management
     add_moderator, remove_moderator, get_all_moderators,
     # Market orders
@@ -2388,6 +2393,43 @@ def admin_county_detail(county_id: int, session_token: Optional[str] = Cookie(No
             <td style="color:#64748b;">{p['yes_votes']} / {p['no_votes']}</td>
         </tr>"""
 
+    # --- Crypto detail ---
+    crypto = admin_get_county_crypto_detail(county_id)
+    mining_frozen  = crypto.get("mining_frozen", False)
+    trading_frozen = crypto.get("trading_frozen", False)
+
+    def _fmt(v, precision=4): return f"{v:,.{precision}f}"
+
+    meme_rows = ""
+    for m in (crypto.get("meme_coins") or []):
+        active_tag = "🟢" if m["is_active"] else "🔴"
+        mine_tag   = "⛏️" if m["mining_enabled"] else "⏸"
+        meme_rows += f"""<tr>
+            <td>{active_tag} <b>{m['symbol']}</b></td>
+            <td style="color:#94a3b8;">{m['name']}</td>
+            <td>${m['last_price']:.6g}</td>
+            <td>{m['minted_supply']:,.0f} / {m['total_supply']:,.0f}</td>
+            <td>{m['total_trades']}</td>
+            <td>
+                <form method="post" action="/admin/counties/{county_id}/meme-freeze" style="display:inline;">
+                    <input type="hidden" name="meme_symbol" value="{m['symbol']}">
+                    <button name="action" value="{'unfreeze_trade' if not m['is_active'] else 'freeze_trade'}"
+                        class="btn {'btn-green' if not m['is_active'] else 'btn-red'}"
+                        style="font-size:0.6rem;padding:2px 5px;">
+                        {'▶ Trading' if not m['is_active'] else '⏸ Trading'}
+                    </button>
+                </form>
+                <form method="post" action="/admin/counties/{county_id}/meme-freeze" style="display:inline;margin-left:3px;">
+                    <input type="hidden" name="meme_symbol" value="{m['symbol']}">
+                    <button name="action" value="{'unfreeze_mine' if not m['mining_enabled'] else 'freeze_mine'}"
+                        class="btn {'btn-green' if not m['mining_enabled'] else 'btn-yellow'}"
+                        style="font-size:0.6rem;padding:2px 5px;">
+                        {mine_tag} Mining
+                    </button>
+                </form>
+            </td>
+        </tr>"""
+
     body = f"""
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
         <a href="/admin/cities" style="color:#64748b;font-size:0.75rem;">← Cities</a>
@@ -2395,6 +2437,54 @@ def admin_county_detail(county_id: int, session_token: Optional[str] = Cookie(No
         <span style="color:#f59e0b;font-size:0.75rem;">{county_info['crypto_symbol']} — {county_info['crypto_name']}</span>
     </div>
     {_flash(msg=msg, err=err)}
+
+    <div class="card">
+        <h3>💰 County Treasury & Crypto</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:12px;">
+            <div style="background:#0f172a;border-radius:6px;padding:8px;">
+                <div style="font-size:0.65rem;color:#64748b;">Treasury Balance</div>
+                <div style="font-weight:bold;color:#22c55e;">${_fmt(crypto.get('treasury_balance',0),2)}</div>
+            </div>
+            <div style="background:#0f172a;border-radius:6px;padding:8px;">
+                <div style="font-size:0.65rem;color:#64748b;">Minted / Max Supply</div>
+                <div style="font-weight:bold;">{_fmt(crypto.get('total_crypto_minted',0),0)} / {_fmt(crypto.get('max_supply',21000000),0)}</div>
+            </div>
+            <div style="background:#0f172a;border-radius:6px;padding:8px;">
+                <div style="font-size:0.65rem;color:#64748b;">Burned</div>
+                <div style="font-weight:bold;color:#f59e0b;">{_fmt(crypto.get('total_crypto_burned',0),4)}</div>
+            </div>
+            <div style="background:#0f172a;border-radius:6px;padding:8px;">
+                <div style="font-size:0.65rem;color:#64748b;">Energy Pool</div>
+                <div style="font-weight:bold;color:#60a5fa;">{_fmt(crypto.get('mining_energy_pool',0),4)}</div>
+            </div>
+            <div style="background:#0f172a;border-radius:6px;padding:8px;">
+                <div style="font-size:0.65rem;color:#64748b;">Gas Price</div>
+                <div style="font-weight:bold;">{_fmt(crypto.get('gas_price',0),8)}</div>
+            </div>
+            <div style="background:#0f172a;border-radius:6px;padding:8px;">
+                <div style="font-size:0.65rem;color:#64748b;">Holders / Stakers</div>
+                <div style="font-weight:bold;">{crypto.get('holders',0)} / {crypto.get('active_stakers',0)}</div>
+            </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <form method="post" action="/admin/counties/{county_id}/freeze-trading" style="display:inline;">
+                <button class="btn {'btn-green' if trading_frozen else 'btn-red'}" name="freeze" value="{'0' if trading_frozen else '1'}">
+                    {'▶ Unfreeze Trading' if trading_frozen else '⏸ Freeze Trading'}
+                </button>
+            </form>
+            <form method="post" action="/admin/counties/{county_id}/freeze-mining" style="display:inline;">
+                <button class="btn {'btn-green' if mining_frozen else 'btn-yellow'}" name="freeze" value="{'0' if mining_frozen else '1'}">
+                    {'▶ Resume Mining' if mining_frozen else '⏸ Pause Mining'}
+                </button>
+            </form>
+            <form method="post" action="/admin/counties/{county_id}/drain-pool"
+                  onsubmit="return confirm('Drain the entire mining energy pool to 0? This stops the next payout cycle.');">
+                <button class="btn btn-red">🚨 Drain Energy Pool</button>
+            </form>
+        </div>
+        {'<p style="color:#ef4444;font-weight:bold;margin-top:8px;">⚠️ TRADING FROZEN</p>' if trading_frozen else ''}
+        {'<p style="color:#f59e0b;font-weight:bold;margin-top:4px;">⚠️ MINING PAUSED</p>' if mining_frozen else ''}
+    </div>
 
     <div class="card">
         <h3>Active Polls ({len(active_polls)})</h3>
@@ -2406,8 +2496,73 @@ def admin_county_detail(county_id: int, session_token: Optional[str] = Cookie(No
         <h3>Recent Polls (last {len(past_polls[:10])})</h3>
         <div class="table-wrap"><table><tr><th>ID</th><th>Target City</th><th>Result</th><th>Y/N</th></tr>{past_poll_rows}</table></div>
     </div>''' if past_polls else ""}
+
+    <div class="card">
+        <h3>🪙 Meme Coins ({len(crypto.get('meme_coins') or [])})</h3>
+        {f'<div class="table-wrap"><table><tr><th>Symbol</th><th>Name</th><th>Price</th><th>Minted/Supply</th><th>Trades</th><th>Controls</th></tr>{meme_rows}</table></div>'
+          if meme_rows else '<p style="color:#64748b;font-size:0.75rem;">No meme coins in this county.</p>'}
+    </div>
     """
     return HTMLResponse(admin_shell(f"County: {county_info['name']}", body, admin.business_name, "/admin/cities", player_id=admin.id))
+
+
+@router.post("/admin/counties/{county_id}/freeze-trading")
+def post_freeze_county_trading(county_id: int, freeze: str = Form(...),
+                               session_token: Optional[str] = Cookie(None)):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    result = admin_freeze_county_trading(admin.id, county_id, freeze == "1")
+    if result["ok"]:
+        label = "frozen" if freeze == "1" else "unfrozen"
+        return RedirectResponse(url=f"/admin/counties/{county_id}?msg=Trading+{label}", status_code=303)
+    return RedirectResponse(url=f"/admin/counties/{county_id}?err={result['error']}", status_code=303)
+
+
+@router.post("/admin/counties/{county_id}/freeze-mining")
+def post_freeze_county_mining(county_id: int, freeze: str = Form(...),
+                              session_token: Optional[str] = Cookie(None)):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    result = admin_freeze_county_mining(admin.id, county_id, freeze == "1")
+    if result["ok"]:
+        label = "paused" if freeze == "1" else "resumed"
+        return RedirectResponse(url=f"/admin/counties/{county_id}?msg=Mining+{label}", status_code=303)
+    return RedirectResponse(url=f"/admin/counties/{county_id}?err={result['error']}", status_code=303)
+
+
+@router.post("/admin/counties/{county_id}/drain-pool")
+def post_drain_county_pool(county_id: int, session_token: Optional[str] = Cookie(None)):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    result = admin_drain_county_mining_pool(admin.id, county_id)
+    if result["ok"]:
+        drained = result.get("drained", 0)
+        return RedirectResponse(url=f"/admin/counties/{county_id}?msg=Pool+drained+%28{drained:.2f}+removed%29", status_code=303)
+    return RedirectResponse(url=f"/admin/counties/{county_id}?err={result['error']}", status_code=303)
+
+
+@router.post("/admin/counties/{county_id}/meme-freeze")
+def post_freeze_meme(county_id: int, meme_symbol: str = Form(...), action: str = Form(...),
+                     session_token: Optional[str] = Cookie(None)):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    if action == "freeze_trade":
+        result = admin_freeze_meme_trading(admin.id, meme_symbol, freeze=True)
+    elif action == "unfreeze_trade":
+        result = admin_freeze_meme_trading(admin.id, meme_symbol, freeze=False)
+    elif action == "freeze_mine":
+        result = admin_freeze_meme_mining(admin.id, meme_symbol, freeze=True)
+    elif action == "unfreeze_mine":
+        result = admin_freeze_meme_mining(admin.id, meme_symbol, freeze=False)
+    else:
+        return RedirectResponse(url=f"/admin/counties/{county_id}?err=Unknown+action", status_code=303)
+    if result["ok"]:
+        return RedirectResponse(url=f"/admin/counties/{county_id}?msg={meme_symbol}+{action.replace('_','+')}d", status_code=303)
+    return RedirectResponse(url=f"/admin/counties/{county_id}?err={result['error']}", status_code=303)
 
 
 @router.post("/admin/counties/{county_id}/resolve-poll")

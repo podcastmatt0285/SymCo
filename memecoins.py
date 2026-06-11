@@ -641,6 +641,34 @@ def launch_meme_coin(
         except Exception:
             pass
 
+        # Announce the launch to everyone holding the county's native token
+        # (they can mine and trade the new coin); confirm to the creator.
+        try:
+            from counties import _notify_crypto, CryptoWallet as _CW
+            _notify_crypto(
+                player_id, f"🚀 {symbol} Launched",
+                f"'{name}' is live on the {native_symbol} chain. "
+                f"You hold {founder_alloc:,.2f} founder tokens.",
+                "/memecoins", tag=f"meme-launch-{symbol}",
+            )
+            _cdb = county_get_db()
+            try:
+                holder_ids = [r.player_id for r in _cdb.query(_CW).filter(
+                    _CW.crypto_symbol == native_symbol, _CW.balance > 0,
+                    _CW.player_id != player_id, _CW.player_id > 0,
+                ).all()]
+            finally:
+                _cdb.close()
+            for _hid in holder_ids:
+                _notify_crypto(
+                    _hid, "🚀 New Meme Coin",
+                    f"'{name}' ({symbol}) just launched on the {native_symbol} chain. "
+                    f"Stake {native_symbol} to mine it, or trade it on the order book.",
+                    "/memecoins", tag=f"meme-launch-{symbol}",
+                )
+        except Exception:
+            pass
+
         # Return the symbol string (not the ORM object) — accessing meme attributes
         # after db.close() in the finally block would raise DetachedInstanceError.
         initial_backing = creation_burn_native / max(founder_alloc, 1.0)
@@ -909,6 +937,18 @@ def process_meme_mining_payouts():
                     _pid, "meme_mining_reward", "crypto", _amt,
                     f"Meme mining reward: {_amt:.6f} {_sym}",
                     item_type=_sym, quantity=_amt,
+                )
+        except Exception:
+            pass
+
+        try:
+            from counties import _notify_crypto as _ncry
+            for _pid, _amt, _sym in _all_meme_rewards:
+                _ncry(
+                    _pid, f"⛏️ {_sym} Mining Payout",
+                    f"You mined {_amt:.6f} {_sym}.",
+                    "/memecoins", tag=f"meme-mine-{_sym}",
+                    cooldown_key=f"meme_mine_{_sym}", cooldown_secs=6 * 3600,
                 )
         except Exception:
             pass
