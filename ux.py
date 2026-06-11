@@ -14772,6 +14772,99 @@ def api_widget_wbc50(device_id: Optional[str] = None,
     })
 
 
+@router.get("/api/widget/memecoins")
+def api_widget_memecoins(page: int = 1,
+                         per_page: int = 10,
+                         sort: str = "market_cap",
+                         device_id: Optional[str] = None,
+                         wt: Optional[str] = None,
+                         session_token: Optional[str] = Cookie(None)):
+    """
+    Paginated feed of EVERY meme coin in the game for the Android widget.
+    Sorted by market cap by default (also: volume, change, new, holders).
+    Each entry carries price, 24h change, volume, supply, holders, backing
+    price, and mining-pool data so the widget can render a full card.
+    """
+    # Auth — same pattern as api_widget_data: device_id > wt > session cookie
+    if device_id:
+        pid = _WIDGET_DEVICE_MAP.get(device_id)
+        if not pid:
+            _load_device_map()
+            pid = _WIDGET_DEVICE_MAP.get(device_id)
+        if not pid:
+            return JSONResponse({"error": "not authenticated"}, status_code=401)
+        import auth as _auth
+        _db = _auth.get_db()
+        try:
+            player = _db.query(_auth.Player).filter(_auth.Player.id == pid).first()
+        finally:
+            _db.close()
+        if not player:
+            return JSONResponse({"error": "not authenticated"}, status_code=401)
+    elif wt:
+        player = _verify_widget_token(wt)
+        if not player:
+            return JSONResponse({"error": "not authenticated"}, status_code=401)
+    else:
+        player = require_auth(session_token)
+        if isinstance(player, RedirectResponse):
+            return JSONResponse({"error": "not authenticated"}, status_code=401)
+
+    if sort not in ("market_cap", "volume", "change", "new", "holders"):
+        sort = "market_cap"
+    per_page = max(1, min(per_page, 25))
+    page = max(1, page)
+
+    try:
+        from memecoins import get_all_meme_coins_global, MEME_CREATION_FEE_NATIVE
+        coins = get_all_meme_coins_global(sort=sort)
+    except Exception as _e:
+        print(f"[widget/memecoins] error: {_e}")
+        return JSONResponse({"error": "memecoin data unavailable"}, status_code=500)
+
+    total = len(coins)
+    total_pages = max(1, (total + per_page - 1) // per_page)
+    page = min(page, total_pages)
+    start = (page - 1) * per_page
+    items = []
+    for c in coins[start:start + per_page]:
+        minted = c["minted_supply"] or 0.0
+        burned_backing = (c.get("creation_fee_burned") or MEME_CREATION_FEE_NATIVE)
+        backing_price = burned_backing / max(minted, 1.0)
+        chg = c["price_change_24h"] or 0.0
+        items.append({
+            "symbol":            c["symbol"],
+            "name":              c["name"],
+            "county":            c["county_name"],
+            "native_symbol":     c["native_symbol"],
+            "creator":           c["creator_name"],
+            "price":             f"{c['last_price']:.6g}",
+            "change_24h":        f"{'+' if chg >= 0 else ''}{chg:.2f}%",
+            "up":                chg >= 0,
+            "market_cap_native": f"{c['market_cap_native']:,.2f}",
+            "volume_native":     f"{c['total_volume_native']:,.2f}",
+            "total_supply":      f"{c['total_supply']:,.0f}",
+            "minted_supply":     f"{minted:,.2f}",
+            "holders":           c["holder_count"],
+            "trades":            c["total_trades"],
+            "all_time_high":     f"{c['all_time_high']:.6g}",
+            "backing_price":     f"{backing_price:.6g}",
+            "mining_enabled":    c["mining_enabled"],
+            "mining_pool_native": f"{c['mining_pool_native']:,.2f}",
+            "mining_minted_pct": round((c["mining_minted"] or 0.0) /
+                                       max(c["mining_allocation"] or 1.0, 1.0) * 100, 1),
+        })
+
+    return JSONResponse({
+        "page":        page,
+        "per_page":    per_page,
+        "total":       total,
+        "total_pages": total_pages,
+        "sort":        sort,
+        "coins":       items,
+    })
+
+
 @router.get("/api/widget/chat")
 def api_widget_chat(room: str = "global",
                     device_id: Optional[str] = None,
