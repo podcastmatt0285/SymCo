@@ -1853,14 +1853,14 @@ async def crypto_exchange(
                     document.body.appendChild(d);
                     setTimeout(function() {{ d.remove(); }}, 3500);
                 }}
-                function _ajaxForm(formEl) {{
+                function ajaxForm(formEl) {{
                     formEl.addEventListener('submit', function(e) {{
                         e.preventDefault();
                         var btn = formEl.querySelector('button[type=submit]') || formEl.querySelector('button');
                         var origText = btn ? btn.textContent : '';
                         if (btn) {{ btn.disabled = true; btn.textContent = '…'; }}
                         var data = new FormData(formEl);
-                        data.set('_ajax', '1');
+                        data.set('ajax', '1');
                         fetch(formEl.action, {{method:'POST', body: new URLSearchParams(data)}})
                             .then(function(r) {{ return r.json(); }})
                             .then(function(d) {{
@@ -1883,7 +1883,7 @@ async def crypto_exchange(
                  'form[action="/api/exchange/sell"]',
                  'form[action="/api/exchange/swap"]',
                  'form[action="/api/county/mining/deposit"]'].forEach(function(sel) {{
-                    document.querySelectorAll(sel).forEach(_ajaxForm);
+                    document.querySelectorAll(sel).forEach(ajaxForm);
                 }});
             }})();
             </script>
@@ -2464,21 +2464,21 @@ async def api_county_vote(
 async def api_mining_deposit(
     county_id: int = Form(...),
     quantity: float = Form(...),
-    _ajax: Optional[str] = Form(None),
+    ajax: Optional[str] = Form(None),
     session_token: Optional[str] = Cookie(None),
 ):
     """Deposit native tokens into the mining node."""
     from fastapi.responses import JSONResponse as _JSON
     player = get_current_player(session_token)
     if not player:
-        if _ajax:
+        if ajax:
             return _JSON({"ok": False, "error": "Not authenticated"}, status_code=401)
         return RedirectResponse(url="/login", status_code=303)
 
     from counties import deposit_to_mining_node
     success, message = deposit_to_mining_node(player.id, county_id, quantity)
 
-    if _ajax:
+    if ajax:
         return _JSON({"ok": success, "message": message})
     return RedirectResponse(
         url=f"/county/{county_id}/mining?msg={message.replace(' ', '+')}",
@@ -2490,14 +2490,14 @@ async def api_mining_deposit(
 async def api_exchange_buy(
     crypto_symbol: str = Form(...),
     cash_amount: float = Form(...),
-    _ajax: Optional[str] = Form(None),
+    ajax: Optional[str] = Form(None),
     session_token: Optional[str] = Cookie(None),
 ):
     """Buy crypto with cash. cash_amount is in the player's legal tender (auto-converted to USD)."""
     from fastapi.responses import JSONResponse as _JSON
     player = get_current_player(session_token)
     if not player:
-        if _ajax:
+        if ajax:
             return _JSON({"ok": False, "error": "Not authenticated"}, status_code=401)
         return RedirectResponse(url="/login", status_code=303)
 
@@ -2518,7 +2518,7 @@ async def api_exchange_buy(
 
     success, message = buy_crypto_with_cash(player.id, crypto_symbol, usd_amount)
 
-    if _ajax:
+    if ajax:
         return _JSON({"ok": success, "message": message})
     if success:
         return RedirectResponse(url=f"/exchange?msg={message.replace(' ', '+')}", status_code=303)
@@ -2529,21 +2529,21 @@ async def api_exchange_buy(
 async def api_exchange_sell(
     crypto_symbol: str = Form(...),
     amount: float = Form(...),
-    _ajax: Optional[str] = Form(None),
+    ajax: Optional[str] = Form(None),
     session_token: Optional[str] = Cookie(None),
 ):
     """Sell crypto for cash."""
     from fastapi.responses import JSONResponse as _JSON
     player = get_current_player(session_token)
     if not player:
-        if _ajax:
+        if ajax:
             return _JSON({"ok": False, "error": "Not authenticated"}, status_code=401)
         return RedirectResponse(url="/login", status_code=303)
 
     from counties import sell_crypto_for_cash
     success, message = sell_crypto_for_cash(player.id, crypto_symbol, amount)
 
-    if _ajax:
+    if ajax:
         return _JSON({"ok": success, "message": message})
     if success:
         return RedirectResponse(url=f"/exchange?msg={message.replace(' ', '+')}", status_code=303)
@@ -2555,26 +2555,26 @@ async def api_exchange_swap(
     sell_symbol: str = Form(...),
     sell_amount: float = Form(...),
     buy_symbol: str = Form(...),
-    _ajax: Optional[str] = Form(None),
+    ajax: Optional[str] = Form(None),
     session_token: Optional[str] = Cookie(None),
 ):
     """Swap one crypto for another."""
     from fastapi.responses import JSONResponse as _JSON
     player = get_current_player(session_token)
     if not player:
-        if _ajax:
+        if ajax:
             return _JSON({"ok": False, "error": "Not authenticated"}, status_code=401)
         return RedirectResponse(url="/login", status_code=303)
 
     from counties import swap_crypto
     if sell_symbol == buy_symbol:
-        if _ajax:
+        if ajax:
             return _JSON({"ok": False, "message": "Cannot swap a token for itself"})
         return RedirectResponse(url="/exchange?error=Cannot+swap+a+crypto+for+itself", status_code=303)
 
     success, message = swap_crypto(player.id, sell_symbol, buy_symbol, sell_amount)
 
-    if _ajax:
+    if ajax:
         return _JSON({"ok": success, "message": message})
     if success:
         return RedirectResponse(url=f"/exchange?msg={message.replace(' ', '+')}", status_code=303)
@@ -3169,7 +3169,7 @@ async def county_governance(
                 var orig = btn ? btn.textContent : '';
                 if (btn) {{ btn.disabled = true; btn.textContent = '…'; }}
                 var data = new FormData(form);
-                data.set('_ajax', '1');
+                data.set('ajax', '1');
                 fetch(form.action, {{method:'POST', body: new URLSearchParams(data)}})
                     .then(function(r) {{ return r.json(); }})
                     .then(function(d) {{
@@ -3242,14 +3242,14 @@ async def api_governance_vote(
     proposal_id: int = Form(...),
     vote: str = Form(...),
     tokens_to_burn: float = Form(...),
-    _ajax: Optional[str] = Form(None),
+    ajax: Optional[str] = Form(None),
     session_token: Optional[str] = Cookie(None),
 ):
     """Cast a governance vote by burning tokens."""
     from fastapi.responses import JSONResponse as _JSON
     player = get_current_player(session_token)
     if not player:
-        if _ajax:
+        if ajax:
             return _JSON({"ok": False, "error": "Not authenticated"}, status_code=401)
         return RedirectResponse(url="/login", status_code=303)
 
@@ -3269,7 +3269,7 @@ async def api_governance_vote(
     county_id = proposal.county_id if proposal else 0
     db.close()
 
-    if _ajax:
+    if ajax:
         return _JSON({"ok": success, "message": message})
     if success:
         return RedirectResponse(

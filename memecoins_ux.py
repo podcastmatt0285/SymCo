@@ -1675,7 +1675,7 @@ function calcBurnMint() {{
             var orig = btn ? btn.textContent : '';
             if (btn) {{ btn.disabled = true; btn.textContent = '…'; }}
             var data = new FormData(form);
-            data.set('_ajax', '1');
+            data.set('ajax', '1');
             fetch(form.action, {{method:'POST', body: new URLSearchParams(data)}})
                 .then(function(r) {{ return r.json(); }})
                 .then(function(d) {{
@@ -1814,13 +1814,13 @@ async def api_meme_order(
     order_mode: str = Form(...),
     quantity: float = Form(...),
     price: Optional[float] = Form(None),
-    _ajax: Optional[str] = Form(None),
+    ajax: Optional[str] = Form(None),
     session_token: Optional[str] = Cookie(None),
 ):
     from fastapi.responses import JSONResponse as _JSON
     player = get_current_player(session_token)
     if not player:
-        if _ajax:
+        if ajax:
             return _JSON({"ok": False, "error": "Not authenticated"}, status_code=401)
         return RedirectResponse(url="/login", status_code=303)
 
@@ -1839,7 +1839,7 @@ async def api_meme_order(
         from market_ws import push_market_snapshot_now
         import asyncio
         asyncio.create_task(push_market_snapshot_now())
-    if _ajax:
+    if ajax:
         return _JSON({"ok": ok, "message": message})
     if ok:
         return RedirectResponse(url=f"/memecoins/{sym}?tab=trade&msg={message.replace(' ', '+')}", status_code=303)
