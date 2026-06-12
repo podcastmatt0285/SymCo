@@ -1,4 +1,111 @@
 {
+  "advanced_materials_plant": {
+    "allowed_proximity": [
+      "road",
+      "urban"
+    ],
+    "allowed_terrain": [
+      "district_industrial",
+      "district_tech",
+      "urban"
+    ],
+    "base_wage_cost": 1000.0,
+    "class": "production",
+    "cycles_to_complete": 300,
+    "description": "Specialty metals and composites facility producing titanium alloys, carbon fiber, duralumin, and armor panels.",
+    "name": "Advanced Materials Plant",
+    "production_lines": [
+      {
+        "inputs": [
+          {
+            "item": "titanium",
+            "quantity": 30
+          },
+          {
+            "item": "aluminum",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 3000
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "titanium_alloy",
+        "output_qty": 10
+      },
+      {
+        "inputs": [
+          {
+            "item": "polymer_compound",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 2000
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "carbon_fiber",
+        "output_qty": 8
+      },
+      {
+        "inputs": [
+          {
+            "item": "aluminum",
+            "quantity": 20
+          },
+          {
+            "item": "copper",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 1500
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ],
+        "output_item": "duralumin",
+        "output_qty": 10
+      },
+      {
+        "inputs": [
+          {
+            "item": "titanium_alloy",
+            "quantity": 5
+          },
+          {
+            "item": "carbon_fiber",
+            "quantity": 5
+          },
+          {
+            "item": "polymer_compound",
+            "quantity": 3
+          },
+          {
+            "item": "energy",
+            "quantity": 1000
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ],
+        "output_item": "composite_armor_panel",
+        "output_qty": 5
+      }
+    ],
+    "startup_cost": 600000
+  },
   "agave_plantation": {
     "allowed_proximity": [
       "volcanic",
@@ -701,20 +808,20 @@
     "name": "Arts & Crafts Store",
     "products": {
       "agate": {
-        "base_sale_chance": 0.48,
-        "elasticity": 1.0
+        "base_sale_chance": 0.2,
+        "elasticity": 1.6
       },
       "chalcedony": {
-        "base_sale_chance": 0.45,
-        "elasticity": 1.0
+        "base_sale_chance": 0.2,
+        "elasticity": 1.6
       },
       "mica": {
-        "base_sale_chance": 0.35,
+        "base_sale_chance": 0.2,
         "elasticity": 0.8
       },
       "obsidian": {
-        "base_sale_chance": 0.5,
-        "elasticity": 1.0
+        "base_sale_chance": 0.2,
+        "elasticity": 1.6
       },
       "thread": {
         "base_sale_chance": 0.03,
@@ -722,7 +829,7 @@
       },
       "yarn": {
         "base_sale_chance": 0.025,
-        "elasticity": 1.3
+        "elasticity": 1.2
       }
     },
     "startup_cost": 8000
@@ -1672,7 +1779,7 @@
       },
       "brownie": {
         "base_sale_chance": 0.06,
-        "elasticity": 1.0
+        "elasticity": 0.9
       },
       "cheesecake": {
         "base_sale_chance": 0.03,
@@ -1688,11 +1795,11 @@
       },
       "cinnamon_roll": {
         "base_sale_chance": 0.06,
-        "elasticity": 0.95
+        "elasticity": 0.9
       },
       "cookie": {
         "base_sale_chance": 0.08,
-        "elasticity": 1.2
+        "elasticity": 0.9
       },
       "croissant": {
         "base_sale_chance": 0.07,
@@ -1700,27 +1807,27 @@
       },
       "donut": {
         "base_sale_chance": 0.09,
-        "elasticity": 1.1
+        "elasticity": 0.9
       },
       "jam": {
         "base_sale_chance": 0.06,
-        "elasticity": 1.1
+        "elasticity": 0.9
       },
       "jelly": {
         "base_sale_chance": 0.05,
-        "elasticity": 1.0
+        "elasticity": 0.9
       },
       "muffin": {
         "base_sale_chance": 0.08,
-        "elasticity": 1.0
+        "elasticity": 0.9
       },
       "peanut_butter_cookie": {
         "base_sale_chance": 0.07,
-        "elasticity": 1.2
+        "elasticity": 0.8
       },
       "pretzel": {
         "base_sale_chance": 0.07,
-        "elasticity": 1.2
+        "elasticity": 0.9
       }
     },
     "startup_cost": 14000
@@ -1874,7 +1981,7 @@
       },
       "yogurt": {
         "base_sale_chance": 0.05,
-        "elasticity": 0.9
+        "elasticity": 0.8
       }
     },
     "startup_cost": 4000
@@ -2687,7 +2794,7 @@
     "products": {
       "encyclopedia": {
         "base_sale_chance": 0.015,
-        "elasticity": 0.8
+        "elasticity": 1.0
       },
       "envelope": {
         "base_sale_chance": 0.05,
@@ -2715,11 +2822,11 @@
       },
       "religious_book": {
         "base_sale_chance": 0.015,
-        "elasticity": 0.3
+        "elasticity": 1.6
       },
       "textbook": {
         "base_sale_chance": 0.02,
-        "elasticity": 0.5
+        "elasticity": 1.0
       }
     },
     "startup_cost": 10000
@@ -3470,16 +3577,16 @@
     "name": "Burrito Truck",
     "products": {
       "bottled_water": {
-        "base_sale_chance": 0.25,
-        "elasticity": 1.5
+        "base_sale_chance": 0.2,
+        "elasticity": 1.0
       },
       "burrito": {
-        "base_sale_chance": 0.22,
-        "elasticity": 1.5
+        "base_sale_chance": 0.2,
+        "elasticity": 1.2
       },
       "soda": {
         "base_sale_chance": 0.2,
-        "elasticity": 1.3
+        "elasticity": 1.0
       }
     },
     "startup_cost": 300
@@ -3509,7 +3616,7 @@
       },
       "duck_meat": {
         "base_sale_chance": 0.04,
-        "elasticity": 1.0
+        "elasticity": 0.9
       },
       "lamb_meat": {
         "base_sale_chance": 0.04,
@@ -3521,7 +3628,7 @@
       },
       "sausage": {
         "base_sale_chance": 0.07,
-        "elasticity": 0.95
+        "elasticity": 0.9
       }
     },
     "startup_cost": 15000
@@ -4029,7 +4136,7 @@
     "products": {
       "brownie": {
         "base_sale_chance": 0.05,
-        "elasticity": 1.1
+        "elasticity": 0.9
       },
       "candy_bar": {
         "base_sale_chance": 0.07,
@@ -4037,7 +4144,7 @@
       },
       "caramel": {
         "base_sale_chance": 0.06,
-        "elasticity": 1.1
+        "elasticity": 0.9
       },
       "chocolate": {
         "base_sale_chance": 0.06,
@@ -4045,7 +4152,7 @@
       },
       "cookie": {
         "base_sale_chance": 0.07,
-        "elasticity": 1.3
+        "elasticity": 0.9
       },
       "fudge": {
         "base_sale_chance": 0.05,
@@ -4061,7 +4168,7 @@
       },
       "ice_cream": {
         "base_sale_chance": 0.08,
-        "elasticity": 1.2
+        "elasticity": 0.8
       },
       "licorice": {
         "base_sale_chance": 0.05,
@@ -4089,7 +4196,7 @@
       },
       "truffles": {
         "base_sale_chance": 0.03,
-        "elasticity": 0.8
+        "elasticity": 1.0
       }
     },
     "startup_cost": 12000
@@ -4248,8 +4355,6 @@
         "output_qty": 1700
       },
       {
-        "output_item": "bio_fuel",
-        "output_qty": 20,
         "inputs": [
           {
             "item": "sunflower",
@@ -4263,7 +4368,9 @@
             "item": "paper",
             "quantity": 1
           }
-        ]
+        ],
+        "output_item": "bio_fuel",
+        "output_qty": 20
       }
     ],
     "startup_cost": 8500
@@ -4647,6 +4754,132 @@
       }
     ],
     "startup_cost": 180000
+  },
+  "chemical_plant": {
+    "allowed_proximity": [
+      "road",
+      "urban",
+      "riverside"
+    ],
+    "allowed_terrain": [
+      "district_industrial",
+      "prairie",
+      "urban"
+    ],
+    "base_wage_cost": 600.0,
+    "class": "production",
+    "cycles_to_complete": 150,
+    "description": "Industrial chemical processing plant producing caustic soda, acid solutions, fertilizers, and solvents.",
+    "name": "Chemical Plant",
+    "production_lines": [
+      {
+        "inputs": [
+          {
+            "item": "salt",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 1000
+          },
+          {
+            "item": "water",
+            "quantity": 50
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ],
+        "output_item": "caustic_soda",
+        "output_qty": 10
+      },
+      {
+        "inputs": [
+          {
+            "item": "sulfur",
+            "quantity": 10
+          },
+          {
+            "item": "water",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 500
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ],
+        "output_item": "acid_solution",
+        "output_qty": 15
+      },
+      {
+        "inputs": [
+          {
+            "item": "ammonia",
+            "quantity": 10
+          },
+          {
+            "item": "phosphoric_acid",
+            "quantity": 8
+          },
+          {
+            "item": "potash_ore",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 1000
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ],
+        "output_item": "fertilizer_npk",
+        "output_qty": 30
+      },
+      {
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 100
+          },
+          {
+            "item": "water",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ],
+        "output_item": "compost",
+        "output_qty": 20
+      },
+      {
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 300
+          },
+          {
+            "item": "water",
+            "quantity": 15
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ],
+        "output_item": "chemical_solvent",
+        "output_qty": 10
+      }
+    ],
+    "startup_cost": 300000
   },
   "chocolate_confectioner": {
     "allowed_proximity": [
@@ -5781,23 +6014,23 @@
       },
       "cinnamon_roll": {
         "base_sale_chance": 0.05,
-        "elasticity": 1.0
+        "elasticity": 0.9
       },
       "cookie": {
         "base_sale_chance": 0.08,
-        "elasticity": 1.3
+        "elasticity": 0.9
       },
       "croissant": {
         "base_sale_chance": 0.07,
-        "elasticity": 1.0
+        "elasticity": 0.9
       },
       "donut": {
         "base_sale_chance": 0.08,
-        "elasticity": 1.2
+        "elasticity": 0.9
       },
       "espresso": {
         "base_sale_chance": 0.12,
-        "elasticity": 0.55
+        "elasticity": 0.6
       },
       "hot_chocolate": {
         "base_sale_chance": 0.07,
@@ -5805,7 +6038,7 @@
       },
       "iced_tea": {
         "base_sale_chance": 0.07,
-        "elasticity": 1.1
+        "elasticity": 1.0
       },
       "latte": {
         "base_sale_chance": 0.1,
@@ -5813,7 +6046,7 @@
       },
       "muffin": {
         "base_sale_chance": 0.07,
-        "elasticity": 1.1
+        "elasticity": 0.9
       },
       "tea": {
         "base_sale_chance": 0.08,
@@ -6308,52 +6541,52 @@
     "name": "Crystal Shop",
     "products": {
       "agate": {
-        "base_sale_chance": 0.55,
-        "elasticity": 1.0
+        "base_sale_chance": 0.2,
+        "elasticity": 1.6
       },
       "chalcedony": {
-        "base_sale_chance": 0.5,
-        "elasticity": 1.0
+        "base_sale_chance": 0.2,
+        "elasticity": 1.6
       },
       "cut_amethyst": {
-        "base_sale_chance": 0.35,
-        "elasticity": 1.4
+        "base_sale_chance": 0.2,
+        "elasticity": 1.6
       },
       "cut_garnet": {
-        "base_sale_chance": 0.38,
-        "elasticity": 1.3
+        "base_sale_chance": 0.2,
+        "elasticity": 1.6
       },
       "cut_peridot": {
-        "base_sale_chance": 0.32,
-        "elasticity": 1.4
+        "base_sale_chance": 0.2,
+        "elasticity": 1.6
       },
       "cut_tourmaline": {
-        "base_sale_chance": 0.3,
-        "elasticity": 1.5
+        "base_sale_chance": 0.2,
+        "elasticity": 1.6
       },
       "obsidian": {
-        "base_sale_chance": 0.6,
-        "elasticity": 0.9
+        "base_sale_chance": 0.2,
+        "elasticity": 1.6
       },
       "rough_amethyst": {
-        "base_sale_chance": 0.55,
-        "elasticity": 1.2
+        "base_sale_chance": 0.2,
+        "elasticity": 1.6
       },
       "rough_garnet": {
-        "base_sale_chance": 0.5,
-        "elasticity": 1.1
+        "base_sale_chance": 0.2,
+        "elasticity": 1.6
       },
       "rough_opal": {
-        "base_sale_chance": 0.4,
-        "elasticity": 1.5
+        "base_sale_chance": 0.2,
+        "elasticity": 1.6
       },
       "rough_peridot": {
-        "base_sale_chance": 0.48,
-        "elasticity": 1.2
+        "base_sale_chance": 0.2,
+        "elasticity": 1.6
       },
       "rough_tourmaline": {
-        "base_sale_chance": 0.45,
-        "elasticity": 1.2
+        "base_sale_chance": 0.2,
+        "elasticity": 1.6
       }
     },
     "startup_cost": 18000
@@ -6746,6 +6979,255 @@
       }
     ],
     "startup_cost": 380000
+  },
+  "defense_electronics_factory": {
+    "allowed_proximity": [
+      "road",
+      "urban"
+    ],
+    "allowed_terrain": [
+      "district_military",
+      "district_tech",
+      "district_industrial"
+    ],
+    "base_wage_cost": 1500.0,
+    "class": "production",
+    "cycles_to_complete": 400,
+    "description": "Specialized military electronics plant producing radar arrays, fire control systems, avionics, sonar, and propulsion systems.",
+    "name": "Defense Electronics Factory",
+    "production_lines": [
+      {
+        "inputs": [
+          {
+            "item": "processor",
+            "quantity": 10
+          },
+          {
+            "item": "circuit_board",
+            "quantity": 20
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 5
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 3000
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "radar_system",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "processor",
+            "quantity": 15
+          },
+          {
+            "item": "circuit_board",
+            "quantity": 25
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 8
+          },
+          {
+            "item": "energy",
+            "quantity": 4000
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "fire_control_system",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "processor",
+            "quantity": 20
+          },
+          {
+            "item": "circuit_board",
+            "quantity": 30
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 5000
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ],
+        "output_item": "avionics_suite",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "processor",
+            "quantity": 8
+          },
+          {
+            "item": "circuit_board",
+            "quantity": 15
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 2000
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ],
+        "output_item": "sonar_system",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "steel",
+            "quantity": 20
+          },
+          {
+            "item": "rdx_explosive",
+            "quantity": 5
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 3
+          },
+          {
+            "item": "energy",
+            "quantity": 2000
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "torpedo",
+        "output_qty": 2
+      },
+      {
+        "inputs": [
+          {
+            "item": "steel",
+            "quantity": 30
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 2500
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "naval_gun_system",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "titanium_alloy",
+            "quantity": 30
+          },
+          {
+            "item": "carbon_fiber",
+            "quantity": 20
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 5000
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ],
+        "output_item": "turbofan_engine",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "titanium_alloy",
+            "quantity": 20
+          },
+          {
+            "item": "carbon_fiber",
+            "quantity": 15
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 3
+          },
+          {
+            "item": "energy",
+            "quantity": 4000
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "turbojet_engine",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "titanium_alloy",
+            "quantity": 5
+          },
+          {
+            "item": "polymer_compound",
+            "quantity": 2
+          },
+          {
+            "item": "energy",
+            "quantity": 500
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ],
+        "output_item": "ejection_seat",
+        "output_qty": 1
+      }
+    ],
+    "startup_cost": 800000
   },
   "distillery": {
     "allowed_proximity": [
@@ -7516,8 +7998,6 @@
         "output_qty": 10
       },
       {
-        "output_item": "cooking_oil",
-        "output_qty": 15,
         "inputs": [
           {
             "item": "sunflower",
@@ -7535,7 +8015,9 @@
             "item": "paper",
             "quantity": 1
           }
-        ]
+        ],
+        "output_item": "cooking_oil",
+        "output_qty": 15
       }
     ],
     "startup_cost": 95000
@@ -7559,7 +8041,7 @@
     "products": {
       "apples": {
         "base_sale_chance": 0.06,
-        "elasticity": 1.2
+        "elasticity": 0.9
       },
       "butter": {
         "base_sale_chance": 0.07,
@@ -7567,7 +8049,7 @@
       },
       "cherries": {
         "base_sale_chance": 0.05,
-        "elasticity": 1.2
+        "elasticity": 0.9
       },
       "crawfish": {
         "base_sale_chance": 0.05,
@@ -7575,7 +8057,7 @@
       },
       "cream": {
         "base_sale_chance": 0.05,
-        "elasticity": 0.9
+        "elasticity": 0.8
       },
       "eggs": {
         "base_sale_chance": 0.1,
@@ -7583,19 +8065,19 @@
       },
       "grapes": {
         "base_sale_chance": 0.04,
-        "elasticity": 1.0
+        "elasticity": 0.9
       },
       "honey": {
         "base_sale_chance": 0.06,
-        "elasticity": 1.0
+        "elasticity": 0.9
       },
       "jam": {
         "base_sale_chance": 0.07,
-        "elasticity": 1.1
+        "elasticity": 0.9
       },
       "jelly": {
         "base_sale_chance": 0.06,
-        "elasticity": 1.0
+        "elasticity": 0.9
       },
       "milk": {
         "base_sale_chance": 0.08,
@@ -7607,15 +8089,15 @@
       },
       "peanut_butter": {
         "base_sale_chance": 0.06,
-        "elasticity": 1.1
+        "elasticity": 0.8
       },
       "sheep_milk": {
         "base_sale_chance": 0.05,
-        "elasticity": 1.2
+        "elasticity": 0.8
       },
       "yogurt": {
         "base_sale_chance": 0.08,
-        "elasticity": 0.9
+        "elasticity": 0.8
       }
     },
     "startup_cost": 8000
@@ -7650,7 +8132,7 @@
       },
       "cheap_luggage": {
         "base_sale_chance": 0.011,
-        "elasticity": 1.4
+        "elasticity": 1.5
       },
       "dress": {
         "base_sale_chance": 0.012,
@@ -7666,7 +8148,7 @@
       },
       "purse": {
         "base_sale_chance": 0.01,
-        "elasticity": 0.9
+        "elasticity": 1.5
       },
       "suit_jacket": {
         "base_sale_chance": 0.006,
@@ -7678,7 +8160,7 @@
       },
       "wallet": {
         "base_sale_chance": 0.014,
-        "elasticity": 0.8
+        "elasticity": 1.5
       }
     },
     "startup_cost": 75000
@@ -7785,16 +8267,16 @@
     "name": "Fish Cart",
     "products": {
       "bottled_water": {
-        "base_sale_chance": 0.25,
-        "elasticity": 1.5
+        "base_sale_chance": 0.2,
+        "elasticity": 1.0
       },
       "dried_anchovies": {
         "base_sale_chance": 0.15,
-        "elasticity": 1.4
+        "elasticity": 1.2
       },
       "dried_squid": {
         "base_sale_chance": 0.12,
-        "elasticity": 1.3
+        "elasticity": 1.2
       },
       "octopus_cleaned": {
         "base_sale_chance": 0.1,
@@ -7806,7 +8288,7 @@
       },
       "soda": {
         "base_sale_chance": 0.2,
-        "elasticity": 1.2
+        "elasticity": 1.0
       }
     },
     "startup_cost": 200
@@ -7841,7 +8323,7 @@
       },
       "bluefin_tuna_sashimi": {
         "base_sale_chance": 0.008,
-        "elasticity": 0.6
+        "elasticity": 0.7
       },
       "bluefish": {
         "base_sale_chance": 0.03,
@@ -7853,15 +8335,15 @@
       },
       "canned_salmon": {
         "base_sale_chance": 0.05,
-        "elasticity": 1.1
+        "elasticity": 0.9
       },
       "canned_sardines": {
         "base_sale_chance": 0.065,
-        "elasticity": 1.3
+        "elasticity": 0.9
       },
       "canned_tuna": {
         "base_sale_chance": 0.06,
-        "elasticity": 1.2
+        "elasticity": 0.9
       },
       "cod": {
         "base_sale_chance": 0.04,
@@ -7913,7 +8395,7 @@
       },
       "langoustine": {
         "base_sale_chance": 0.015,
-        "elasticity": 0.75
+        "elasticity": 0.9
       },
       "lobster_meat": {
         "base_sale_chance": 0.01,
@@ -7933,7 +8415,7 @@
       },
       "omega_3_capsule": {
         "base_sale_chance": 0.035,
-        "elasticity": 0.9
+        "elasticity": 0.6
       },
       "oyster_sauce": {
         "base_sale_chance": 0.04,
@@ -10223,12 +10705,12 @@
         "elasticity": 1.5
       },
       "carnation": {
-        "base_sale_chance": 0.28,
-        "elasticity": 1.3
+        "base_sale_chance": 0.2,
+        "elasticity": 1.4
       },
       "chrysanthemum": {
-        "base_sale_chance": 0.22,
-        "elasticity": 1.3
+        "base_sale_chance": 0.2,
+        "elasticity": 1.4
       },
       "corsage": {
         "base_sale_chance": 0.1,
@@ -10236,7 +10718,7 @@
       },
       "dried_flower_bundle": {
         "base_sale_chance": 0.15,
-        "elasticity": 1.3
+        "elasticity": 1.4
       },
       "floral_centerpiece": {
         "base_sale_chance": 0.08,
@@ -10252,11 +10734,11 @@
       },
       "lavender": {
         "base_sale_chance": 0.2,
-        "elasticity": 1.2
+        "elasticity": 1.4
       },
       "lily": {
-        "base_sale_chance": 0.25,
-        "elasticity": 1.3
+        "base_sale_chance": 0.2,
+        "elasticity": 1.4
       },
       "orchid": {
         "base_sale_chance": 0.15,
@@ -10268,31 +10750,31 @@
       },
       "potpourri": {
         "base_sale_chance": 0.15,
-        "elasticity": 1.2
+        "elasticity": 1.4
       },
       "pressed_flower_art": {
         "base_sale_chance": 0.05,
         "elasticity": 2.0
       },
       "rose": {
-        "base_sale_chance": 0.3,
+        "base_sale_chance": 0.2,
         "elasticity": 1.4
       },
       "rose_water": {
         "base_sale_chance": 0.18,
-        "elasticity": 1.3
+        "elasticity": 0.9
       },
       "sunflower": {
-        "base_sale_chance": 0.22,
-        "elasticity": 1.2
+        "base_sale_chance": 0.2,
+        "elasticity": 1.4
       },
       "tulip": {
-        "base_sale_chance": 0.25,
-        "elasticity": 1.3
+        "base_sale_chance": 0.2,
+        "elasticity": 1.4
       },
       "wedding_bouquet": {
         "base_sale_chance": 0.06,
-        "elasticity": 2.2
+        "elasticity": 2.0
       }
     },
     "startup_cost": 5000
@@ -11169,11 +11651,11 @@
     "products": {
       "caviar": {
         "base_sale_chance": 0.005,
-        "elasticity": 0.5
+        "elasticity": 0.8
       },
       "champagne": {
         "base_sale_chance": 0.03,
-        "elasticity": 0.85
+        "elasticity": 0.9
       },
       "cheesecake": {
         "base_sale_chance": 0.04,
@@ -11193,7 +11675,7 @@
       },
       "langoustine": {
         "base_sale_chance": 0.01,
-        "elasticity": 0.7
+        "elasticity": 0.9
       },
       "lobster_bisque": {
         "base_sale_chance": 0.015,
@@ -11213,11 +11695,11 @@
       },
       "red_wine": {
         "base_sale_chance": 0.05,
-        "elasticity": 0.7
+        "elasticity": 0.9
       },
       "satay": {
         "base_sale_chance": 0.03,
-        "elasticity": 0.85
+        "elasticity": 0.8
       },
       "seafood_chowder": {
         "base_sale_chance": 0.02,
@@ -11229,7 +11711,7 @@
       },
       "smoked_eel": {
         "base_sale_chance": 0.01,
-        "elasticity": 0.65
+        "elasticity": 0.7
       },
       "stew": {
         "base_sale_chance": 0.05,
@@ -11237,7 +11719,7 @@
       },
       "tobacco_cured_fish": {
         "base_sale_chance": 0.002,
-        "elasticity": 0.35
+        "elasticity": 0.7
       },
       "tuna_steak": {
         "base_sale_chance": 0.02,
@@ -11606,27 +12088,27 @@
       },
       "apples": {
         "base_sale_chance": 0.03,
-        "elasticity": 1.2
+        "elasticity": 0.9
       },
       "canned_anchovies": {
         "base_sale_chance": 0.055,
-        "elasticity": 1.3
+        "elasticity": 0.9
       },
       "canned_clams": {
         "base_sale_chance": 0.05,
-        "elasticity": 1.2
+        "elasticity": 0.9
       },
       "canned_crab": {
         "base_sale_chance": 0.04,
-        "elasticity": 1.0
+        "elasticity": 0.9
       },
       "canned_mackerel": {
         "base_sale_chance": 0.05,
-        "elasticity": 1.2
+        "elasticity": 0.9
       },
       "canned_oysters": {
         "base_sale_chance": 0.04,
-        "elasticity": 1.0
+        "elasticity": 0.9
       },
       "carrots": {
         "base_sale_chance": 0.022,
@@ -11642,7 +12124,7 @@
       },
       "envelope": {
         "base_sale_chance": 0.02,
-        "elasticity": 0.6
+        "elasticity": 0.7
       },
       "fish_fingers": {
         "base_sale_chance": 0.045,
@@ -11650,11 +12132,11 @@
       },
       "jam": {
         "base_sale_chance": 0.05,
-        "elasticity": 1.0
+        "elasticity": 0.9
       },
       "jelly": {
         "base_sale_chance": 0.04,
-        "elasticity": 1.0
+        "elasticity": 0.9
       },
       "ketchup": {
         "base_sale_chance": 0.05,
@@ -11662,7 +12144,7 @@
       },
       "lettuce": {
         "base_sale_chance": 0.04,
-        "elasticity": 1.0
+        "elasticity": 0.9
       },
       "mussels": {
         "base_sale_chance": 0.04,
@@ -11674,7 +12156,7 @@
       },
       "oranges": {
         "base_sale_chance": 0.02,
-        "elasticity": 1.0
+        "elasticity": 0.9
       },
       "pasta": {
         "base_sale_chance": 0.05,
@@ -11682,7 +12164,7 @@
       },
       "peanut_butter": {
         "base_sale_chance": 0.05,
-        "elasticity": 1.0
+        "elasticity": 0.8
       },
       "peanut_flour": {
         "base_sale_chance": 0.03,
@@ -11690,7 +12172,7 @@
       },
       "peanut_oil": {
         "base_sale_chance": 0.04,
-        "elasticity": 0.9
+        "elasticity": 0.8
       },
       "pickled_herring": {
         "base_sale_chance": 0.03,
@@ -11714,7 +12196,7 @@
       },
       "sheep_milk": {
         "base_sale_chance": 0.04,
-        "elasticity": 1.1
+        "elasticity": 0.8
       },
       "shrimp_paste": {
         "base_sale_chance": 0.03,
@@ -11738,7 +12220,7 @@
       },
       "yogurt": {
         "base_sale_chance": 0.06,
-        "elasticity": 0.85
+        "elasticity": 0.8
       }
     },
     "startup_cost": 2500
@@ -11772,7 +12254,7 @@
       },
       "nails": {
         "base_sale_chance": 0.03,
-        "elasticity": 0.6
+        "elasticity": 0.8
       },
       "ornamental_candle": {
         "base_sale_chance": 0.04,
@@ -11784,7 +12266,7 @@
       },
       "religious_candle": {
         "base_sale_chance": 0.008,
-        "elasticity": 0.4
+        "elasticity": 1.6
       },
       "tea_light": {
         "base_sale_chance": 0.06,
@@ -11965,16 +12447,16 @@
     "name": "Hot Dog Cart",
     "products": {
       "bottled_water": {
-        "base_sale_chance": 0.25,
-        "elasticity": 1.5
+        "base_sale_chance": 0.2,
+        "elasticity": 1.0
       },
       "hot_dog": {
-        "base_sale_chance": 0.25,
-        "elasticity": 1.5
+        "base_sale_chance": 0.2,
+        "elasticity": 1.2
       },
       "soda": {
         "base_sale_chance": 0.2,
-        "elasticity": 1.3
+        "elasticity": 1.0
       }
     },
     "startup_cost": 200
@@ -13070,21 +13552,27 @@
     "products": {
       "blessed_sheep": {
         "base_sale_chance": 0.001,
-        "elasticity": 0.5
+        "elasticity": 1.6
       },
       "diamond_ring": {
+        "base_sale_chance": 0.05,
+        "elasticity": 1.5,
         "price": 85000,
         "quantity": 1
       },
       "luxury_car": {
         "base_sale_chance": 0.0003,
-        "elasticity": 0.8
+        "elasticity": 1.1
       },
       "luxury_watch": {
+        "base_sale_chance": 0.05,
+        "elasticity": 1.5,
         "price": 48000,
         "quantity": 1
       },
       "ruby_ring": {
+        "base_sale_chance": 0.05,
+        "elasticity": 1.5,
         "price": 62000,
         "quantity": 1
       }
@@ -13150,7 +13638,7 @@
     "products": {
       "aquaculture_raft": {
         "base_sale_chance": 0.0005,
-        "elasticity": 0.9
+        "elasticity": 1.1
       },
       "boat": {
         "base_sale_chance": 0.0008,
@@ -13158,7 +13646,7 @@
       },
       "dive_vessel": {
         "base_sale_chance": 0.0006,
-        "elasticity": 1.0
+        "elasticity": 1.1
       },
       "dredger": {
         "base_sale_chance": 0.0007,
@@ -13174,15 +13662,15 @@
       },
       "longliner": {
         "base_sale_chance": 0.0003,
-        "elasticity": 0.9
+        "elasticity": 1.1
       },
       "purse_seiner": {
         "base_sale_chance": 0.0005,
-        "elasticity": 1.0
+        "elasticity": 1.1
       },
       "shrimp_trawler": {
         "base_sale_chance": 0.0006,
-        "elasticity": 1.0
+        "elasticity": 1.1
       },
       "trawler": {
         "base_sale_chance": 0.0006,
@@ -13190,7 +13678,7 @@
       },
       "yacht": {
         "base_sale_chance": 0.0001,
-        "elasticity": 0.7
+        "elasticity": 1.1
       }
     },
     "startup_cost": 250000
@@ -14565,6 +15053,329 @@
     ],
     "startup_cost": 15000
   },
+  "military_aircraft_plant": {
+    "allowed_proximity": [
+      "road",
+      "remote"
+    ],
+    "allowed_terrain": [
+      "district_aerospace",
+      "district_military"
+    ],
+    "base_wage_cost": 2000.0,
+    "class": "production",
+    "cycles_to_complete": 600,
+    "description": "Defense aerospace plant producing fighter jets, attack helicopters, and airframe components.",
+    "name": "Military Aircraft Plant",
+    "production_lines": [
+      {
+        "inputs": [
+          {
+            "item": "jet_airframe",
+            "quantity": 1
+          },
+          {
+            "item": "turbojet_engine",
+            "quantity": 2
+          },
+          {
+            "item": "avionics_suite",
+            "quantity": 1
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 10000
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          }
+        ],
+        "output_item": "fighter_jet",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "helicopter_rotor",
+            "quantity": 1
+          },
+          {
+            "item": "turbofan_engine",
+            "quantity": 1
+          },
+          {
+            "item": "avionics_suite",
+            "quantity": 1
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 6000
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ],
+        "output_item": "attack_helicopter",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "helicopter_rotor",
+            "quantity": 1
+          },
+          {
+            "item": "turbofan_engine",
+            "quantity": 1
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 4000
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "military_helicopter",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "titanium_alloy",
+            "quantity": 100
+          },
+          {
+            "item": "carbon_fiber",
+            "quantity": 80
+          },
+          {
+            "item": "duralumin",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 5000
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ],
+        "output_item": "jet_airframe",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "titanium_alloy",
+            "quantity": 40
+          },
+          {
+            "item": "carbon_fiber",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 2000
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "helicopter_rotor",
+        "output_qty": 1
+      }
+    ],
+    "startup_cost": 1500000
+  },
+  "military_vehicle_plant": {
+    "allowed_proximity": [
+      "road",
+      "remote"
+    ],
+    "allowed_terrain": [
+      "district_military"
+    ],
+    "base_wage_cost": 1200.0,
+    "class": "production",
+    "cycles_to_complete": 400,
+    "description": "Heavy armored vehicle plant producing tanks, APCs, and military trucks.",
+    "name": "Military Vehicle Plant",
+    "production_lines": [
+      {
+        "inputs": [
+          {
+            "item": "tank_hull",
+            "quantity": 1
+          },
+          {
+            "item": "tank_turret",
+            "quantity": 1
+          },
+          {
+            "item": "tank_cannon",
+            "quantity": 1
+          },
+          {
+            "item": "diesel_engine",
+            "quantity": 1
+          },
+          {
+            "item": "steel",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 5000
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          }
+        ],
+        "output_item": "main_battle_tank",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "steel",
+            "quantity": 30
+          },
+          {
+            "item": "diesel_engine",
+            "quantity": 1
+          },
+          {
+            "item": "energy",
+            "quantity": 2000
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "military_truck",
+        "output_qty": 2
+      },
+      {
+        "inputs": [
+          {
+            "item": "apc_hull",
+            "quantity": 1
+          },
+          {
+            "item": "diesel_engine",
+            "quantity": 1
+          },
+          {
+            "item": "steel",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 2000
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "armored_personnel_carrier",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "steel",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 3000
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ],
+        "output_item": "tank_hull",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "steel",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 2000
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "tank_turret",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "steel",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 1000
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ],
+        "output_item": "tank_cannon",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "steel",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 1500
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "apc_hull",
+        "output_qty": 1
+      }
+    ],
+    "startup_cost": 800000
+  },
   "mineral_mine": {
     "allowed_proximity": [
       "remote",
@@ -15899,6 +16710,145 @@
       }
     ],
     "startup_cost": 280000
+  },
+  "naval_shipyard": {
+    "allowed_proximity": [
+      "coastal",
+      "road"
+    ],
+    "allowed_terrain": [
+      "district_military",
+      "district_shipyard",
+      "coastal"
+    ],
+    "base_wage_cost": 2500.0,
+    "class": "production",
+    "cycles_to_complete": 800,
+    "description": "Heavy naval construction facility producing destroyers, submarines, and hull components.",
+    "name": "Naval Shipyard",
+    "production_lines": [
+      {
+        "inputs": [
+          {
+            "item": "destroyer_hull",
+            "quantity": 1
+          },
+          {
+            "item": "turbofan_engine",
+            "quantity": 2
+          },
+          {
+            "item": "naval_gun_system",
+            "quantity": 1
+          },
+          {
+            "item": "radar_system",
+            "quantity": 1
+          },
+          {
+            "item": "steel",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 20000
+          },
+          {
+            "item": "paper",
+            "quantity": 10
+          }
+        ],
+        "output_item": "naval_destroyer",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "submarine_hull",
+            "quantity": 1
+          },
+          {
+            "item": "nuclear_reactor_core",
+            "quantity": 1
+          },
+          {
+            "item": "sonar_system",
+            "quantity": 1
+          },
+          {
+            "item": "torpedo",
+            "quantity": 10
+          },
+          {
+            "item": "steel",
+            "quantity": 150
+          },
+          {
+            "item": "energy",
+            "quantity": 15000
+          },
+          {
+            "item": "paper",
+            "quantity": 8
+          }
+        ],
+        "output_item": "submarine",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "steel",
+            "quantity": 300
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 100
+          },
+          {
+            "item": "marine_piping",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 10000
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          }
+        ],
+        "output_item": "destroyer_hull",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "steel",
+            "quantity": 200
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 80
+          },
+          {
+            "item": "marine_piping",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 8000
+          },
+          {
+            "item": "paper",
+            "quantity": 4
+          }
+        ],
+        "output_item": "submarine_hull",
+        "output_qty": 1
+      }
+    ],
+    "startup_cost": 2000000
   },
   "oil_refinery": {
     "allowed_proximity": [
@@ -19244,8 +20194,6 @@
         "output_qty": 45
       },
       {
-        "output_item": "lotion",
-        "output_qty": 30,
         "inputs": [
           {
             "item": "sunflower",
@@ -19267,7 +20215,9 @@
             "item": "paper",
             "quantity": 2
           }
-        ]
+        ],
+        "output_item": "lotion",
+        "output_qty": 30
       }
     ],
     "startup_cost": 55000
@@ -19304,7 +20254,7 @@
     "products": {
       "appenzeller_sennenhund": {
         "base_sale_chance": 0.0003,
-        "elasticity": 0.5
+        "elasticity": 0.7
       },
       "australian_kelpie": {
         "base_sale_chance": 0.005,
@@ -19312,19 +20262,19 @@
       },
       "basque_shepherd": {
         "base_sale_chance": 0.0003,
-        "elasticity": 0.5
+        "elasticity": 0.7
       },
       "bearded_collie": {
         "base_sale_chance": 0.002,
-        "elasticity": 0.65
+        "elasticity": 0.7
       },
       "beauceron": {
         "base_sale_chance": 0.002,
-        "elasticity": 0.65
+        "elasticity": 0.7
       },
       "belgian_laekenois": {
         "base_sale_chance": 0.0003,
-        "elasticity": 0.5
+        "elasticity": 0.7
       },
       "belgian_malinois": {
         "base_sale_chance": 0.005,
@@ -19336,11 +20286,11 @@
       },
       "belgian_tervuren": {
         "base_sale_chance": 0.002,
-        "elasticity": 0.65
+        "elasticity": 0.7
       },
       "bergamasco_shepherd": {
         "base_sale_chance": 0.0003,
-        "elasticity": 0.5
+        "elasticity": 0.7
       },
       "border_collie": {
         "base_sale_chance": 0.005,
@@ -19348,35 +20298,35 @@
       },
       "bouvier_des_flandres": {
         "base_sale_chance": 0.002,
-        "elasticity": 0.65
+        "elasticity": 0.7
       },
       "canary": {
         "base_sale_chance": 0.006,
-        "elasticity": 1.2
+        "elasticity": 1.1
       },
       "cardigan_welsh_corgi": {
         "base_sale_chance": 0.002,
-        "elasticity": 0.65
+        "elasticity": 0.7
       },
       "carpathian_shepherd": {
         "base_sale_chance": 0.002,
-        "elasticity": 0.65
+        "elasticity": 0.7
       },
       "catahoula_leopard_dog": {
         "base_sale_chance": 0.002,
-        "elasticity": 0.65
+        "elasticity": 0.7
       },
       "catalan_sheepdog": {
         "base_sale_chance": 0.0003,
-        "elasticity": 0.5
+        "elasticity": 0.7
       },
       "croatian_sheepdog": {
         "base_sale_chance": 0.0003,
-        "elasticity": 0.5
+        "elasticity": 0.7
       },
       "english_shepherd": {
         "base_sale_chance": 0.002,
-        "elasticity": 0.65
+        "elasticity": 0.7
       },
       "finnish_lapphund": {
         "base_sale_chance": 0.005,
@@ -19388,15 +20338,15 @@
       },
       "icelandic_sheepdog": {
         "base_sale_chance": 0.002,
-        "elasticity": 0.65
+        "elasticity": 0.7
       },
       "lapponian_herder": {
         "base_sale_chance": 0.0003,
-        "elasticity": 0.5
+        "elasticity": 0.7
       },
       "miniature_american_shepherd": {
         "base_sale_chance": 0.002,
-        "elasticity": 0.65
+        "elasticity": 0.7
       },
       "old_english_sheepdog": {
         "base_sale_chance": 0.005,
@@ -19412,11 +20362,11 @@
       },
       "polish_lowland_sheepdog": {
         "base_sale_chance": 0.0003,
-        "elasticity": 0.5
+        "elasticity": 0.7
       },
       "pyrenean_sheepdog": {
         "base_sale_chance": 0.002,
-        "elasticity": 0.65
+        "elasticity": 0.7
       },
       "rottweiler": {
         "base_sale_chance": 0.005,
@@ -19428,15 +20378,15 @@
       },
       "schipperke": {
         "base_sale_chance": 0.0003,
-        "elasticity": 0.5
+        "elasticity": 0.7
       },
       "scotch_collie": {
         "base_sale_chance": 0.0003,
-        "elasticity": 0.5
+        "elasticity": 0.7
       },
       "tibetan_terrier": {
         "base_sale_chance": 0.0003,
-        "elasticity": 0.5
+        "elasticity": 0.7
       },
       "tropical_fish": {
         "base_sale_chance": 0.015,
@@ -19444,7 +20394,7 @@
       },
       "white_swiss_shepherd": {
         "base_sale_chance": 0.002,
-        "elasticity": 0.65
+        "elasticity": 0.7
       }
     },
     "startup_cost": 4500
@@ -20165,15 +21115,15 @@
       },
       "bismuth_subsalicylate": {
         "base_sale_chance": 0.12,
-        "elasticity": 1.3
+        "elasticity": 0.6
       },
       "cardiac_drug": {
         "base_sale_chance": 0.1,
-        "elasticity": 1.5
+        "elasticity": 0.6
       },
       "cotton_essential_oil": {
         "base_sale_chance": 0.05,
-        "elasticity": 1.2
+        "elasticity": 1.4
       },
       "cough_syrup": {
         "base_sale_chance": 0.05,
@@ -20181,7 +21131,7 @@
       },
       "echinacea_extract": {
         "base_sale_chance": 0.12,
-        "elasticity": 1.3
+        "elasticity": 0.6
       },
       "medicine": {
         "base_sale_chance": 0.05,
@@ -20193,7 +21143,7 @@
       },
       "orange_essential_oil": {
         "base_sale_chance": 0.05,
-        "elasticity": 1.2
+        "elasticity": 1.4
       },
       "painkillers": {
         "base_sale_chance": 0.06,
@@ -20201,11 +21151,11 @@
       },
       "passionflower_extract": {
         "base_sale_chance": 0.12,
-        "elasticity": 1.3
+        "elasticity": 0.6
       },
       "vitamins": {
         "base_sale_chance": 0.04,
-        "elasticity": 1.2
+        "elasticity": 0.6
       }
     },
     "startup_cost": 22000
@@ -20967,7 +21917,7 @@
     "products": {
       "beer": {
         "base_sale_chance": 0.09,
-        "elasticity": 0.85
+        "elasticity": 0.9
       },
       "cider": {
         "base_sale_chance": 0.07,
@@ -20983,19 +21933,19 @@
       },
       "rum": {
         "base_sale_chance": 0.05,
-        "elasticity": 0.85
+        "elasticity": 0.9
       },
       "stout": {
         "base_sale_chance": 0.06,
-        "elasticity": 0.8
+        "elasticity": 0.9
       },
       "vodka": {
         "base_sale_chance": 0.06,
-        "elasticity": 0.8
+        "elasticity": 0.9
       },
       "whiskey": {
         "base_sale_chance": 0.05,
-        "elasticity": 0.65
+        "elasticity": 0.9
       }
     },
     "startup_cost": 18000
@@ -23121,7 +24071,7 @@
       },
       "langoustine": {
         "base_sale_chance": 0.018,
-        "elasticity": 0.8
+        "elasticity": 0.9
       },
       "lobster_bisque": {
         "base_sale_chance": 0.02,
@@ -23129,7 +24079,7 @@
       },
       "lobster_meat": {
         "base_sale_chance": 0.015,
-        "elasticity": 0.65
+        "elasticity": 0.7
       },
       "mussels": {
         "base_sale_chance": 0.035,
@@ -25314,15 +26264,15 @@
     "name": "Stationery & Office",
     "products": {
       "art_book": {
-        "base_sale_chance": 0.52,
-        "elasticity": 0.9
+        "base_sale_chance": 0.2,
+        "elasticity": 1.0
       },
       "envelope": {
         "base_sale_chance": 0.06,
         "elasticity": 0.7
       },
       "ink": {
-        "base_sale_chance": 0.9,
+        "base_sale_chance": 0.2,
         "elasticity": 1
       },
       "notebook": {
@@ -25330,11 +26280,11 @@
         "elasticity": 1.0
       },
       "paint": {
-        "base_sale_chance": 0.45,
+        "base_sale_chance": 0.2,
         "elasticity": 1.1
       },
       "paper": {
-        "base_sale_chance": 0.25,
+        "base_sale_chance": 0.2,
         "elasticity": 0.85
       },
       "postcard": {
@@ -25343,7 +26293,7 @@
       },
       "religious_book": {
         "base_sale_chance": 0.02,
-        "elasticity": 0.3
+        "elasticity": 1.6
       }
     },
     "startup_cost": 2000
@@ -25386,35 +26336,35 @@
     "products": {
       "bouquet": {
         "base_sale_chance": 0.02,
-        "elasticity": 1.2
+        "elasticity": 1.4
       },
       "carnation": {
         "base_sale_chance": 0.04,
-        "elasticity": 1.1
+        "elasticity": 1.4
       },
       "chrysanthemum": {
         "base_sale_chance": 0.03,
-        "elasticity": 1.1
+        "elasticity": 1.4
       },
       "lavender": {
         "base_sale_chance": 0.03,
-        "elasticity": 1.1
+        "elasticity": 1.4
       },
       "lily": {
         "base_sale_chance": 0.04,
-        "elasticity": 1.1
+        "elasticity": 1.4
       },
       "rose": {
         "base_sale_chance": 0.04,
-        "elasticity": 1.1
+        "elasticity": 1.4
       },
       "sunflower": {
         "base_sale_chance": 0.03,
-        "elasticity": 1.1
+        "elasticity": 1.4
       },
       "tulip": {
         "base_sale_chance": 0.03,
-        "elasticity": 1.1
+        "elasticity": 1.4
       }
     },
     "startup_cost": 0
@@ -25437,7 +26387,7 @@
     "products": {
       "bluefin_tuna_sashimi": {
         "base_sale_chance": 0.008,
-        "elasticity": 0.6
+        "elasticity": 0.7
       },
       "calamari": {
         "base_sale_chance": 0.03,
@@ -25449,15 +26399,15 @@
       },
       "premium_sashimi": {
         "base_sale_chance": 0.004,
-        "elasticity": 0.5
+        "elasticity": 0.7
       },
       "rice": {
         "base_sale_chance": 0.06,
-        "elasticity": 1.1
+        "elasticity": 0.8
       },
       "sake": {
         "base_sale_chance": 0.025,
-        "elasticity": 0.85
+        "elasticity": 0.9
       },
       "salmon_fillet": {
         "base_sale_chance": 0.04,
@@ -25477,10 +26427,95 @@
       },
       "urchin": {
         "base_sale_chance": 0.01,
-        "elasticity": 0.7
+        "elasticity": 0.9
       }
     },
     "startup_cost": 55000
+  },
+  "tactical_gear_factory": {
+    "allowed_proximity": [
+      "road",
+      "urban"
+    ],
+    "allowed_terrain": [
+      "district_military",
+      "district_industrial",
+      "urban"
+    ],
+    "base_wage_cost": 400.0,
+    "class": "production",
+    "cycles_to_complete": 150,
+    "description": "Military apparel and personal protection factory producing body armor, tactical vests, and uniforms.",
+    "name": "Tactical Gear Factory",
+    "production_lines": [
+      {
+        "inputs": [
+          {
+            "item": "composite_armor_panel",
+            "quantity": 2
+          },
+          {
+            "item": "polyester",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 300
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ],
+        "output_item": "body_armor",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "polyester",
+            "quantity": 3
+          },
+          {
+            "item": "plastic",
+            "quantity": 2
+          },
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ],
+        "output_item": "tactical_vest",
+        "output_qty": 2
+      },
+      {
+        "inputs": [
+          {
+            "item": "cotton",
+            "quantity": 5
+          },
+          {
+            "item": "polyester",
+            "quantity": 2
+          },
+          {
+            "item": "energy",
+            "quantity": 100
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ],
+        "output_item": "military_uniform",
+        "output_qty": 5
+      }
+    ],
+    "startup_cost": 200000
   },
   "tallow_works": {
     "allowed_proximity": [
@@ -26216,11 +27251,11 @@
       },
       "cuban_style_cigar": {
         "base_sale_chance": 0.005,
-        "elasticity": 0.35
+        "elasticity": 0.6
       },
       "dokha": {
         "base_sale_chance": 0.015,
-        "elasticity": 0.5
+        "elasticity": 0.6
       },
       "english_blend_pipe_tobacco": {
         "base_sale_chance": 0.025,
@@ -26240,7 +27275,7 @@
       },
       "premium_cigar": {
         "base_sale_chance": 0.01,
-        "elasticity": 0.5
+        "elasticity": 0.6
       },
       "robusto_cigar": {
         "base_sale_chance": 0.022,
@@ -27072,6 +28107,142 @@
     ],
     "startup_cost": 3500
   },
+  "weapons_factory": {
+    "allowed_proximity": [
+      "road",
+      "remote",
+      "urban"
+    ],
+    "allowed_terrain": [
+      "district_military"
+    ],
+    "base_wage_cost": 800.0,
+    "class": "production",
+    "cycles_to_complete": 200,
+    "description": "Military arms plant producing rifles, machine guns, ammunition, grenades, and missiles.",
+    "name": "Weapons Factory",
+    "production_lines": [
+      {
+        "inputs": [
+          {
+            "item": "rifle_barrel",
+            "quantity": 2
+          },
+          {
+            "item": "rifle_receiver",
+            "quantity": 2
+          },
+          {
+            "item": "polymer_compound",
+            "quantity": 1
+          },
+          {
+            "item": "energy",
+            "quantity": 500
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ],
+        "output_item": "rifle",
+        "output_qty": 2
+      },
+      {
+        "inputs": [
+          {
+            "item": "steel",
+            "quantity": 8
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 3
+          },
+          {
+            "item": "energy",
+            "quantity": 1000
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ],
+        "output_item": "machine_gun",
+        "output_qty": 1
+      },
+      {
+        "inputs": [
+          {
+            "item": "copper",
+            "quantity": 10
+          },
+          {
+            "item": "rdx_explosive",
+            "quantity": 2
+          },
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ],
+        "output_item": "ammunition",
+        "output_qty": 500
+      },
+      {
+        "inputs": [
+          {
+            "item": "grenade_body",
+            "quantity": 5
+          },
+          {
+            "item": "rdx_explosive",
+            "quantity": 2
+          },
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ],
+        "output_item": "grenade",
+        "output_qty": 5
+      },
+      {
+        "inputs": [
+          {
+            "item": "steel",
+            "quantity": 20
+          },
+          {
+            "item": "rdx_explosive",
+            "quantity": 5
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 3
+          },
+          {
+            "item": "energy",
+            "quantity": 2000
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "missile",
+        "output_qty": 1
+      }
+    ],
+    "startup_cost": 500000
+  },
   "wine_bar": {
     "allowed_proximity": [
       "urban",
@@ -27089,7 +28260,7 @@
     "products": {
       "brandy": {
         "base_sale_chance": 0.03,
-        "elasticity": 0.55
+        "elasticity": 0.9
       },
       "champagne": {
         "base_sale_chance": 0.03,
@@ -27101,7 +28272,7 @@
       },
       "red_wine": {
         "base_sale_chance": 0.05,
-        "elasticity": 0.65
+        "elasticity": 0.9
       },
       "rose_wine": {
         "base_sale_chance": 0.04,
@@ -27109,7 +28280,7 @@
       },
       "rum": {
         "base_sale_chance": 0.04,
-        "elasticity": 0.75
+        "elasticity": 0.9
       },
       "tequila": {
         "base_sale_chance": 0.04,
@@ -27117,15 +28288,15 @@
       },
       "vodka": {
         "base_sale_chance": 0.05,
-        "elasticity": 0.75
+        "elasticity": 0.9
       },
       "whiskey": {
         "base_sale_chance": 0.04,
-        "elasticity": 0.6
+        "elasticity": 0.9
       },
       "white_wine": {
         "base_sale_chance": 0.05,
-        "elasticity": 0.7
+        "elasticity": 0.9
       }
     },
     "startup_cost": 30000
@@ -28082,1170 +29253,5 @@
       }
     ],
     "startup_cost": 7500
-  },
-  "weapons_factory": {
-    "class": "production",
-    "name": "Weapons Factory",
-    "description": "Military arms plant producing rifles, machine guns, ammunition, grenades, and missiles.",
-    "allowed_terrain": [
-      "district_military"
-    ],
-    "allowed_proximity": [
-      "road",
-      "remote",
-      "urban"
-    ],
-    "base_wage_cost": 800.0,
-    "cycles_to_complete": 200,
-    "startup_cost": 500000,
-    "production_lines": [
-      {
-        "inputs": [
-          {
-            "item": "rifle_barrel",
-            "quantity": 2
-          },
-          {
-            "item": "rifle_receiver",
-            "quantity": 2
-          },
-          {
-            "item": "polymer_compound",
-            "quantity": 1
-          },
-          {
-            "item": "energy",
-            "quantity": 500
-          },
-          {
-            "item": "paper",
-            "quantity": 1
-          }
-        ],
-        "output_item": "rifle",
-        "output_qty": 2
-      },
-      {
-        "inputs": [
-          {
-            "item": "steel",
-            "quantity": 8
-          },
-          {
-            "item": "copper_wire",
-            "quantity": 3
-          },
-          {
-            "item": "energy",
-            "quantity": 1000
-          },
-          {
-            "item": "paper",
-            "quantity": 1
-          }
-        ],
-        "output_item": "machine_gun",
-        "output_qty": 1
-      },
-      {
-        "inputs": [
-          {
-            "item": "copper",
-            "quantity": 10
-          },
-          {
-            "item": "rdx_explosive",
-            "quantity": 2
-          },
-          {
-            "item": "energy",
-            "quantity": 200
-          },
-          {
-            "item": "paper",
-            "quantity": 1
-          }
-        ],
-        "output_item": "ammunition",
-        "output_qty": 500
-      },
-      {
-        "inputs": [
-          {
-            "item": "grenade_body",
-            "quantity": 5
-          },
-          {
-            "item": "rdx_explosive",
-            "quantity": 2
-          },
-          {
-            "item": "energy",
-            "quantity": 200
-          },
-          {
-            "item": "paper",
-            "quantity": 1
-          }
-        ],
-        "output_item": "grenade",
-        "output_qty": 5
-      },
-      {
-        "inputs": [
-          {
-            "item": "steel",
-            "quantity": 20
-          },
-          {
-            "item": "rdx_explosive",
-            "quantity": 5
-          },
-          {
-            "item": "copper_wire",
-            "quantity": 3
-          },
-          {
-            "item": "energy",
-            "quantity": 2000
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ],
-        "output_item": "missile",
-        "output_qty": 1
-      }
-    ]
-  },
-  "military_vehicle_plant": {
-    "class": "production",
-    "name": "Military Vehicle Plant",
-    "description": "Heavy armored vehicle plant producing tanks, APCs, and military trucks.",
-    "allowed_terrain": [
-      "district_military"
-    ],
-    "allowed_proximity": [
-      "road",
-      "remote"
-    ],
-    "base_wage_cost": 1200.0,
-    "cycles_to_complete": 400,
-    "startup_cost": 800000,
-    "production_lines": [
-      {
-        "inputs": [
-          {
-            "item": "tank_hull",
-            "quantity": 1
-          },
-          {
-            "item": "tank_turret",
-            "quantity": 1
-          },
-          {
-            "item": "tank_cannon",
-            "quantity": 1
-          },
-          {
-            "item": "diesel_engine",
-            "quantity": 1
-          },
-          {
-            "item": "steel",
-            "quantity": 50
-          },
-          {
-            "item": "energy",
-            "quantity": 5000
-          },
-          {
-            "item": "paper",
-            "quantity": 5
-          }
-        ],
-        "output_item": "main_battle_tank",
-        "output_qty": 1
-      },
-      {
-        "inputs": [
-          {
-            "item": "steel",
-            "quantity": 30
-          },
-          {
-            "item": "diesel_engine",
-            "quantity": 1
-          },
-          {
-            "item": "energy",
-            "quantity": 2000
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ],
-        "output_item": "military_truck",
-        "output_qty": 2
-      },
-      {
-        "inputs": [
-          {
-            "item": "apc_hull",
-            "quantity": 1
-          },
-          {
-            "item": "diesel_engine",
-            "quantity": 1
-          },
-          {
-            "item": "steel",
-            "quantity": 20
-          },
-          {
-            "item": "energy",
-            "quantity": 2000
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ],
-        "output_item": "armored_personnel_carrier",
-        "output_qty": 1
-      },
-      {
-        "inputs": [
-          {
-            "item": "steel",
-            "quantity": 80
-          },
-          {
-            "item": "energy",
-            "quantity": 3000
-          },
-          {
-            "item": "paper",
-            "quantity": 3
-          }
-        ],
-        "output_item": "tank_hull",
-        "output_qty": 1
-      },
-      {
-        "inputs": [
-          {
-            "item": "steel",
-            "quantity": 40
-          },
-          {
-            "item": "energy",
-            "quantity": 2000
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ],
-        "output_item": "tank_turret",
-        "output_qty": 1
-      },
-      {
-        "inputs": [
-          {
-            "item": "steel",
-            "quantity": 20
-          },
-          {
-            "item": "energy",
-            "quantity": 1000
-          },
-          {
-            "item": "paper",
-            "quantity": 1
-          }
-        ],
-        "output_item": "tank_cannon",
-        "output_qty": 1
-      },
-      {
-        "inputs": [
-          {
-            "item": "steel",
-            "quantity": 30
-          },
-          {
-            "item": "energy",
-            "quantity": 1500
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ],
-        "output_item": "apc_hull",
-        "output_qty": 1
-      }
-    ]
-  },
-  "military_aircraft_plant": {
-    "class": "production",
-    "name": "Military Aircraft Plant",
-    "description": "Defense aerospace plant producing fighter jets, attack helicopters, and airframe components.",
-    "allowed_terrain": [
-      "district_aerospace",
-      "district_military"
-    ],
-    "allowed_proximity": [
-      "road",
-      "remote"
-    ],
-    "base_wage_cost": 2000.0,
-    "cycles_to_complete": 600,
-    "startup_cost": 1500000,
-    "production_lines": [
-      {
-        "inputs": [
-          {
-            "item": "jet_airframe",
-            "quantity": 1
-          },
-          {
-            "item": "turbojet_engine",
-            "quantity": 2
-          },
-          {
-            "item": "avionics_suite",
-            "quantity": 1
-          },
-          {
-            "item": "titanium_alloy",
-            "quantity": 50
-          },
-          {
-            "item": "energy",
-            "quantity": 10000
-          },
-          {
-            "item": "paper",
-            "quantity": 5
-          }
-        ],
-        "output_item": "fighter_jet",
-        "output_qty": 1
-      },
-      {
-        "inputs": [
-          {
-            "item": "helicopter_rotor",
-            "quantity": 1
-          },
-          {
-            "item": "turbofan_engine",
-            "quantity": 1
-          },
-          {
-            "item": "avionics_suite",
-            "quantity": 1
-          },
-          {
-            "item": "titanium_alloy",
-            "quantity": 30
-          },
-          {
-            "item": "energy",
-            "quantity": 6000
-          },
-          {
-            "item": "paper",
-            "quantity": 3
-          }
-        ],
-        "output_item": "attack_helicopter",
-        "output_qty": 1
-      },
-      {
-        "inputs": [
-          {
-            "item": "helicopter_rotor",
-            "quantity": 1
-          },
-          {
-            "item": "turbofan_engine",
-            "quantity": 1
-          },
-          {
-            "item": "titanium_alloy",
-            "quantity": 20
-          },
-          {
-            "item": "energy",
-            "quantity": 4000
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ],
-        "output_item": "military_helicopter",
-        "output_qty": 1
-      },
-      {
-        "inputs": [
-          {
-            "item": "titanium_alloy",
-            "quantity": 100
-          },
-          {
-            "item": "carbon_fiber",
-            "quantity": 80
-          },
-          {
-            "item": "duralumin",
-            "quantity": 60
-          },
-          {
-            "item": "energy",
-            "quantity": 5000
-          },
-          {
-            "item": "paper",
-            "quantity": 3
-          }
-        ],
-        "output_item": "jet_airframe",
-        "output_qty": 1
-      },
-      {
-        "inputs": [
-          {
-            "item": "titanium_alloy",
-            "quantity": 40
-          },
-          {
-            "item": "carbon_fiber",
-            "quantity": 30
-          },
-          {
-            "item": "energy",
-            "quantity": 2000
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ],
-        "output_item": "helicopter_rotor",
-        "output_qty": 1
-      }
-    ]
-  },
-  "naval_shipyard": {
-    "class": "production",
-    "name": "Naval Shipyard",
-    "description": "Heavy naval construction facility producing destroyers, submarines, and hull components.",
-    "allowed_terrain": [
-      "district_military",
-      "district_shipyard",
-      "coastal"
-    ],
-    "allowed_proximity": [
-      "coastal",
-      "road"
-    ],
-    "base_wage_cost": 2500.0,
-    "cycles_to_complete": 800,
-    "startup_cost": 2000000,
-    "production_lines": [
-      {
-        "inputs": [
-          {
-            "item": "destroyer_hull",
-            "quantity": 1
-          },
-          {
-            "item": "turbofan_engine",
-            "quantity": 2
-          },
-          {
-            "item": "naval_gun_system",
-            "quantity": 1
-          },
-          {
-            "item": "radar_system",
-            "quantity": 1
-          },
-          {
-            "item": "steel",
-            "quantity": 200
-          },
-          {
-            "item": "energy",
-            "quantity": 20000
-          },
-          {
-            "item": "paper",
-            "quantity": 10
-          }
-        ],
-        "output_item": "naval_destroyer",
-        "output_qty": 1
-      },
-      {
-        "inputs": [
-          {
-            "item": "submarine_hull",
-            "quantity": 1
-          },
-          {
-            "item": "nuclear_reactor_core",
-            "quantity": 1
-          },
-          {
-            "item": "sonar_system",
-            "quantity": 1
-          },
-          {
-            "item": "torpedo",
-            "quantity": 10
-          },
-          {
-            "item": "steel",
-            "quantity": 150
-          },
-          {
-            "item": "energy",
-            "quantity": 15000
-          },
-          {
-            "item": "paper",
-            "quantity": 8
-          }
-        ],
-        "output_item": "submarine",
-        "output_qty": 1
-      },
-      {
-        "inputs": [
-          {
-            "item": "steel",
-            "quantity": 300
-          },
-          {
-            "item": "titanium_alloy",
-            "quantity": 100
-          },
-          {
-            "item": "marine_piping",
-            "quantity": 50
-          },
-          {
-            "item": "energy",
-            "quantity": 10000
-          },
-          {
-            "item": "paper",
-            "quantity": 5
-          }
-        ],
-        "output_item": "destroyer_hull",
-        "output_qty": 1
-      },
-      {
-        "inputs": [
-          {
-            "item": "steel",
-            "quantity": 200
-          },
-          {
-            "item": "titanium_alloy",
-            "quantity": 80
-          },
-          {
-            "item": "marine_piping",
-            "quantity": 30
-          },
-          {
-            "item": "energy",
-            "quantity": 8000
-          },
-          {
-            "item": "paper",
-            "quantity": 4
-          }
-        ],
-        "output_item": "submarine_hull",
-        "output_qty": 1
-      }
-    ]
-  },
-  "tactical_gear_factory": {
-    "class": "production",
-    "name": "Tactical Gear Factory",
-    "description": "Military apparel and personal protection factory producing body armor, tactical vests, and uniforms.",
-    "allowed_terrain": [
-      "district_military",
-      "district_industrial",
-      "urban"
-    ],
-    "allowed_proximity": [
-      "road",
-      "urban"
-    ],
-    "base_wage_cost": 400.0,
-    "cycles_to_complete": 150,
-    "startup_cost": 200000,
-    "production_lines": [
-      {
-        "inputs": [
-          {
-            "item": "composite_armor_panel",
-            "quantity": 2
-          },
-          {
-            "item": "polyester",
-            "quantity": 5
-          },
-          {
-            "item": "energy",
-            "quantity": 300
-          },
-          {
-            "item": "paper",
-            "quantity": 1
-          }
-        ],
-        "output_item": "body_armor",
-        "output_qty": 1
-      },
-      {
-        "inputs": [
-          {
-            "item": "polyester",
-            "quantity": 3
-          },
-          {
-            "item": "plastic",
-            "quantity": 2
-          },
-          {
-            "item": "energy",
-            "quantity": 200
-          },
-          {
-            "item": "paper",
-            "quantity": 1
-          }
-        ],
-        "output_item": "tactical_vest",
-        "output_qty": 2
-      },
-      {
-        "inputs": [
-          {
-            "item": "cotton",
-            "quantity": 5
-          },
-          {
-            "item": "polyester",
-            "quantity": 2
-          },
-          {
-            "item": "energy",
-            "quantity": 100
-          },
-          {
-            "item": "paper",
-            "quantity": 1
-          }
-        ],
-        "output_item": "military_uniform",
-        "output_qty": 5
-      }
-    ]
-  },
-  "advanced_materials_plant": {
-    "class": "production",
-    "name": "Advanced Materials Plant",
-    "description": "Specialty metals and composites facility producing titanium alloys, carbon fiber, duralumin, and armor panels.",
-    "allowed_terrain": [
-      "district_industrial",
-      "district_tech",
-      "urban"
-    ],
-    "allowed_proximity": [
-      "road",
-      "urban"
-    ],
-    "base_wage_cost": 1000.0,
-    "cycles_to_complete": 300,
-    "startup_cost": 600000,
-    "production_lines": [
-      {
-        "inputs": [
-          {
-            "item": "titanium",
-            "quantity": 30
-          },
-          {
-            "item": "aluminum",
-            "quantity": 10
-          },
-          {
-            "item": "energy",
-            "quantity": 3000
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ],
-        "output_item": "titanium_alloy",
-        "output_qty": 10
-      },
-      {
-        "inputs": [
-          {
-            "item": "polymer_compound",
-            "quantity": 20
-          },
-          {
-            "item": "energy",
-            "quantity": 2000
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ],
-        "output_item": "carbon_fiber",
-        "output_qty": 8
-      },
-      {
-        "inputs": [
-          {
-            "item": "aluminum",
-            "quantity": 20
-          },
-          {
-            "item": "copper",
-            "quantity": 5
-          },
-          {
-            "item": "energy",
-            "quantity": 1500
-          },
-          {
-            "item": "paper",
-            "quantity": 1
-          }
-        ],
-        "output_item": "duralumin",
-        "output_qty": 10
-      },
-      {
-        "inputs": [
-          {
-            "item": "titanium_alloy",
-            "quantity": 5
-          },
-          {
-            "item": "carbon_fiber",
-            "quantity": 5
-          },
-          {
-            "item": "polymer_compound",
-            "quantity": 3
-          },
-          {
-            "item": "energy",
-            "quantity": 1000
-          },
-          {
-            "item": "paper",
-            "quantity": 1
-          }
-        ],
-        "output_item": "composite_armor_panel",
-        "output_qty": 5
-      }
-    ]
-  },
-  "defense_electronics_factory": {
-    "class": "production",
-    "name": "Defense Electronics Factory",
-    "description": "Specialized military electronics plant producing radar arrays, fire control systems, avionics, sonar, and propulsion systems.",
-    "allowed_terrain": [
-      "district_military",
-      "district_tech",
-      "district_industrial"
-    ],
-    "allowed_proximity": [
-      "road",
-      "urban"
-    ],
-    "base_wage_cost": 1500.0,
-    "cycles_to_complete": 400,
-    "startup_cost": 800000,
-    "production_lines": [
-      {
-        "inputs": [
-          {
-            "item": "processor",
-            "quantity": 10
-          },
-          {
-            "item": "circuit_board",
-            "quantity": 20
-          },
-          {
-            "item": "copper_wire",
-            "quantity": 5
-          },
-          {
-            "item": "titanium_alloy",
-            "quantity": 5
-          },
-          {
-            "item": "energy",
-            "quantity": 3000
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ],
-        "output_item": "radar_system",
-        "output_qty": 1
-      },
-      {
-        "inputs": [
-          {
-            "item": "processor",
-            "quantity": 15
-          },
-          {
-            "item": "circuit_board",
-            "quantity": 25
-          },
-          {
-            "item": "copper_wire",
-            "quantity": 8
-          },
-          {
-            "item": "energy",
-            "quantity": 4000
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ],
-        "output_item": "fire_control_system",
-        "output_qty": 1
-      },
-      {
-        "inputs": [
-          {
-            "item": "processor",
-            "quantity": 20
-          },
-          {
-            "item": "circuit_board",
-            "quantity": 30
-          },
-          {
-            "item": "copper_wire",
-            "quantity": 10
-          },
-          {
-            "item": "energy",
-            "quantity": 5000
-          },
-          {
-            "item": "paper",
-            "quantity": 3
-          }
-        ],
-        "output_item": "avionics_suite",
-        "output_qty": 1
-      },
-      {
-        "inputs": [
-          {
-            "item": "processor",
-            "quantity": 8
-          },
-          {
-            "item": "circuit_board",
-            "quantity": 15
-          },
-          {
-            "item": "copper_wire",
-            "quantity": 5
-          },
-          {
-            "item": "energy",
-            "quantity": 2000
-          },
-          {
-            "item": "paper",
-            "quantity": 1
-          }
-        ],
-        "output_item": "sonar_system",
-        "output_qty": 1
-      },
-      {
-        "inputs": [
-          {
-            "item": "steel",
-            "quantity": 20
-          },
-          {
-            "item": "rdx_explosive",
-            "quantity": 5
-          },
-          {
-            "item": "copper_wire",
-            "quantity": 3
-          },
-          {
-            "item": "energy",
-            "quantity": 2000
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ],
-        "output_item": "torpedo",
-        "output_qty": 2
-      },
-      {
-        "inputs": [
-          {
-            "item": "steel",
-            "quantity": 30
-          },
-          {
-            "item": "copper_wire",
-            "quantity": 5
-          },
-          {
-            "item": "energy",
-            "quantity": 2500
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ],
-        "output_item": "naval_gun_system",
-        "output_qty": 1
-      },
-      {
-        "inputs": [
-          {
-            "item": "titanium_alloy",
-            "quantity": 30
-          },
-          {
-            "item": "carbon_fiber",
-            "quantity": 20
-          },
-          {
-            "item": "copper_wire",
-            "quantity": 5
-          },
-          {
-            "item": "energy",
-            "quantity": 5000
-          },
-          {
-            "item": "paper",
-            "quantity": 3
-          }
-        ],
-        "output_item": "turbofan_engine",
-        "output_qty": 1
-      },
-      {
-        "inputs": [
-          {
-            "item": "titanium_alloy",
-            "quantity": 20
-          },
-          {
-            "item": "carbon_fiber",
-            "quantity": 15
-          },
-          {
-            "item": "copper_wire",
-            "quantity": 3
-          },
-          {
-            "item": "energy",
-            "quantity": 4000
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ],
-        "output_item": "turbojet_engine",
-        "output_qty": 1
-      },
-      {
-        "inputs": [
-          {
-            "item": "titanium_alloy",
-            "quantity": 5
-          },
-          {
-            "item": "polymer_compound",
-            "quantity": 2
-          },
-          {
-            "item": "energy",
-            "quantity": 500
-          },
-          {
-            "item": "paper",
-            "quantity": 1
-          }
-        ],
-        "output_item": "ejection_seat",
-        "output_qty": 1
-      }
-    ]
-  },
-  "chemical_plant": {
-    "class": "production",
-    "name": "Chemical Plant",
-    "description": "Industrial chemical processing plant producing caustic soda, acid solutions, fertilizers, and solvents.",
-    "allowed_terrain": [
-      "district_industrial",
-      "prairie",
-      "urban"
-    ],
-    "allowed_proximity": [
-      "road",
-      "urban",
-      "riverside"
-    ],
-    "base_wage_cost": 600.0,
-    "cycles_to_complete": 150,
-    "startup_cost": 300000,
-    "production_lines": [
-      {
-        "inputs": [
-          {
-            "item": "salt",
-            "quantity": 20
-          },
-          {
-            "item": "energy",
-            "quantity": 1000
-          },
-          {
-            "item": "water",
-            "quantity": 50
-          },
-          {
-            "item": "paper",
-            "quantity": 1
-          }
-        ],
-        "output_item": "caustic_soda",
-        "output_qty": 10
-      },
-      {
-        "inputs": [
-          {
-            "item": "sulfur",
-            "quantity": 10
-          },
-          {
-            "item": "water",
-            "quantity": 30
-          },
-          {
-            "item": "energy",
-            "quantity": 500
-          },
-          {
-            "item": "paper",
-            "quantity": 1
-          }
-        ],
-        "output_item": "acid_solution",
-        "output_qty": 15
-      },
-      {
-        "inputs": [
-          {
-            "item": "ammonia",
-            "quantity": 10
-          },
-          {
-            "item": "phosphoric_acid",
-            "quantity": 8
-          },
-          {
-            "item": "potash_ore",
-            "quantity": 10
-          },
-          {
-            "item": "energy",
-            "quantity": 1000
-          },
-          {
-            "item": "paper",
-            "quantity": 1
-          }
-        ],
-        "output_item": "fertilizer_npk",
-        "output_qty": 30
-      },
-      {
-        "inputs": [
-          {
-            "item": "energy",
-            "quantity": 100
-          },
-          {
-            "item": "water",
-            "quantity": 10
-          },
-          {
-            "item": "paper",
-            "quantity": 1
-          }
-        ],
-        "output_item": "compost",
-        "output_qty": 20
-      },
-      {
-        "inputs": [
-          {
-            "item": "energy",
-            "quantity": 300
-          },
-          {
-            "item": "water",
-            "quantity": 15
-          },
-          {
-            "item": "paper",
-            "quantity": 1
-          }
-        ],
-        "output_item": "chemical_solvent",
-        "output_qty": 10
-      }
-    ]
   }
 }
