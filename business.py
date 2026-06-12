@@ -570,20 +570,22 @@ def process_business_tick(db):
                             f"Out of {_fmt_item(req['item'])} — need {req['quantity']} to produce")
                         break
 
-                # Mint guard: coinage is backed 1:1 by metal market value, so a run
-                # only makes sense when every backing metal has a live price. If any
-                # is unpriced (empty book + no recent trade), skip BEFORE consuming
-                # inputs — otherwise the player would burn metal for zero coinage.
+                # Mint guard: coinage is backed 1:1 by metal market value. Value
+                # each metal at its live market price, falling back to the item's
+                # base_price when the market is thin (empty book + no recent
+                # trade) — otherwise the mint freezes at max tick forever on
+                # low-liquidity metals. Skip BEFORE consuming inputs only when
+                # a metal has no price by EITHER source.
                 if line_can_run and config.get("class") == "mint":
                     for req in effective_inputs:
                         if req["item"] in ("energy", "paper", "water"):
                             continue
-                        if not (market.get_market_price(req["item"]) or 0.0) > 0:
+                        if not _retail_reference_price(req["item"], default=0.0) > 0:
                             line_can_run = False
                             biz_name = config.get("name", biz.business_type)
                             _fire_business_push(player.id, biz.id, f"mintprice-{req['item']}",
                                 biz_name,
-                                f"Mint paused — no live market price for {_fmt_item(req['item'])}")
+                                f"Mint paused — no reference price for {_fmt_item(req['item'])}")
                             break
 
                 if line_can_run:
@@ -621,7 +623,7 @@ def process_business_tick(db):
                     if config.get("class") == "mint":
                         _currency_code = line.get("output_item", "")
                         _metal_usd = sum(
-                            req["quantity"] * (market.get_market_price(req["item"]) or 0.0)
+                            req["quantity"] * _retail_reference_price(req["item"], default=0.0)
                             for req in effective_inputs
                             if req["item"] not in ("energy", "paper", "water")
                         )
@@ -1078,9 +1080,11 @@ def _augment_district_retail(business_type: str, config: dict) -> dict:
     return config
 
 
-def _retail_reference_price(item: str) -> float:
-    """Reference market price for retail demand: live market → district market →
-    item base_price (item_types/district_items) → $10 last-resort default."""
+def _retail_reference_price(item: str, default: float = 10.0) -> float:
+    """Reference market price: live market → district market → item base_price
+    (item_types/district_items) → `default`. Retail uses the $10 last-resort;
+    the mint peg passes default=0 so an unpriceable metal halts the run instead
+    of minting against a made-up valuation."""
     try:
         import market
         p = market.get_market_price(item)
@@ -1109,7 +1113,7 @@ def _retail_reference_price(item: str) -> float:
             return float(bp)
     except Exception:
         pass
-    return 10.0
+    return default
 
 # ==========================
 # FIXED create_district_business FUNCTION
