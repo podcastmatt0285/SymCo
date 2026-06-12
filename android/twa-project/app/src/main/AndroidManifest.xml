@@ -20,32 +20,20 @@
      application, the package attribute will need to reflect the correct path in order to use
      the abbreviated format. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-   >
+    package="cc.notifly.wadsworth.twa">
 
-
+    
         <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    
 
+    
 
-    <!-- Maximize Play Store device reach. By default Android implicitly treats
-         these hardware features as required="true", which makes the Play Store
-         hide the listing from any device that lacks them (Android TV, many
-         Chromebooks, desktop-mode / foldable devices, and cheap tablets that
-         report "faketouch" instead of a real touchscreen). Declaring them as
-         required="false" keeps the app installable on those devices. -->
-    <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
-    <uses-feature android:name="android.hardware.faketouch" android:required="false"/>
-    <uses-feature android:name="android.hardware.screen.portrait" android:required="false"/>
-    <uses-feature android:name="android.hardware.screen.landscape" android:required="false"/>
-    <uses-feature android:name="android.software.leanback" android:required="false"/>
+    
 
-
-
-
-
-
+    
 
     <application
-        android:name="cc.notifly.wadsworth.WadsworthApplication"
+        android:name="Application"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/appName"
@@ -219,37 +207,30 @@
         
 
         
-            <receiver android:name="cc.notifly.wadsworth.WadsworthWidget" android:label="Balance + Alerts" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/><action android:name="cc.notifly.wadsworth.WIDGET_REFRESH"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/wadsworth_widget_info"/></receiver>
-            <activity android:name="cc.notifly.wadsworth.WadsworthTokenActivity" android:exported="true" android:theme="@android:style/Theme.NoDisplay"><intent-filter><action android:name="android.intent.action.VIEW"/><category android:name="android.intent.category.DEFAULT"/><category android:name="android.intent.category.BROWSABLE"/><data android:scheme="wadsworth" android:host="widget-auth"/></intent-filter></activity>
-            <receiver android:name="cc.notifly.wadsworth.WBCWidget" android:label="WBC-50 Index" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/><action android:name="cc.notifly.wadsworth.WBC_REFRESH"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/wbc_widget_info"/></receiver>
-            <receiver android:name="cc.notifly.wadsworth.GlobalChatWidget" android:label="Global Chat" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/><action android:name="cc.notifly.wadsworth.GLOBAL_CHAT_REFRESH"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/global_chat_widget_info"/></receiver>
-            <receiver android:name="cc.notifly.wadsworth.TradeChatWidget" android:label="Trade Chat" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/><action android:name="cc.notifly.wadsworth.TRADE_CHAT_REFRESH"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/trade_chat_widget_info"/></receiver>
-            <receiver android:name="cc.notifly.wadsworth.BondsWidget" android:label="Bond Yields" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/><action android:name="cc.notifly.wadsworth.BONDS_REFRESH"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/bonds_widget_info"/></receiver>
-            <receiver android:name="cc.notifly.wadsworth.ForexWidget" android:label="Forex Rates" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/><action android:name="cc.notifly.wadsworth.FOREX_REFRESH"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/forex_widget_info"/></receiver>
-            <receiver android:name="cc.notifly.wadsworth.P2PWidget" android:label="P2P Contacts" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/><action android:name="cc.notifly.wadsworth.P2P_PREV"/><action android:name="cc.notifly.wadsworth.P2P_NEXT"/><action android:name="cc.notifly.wadsworth.P2P_REFRESH"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/p2p_widget_info"/></receiver>
-
-        <!-- Play Billing / Digital Goods API support -->
+            
         <activity
             android:name="com.google.androidbrowserhelper.playbilling.provider.PaymentActivity"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             android:configChanges="keyboardHidden|keyboard|orientation|screenLayout|screenSize"
             android:exported="true">
+
             <intent-filter>
                 <action android:name="org.chromium.intent.action.PAY" />
             </intent-filter>
+
             <meta-data
                 android:name="org.chromium.default_payment_method_name"
                 android:value="https://play.google.com/billing" />
         </activity>
 
+        <!-- This service checks who calls it at runtime. -->
         <service
             android:name="com.google.androidbrowserhelper.playbilling.provider.PaymentService"
-            android:exported="true">
+            android:exported="true" >
             <intent-filter>
                 <action android:name="org.chromium.intent.action.IS_READY_TO_PAY" />
             </intent-filter>
-        </service>
-
+        </service> 
+        
     </application>
-    <uses-permission android:name="android.permission.INTERNET"/>
 </manifest>
