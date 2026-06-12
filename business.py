@@ -1055,10 +1055,13 @@ def _augment_district_retail(business_type: str, config: dict) -> dict:
         return cached
     try:
         from district_market import DISTRICT_ITEMS
+        from inventory import ITEM_RECIPES
         auto = {}
         for line in config.get("production_lines", []) or []:
             out = line.get("output_item")
-            d = DISTRICT_ITEMS.get(out)
+            # demand params live in district_items.json; some district outputs
+            # are defined in item_types.json instead, so fall back there
+            d = DISTRICT_ITEMS.get(out) or ITEM_RECIPES.get(out)
             if not out or not isinstance(d, dict):
                 continue
             if "elasticity" not in d or "base_sale_chance" not in d:

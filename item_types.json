@@ -397,8 +397,10 @@
   },
   "armored_car": {
     "base_price": 5870.7115,
+    "base_sale_chance": 0.001,
     "category": "vehicles",
     "description": "Ballistic and blast protected executive or cash transport vehicle.",
+    "elasticity": 0.8,
     "name": "Armored Car"
   },
   "armored_personnel_carrier": {
@@ -1315,8 +1317,10 @@
   },
   "catered_banquet_service": {
     "base_price": 1494.4661,
+    "base_sale_chance": 0.01,
     "category": "services",
     "description": "A professional catered banquet service, a contracted or licensed service within the economy.",
+    "elasticity": 1.3,
     "name": "Catered Banquet Service"
   },
   "catfish": {
@@ -1363,8 +1367,10 @@
   },
   "cell_tower_kit": {
     "base_price": 0,
+    "base_sale_chance": 0.002,
     "category": "components",
     "description": "Complete cellular tower installation package including antenna, backhaul, and power systems.",
+    "elasticity": 0.8,
     "name": "Cell Tower Kit"
   },
   "cellulose": {
@@ -1723,8 +1729,10 @@
   },
   "cocktail_service": {
     "base_price": 988.3378,
+    "base_sale_chance": 0.01,
     "category": "services",
     "description": "A professional cocktail service, a contracted or licensed service within the economy.",
+    "elasticity": 1.5,
     "name": "Cocktail Service"
   },
   "cocoa_beans": {
@@ -2509,8 +2517,10 @@
   },
   "drone_swarm_unit": {
     "base_price": 25836.2853,
+    "base_sale_chance": 0.0008,
     "category": "vehicles",
     "description": "Coordinated expendable micro-drone swarm for electronic warfare.",
+    "elasticity": 0.5,
     "name": "Drone Swarm Unit"
   },
   "duck": {
@@ -2617,8 +2627,10 @@
   },
   "electric_bus": {
     "base_price": 74569.4098,
+    "base_sale_chance": 0.001,
     "category": "vehicles",
     "description": "Zero-emission battery-electric transit bus.",
+    "elasticity": 0.9,
     "name": "Electric Bus"
   },
   "electric_car": {
@@ -2629,8 +2641,10 @@
   },
   "electric_truck": {
     "base_price": 45026.2037,
+    "base_sale_chance": 0.001,
     "category": "vehicles",
     "description": "Heavy-duty battery-electric commercial truck.",
+    "elasticity": 1.0,
     "name": "Electric Truck"
   },
   "electronics_package": {
@@ -3805,8 +3819,10 @@
   },
   "international_bandwidth": {
     "base_price": 0,
+    "base_sale_chance": 0.01,
     "category": "services",
     "description": "Transoceanic internet capacity measured in terabits per second. Traded between carriers and content networks.",
+    "elasticity": 0.6,
     "name": "International Bandwidth"
   },
   "international_platter": {
@@ -4159,8 +4175,10 @@
   },
   "led_panel": {
     "base_price": 0,
+    "base_sale_chance": 0.005,
     "category": "electronics",
     "description": "Tiled array of LED chips on an aluminum backplane. Used in displays, signage, and general illumination.",
+    "elasticity": 1.2,
     "name": "LED Panel"
   },
   "legal_aid": {
@@ -4688,8 +4706,10 @@
   },
   "mixed_rare_earth_oxide": {
     "base_price": 488.1619,
+    "base_sale_chance": 0.01,
     "category": "materials",
     "description": "Partially separated mixed rare earth oxide precipitate; intermediate in REE refining.",
+    "elasticity": 0.9,
     "name": "Mixed Rare Earth Oxide"
   },
   "mohair_sheep": {
@@ -6530,8 +6550,10 @@
   },
   "security_contract": {
     "base_price": 420.3018,
+    "base_sale_chance": 0.005,
     "category": "services",
     "description": "A professional security contract, a contracted or licensed service within the economy.",
+    "elasticity": 0.7,
     "name": "Security Contract"
   },
   "security_package": {
@@ -6548,8 +6570,10 @@
   },
   "self_propelled_artillery": {
     "base_price": 56137.0888,
+    "base_sale_chance": 0.0005,
     "category": "vehicles",
     "description": "Armored howitzer on a tracked or wheeled self-propelled chassis.",
+    "elasticity": 0.5,
     "name": "Self-Propelled Artillery"
   },
   "semi_truck": {
@@ -6932,8 +6956,10 @@
   },
   "special_munitions_kit": {
     "base_price": 9958.664,
+    "base_sale_chance": 0.0008,
     "category": "military",
     "description": "Packaged field kit containing smoke, incendiary, and WP grenades for special operations.",
+    "elasticity": 0.5,
     "name": "Special Munitions Kit"
   },
   "spices": {
@@ -6974,8 +7000,10 @@
   },
   "spy_satellite": {
     "base_price": 0,
+    "base_sale_chance": 0.0002,
     "category": "military",
     "description": "Military-grade imaging satellite with sub-meter optical resolution and signals intelligence capability.",
+    "elasticity": 0.4,
     "name": "Reconnaissance Satellite"
   },
   "squid": {
@@ -7574,8 +7602,10 @@
   },
   "touch_screen": {
     "base_price": 0,
+    "base_sale_chance": 0.005,
     "category": "electronics",
     "description": "Capacitive multi-touch display combining an indium tin oxide touch layer with an LED or OLED panel.",
+    "elasticity": 1.2,
     "name": "Touch Screen"
   },
   "towel": {
@@ -7928,8 +7958,10 @@
   },
   "weather_satellite": {
     "base_price": 0,
+    "base_sale_chance": 0.0003,
     "category": "vehicles",
     "description": "Earth observation satellite with multispectral imaging and atmospheric sensors for meteorological data.",
+    "elasticity": 0.5,
     "name": "Weather Satellite"
   },
   "wedding_bouquet": {

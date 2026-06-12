@@ -581,7 +581,7 @@
     ],
     "base_wage_cost": 500.0,
     "class": "production",
-    "cycles_to_complete": 86400,
+    "cycles_to_complete": 14400,
     "description": "Net-pen and pond aquaculture operation farming high-demand fish species.",
     "name": "Aquaculture Fish Farm",
     "production_lines": [
@@ -1316,6 +1316,18 @@
       "car": {
         "base_sale_chance": 0.0008,
         "elasticity": 1.5
+      },
+      "electric_car": {
+        "base_sale_chance": 0.001,
+        "elasticity": 1.3
+      },
+      "hybrid_car": {
+        "base_sale_chance": 0.001,
+        "elasticity": 1.2
+      },
+      "hydrogen_vehicle": {
+        "base_sale_chance": 0.0008,
+        "elasticity": 1.4
       },
       "motorcycle": {
         "base_sale_chance": 0.001,
@@ -8453,6 +8465,10 @@
         "base_sale_chance": 0.02,
         "elasticity": 0.85
       },
+      "sea_bass_fillet": {
+        "base_sale_chance": 0.03,
+        "elasticity": 0.9
+      },
       "sea_trout": {
         "base_sale_chance": 0.02,
         "elasticity": 0.85
@@ -8476,6 +8492,14 @@
       "smoked_salmon": {
         "base_sale_chance": 0.025,
         "elasticity": 0.8
+      },
+      "smoked_sea_trout": {
+        "base_sale_chance": 0.02,
+        "elasticity": 0.9
+      },
+      "smoked_trout": {
+        "base_sale_chance": 0.02,
+        "elasticity": 0.9
       },
       "snapper": {
         "base_sale_chance": 0.022,
@@ -10708,6 +10732,10 @@
         "base_sale_chance": 0.2,
         "elasticity": 1.4
       },
+      "chamomile": {
+        "base_sale_chance": 0.02,
+        "elasticity": 1.4
+      },
       "chrysanthemum": {
         "base_sale_chance": 0.2,
         "elasticity": 1.4
@@ -10739,6 +10767,10 @@
       "lily": {
         "base_sale_chance": 0.2,
         "elasticity": 1.4
+      },
+      "narcissus": {
+        "base_sale_chance": 0.02,
+        "elasticity": 1.5
       },
       "orchid": {
         "base_sale_chance": 0.15,
@@ -12268,6 +12300,10 @@
         "base_sale_chance": 0.008,
         "elasticity": 1.6
       },
+      "tallow_candle": {
+        "base_sale_chance": 0.02,
+        "elasticity": 1.4
+      },
       "tea_light": {
         "base_sale_chance": 0.06,
         "elasticity": 1.1
@@ -13569,6 +13605,10 @@
         "elasticity": 1.5,
         "price": 48000,
         "quantity": 1
+      },
+      "premium_ev": {
+        "base_sale_chance": 0.0005,
+        "elasticity": 1.8
       },
       "ruby_ring": {
         "base_sale_chance": 0.05,
@@ -19203,7 +19243,7 @@
     ],
     "base_wage_cost": 400.0,
     "class": "production",
-    "cycles_to_complete": 86400,
+    "cycles_to_complete": 14400,
     "description": "Cultivates oysters over long growth periods to produce natural pearls of multiple colors.",
     "name": "Pearl Oyster Farm",
     "production_lines": [
@@ -21923,6 +21963,10 @@
         "base_sale_chance": 0.07,
         "elasticity": 0.9
       },
+      "elderflower_gin": {
+        "base_sale_chance": 0.01,
+        "elasticity": 1.2
+      },
       "lager": {
         "base_sale_chance": 0.1,
         "elasticity": 1.0
@@ -24093,9 +24137,17 @@
         "base_sale_chance": 0.04,
         "elasticity": 0.9
       },
+      "sea_bass_fillet": {
+        "base_sale_chance": 0.02,
+        "elasticity": 0.9
+      },
       "seafood_chowder": {
         "base_sale_chance": 0.04,
         "elasticity": 0.9
+      },
+      "smoked_sea_trout": {
+        "base_sale_chance": 0.02,
+        "elasticity": 1.0
       }
     },
     "startup_cost": 45000
@@ -26342,6 +26394,10 @@
         "base_sale_chance": 0.04,
         "elasticity": 1.4
       },
+      "chamomile": {
+        "base_sale_chance": 0.02,
+        "elasticity": 1.4
+      },
       "chrysanthemum": {
         "base_sale_chance": 0.03,
         "elasticity": 1.4
@@ -26353,6 +26409,10 @@
       "lily": {
         "base_sale_chance": 0.04,
         "elasticity": 1.4
+      },
+      "narcissus": {
+        "base_sale_chance": 0.02,
+        "elasticity": 1.5
       },
       "rose": {
         "base_sale_chance": 0.04,
@@ -28265,6 +28325,10 @@
       "champagne": {
         "base_sale_chance": 0.03,
         "elasticity": 0.9
+      },
+      "elderflower_gin": {
+        "base_sale_chance": 0.01,
+        "elasticity": 1.2
       },
       "gin": {
         "base_sale_chance": 0.04,

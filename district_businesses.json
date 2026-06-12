@@ -14026,6 +14026,10 @@
           {
             "item": "paper",
             "quantity": 500
+          },
+          {
+            "item": "rifle",
+            "quantity": 150
           }
         ],
         "output_item": "defense_contract",
@@ -14056,6 +14060,10 @@
           {
             "item": "paper",
             "quantity": 500
+          },
+          {
+            "item": "main_battle_tank",
+            "quantity": 2
           }
         ],
         "output_item": "defense_contract",
@@ -14086,6 +14094,10 @@
           {
             "item": "paper",
             "quantity": 500
+          },
+          {
+            "item": "fighter_jet",
+            "quantity": 2
           }
         ],
         "output_item": "defense_contract",
@@ -14112,6 +14124,14 @@
           {
             "item": "paper",
             "quantity": 600
+          },
+          {
+            "item": "naval_destroyer",
+            "quantity": 1
+          },
+          {
+            "item": "submarine",
+            "quantity": 1
           }
         ],
         "output_item": "defense_contract",
@@ -14142,6 +14162,14 @@
           {
             "item": "paper",
             "quantity": 400
+          },
+          {
+            "item": "attack_helicopter",
+            "quantity": 2
+          },
+          {
+            "item": "military_helicopter",
+            "quantity": 2
           }
         ],
         "output_item": "defense_contract",
@@ -23978,6 +24006,32 @@
         ],
         "output_item": "beryllium",
         "output_qty": 50
+      },
+      {
+        "inputs": [
+          {
+            "item": "ilmenite",
+            "quantity": 2400
+          },
+          {
+            "item": "magnesium",
+            "quantity": 400
+          },
+          {
+            "item": "energy",
+            "quantity": 200000
+          },
+          {
+            "item": "water",
+            "quantity": 5000
+          },
+          {
+            "item": "paper",
+            "quantity": 60
+          }
+        ],
+        "output_item": "titanium",
+        "output_qty": 200
       }
     ],
     "startup_cost": 6000000
