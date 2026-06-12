@@ -509,6 +509,12 @@ COUNTY_STYLES = """
 </style>
 """
 
+# Re-skin every county/crypto page in the shared Trust Wallet × Uniswap design
+# language. Appended after the legacy CSS so the theme wins the cascade; also
+# auto-injects the consistent crypto subnav at the top of each page.
+from crypto_theme import CRYPTO_THEME as _CRYPTO_THEME
+COUNTY_STYLES = COUNTY_STYLES + _CRYPTO_THEME
+
 
 # ==========================
 # CRYPTO TICKER HELPER
@@ -1437,6 +1443,12 @@ async def crypto_exchange(
     )
     disp = get_player_display_currency(player.id)
 
+    # Uniswap-style swap card (shared with the Crypto Hub) replaces the old
+    # three separate Buy / Sell / Swap form panels.
+    from crypto_theme import build_swap_tokens, swap_card_html
+    _swap_tokens, _eff_fee_pct, _exec_bonus = build_swap_tokens(player.id)
+    swap_card = swap_card_html(_swap_tokens, _eff_fee_pct, _exec_bonus, redirect="/exchange")
+
     # --- Multi-currency cash holdings ---
     player_tender = get_player_legal_tender(player.id)
     player_currencies = get_player_currency_balances(player.id)
@@ -1677,216 +1689,14 @@ async def crypto_exchange(
                 {wallets_html}
             </div>
 
-            <div class="grid grid-3" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom: 16px;">
-                <!-- Buy Crypto -->
-                <div class="card">
-                    <h2>Buy Crypto</h2>
-                    <p style="color: #94a3b8; font-size: 13px; margin-bottom: 12px;">
-                        Buy cryptocurrency with cash. 2% exchange fee.
-                        <br><span style="color:#f59e0b;font-size:11px;">Requires blockchain energy. Cash goes to county treasury.</span>
-                    </p>
-                    <form action="/api/exchange/buy" method="post">
-                        <div class="form-group">
-                            <label>Crypto to Buy</label>
-                            <select name="crypto_symbol" id="buy-symbol" required onchange="updateBuyGas()">
-                                <option value="">-- Select --</option>
-                                {crypto_options}
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Amount to Spend ({buy_currency_symbol} {buy_currency_code})</label>
-                            <input type="number" name="cash_amount" id="buy-cash" min="0.01" step="0.01"
-                                   max="{buy_max:.4f}" placeholder="{buy_currency_symbol} amount" required
-                                   oninput="updateBuyGas()">
-                            <div style="font-size:11px;color:#64748b;margin-top:4px;">
-                                Available: <strong style="color:#4ade80;">{cash_header}</strong>
-                                {'<span id="buy-usd-equiv" style="color:#475569;margin-left:6px;"></span>' if buy_currency_code != 'USD' else ''}
-                            </div>
-                        </div>
-                        <div id="buy-gas-preview" style="display:none;background:#0a0f1a;border:1px solid #1e293b;border-radius:6px;padding:8px 10px;margin-bottom:10px;font-size:12px;"></div>
-                        <button type="submit" class="btn btn-primary">Buy</button>
-                    </form>
-                </div>
-
-                <!-- Sell Crypto -->
-                <div class="card">
-                    <h2>Sell Crypto</h2>
-                    <p style="color: #94a3b8; font-size: 13px; margin-bottom: 12px;">
-                        Sell cryptocurrency for cash. 2% exchange fee.
-                        <br><span style="color:#f59e0b;font-size:11px;">Cash paid from county treasury. Tokens burned.</span>
-                    </p>
-                    <form action="/api/exchange/sell" method="post">
-                        <div class="form-group">
-                            <label>Crypto to Sell</label>
-                            <select name="crypto_symbol" id="sell-symbol" required onchange="updateSellGas()">
-                                <option value="">-- Select --</option>
-                                {sell_options if sell_options else '<option disabled>No crypto to sell</option>'}
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Amount</label>
-                            <input type="number" name="amount" id="sell-amount" min="0.000001" step="0.000001"
-                                   placeholder="Crypto amount" required oninput="updateSellGas()">
-                        </div>
-                        <div id="sell-gas-preview" style="display:none;background:#0a0f1a;border:1px solid #1e293b;border-radius:6px;padding:8px 10px;margin-bottom:10px;font-size:12px;"></div>
-                        <button type="submit" class="btn btn-crypto">Sell</button>
-                    </form>
-                </div>
-
-                <!-- Swap Crypto -->
-                <div class="card">
-                    <h2>Swap Crypto</h2>
-                    <p style="color: #94a3b8; font-size: 13px; margin-bottom: 12px;">
-                        Swap one crypto for another. 2% exchange fee.
-                        <br><span style="color:#f59e0b;font-size:11px;">Both blockchains must have energy. Gas charged on both chains.</span>
-                    </p>
-                    <form action="/api/exchange/swap" method="post">
-                        <div class="form-group">
-                            <label>Sell</label>
-                            <select name="sell_symbol" id="swap-sell-symbol" required onchange="updateSwapGas()">
-                                <option value="">-- Select --</option>
-                                {sell_options if sell_options else '<option disabled>No crypto to swap</option>'}
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Sell Amount</label>
-                            <input type="number" name="sell_amount" id="swap-sell-amount" min="0.000001" step="0.000001"
-                                   placeholder="Amount to sell" required oninput="updateSwapGas()">
-                        </div>
-                        <div class="form-group">
-                            <label>Buy</label>
-                            <select name="buy_symbol" id="swap-buy-symbol" required onchange="updateSwapGas()">
-                                <option value="">-- Select --</option>
-                                {crypto_options}
-                            </select>
-                        </div>
-                        <div id="swap-gas-preview" style="display:none;background:#0a0f1a;border:1px solid #1e293b;border-radius:6px;padding:8px 10px;margin-bottom:10px;font-size:12px;"></div>
-                        <button type="submit" class="btn btn-secondary">Swap</button>
-                    </form>
-                </div>
-            </div>
-
-            <script>
-            // Gas prices keyed by crypto symbol, injected server-side
-            const GAS_PRICES = {{{','.join(f'"{c["crypto_symbol"]}": {c["gas_price"]:.8f}' for c in counties)}}};
-            const EXCHANGE_FEE = 0.02;
-            // Buy form: exchange rate from player's legal tender to USD
-            const BUY_USD_PER_UNIT = {buy_usd_per_unit:.8f};
-            const BUY_CURRENCY_CODE = "{buy_currency_code}";
-
-            function fmtGas(n) {{
-                return n < 0.0001 ? n.toExponential(4) : n.toFixed(6);
-            }}
-            function gasLabel(price) {{
-                const base = 0.001;
-                const ratio = price / base;
-                if (ratio <= 1.05) return '<span style="color:#4ade80;">⬤ LOW</span>';
-                if (ratio <= 3)    return '<span style="color:#a3e635;">⬤ NORMAL</span>';
-                if (ratio <= 10)   return '<span style="color:#fbbf24;">⬤ MODERATE</span>';
-                if (ratio <= 50)   return '<span style="color:#f97316;">⬤ HIGH</span>';
-                return '<span style="color:#f87171;">⬤ SURGE</span>';
-            }}
-
-            function updateBuyGas() {{
-                const sym = document.getElementById('buy-symbol').value;
-                const inputAmt = parseFloat(document.getElementById('buy-cash').value) || 0;
-                // Convert input to USD for the gas/preview calculations
-                const cashUsd = inputAmt * BUY_USD_PER_UNIT;
-                // Show live USD equivalent for non-USD players
-                const equivEl = document.getElementById('buy-usd-equiv');
-                if (equivEl && BUY_CURRENCY_CODE !== 'USD' && inputAmt > 0) {{
-                    equivEl.textContent = `≈ ${{cashUsd.toFixed(2)}} USD`;
-                }} else if (equivEl) {{
-                    equivEl.textContent = '';
-                }}
-                const box = document.getElementById('buy-gas-preview');
-                if (!sym || !GAS_PRICES[sym]) {{ box.style.display='none'; return; }}
-                const gas = GAS_PRICES[sym];
-                box.style.display = 'block';
-                const gasFeeNote = gas > 0
-                    ? `<div style="margin-top:4px;">Gas deducted from received tokens: <strong style="color:#f59e0b;">-${{fmtGas(gas)}} ${{sym}}</strong> &nbsp;${{gasLabel(gas)}}</div>`
-                    : '';
-                box.innerHTML = `
-                    <div style="color:#94a3b8;">Network gas price: <strong style="color:#f59e0b;">${{fmtGas(gas)}} ${{sym}}</strong> ${{gasLabel(gas)}} &nbsp;&nbsp;<a href="/gas-tracker" style="color:#38bdf8;font-size:11px;">Gas Tracker ↗</a></div>
-                    ${{gasFeeNote}}
-                    <div style="color:#64748b;font-size:11px;margin-top:2px;">Gas rises +5% each tx · decays 10% per hour</div>`;
-            }}
-
-            function updateSellGas() {{
-                const sym = document.getElementById('sell-symbol').value;
-                const amt = parseFloat(document.getElementById('sell-amount').value) || 0;
-                const box = document.getElementById('sell-gas-preview');
-                if (!sym || !GAS_PRICES[sym]) {{ box.style.display='none'; return; }}
-                const gas = GAS_PRICES[sym];
-                box.style.display = 'block';
-                box.innerHTML = `
-                    <div style="color:#94a3b8;">Network gas price: <strong style="color:#f59e0b;">${{fmtGas(gas)}} ${{sym}}</strong> ${{gasLabel(gas)}} &nbsp;&nbsp;<a href="/gas-tracker" style="color:#38bdf8;font-size:11px;">Gas Tracker ↗</a></div>
-                    <div style="margin-top:4px;color:#94a3b8;">Gas charged on top of sell amount: <strong style="color:#f59e0b;">+${{fmtGas(gas)}} ${{sym}}</strong> required in wallet</div>
-                    <div style="color:#64748b;font-size:11px;margin-top:2px;">Gas rises +5% each tx · decays 10% per hour</div>`;
-            }}
-
-            function updateSwapGas() {{
-                const sellSym = document.getElementById('swap-sell-symbol').value;
-                const buySym  = document.getElementById('swap-buy-symbol').value;
-                const box = document.getElementById('swap-gas-preview');
-                if (!sellSym || !buySym) {{ box.style.display='none'; return; }}
-                const sellGas = GAS_PRICES[sellSym] || 0.001;
-                const buyGas  = GAS_PRICES[buySym]  || 0.001;
-                box.style.display = 'block';
-                box.innerHTML = `
-                    <div style="color:#94a3b8;font-weight:600;margin-bottom:4px;">Gas on both chains:</div>
-                    <div style="margin-left:8px;color:#94a3b8;">${{sellSym}} chain: <strong style="color:#f59e0b;">${{fmtGas(sellGas)}} ${{sellSym}}</strong> ${{gasLabel(sellGas)}} <span style="color:#64748b;">(from your wallet)</span></div>
-                    <div style="margin-left:8px;color:#94a3b8;margin-top:2px;">${{buySym}} chain: <strong style="color:#f59e0b;">${{fmtGas(buyGas)}} ${{buySym}}</strong> ${{gasLabel(buyGas)}} <span style="color:#64748b;">(from received tokens)</span></div>
-                    <div style="color:#64748b;font-size:11px;margin-top:4px;"><a href="/gas-tracker" style="color:#38bdf8;">Gas Tracker ↗</a> · Gas rises +5% each tx · decays 10% per hour</div>`;
-            }}
-            </script>
-
-            <script>
-            /* AJAX form handling — eliminates full-page reloads on exchange actions */
-            (function() {{
-                function _toast(msg, ok) {{
-                    var d = document.createElement('div');
-                    d.textContent = msg;
-                    d.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);' +
-                        'padding:10px 18px;border-radius:8px;font-size:0.85rem;z-index:9999;max-width:90%;text-align:center;' +
-                        'background:' + (ok ? '#15803d' : '#991b1b') + ';color:#fff;box-shadow:0 4px 12px rgba(0,0,0,0.4);';
-                    document.body.appendChild(d);
-                    setTimeout(function() {{ d.remove(); }}, 3500);
-                }}
-                function ajaxForm(formEl) {{
-                    formEl.addEventListener('submit', function(e) {{
-                        e.preventDefault();
-                        var btn = formEl.querySelector('button[type=submit]') || formEl.querySelector('button');
-                        var origText = btn ? btn.textContent : '';
-                        if (btn) {{ btn.disabled = true; btn.textContent = '…'; }}
-                        var data = new FormData(formEl);
-                        data.set('ajax', '1');
-                        fetch(formEl.action, {{method:'POST', body: new URLSearchParams(data)}})
-                            .then(function(r) {{ return r.json(); }})
-                            .then(function(d) {{
-                                _toast(d.message || (d.ok ? 'Done' : 'Error'), d.ok);
-                                if (d.ok) {{
-                                    // Reset input fields on success
-                                    formEl.querySelectorAll('input[type=number]').forEach(function(i) {{ i.value = ''; }});
-                                    // Re-hide gas previews
-                                    formEl.querySelectorAll('[id$="-gas-preview"]').forEach(function(p) {{ p.style.display = 'none'; }});
-                                }}
-                            }})
-                            .catch(function() {{ _toast('Network error — please try again.', false); }})
-                            .finally(function() {{
-                                if (btn) {{ btn.disabled = false; btn.textContent = origText; }}
-                            }});
-                    }});
-                }}
-                // Wire up all exchange and mining deposit forms
-                ['form[action="/api/exchange/buy"]',
-                 'form[action="/api/exchange/sell"]',
-                 'form[action="/api/exchange/swap"]',
-                 'form[action="/api/county/mining/deposit"]'].forEach(function(sel) {{
-                    document.querySelectorAll(sel).forEach(ajaxForm);
-                }});
-            }})();
-            </script>
+            <!-- Uniswap-style swap card (shared with /crypto hub).
+                 Routes Cash ↔ Native, Native ↔ Native, Native ↔ WSC, WSC → Cash
+                 automatically — replaces the old Buy / Sell / Swap panels. -->
+            {swap_card}
+            <p style="text-align:center;font-size:.7rem;color:#707694;margin:10px 0 16px;">
+                Gas is charged per chain on top of the exchange fee —
+                <a href="/gas-tracker">live gas tracker ⛽</a>
+            </p>
 
             <div class="card">
                 <h2>Market Overview &nbsp;<a href="/gas-tracker" style="font-size:12px;color:#38bdf8;font-weight:400;">⛽ Gas Tracker ↗</a></h2>

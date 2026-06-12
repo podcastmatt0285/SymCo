@@ -249,6 +249,11 @@ input[type=range] { accent-color: #f59e0b; }
 </style>
 """
 
+# Re-skin every meme-coin page in the shared Trust Wallet × Uniswap design
+# language (appended after legacy CSS so the theme wins; injects the subnav).
+from crypto_theme import CRYPTO_THEME as _CRYPTO_THEME
+MEME_STYLES = MEME_STYLES + _CRYPTO_THEME
+
 
 # ==========================
 # COUNTY MEME COIN LIST
@@ -1932,6 +1937,9 @@ _WALLET_STYLES = """
   margin-bottom:6px;font-size:13px;}
 </style>
 """
+
+# WSC wallet page also adopts the shared crypto theme + subnav.
+_WALLET_STYLES = _WALLET_STYLES + _CRYPTO_THEME
 
 @router.get("/wallet", response_class=HTMLResponse)
 async def wallet_dashboard(

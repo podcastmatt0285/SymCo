@@ -303,20 +303,11 @@ def crypto_hub(session_token: Optional[str] = Cookie(None), tab: str = Query("wa
             </div>
         </a>'''
 
-    # ── Swap token table (JS) ────────────────────────────────────────────
-    native_bal_by_sym = {h["symbol"]: h["balance"] for h in portfolio["native_holdings"]}
-    swap_tokens = [
-        {"sym": "CASH", "name": f"Cash ({disp['code']})", "type": "cash",
-         "price": 1.0, "balance": round(cash_bal, 2)},
-        {"sym": WSC_SYMBOL, "name": WSC_NAME, "type": "wsc",
-         "price": 1.0, "balance": round(wsc_bal, 6)},
-    ] + [
-        {"sym": c["crypto_symbol"], "name": c["crypto_name"], "type": "native",
-         "price": round(c["crypto_price"], 8),
-         "balance": round(native_bal_by_sym.get(c["crypto_symbol"], 0.0), 6)}
-        for c in counties
-    ]
-    swap_tokens_json = json.dumps(swap_tokens)
+    # ── Uniswap swap card (shared with /exchange via crypto_theme) ──────
+    from crypto_theme import build_swap_tokens, swap_card_html
+    _swap_tokens, _, _ = build_swap_tokens(player.id)
+    swap_card = swap_card_html(_swap_tokens, eff_fee_pct, exec_bonus,
+                               redirect="/crypto?tab=swap")
 
     # ── Earn tab data ────────────────────────────────────────────────────
     yield_deposits = []
@@ -449,33 +440,9 @@ def crypto_hub(session_token: Optional[str] = Cookie(None), tab: str = Query("wa
     {meme_rows or '<div class="empty">No meme coins yet — <a href="/memecoins">discover the meme market →</a></div>'}
   </div>
 
-  <!-- ════════ SWAP (Uniswap card) ════════ -->
+  <!-- ════════ SWAP (Uniswap card — shared with /exchange) ════════ -->
   <div class="hub-tab" id="tab-swap">
-    <div class="uni-card">
-      <div class="uni-panel">
-        <div class="plbl">You pay</div>
-        <div class="uni-row">
-          <input class="uni-amt" id="amt-in" type="number" min="0" step="any" placeholder="0" oninput="cbQuote()">
-          <button class="uni-tok" id="tok-in" onclick="cbMenu('in', event)"></button>
-        </div>
-        <div class="uni-sub"><span id="bal-in"></span><span class="mx" onclick="cbMax()">MAX</span></div>
-      </div>
-      <div class="uni-flip"><button onclick="cbFlip()" title="Flip">⇅</button></div>
-      <div class="uni-panel">
-        <div class="plbl">You receive (estimated)</div>
-        <div class="uni-row">
-          <input class="uni-amt" id="amt-out" type="text" placeholder="0" readonly>
-          <button class="uni-tok" id="tok-out" onclick="cbMenu('out', event)"></button>
-        </div>
-        <div class="uni-sub"><span id="bal-out"></span><span></span></div>
-      </div>
-      <div class="uni-info">
-        <div class="irow"><span>Rate</span><span class="iv" id="i-rate">—</span></div>
-        <div class="irow"><span>Exchange fee {"(exec bonus −" + format(exec_bonus * 100, ".0f") + "%)" if exec_bonus > 0 else ""}</span><span class="iv">{eff_fee_pct:.2f}% + gas</span></div>
-        <div class="irow"><span>Government tax</span><span class="iv" style="color:#4ade80;">0.00% — untracked 🕶️</span></div>
-      </div>
-      <button class="uni-btn" id="swap-btn" onclick="cbSwap()" disabled>Enter an amount</button>
-    </div>
+    {swap_card}
     <p style="text-align:center;font-size:.68rem;color:var(--mut);margin-top:12px;">
       Routes automatically: Cash ↔ L1 · L1 ↔ L1 · L1 ↔ WSC · WSC → Cash.<br>
       Meme coins trade on their own order books — <a href="/memecoins">open the meme market →</a>
@@ -526,137 +493,6 @@ document.querySelectorAll('.tw-act').forEach(function(b) {{
 }});
 cbTab({json.dumps(tab)});
 
-// ───────── Toast ─────────
-function cbToast(msg, ok) {{
-  var el = document.getElementById('cb-toast');
-  el.textContent = msg;
-  el.style.background = ok ? '#14532d' : '#7f1d1d';
-  el.style.color = ok ? '#bbf7d0' : '#fecaca';
-  el.style.border = '1px solid ' + (ok ? '#22c55e' : '#ef4444');
-  el.style.opacity = '1';
-  clearTimeout(el._t);
-  el._t = setTimeout(function() {{ el.style.opacity = '0'; }}, 4200);
-}}
-
-// ───────── Swap engine ─────────
-var TOKENS = {swap_tokens_json};
-var FEE = {eff_fee_pct / 100:.6f};
-var tokIn = TOKENS[0], tokOut = TOKENS.length > 2 ? TOKENS[2] : TOKENS[1];
-
-function tokIcon(sym) {{
-  var pals = [['#f97316','#fb923c'],['#a855f7','#c084fc'],['#38bdf8','#7dd3fc'],['#22c55e','#4ade80'],
-              ['#ef4444','#f87171'],['#eab308','#fde047'],['#ec4899','#f9a8d4'],['#14b8a6','#5eead4']];
-  var s = 0; for (var i = 0; i < sym.length; i++) s += sym.charCodeAt(i);
-  var p = pals[s % pals.length];
-  return '<span class="ti" style="background:linear-gradient(135deg,' + p[0] + ',' + p[1] + ');">' + sym.slice(0,4) + '</span>';
-}}
-function cbRender() {{
-  document.getElementById('tok-in').innerHTML  = tokIcon(tokIn.sym)  + tokIn.sym  + ' ▾';
-  document.getElementById('tok-out').innerHTML = tokIcon(tokOut.sym) + tokOut.sym + ' ▾';
-  document.getElementById('bal-in').textContent  = 'Balance: ' + tokIn.balance.toLocaleString();
-  document.getElementById('bal-out').textContent = 'Balance: ' + tokOut.balance.toLocaleString();
-  cbQuote();
-}}
-function cbRoute() {{
-  var a = tokIn.type, b = tokOut.type;
-  if (a === 'cash'   && b === 'native') return {{url: '/api/exchange/buy',  f: function(amt) {{ return {{crypto_symbol: tokOut.sym, cash_amount: amt}}; }}}};
-  if (a === 'native' && b === 'cash')   return {{url: '/api/exchange/sell', f: function(amt) {{ return {{crypto_symbol: tokIn.sym, amount: amt}}; }}}};
-  if (a === 'native' && b === 'native') return {{url: '/api/exchange/swap', f: function(amt) {{ return {{sell_symbol: tokIn.sym, sell_amount: amt, buy_symbol: tokOut.sym}}; }}}};
-  if (a === 'native' && b === 'wsc')    return {{url: '/api/wallet/amm/native-to-wsc', f: function(amt) {{ return {{native_symbol: tokIn.sym, native_amount: amt}}; }}}};
-  if (a === 'wsc'    && b === 'native') return {{url: '/api/wallet/amm/wsc-to-native', f: function(amt) {{ return {{native_symbol: tokOut.sym, wsc_amount: amt}}; }}}};
-  if (a === 'wsc'    && b === 'cash')   return {{url: '/api/wallet/redeem', f: function(amt) {{ return {{amount: amt}}; }}}};
-  return null;
-}}
-function cbQuote() {{
-  var amt = parseFloat(document.getElementById('amt-in').value) || 0;
-  var btn = document.getElementById('swap-btn');
-  var route = cbRoute();
-  if (!route) {{
-    btn.disabled = true; btn.textContent = 'Pair not supported';
-    document.getElementById('amt-out').value = '';
-    document.getElementById('i-rate').textContent = '—';
-    return;
-  }}
-  if (amt <= 0) {{
-    btn.disabled = true; btn.textContent = 'Enter an amount';
-    document.getElementById('amt-out').value = '';
-    document.getElementById('i-rate').textContent = '—';
-    return;
-  }}
-  // Indicative quote off live prices, net of exchange fee (gas not included).
-  var usdIn = amt * tokIn.price;
-  var out = tokOut.price > 0 ? (usdIn * (1 - FEE)) / tokOut.price : 0;
-  document.getElementById('amt-out').value = out > 0 ? out.toLocaleString(undefined, {{maximumFractionDigits: 6}}) : '';
-  document.getElementById('i-rate').textContent =
-    '1 ' + tokIn.sym + ' ≈ ' + (tokOut.price > 0 ? (tokIn.price / tokOut.price).toLocaleString(undefined, {{maximumFractionDigits: 6}}) : '—') + ' ' + tokOut.sym;
-  if (amt > tokIn.balance) {{
-    btn.disabled = true; btn.textContent = 'Insufficient ' + tokIn.sym + ' balance';
-  }} else {{
-    btn.disabled = false; btn.textContent = 'Swap ' + tokIn.sym + ' → ' + tokOut.sym;
-  }}
-}}
-function cbMax() {{
-  document.getElementById('amt-in').value = tokIn.balance;
-  cbQuote();
-}}
-function cbFlip() {{
-  var t = tokIn; tokIn = tokOut; tokOut = t;
-  document.getElementById('amt-in').value = '';
-  cbRender();
-}}
-function cbMenu(side, ev) {{
-  ev.stopPropagation();
-  var old = document.getElementById('tok-menu'); if (old) old.remove();
-  var menu = document.createElement('div');
-  menu.id = 'tok-menu'; menu.className = 'tok-menu';
-  TOKENS.forEach(function(t) {{
-    var other = side === 'in' ? tokOut : tokIn;
-    if (t.sym === other.sym) return;
-    var it = document.createElement('div');
-    it.className = 'tm-it';
-    it.innerHTML = tokIcon(t.sym) + t.sym + '<span class="tm-bal">' + t.balance.toLocaleString() + '</span>';
-    it.onclick = function() {{
-      if (side === 'in') tokIn = t; else tokOut = t;
-      menu.remove(); cbRender();
-    }};
-    menu.appendChild(it);
-  }});
-  var anchor = document.getElementById(side === 'in' ? 'tok-in' : 'tok-out');
-  var r = anchor.getBoundingClientRect();
-  menu.style.top  = (r.bottom + window.scrollY + 6) + 'px';
-  menu.style.left = Math.max(8, r.right + window.scrollX - 230) + 'px';
-  document.body.appendChild(menu);
-  setTimeout(function() {{
-    document.addEventListener('click', function h() {{ menu.remove(); document.removeEventListener('click', h); }});
-  }}, 0);
-}}
-function cbSwap() {{
-  var amt = parseFloat(document.getElementById('amt-in').value) || 0;
-  var route = cbRoute();
-  if (!route || amt <= 0) return;
-  var btn = document.getElementById('swap-btn');
-  btn.disabled = true; btn.textContent = 'Swapping…';
-  var fd = new FormData();
-  var fields = route.f(amt);
-  for (var k in fields) fd.set(k, fields[k]);
-  fd.set('ajax', '1');
-  fetch(route.url, {{method: 'POST', body: fd}})
-    .then(function(r) {{ return r.json(); }})
-    .then(function(d) {{
-      if (d.ok) {{
-        cbToast(d.message || 'Swap complete!', true);
-        setTimeout(function() {{ location.href = '/crypto?tab=swap'; }}, 1400);
-      }} else {{
-        cbToast(d.error || d.message || 'Swap failed.', false);
-        btn.disabled = false; cbQuote();
-      }}
-    }})
-    .catch(function() {{
-      cbToast('Network error — please retry.', false);
-      btn.disabled = false; cbQuote();
-    }});
-}}
-cbRender();
 
 // ───────── Faucet ─────────
 function cbFaucet() {{
