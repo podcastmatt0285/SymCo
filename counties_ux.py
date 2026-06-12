@@ -509,11 +509,12 @@ COUNTY_STYLES = """
 </style>
 """
 
-# Re-skin every county/crypto page in the shared Trust Wallet × Uniswap design
-# language. Appended after the legacy CSS so the theme wins the cascade; also
-# auto-injects the consistent crypto subnav at the top of each page.
+# Crypto pages only get the Trust Wallet × Uniswap design language. Appended
+# after the legacy CSS so the theme wins the cascade; also auto-injects the
+# consistent crypto subnav. County civic pages (dashboard, list, form, join)
+# keep the legacy COUNTY_STYLES untouched.
 from crypto_theme import CRYPTO_THEME as _CRYPTO_THEME
-COUNTY_STYLES = COUNTY_STYLES + _CRYPTO_THEME
+CRYPTO_STYLES = COUNTY_STYLES + _CRYPTO_THEME
 
 
 # ==========================
@@ -1322,7 +1323,7 @@ async def county_mining_node(
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Mining Node · {county.name} · Wadsworth</title>
     {_skin_links(player.id, "crypto")}
-    {COUNTY_STYLES}
+    {CRYPTO_STYLES}
 </head>
 <body>
 <div class="container" style="max-width:960px;">
@@ -1498,7 +1499,7 @@ async def crypto_exchange(
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Explore Tokens — Wadsworth Crypto</title>
         {_skin_links(player.id, "crypto")}
-        {COUNTY_STYLES}
+        {CRYPTO_STYLES}
         <style>
         .xp-head {{ display:flex; align-items:center; justify-content:space-between;
                     gap:14px; flex-wrap:wrap; margin:6px 0 14px; }}
@@ -1641,7 +1642,7 @@ async def gas_tracker_page(
 <meta http-equiv="refresh" content="30">
 <title>Gas Tracker — Wadsworth</title>
 {skin_html}
-{COUNTY_STYLES}
+{CRYPTO_STYLES}
 <style>
 .gt-row {{ cursor:default;border-bottom:1px solid #0f172a;transition:background .12s; }}
 .gt-row:hover {{ background:rgba(99,102,241,.07); }}
@@ -1821,7 +1822,7 @@ async def token_info_page(
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{info["crypto_name"]} ({crypto_symbol}) · Token Info</title>
         {_skin_links(player.id, "crypto")}
-        {COUNTY_STYLES}
+        {CRYPTO_STYLES}
         <style>
         /* Uniswap TDP layout: content left, sticky swap card right */
         .tdp-grid {{ display: grid; grid-template-columns: minmax(0,1fr) 420px; gap: 18px;
@@ -2732,7 +2733,7 @@ async def county_governance(
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Governance · {county.name} · Wadsworth</title>
         {_skin_links(player.id, "crypto")}
-        {COUNTY_STYLES}
+        {CRYPTO_STYLES}
     </head>
     <body>
         <div class="container" style="max-width:960px;">
