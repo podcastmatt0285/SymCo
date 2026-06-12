@@ -44,6 +44,25 @@ class IndexSnapshot(Base):
     meta_json  = Column(Text, nullable=True)   # JSON for pie / heatmap breakdown
 
 
+class IndexDivisor(Base):
+    """Persistent index divisors — one row per index code.
+
+    The S&P 500 methodology keeps the index level continuous across
+    composition changes (IPOs entering/leaving, secondary offerings,
+    buybacks) by adjusting the divisor rather than the level. The divisor
+    is stored here so it survives server restarts and continues to evolve
+    correctly across rebalances.
+
+    level = aggregate_cap / divisor
+    New divisor = new_cap / old_level   (when composition changes)
+    """
+    __tablename__ = "index_divisors"
+    id         = Column(Integer, primary_key=True)
+    index_code = Column(String(16), unique=True, nullable=False, index=True)
+    divisor    = Column(Float, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow)
+
+
 def _get_db():
     return SessionLocal()
 
@@ -56,8 +75,8 @@ INDICES: dict[str, dict] = {
     "WBC50": {
         "name": "Wadsworth Blue-Chip 50",
         "code": "WBC-50",
-        "desc": "Top 50 companies by market capitalisation — public players and NPC businesses.",
-        "unit": "USD", "icon": "📈", "color": "#38bdf8",
+        "desc": "Top 50 companies by market capitalisation — public players and NPC businesses. Divisor-adjusted S&P-style index level (base 5,000).",
+        "unit": "pts", "icon": "📈", "color": "#38bdf8",
     },
     "GLVI": {
         "name": "Global Land Valuation Index",
@@ -198,6 +217,9 @@ def _fmt(value: float, unit: str, disp: dict | None = None) -> str:
         return f"${value:,.2f}"
     if unit == "%":
         return f"{value:.3f}%"
+    if unit == "pts":
+        # Index level (S&P-style points) — never abbreviate, always 2 decimals.
+        return f"{value:,.2f}"
     if unit == "ratio":
         return f"{value:.3f}×"
     if unit == "WSC":
@@ -220,85 +242,189 @@ def _clamp(v: float, lo: float, hi: float) -> float:
 # CALCULATION FUNCTIONS
 # ─────────────────────────────────────────────────────────────────────────────
 
-def calc_WBC50() -> tuple[float, dict]:
-    """Top-50 market cap sum — public companies + NPC private enterprises."""
+_WBC50_BASE_LEVEL = 5_000.0   # S&P-style anchor on first ever calculation
+
+
+def _get_wbc50_divisor(aggregate_cap: float) -> float:
+    """Return the current WBC-50 divisor, bootstrapping if it has never been set.
+
+    S&P 500 methodology: index level = aggregate_cap / divisor.
+    The divisor is adjusted whenever the composition changes (not when prices
+    move) so the index level is continuous. Stored in ``index_divisors`` so it
+    survives restarts.
+    """
+    db = _get_db()
     try:
-        from banks.brokerage_firm import CompanyShares, get_db as firm_db
-        db = firm_db()
+        row = db.query(IndexDivisor).filter(IndexDivisor.index_code == "WBC50").first()
+        if row is None:
+            # Bootstrap: choose the divisor that makes the level exactly 5,000.
+            divisor = aggregate_cap / _WBC50_BASE_LEVEL if aggregate_cap > 0 else 1.0
+            db.add(IndexDivisor(index_code="WBC50", divisor=divisor))
+            db.commit()
+            print(f"[WBC50] Divisor bootstrapped: {divisor:,.4f} (level → {_WBC50_BASE_LEVEL:.2f})")
+            return divisor
+        return float(row.divisor)
+    finally:
+        db.close()
+
+
+def _update_wbc50_divisor(new_cap: float, old_level: float) -> float:
+    """Recompute and persist the divisor so the new aggregate cap maps to the
+    same index level as the previous snapshot (composition-change adjustment)."""
+    new_divisor = new_cap / old_level if old_level > 0 else new_cap / _WBC50_BASE_LEVEL
+    db = _get_db()
+    try:
+        row = db.query(IndexDivisor).filter(IndexDivisor.index_code == "WBC50").first()
+        if row:
+            row.divisor = new_divisor
+            row.updated_at = datetime.utcnow()
+        else:
+            db.add(IndexDivisor(index_code="WBC50", divisor=new_divisor))
+        db.commit()
+    finally:
+        db.close()
+    return new_divisor
+
+
+def _collect_wbc50_caps() -> list[dict]:
+    """Gather market caps for all public companies + NPC private enterprises."""
+    from banks.brokerage_firm import CompanyShares, get_db as firm_db
+    db = firm_db()
+    try:
+        rows = (db.query(CompanyShares.ticker_symbol,
+                         CompanyShares.company_name,
+                         CompanyShares.shares_outstanding,
+                         CompanyShares.current_price)
+                .filter(CompanyShares.is_delisted == False)
+                .all())
+    finally:
+        db.close()
+    caps = [{"label": r.ticker_symbol, "name": r.company_name,
+             "value": r.shares_outstanding * r.current_price,
+             "is_public": True}
+            for r in rows if r.shares_outstanding and r.current_price]
+
+    # NPC players as private enterprise entries (cash + land value).
+    try:
+        from auth import Player
+        from land import LandPlot
+        db_main = _get_db()
         try:
-            rows = (db.query(CompanyShares.ticker_symbol,
-                             CompanyShares.company_name,
-                             CompanyShares.shares_outstanding,
-                             CompanyShares.current_price)
-                    .filter(CompanyShares.is_delisted == False)
-                    .all())
+            npc_players = db_main.query(Player).filter(Player.is_npc == True).all()
+            if npc_players:
+                npc_ids = [p.id for p in npc_players]
+                land_rows = (db_main.query(LandPlot.owner_id,
+                                           func.sum(LandPlot.monthly_tax * 120))
+                             .filter(LandPlot.owner_id.in_(npc_ids))
+                             .group_by(LandPlot.owner_id).all())
+                land_by_id = {row[0]: float(row[1] or 0.0) for row in land_rows}
+
+                # Value ALL currency holdings in USD (not just the USD row).
+                cash_by_id: dict = {}
+                from database import ReserveSessionLocal
+                from reserve_banks import PlayerCurrencyBalance, StateReserveBank
+                rdb = ReserveSessionLocal()
+                try:
+                    rates = {b.currency_code: float(b.usd_per_unit or 0.0)
+                             for b in rdb.query(StateReserveBank).all()}
+                    rates.setdefault("USD", 1.0)
+                    bal_rows = (rdb.query(PlayerCurrencyBalance.player_id,
+                                          PlayerCurrencyBalance.currency_code,
+                                          func.sum(PlayerCurrencyBalance.balance))
+                                .filter(PlayerCurrencyBalance.player_id.in_(npc_ids),
+                                        PlayerCurrencyBalance.balance > 0)
+                                .group_by(PlayerCurrencyBalance.player_id,
+                                          PlayerCurrencyBalance.currency_code)
+                                .all())
+                    for pid, ccode, amt in bal_rows:
+                        cash_by_id[pid] = (cash_by_id.get(pid, 0.0)
+                                           + float(amt or 0.0) * rates.get(ccode, 0.0))
+                finally:
+                    rdb.close()
+
+                for npc in npc_players:
+                    npc_val = cash_by_id.get(npc.id, 0.0) + land_by_id.get(npc.id, 0.0)
+                    if npc_val > 0:
+                        caps.append({"label": npc.business_name,
+                                     "name": npc.business_name,
+                                     "value": npc_val,
+                                     "is_public": False})
         finally:
-            db.close()
-        caps = [{"label": r.ticker_symbol, "name": r.company_name,
-                 "value": r.shares_outstanding * r.current_price}
-                for r in rows if r.shares_outstanding and r.current_price]
+            db_main.close()
+    except Exception as e:
+        print(f"[Indices] WBC50 NPC valuation error: {e}")
 
-        # Add NPC players as private enterprise entries (cash + land value)
-        try:
-            from auth import Player
-            from land import LandPlot
-            db_main = _get_db()
-            try:
-                npc_players = db_main.query(Player).filter(Player.is_npc == True).all()
-                if npc_players:
-                    npc_ids = [p.id for p in npc_players]
-                    land_rows = (db_main.query(LandPlot.owner_id,
-                                               func.sum(LandPlot.monthly_tax * 120))
-                                 .filter(LandPlot.owner_id.in_(npc_ids))
-                                 .group_by(LandPlot.owner_id).all())
-                    land_by_id = {row[0]: float(row[1] or 0.0) for row in land_rows}
+    return caps
 
-                    # Value ALL currency holdings in USD, not just the USD row.
-                    # get_usd_balance() only reads the USD balance — an NPC whose
-                    # legal tender was mandated to TRY/JPY/etc. would otherwise
-                    # appear worthless and silently drop out of the index. One
-                    # batch query instead of ~97 sequential sessions per snapshot.
-                    cash_by_id: dict = {}
-                    from database import ReserveSessionLocal
-                    from reserve_banks import PlayerCurrencyBalance, StateReserveBank
-                    rdb = ReserveSessionLocal()
-                    try:
-                        rates = {b.currency_code: float(b.usd_per_unit or 0.0)
-                                 for b in rdb.query(StateReserveBank).all()}
-                        rates.setdefault("USD", 1.0)
-                        bal_rows = (rdb.query(PlayerCurrencyBalance.player_id,
-                                              PlayerCurrencyBalance.currency_code,
-                                              func.sum(PlayerCurrencyBalance.balance))
-                                    .filter(PlayerCurrencyBalance.player_id.in_(npc_ids),
-                                            PlayerCurrencyBalance.balance > 0)
-                                    .group_by(PlayerCurrencyBalance.player_id,
-                                              PlayerCurrencyBalance.currency_code)
-                                    .all())
-                        for pid, ccode, amt in bal_rows:
-                            cash_by_id[pid] = (cash_by_id.get(pid, 0.0)
-                                               + float(amt or 0.0) * rates.get(ccode, 0.0))
-                    finally:
-                        rdb.close()
 
-                    for npc in npc_players:
-                        npc_val = cash_by_id.get(npc.id, 0.0) + land_by_id.get(npc.id, 0.0)
-                        if npc_val > 0:
-                            caps.append({"label": npc.business_name,
-                                         "name": npc.business_name,
-                                         "value": npc_val})
-            finally:
-                db_main.close()
-        except Exception as e:
-            print(f"[Indices] WBC50 NPC valuation error: {e}")
+def calc_WBC50() -> tuple[float, dict]:
+    """S&P 500-style divisor-adjusted index level for the top-50 constituents.
 
+    How it works (mirrors the S&P 500 methodology):
+      index_level  = aggregate_market_cap / divisor
+      divisor      = aggregate_cap / index_level           (rearranged)
+
+    The divisor is adjusted whenever the *composition* changes (a company
+    IPOs into or out of the top-50, a secondary offering/buyback changes
+    shares_outstanding, an NPC reshuffles the rankings) so the level is
+    continuous across those mechanical events. Pure price moves — a stock
+    trading up or down — flow through to the level without any divisor
+    adjustment, exactly as the S&P works.
+
+    Composition-change detection: compare the current constituent set
+    (ticker + shares_outstanding) with the previous snapshot's constituent
+    fingerprint stored in meta_json. A mismatch triggers a divisor update.
+    """
+    try:
+        caps = _collect_wbc50_caps()
         caps.sort(key=lambda x: x["value"], reverse=True)
         top50 = caps[:50]
-        total = sum(c["value"] for c in top50)
+        aggregate_cap = sum(c["value"] for c in top50)
+
+        if aggregate_cap <= 0:
+            return 0.0, {}
+
+        # --- Composition-change detection ---
+        # Fingerprint = frozenset of (label, shares_outstanding) for public
+        # companies, or (label,) for NPC entries. Any change → adjust divisor.
+        current_fp = frozenset(
+            (c["label"], round(c["value"], -2))   # round to nearest $100 to dampen NPC noise
+            for c in top50
+        )
+
+        prev_snap = _get_latest("WBC50")
+        divisor_adjusted = False
+        if prev_snap and prev_snap.meta_json:
+            try:
+                prev_meta = json.loads(prev_snap.meta_json)
+                prev_fp_raw = prev_meta.get("constituent_fp")
+                if prev_fp_raw is not None:
+                    prev_fp = frozenset(tuple(x) for x in prev_fp_raw)
+                    if prev_fp != current_fp:
+                        # Composition changed — hold the index level constant.
+                        _update_wbc50_divisor(aggregate_cap, float(prev_snap.value))
+                        divisor_adjusted = True
+            except Exception:
+                pass
+
+        divisor = _get_wbc50_divisor(aggregate_cap)
+        level = aggregate_cap / divisor
+
         breakdown = [{"label": c["label"], "value": round(c["value"], 2)} for c in top50[:15]]
         if len(top50) > 15:
-            rest = total - sum(b["value"] for b in breakdown)
+            rest = aggregate_cap - sum(b["value"] for b in breakdown)
             breakdown.append({"label": "Other", "value": round(rest, 2)})
-        return total, {"breakdown": breakdown, "total": total, "companies": len(top50)}
+
+        meta = {
+            "breakdown": breakdown,
+            "aggregate_cap": round(aggregate_cap, 2),
+            "divisor": round(divisor, 6),
+            "companies": len(top50),
+            "divisor_adjusted": divisor_adjusted,
+            # Serialisable constituent fingerprint for next-tick comparison.
+            "constituent_fp": [list(x) for x in current_fp],
+        }
+        return level, meta
     except Exception as e:
         print(f"[Indices] WBC50 error: {e}")
         return 0.0, {}
@@ -2391,14 +2517,33 @@ def _build_heatmap(code: str, breakdown: list[dict],
     if not breakdown:
         return '<p style="color:#64748b;font-size:.8rem;">No component data available.</p>'
 
+    # WBC-50 breakdown values are raw market caps (USD), not index points.
+    bar_unit = "USD" if code == "WBC50" else unit
+
     sorted_bd = sorted(breakdown, key=lambda b: abs(b["value"]), reverse=True)[:20]
     max_v = max(abs(b["value"]) for b in sorted_bd) or 1.0
+
+    # For WBC-50 add aggregate cap + divisor summary above the bars.
+    header_html = ""
+    if code == "WBC50":
+        agg = meta.get("aggregate_cap")
+        div = meta.get("divisor")
+        cos = meta.get("companies", len(sorted_bd))
+        if agg and div:
+            header_html = (
+                f'<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;'
+                f'font-size:.75rem;color:#94a3b8;">'
+                f'<span>Constituents: <strong style="color:#e2e8f0;">{cos}</strong></span>'
+                f'<span>Aggregate cap: <strong style="color:#38bdf8;">{_fmt(agg,"USD",disp)}</strong></span>'
+                f'<span>Divisor: <strong style="color:#94a3b8;">{div:,.4f}</strong></span>'
+                f'</div>'
+            )
 
     rows = ""
     for b in sorted_bd:
         ratio = abs(b["value"]) / max_v
         pct   = f"{ratio * 100:.0f}%"
-        val_disp = _fmt(b["value"], unit, disp)
+        val_disp = _fmt(b["value"], bar_unit, disp)
         rows += (
             f'<div class="bd-row">'
             f'<span class="bd-label" title="{b["label"]}">{b["label"][:16]}</span>'
@@ -2409,7 +2554,7 @@ def _build_heatmap(code: str, breakdown: list[dict],
             f'</div>'
         )
 
-    return f'<div class="bd-list">{rows}</div>'
+    return f'{header_html}<div class="bd-list">{rows}</div>'
 
 
 def _gfi_gauge(meta: dict) -> str:
