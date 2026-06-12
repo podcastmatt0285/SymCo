@@ -1,225 +1,353 @@
 {
-  "player_id": -2067,
   "business_name": "Vostok Arms Federation",
-  "description": "Russian multi-domain arms exporter producing AK-47s, AK-74Ms, T-90M Proryv and T-14 Armata tanks, Su-57 Felon and Su-35 Flanker jets, and Ka-52 Alligator and Mi-24 Hind attack helicopters.",
-  "cash_caps": {
-    "hard_high": 200000000,
-    "soft_high": 90000000,
-    "soft_low": 25000000,
-    "hard_low": 8000000
-  },
-  "seed": {
-    "starting_cash": 50000000,
-    "land_plots": [],
-    "districts": [
-      {
-        "district_type": "military",
-        "size": 4,
-        "plots_merged": 4
-      },
-      {
-        "district_type": "aerospace",
-        "size": 3,
-        "plots_merged": 3
-      }
-    ]
-  },
   "businesses": [
     {
+      "active_lines": [
+        "ak_47",
+        "ak_74m",
+        "machine_gun",
+        "ammunition",
+        "grenade",
+        "missile"
+      ],
       "business_type": "weapons_factory",
-      "district_seed_index": 0,
-      "active_lines": ["ak_47", "ak_74m", "machine_gun", "ammunition", "grenade", "missile"]
+      "district_seed_index": 0
     },
     {
+      "active_lines": [
+        "t90m_proryv",
+        "t14_armata",
+        "humvee",
+        "military_truck"
+      ],
       "business_type": "military_vehicle_plant",
-      "district_seed_index": 0,
-      "active_lines": ["t90m_proryv", "t14_armata", "humvee", "military_truck"]
+      "district_seed_index": 0
     },
     {
+      "active_lines": [
+        "su57_felon",
+        "su35_flanker",
+        "mig29_fulcrum",
+        "ka52_alligator",
+        "mi24_hind",
+        "jet_airframe",
+        "helicopter_rotor"
+      ],
       "business_type": "military_aircraft_plant",
-      "district_seed_index": 1,
-      "active_lines": ["su57_felon", "su35_flanker", "mig29_fulcrum", "ka52_alligator", "mi24_hind", "jet_airframe", "helicopter_rotor"]
+      "district_seed_index": 1
     }
   ],
   "buy_items": {
-    "rifle_barrel": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
+    "altay_tank": {
+      "market": "district",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 1,
+      "target_inventory": 5
     },
-    "rifle_receiver": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
+    "arjun_mk2": {
+      "market": "district",
       "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "steel": {
-      "target_inventory": 20000,
-      "reorder_at": 4000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "tank_hull": {
-      "target_inventory": 20,
-      "reorder_at": 4,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "tank_turret": {
-      "target_inventory": 20,
-      "reorder_at": 4,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "tank_cannon": {
-      "target_inventory": 20,
-      "reorder_at": 4,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "diesel_engine": {
-      "target_inventory": 50,
-      "reorder_at": 10,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "explosive_reactive_armor": {
-      "target_inventory": 200,
-      "reorder_at": 40,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "turbojet_engine": {
-      "target_inventory": 30,
-      "reorder_at": 6,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "turbofan_engine": {
-      "target_inventory": 30,
-      "reorder_at": 6,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 1,
+      "target_inventory": 5
     },
     "avionics_suite": {
-      "target_inventory": 20,
-      "reorder_at": 4,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "fire_control_system": {
-      "target_inventory": 20,
       "reorder_at": 4,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
+      "target_inventory": 20
     },
-    "ejection_seat": {
-      "target_inventory": 30,
-      "reorder_at": 6,
+    "baynunah_corvette": {
+      "market": "district",
       "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "radar_system": {
-      "target_inventory": 20,
-      "reorder_at": 4,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "missile": {
-      "target_inventory": 200,
-      "reorder_at": 40,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "titanium_alloy": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 1,
+      "target_inventory": 5
     },
     "carbon_fiber": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "charles_degaulle_carrier": {
+      "market": "district",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "diesel_engine": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 10,
+      "target_inventory": 50
     },
     "duralumin": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "rdx_explosive": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "grenade_body": {
-      "target_inventory": 3000,
       "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "ejection_seat": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 6,
+      "target_inventory": 30
     },
     "energy": {
-      "target_inventory": 2000000,
-      "reorder_at": 400000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 400000,
+      "target_inventory": 2000000
+    },
+    "eurofighter_typhoon": {
+      "market": "district",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "explosive_reactive_armor": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 40,
+      "target_inventory": 200
+    },
+    "fire_control_system": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 4,
+      "target_inventory": 20
+    },
+    "firing_range": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "grenade_body": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "hal_dhruv": {
+      "market": "district",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "hk_g36": {
+      "market": "district",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 6,
+      "target_inventory": 26
+    },
+    "incendiary_rocket": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "j16_flanker": {
+      "market": "district",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "kdx3_destroyer": {
+      "market": "district",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "leopard_2a7": {
+      "market": "district",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "missile": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 40,
+      "target_inventory": 200
+    },
+    "obstacle_course": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
     },
     "paper": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "radar_system": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 4,
+      "target_inventory": 20
+    },
+    "rdx_explosive": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "rifle": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 8,
+      "target_inventory": 33
+    },
+    "rifle_barrel": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "rifle_receiver": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "special_munitions_kit": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "steel": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 4000,
+      "target_inventory": 20000
+    },
+    "tai_tfx": {
+      "market": "district",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "tank_cannon": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 4,
+      "target_inventory": 20
+    },
+    "tank_hull": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 4,
+      "target_inventory": 20
+    },
+    "tank_turret": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 4,
+      "target_inventory": 20
+    },
+    "titanium_alloy": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "turbofan_engine": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 6,
+      "target_inventory": 30
+    },
+    "turbojet_engine": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 6,
+      "target_inventory": 30
+    },
+    "type10_tank": {
+      "market": "district",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "visakhapatnam_destroyer": {
+      "market": "district",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
     }
+  },
+  "cash_caps": {
+    "hard_high": 200000000,
+    "hard_low": 8000000,
+    "soft_high": 90000000,
+    "soft_low": 25000000
+  },
+  "description": "Russian multi-domain arms exporter producing AK-47s, AK-74Ms, T-90M Proryv and T-14 Armata tanks, Su-57 Felon and Su-35 Flanker jets, and Ka-52 Alligator and Mi-24 Hind attack helicopters.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "VSTK",
+    "total_shares": 1000000
+  },
+  "player_id": -2067,
+  "seed": {
+    "districts": [
+      {
+        "district_type": "military",
+        "plots_merged": 4,
+        "size": 4
+      },
+      {
+        "district_type": "aerospace",
+        "plots_merged": 3,
+        "size": 3
+      }
+    ],
+    "land_plots": [],
+    "starting_cash": 50000000
   },
   "sell_items": {
     "ak_47": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 500,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "ak_74m": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 500,
-      "market": "regular"
-    },
-    "t90m_proryv": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 10,
-      "market": "regular"
-    },
-    "t14_armata": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 5,
-      "market": "regular"
-    },
-    "su57_felon": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 5,
-      "market": "regular"
-    },
-    "su35_flanker": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 10,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "ka52_alligator": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 10,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "mi24_hind": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 10,
-      "market": "regular"
+      "min_inventory_to_keep": 0
+    },
+    "su35_flanker": {
+      "market": "regular",
+      "max_order_quantity": 10,
+      "min_inventory_to_keep": 0
+    },
+    "su57_felon": {
+      "market": "regular",
+      "max_order_quantity": 5,
+      "min_inventory_to_keep": 0
+    },
+    "t14_armata": {
+      "market": "regular",
+      "max_order_quantity": 5,
+      "min_inventory_to_keep": 0
+    },
+    "t90m_proryv": {
+      "market": "regular",
+      "max_order_quantity": 10,
+      "min_inventory_to_keep": 0
     }
-  },
-  "ipo": {
-    "ticker": "VSTK",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

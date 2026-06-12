@@ -1,94 +1,142 @@
 {
-  "player_id": -2091,
   "business_name": "Umami Craft Co.",
-  "description": "Sake brewer and commercial dive operator supplying the two hardest-to-source sushi bar ingredients: sake (from traditional rice fermentation) and fresh sea urchin (hand-harvested by professional divers). Together with Pacific Harvest Seafood, completes the sushi bar supply chain.",
-  "cash_caps": {
-    "hard_high": 20000000,
-    "soft_high": 8000000,
-    "soft_low": 2000000,
-    "hard_low": 600000
-  },
-  "seed": {
-    "starting_cash": 4000000,
-    "land_plots": [
-      { "terrain_type": "urban",   "proximity_features": ["riverside"], "size": 1 },
-      { "terrain_type": "urban",   "proximity_features": ["riverside"], "size": 1 },
-      { "terrain_type": "coastal", "proximity_features": ["coastal"],   "size": 1 },
-      { "terrain_type": "coastal", "proximity_features": ["coastal"],   "size": 1 }
-    ],
-    "districts": []
-  },
   "businesses": [
-    { "business_type": "sake_brewery",    "district_id": null, "active_lines": ["sake"] },
-    { "business_type": "sake_brewery",    "district_id": null, "active_lines": ["sake"] },
-    { "business_type": "dive_operations", "district_id": null, "active_lines": ["urchin"] },
-    { "business_type": "dive_operations", "district_id": null, "active_lines": ["urchin"] }
+    {
+      "active_lines": [
+        "sake"
+      ],
+      "business_type": "sake_brewery",
+      "district_id": null
+    },
+    {
+      "active_lines": [
+        "sake"
+      ],
+      "business_type": "sake_brewery",
+      "district_id": null
+    },
+    {
+      "active_lines": [
+        "urchin"
+      ],
+      "business_type": "dive_operations",
+      "district_id": null
+    },
+    {
+      "active_lines": [
+        "urchin"
+      ],
+      "business_type": "dive_operations",
+      "district_id": null
+    }
   ],
   "buy_items": {
-    "rice": {
-      "target_inventory": 30000,
-      "reorder_at": 7000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "water": {
-      "target_inventory": 20000,
-      "reorder_at": 5000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
-    "yeast": {
-      "target_inventory": 2000,
-      "reorder_at": 500,
+    "bio_fuel": {
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 1200,
+      "target_inventory": 5000
     },
     "bottle": {
-      "target_inventory": 20000,
-      "reorder_at": 5000,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
-    "bio_fuel": {
-      "target_inventory": 5000,
-      "reorder_at": 1200,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 5000,
+      "target_inventory": 20000
     },
     "dive_vessel": {
-      "target_inventory": 20,
-      "reorder_at": 5,
+      "market": "regular",
       "max_price_multiplier": 1.2,
-      "market": "regular"
+      "reorder_at": 5,
+      "target_inventory": 20
     },
     "energy": {
-      "target_inventory": 20000,
-      "reorder_at": 5000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 5000,
+      "target_inventory": 20000
     },
     "paper": {
-      "target_inventory": 3000,
-      "reorder_at": 700,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 700,
+      "target_inventory": 3000
+    },
+    "rice": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 7000,
+      "target_inventory": 30000
+    },
+    "water": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 5000,
+      "target_inventory": 20000
+    },
+    "yeast": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 500,
+      "target_inventory": 2000
     }
+  },
+  "cash_caps": {
+    "hard_high": 20000000,
+    "hard_low": 600000,
+    "soft_high": 8000000,
+    "soft_low": 2000000
+  },
+  "description": "Sake brewer and commercial dive operator supplying the two hardest-to-source sushi bar ingredients: sake (from traditional rice fermentation) and fresh sea urchin (hand-harvested by professional divers). Together with Pacific Harvest Seafood, completes the sushi bar supply chain.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "UMAI",
+    "total_shares": 1000000
+  },
+  "player_id": -2091,
+  "seed": {
+    "districts": [],
+    "land_plots": [
+      {
+        "proximity_features": [
+          "riverside"
+        ],
+        "size": 1,
+        "terrain_type": "urban"
+      },
+      {
+        "proximity_features": [
+          "riverside"
+        ],
+        "size": 1,
+        "terrain_type": "urban"
+      },
+      {
+        "proximity_features": [
+          "coastal"
+        ],
+        "size": 1,
+        "terrain_type": "coastal"
+      },
+      {
+        "proximity_features": [
+          "coastal"
+        ],
+        "size": 1,
+        "terrain_type": "coastal"
+      }
+    ],
+    "starting_cash": 4000000
   },
   "sell_items": {
     "sake": {
-      "min_inventory_to_keep": 100,
+      "market": "regular",
       "max_order_quantity": 2000,
-      "market": "regular"
+      "min_inventory_to_keep": 100
     },
     "urchin": {
-      "min_inventory_to_keep": 50,
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 50
     }
-  },
-  "ipo": {
-    "ticker": "UMAI",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

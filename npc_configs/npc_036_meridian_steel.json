@@ -1,24 +1,5 @@
 {
-  "player_id": -2036,
   "business_name": "Meridian Steel Works",
-  "description": "Heavy industrial steel and aluminum complex. Converts iron ore and coal into structural steel, rebar, and aluminum ingots \u2014 the foundational metals for construction, vehicle manufacturing, defense, and every metal-dependent district operation.",
-  "cash_caps": {
-    "hard_high": 60000000,
-    "soft_high": 25000000,
-    "soft_low": 6000000,
-    "hard_low": 2000000
-  },
-  "seed": {
-    "starting_cash": 12000000,
-    "land_plots": [],
-    "districts": [
-      {
-        "district_type": "industrial",
-        "size": 4,
-        "plots_merged": 4
-      }
-    ]
-  },
   "businesses": [
     {
       "business_type": "steel_mill",
@@ -30,75 +11,340 @@
     }
   ],
   "buy_items": {
-    "iron_ore": {
-      "target_inventory": 15000,
-      "reorder_at": 3000,
+    "3d_printer_industrial": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 1,
+      "target_inventory": 5
     },
-    "coal": {
-      "target_inventory": 10000,
-      "reorder_at": 2000,
+    "5g_antenna": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "energy": {
-      "target_inventory": 500000,
-      "reorder_at": 100000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "water": {
-      "target_inventory": 30000,
-      "reorder_at": 6000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
-    "paper": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 125,
+      "target_inventory": 500
     },
     "bauxite": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "beryllium": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 5,
+      "target_inventory": 20
+    },
+    "boron": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 14,
+      "target_inventory": 59
+    },
+    "bulk_industrial_pallet": {
+      "market": "district",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 13,
+      "target_inventory": 53
     },
     "caustic_soda": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "cell_tower_kit": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "cnc_machine": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "coal": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 2000,
+      "target_inventory": 10000
+    },
+    "composite_alloy": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 9,
+      "target_inventory": 39
+    },
+    "cryogenic_tank": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "dialysis_machine": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "drone_avionics": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 2,
+      "target_inventory": 9
+    },
+    "dysprosium": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 7
+    },
+    "energy": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 100000,
+      "target_inventory": 500000
+    },
+    "feeding_station": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 4,
+      "target_inventory": 19
+    },
+    "fiber_optic_cable": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 7,
+      "target_inventory": 29
+    },
+    "germanium": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 7
+    },
+    "habitat_landscape": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 7
+    },
+    "hdd_platter": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "helicopter_rotor": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "inconel": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 33,
+      "target_inventory": 133
+    },
+    "industrial_heater": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 2,
+      "target_inventory": 8
+    },
+    "inertial_nav_unit": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 2,
+      "target_inventory": 9
+    },
+    "iron_ore": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 3000,
+      "target_inventory": 15000
+    },
+    "jet_turbine_blade": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 4,
+      "target_inventory": 18
+    },
+    "lidar_sensor": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "mri_machine": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "niobium": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 2,
+      "target_inventory": 8
+    },
+    "optical_interferometer": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "paper": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "pcb_substrate": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 39,
+      "target_inventory": 158
+    },
+    "penguin": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 3,
+      "target_inventory": 13
+    },
+    "praseodymium": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 4,
+      "target_inventory": 18
+    },
+    "quantum_bit": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "radio_dish": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "ruby_laser": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 3,
+      "target_inventory": 15
+    },
+    "samarium": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 2,
+      "target_inventory": 10
+    },
+    "sapphire_wafer": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "selenium": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 6
+    },
+    "server_rack": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "software_license": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 100,
+      "target_inventory": 400
+    },
+    "submarine_hull": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
     },
     "sulfuric_acid": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "surgical_robot": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "tellurium": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "undersea_cable_segment": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "water": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 6000,
+      "target_inventory": 30000
     }
+  },
+  "cash_caps": {
+    "hard_high": 60000000,
+    "hard_low": 2000000,
+    "soft_high": 25000000,
+    "soft_low": 6000000
+  },
+  "description": "Heavy industrial steel and aluminum complex. Converts iron ore and coal into structural steel, rebar, and aluminum ingots \u2014 the foundational metals for construction, vehicle manufacturing, defense, and every metal-dependent district operation.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "MDSW",
+    "total_shares": 1000000
+  },
+  "player_id": -2036,
+  "seed": {
+    "districts": [
+      {
+        "district_type": "industrial",
+        "plots_merged": 4,
+        "size": 4
+      }
+    ],
+    "land_plots": [],
+    "starting_cash": 12000000
   },
   "sell_items": {
-    "steel": {
-      "min_inventory_to_keep": 500,
-      "max_order_quantity": 3000,
-      "market": "regular"
+    "aluminum": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 300
     },
     "rebar": {
-      "min_inventory_to_keep": 200,
+      "market": "regular",
       "max_order_quantity": 1500,
-      "market": "regular"
+      "min_inventory_to_keep": 200
     },
-    "aluminum": {
-      "min_inventory_to_keep": 300,
-      "max_order_quantity": 2000,
-      "market": "regular"
+    "steel": {
+      "market": "regular",
+      "max_order_quantity": 3000,
+      "min_inventory_to_keep": 500
     }
-  },
-  "ipo": {
-    "ticker": "MDSW",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

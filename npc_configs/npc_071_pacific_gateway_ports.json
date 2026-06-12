@@ -1,101 +1,105 @@
 {
-  "player_id": -2071,
   "business_name": "Pacific Gateway Ports",
-  "description": "Port logistics company operating dock berth leases, port logistics packages, and customs clearance services from a shipyard district on the Pacific coast.",
-  "cash_caps": {
-    "hard_high": 50000000,
-    "soft_high": 22000000,
-    "soft_low": 7000000,
-    "hard_low": 2000000
-  },
-  "seed": {
-    "starting_cash": 12000000,
-    "land_plots": [],
-    "districts": [
-      {
-        "district_type": "shipyard",
-        "size": 4,
-        "plots_merged": 4
-      }
-    ]
-  },
   "businesses": [
     {
+      "active_lines": [
+        "dock_berth_lease",
+        "port_logistics_package",
+        "customs_clearance_service"
+      ],
       "business_type": "seaport_operations_hub",
-      "district_seed_index": 0,
-      "active_lines": ["dock_berth_lease", "port_logistics_package", "customs_clearance_service"]
+      "district_seed_index": 0
     }
   ],
   "buy_items": {
-    "steel": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
     "concrete": {
-      "target_inventory": 2000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 400,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "marine_fuel": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "shipping_container": {
-      "target_inventory": 200,
-      "reorder_at": 40,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "freight_manifest": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
-    "refrigerated_container": {
-      "target_inventory": 50,
-      "reorder_at": 10,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 2000
     },
     "energy": {
-      "target_inventory": 500000,
-      "reorder_at": 100000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 100000,
+      "target_inventory": 500000
+    },
+    "freight_manifest": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "marine_fuel": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
     },
     "paper": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "refrigerated_container": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 10,
+      "target_inventory": 50
+    },
+    "shipping_container": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 40,
+      "target_inventory": 200
+    },
+    "steel": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 400,
+      "target_inventory": 2000
     }
+  },
+  "cash_caps": {
+    "hard_high": 50000000,
+    "hard_low": 2000000,
+    "soft_high": 22000000,
+    "soft_low": 7000000
+  },
+  "description": "Port logistics company operating dock berth leases, port logistics packages, and customs clearance services from a shipyard district on the Pacific coast.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "PCGP",
+    "total_shares": 1000000
+  },
+  "player_id": -2071,
+  "seed": {
+    "districts": [
+      {
+        "district_type": "shipyard",
+        "plots_merged": 4,
+        "size": 4
+      }
+    ],
+    "land_plots": [],
+    "starting_cash": 12000000
   },
   "sell_items": {
+    "customs_clearance_service": {
+      "market": "district",
+      "max_order_quantity": 300,
+      "min_inventory_to_keep": 0
+    },
     "dock_berth_lease": {
-      "min_inventory_to_keep": 0,
+      "market": "district",
       "max_order_quantity": 100,
-      "market": "district"
+      "min_inventory_to_keep": 0
     },
     "port_logistics_package": {
-      "min_inventory_to_keep": 0,
+      "market": "district",
       "max_order_quantity": 200,
-      "market": "district"
-    },
-    "customs_clearance_service": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 300,
-      "market": "district"
+      "min_inventory_to_keep": 0
     }
-  },
-  "ipo": {
-    "ticker": "PCGP",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

@@ -1,295 +1,435 @@
 {
-  "player_id": -2021,
   "business_name": "Leaf & Vine Industries",
-  "description": "Vertically integrated tobacco and spirits producer. Grows Virginia and specialty tobaccos, cures and blends leaf for cigarette manufacture, and operates a winery and distillery producing wine, gin, vodka, whiskey, rum, brandy, and related spirits.",
-  "cash_caps": {
-    "hard_high": 50000000,
-    "soft_high": 20000000,
-    "soft_low": 5000000,
-    "hard_low": 1500000
-  },
-  "seed": {
-    "starting_cash": 10000000,
-    "land_plots": [
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "hills",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "hills",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "urban",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "urban",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      }
-    ]
-  },
   "businesses": [
     {
+      "active_lines": [],
       "business_type": "virginia_tobacco_farm",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "specialty_tobacco_farm",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "tobacco_curing_house",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "cigarette_factory",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "winery",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "distillery",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     }
   ],
   "buy_items": {
-    "tobacco_seeds": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "burley_leaf": {
-      "target_inventory": 8000,
-      "reorder_at": 1600,
+    "aromatic_pipe_tobacco": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "oriental_leaf": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "grapes": {
-      "target_inventory": 10000,
-      "reorder_at": 2000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 500,
+      "target_inventory": 2000
     },
     "bottle": {
-      "target_inventory": 20000,
+      "market": "regular",
+      "max_price_multiplier": 1.05,
       "reorder_at": 4000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
-    "wine_barrel": {
-      "target_inventory": 200,
-      "reorder_at": 40,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "malt": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "potatoes": {
-      "target_inventory": 8000,
-      "reorder_at": 1600,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
-    "corn": {
-      "target_inventory": 8000,
-      "reorder_at": 1600,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
-    "rum_molasses": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "sugar": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
-    "water": {
-      "target_inventory": 30000,
-      "reorder_at": 6000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
-    "energy": {
-      "target_inventory": 40000,
-      "reorder_at": 8000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "paper": {
-      "target_inventory": 50000,
-      "reorder_at": 10000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
-    "mint": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "cotton": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "isinglass": {
-      "target_inventory": 500,
-      "reorder_at": 100,
-      "max_price_multiplier": 1.2,
-      "market": "regular"
-    },
-    "juniper_berries": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    }
-  },
-  "sell_items": {
-    "virginia_leaf": {
-      "min_inventory_to_keep": 2000,
-      "max_order_quantity": 5000,
-      "market": "regular"
+      "target_inventory": 20000
     },
     "burley_leaf": {
-      "min_inventory_to_keep": 1000,
-      "max_order_quantity": 3000,
-      "market": "regular"
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1600,
+      "target_inventory": 8000
+    },
+    "churchill_cigar": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 70,
+      "target_inventory": 280
+    },
+    "corn": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 1600,
+      "target_inventory": 8000
+    },
+    "cotton": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "cuban_style_cigar": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 44,
+      "target_inventory": 176
+    },
+    "energy": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 8000,
+      "target_inventory": 40000
+    },
+    "english_blend_pipe_tobacco": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 64,
+      "target_inventory": 257
+    },
+    "grapes": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 2000,
+      "target_inventory": 10000
+    },
+    "hookah_tobacco": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 106,
+      "target_inventory": 424
+    },
+    "isinglass": {
+      "market": "regular",
+      "max_price_multiplier": 1.2,
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "juniper_berries": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "malt": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "mint": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 600,
+      "target_inventory": 3000
     },
     "oriental_leaf": {
-      "min_inventory_to_keep": 1000,
-      "max_order_quantity": 2000,
-      "market": "regular"
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
     },
-    "cured_tobacco": {
-      "min_inventory_to_keep": 1000,
+    "paper": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 10000,
+      "target_inventory": 50000
+    },
+    "potatoes": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 1600,
+      "target_inventory": 8000
+    },
+    "robusto_cigar": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 145,
+      "target_inventory": 583
+    },
+    "rum_molasses": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "snuff": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 368,
+      "target_inventory": 1473
+    },
+    "sugar": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "tobacco_seeds": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "virginia_pipe_tobacco": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 99,
+      "target_inventory": 396
+    },
+    "water": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 6000,
+      "target_inventory": 30000
+    },
+    "wine_barrel": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 40,
+      "target_inventory": 200
+    }
+  },
+  "cash_caps": {
+    "hard_high": 50000000,
+    "hard_low": 1500000,
+    "soft_high": 20000000,
+    "soft_low": 5000000
+  },
+  "description": "Vertically integrated tobacco and spirits producer. Grows Virginia and specialty tobaccos, cures and blends leaf for cigarette manufacture, and operates a winery and distillery producing wine, gin, vodka, whiskey, rum, brandy, and related spirits.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "LVND",
+    "total_shares": 1000000
+  },
+  "player_id": -2021,
+  "seed": {
+    "land_plots": [
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "hills"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "hills"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "urban"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "urban"
+      }
+    ],
+    "starting_cash": 10000000
+  },
+  "sell_items": {
+    "air_cured_tobacco": {
+      "market": "regular",
       "max_order_quantity": 3000,
-      "market": "regular"
-    },
-    "cigarettes": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 5000,
-      "market": "regular"
-    },
-    "cigars": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "pipe_tobacco": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "wine": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 3000,
-      "market": "regular"
+      "min_inventory_to_keep": 500
     },
     "brandy": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
+    },
+    "burley_leaf": {
+      "market": "regular",
+      "max_order_quantity": 3000,
+      "min_inventory_to_keep": 1000
+    },
+    "cavendish_leaf": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 500
+    },
+    "cavendish_tobacco": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 300
+    },
+    "champagne": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "cigarette": {
+      "market": "regular",
+      "max_order_quantity": 5000,
+      "min_inventory_to_keep": 0
+    },
+    "cigarettes": {
+      "market": "regular",
+      "max_order_quantity": 5000,
+      "min_inventory_to_keep": 0
+    },
+    "cigarillo": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "cigars": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "clove_cigarette": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "cured_tobacco": {
+      "market": "regular",
+      "max_order_quantity": 3000,
+      "min_inventory_to_keep": 1000
+    },
+    "fire_cured_tobacco": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 300
+    },
+    "flue_cured_tobacco": {
+      "market": "regular",
+      "max_order_quantity": 3000,
+      "min_inventory_to_keep": 500
     },
     "gin": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 1500,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
-    "vodka": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1500,
-      "market": "regular"
+    "latakia_leaf": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 500
     },
-    "whiskey": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1500,
-      "market": "regular"
+    "menthol_cigarette": {
+      "market": "regular",
+      "max_order_quantity": 3000,
+      "min_inventory_to_keep": 0
+    },
+    "moonshine": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "oriental_leaf": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 1000
+    },
+    "perique_leaf": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 500
+    },
+    "perique_tobacco": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 200
+    },
+    "pipe_tobacco": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "red_wine": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 0
+    },
+    "rose_wine": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
     },
     "rum": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 1500,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
-    "moonshine": { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
-    "tobacco_seeds": { "min_inventory_to_keep": 500, "max_order_quantity": 2000, "market": "regular" },
-    "tobacco_flower": { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
-    "latakia_leaf": { "min_inventory_to_keep": 500, "max_order_quantity": 2000, "market": "regular" },
-    "perique_leaf": { "min_inventory_to_keep": 500, "max_order_quantity": 2000, "market": "regular" },
-    "cavendish_leaf": { "min_inventory_to_keep": 500, "max_order_quantity": 2000, "market": "regular" },
-    "flue_cured_tobacco": { "min_inventory_to_keep": 500, "max_order_quantity": 3000, "market": "regular" },
-    "air_cured_tobacco": { "min_inventory_to_keep": 500, "max_order_quantity": 3000, "market": "regular" },
-    "fire_cured_tobacco": { "min_inventory_to_keep": 300, "max_order_quantity": 2000, "market": "regular" },
-    "sun_cured_tobacco": { "min_inventory_to_keep": 300, "max_order_quantity": 2000, "market": "regular" },
-    "cavendish_tobacco": { "min_inventory_to_keep": 300, "max_order_quantity": 2000, "market": "regular" },
-    "perique_tobacco": { "min_inventory_to_keep": 200, "max_order_quantity": 1000, "market": "regular" },
-    "cigarette": { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "virginia_cigarette": { "min_inventory_to_keep": 0, "max_order_quantity": 3000, "market": "regular" },
-    "menthol_cigarette": { "min_inventory_to_keep": 0, "max_order_quantity": 3000, "market": "regular" },
-    "turkish_cigarette": { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
-    "clove_cigarette": { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
-    "cigarillo": { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
-    "red_wine": { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
-    "white_wine": { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
-    "rose_wine": { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
-    "champagne": { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
-    "vinegar": { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" }
-  },
-  "ipo": {
-    "ticker": "LVND",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
+    "sun_cured_tobacco": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 300
+    },
+    "tobacco_flower": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "tobacco_seeds": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 500
+    },
+    "turkish_cigarette": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 0
+    },
+    "vinegar": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 0
+    },
+    "virginia_cigarette": {
+      "market": "regular",
+      "max_order_quantity": 3000,
+      "min_inventory_to_keep": 0
+    },
+    "virginia_leaf": {
+      "market": "regular",
+      "max_order_quantity": 5000,
+      "min_inventory_to_keep": 2000
+    },
+    "vodka": {
+      "market": "regular",
+      "max_order_quantity": 1500,
+      "min_inventory_to_keep": 0
+    },
+    "whiskey": {
+      "market": "regular",
+      "max_order_quantity": 1500,
+      "min_inventory_to_keep": 0
+    },
+    "white_wine": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 0
+    },
+    "wine": {
+      "market": "regular",
+      "max_order_quantity": 3000,
+      "min_inventory_to_keep": 0
+    }
   }
 }

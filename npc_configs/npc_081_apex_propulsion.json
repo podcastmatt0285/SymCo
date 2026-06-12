@@ -1,31 +1,111 @@
 {
-  "player_id": -2081,
   "business_name": "Apex Propulsion Systems",
-  "description": "Aerospace and defense propulsion manufacturer producing turbofan engines, turbojet engines, and diesel engines for military aircraft, naval vessels, and armored vehicles.",
-  "cash_caps": {"hard_high": 80000000, "soft_high": 35000000, "soft_low": 10000000, "hard_low": 3000000},
-  "seed": {
-    "starting_cash": 20000000,
-    "land_plots": [],
-    "districts": [{"district_type": "aerospace", "size": 4, "plots_merged": 4}]
-  },
   "businesses": [
-    {"business_type": "defense_electronics_factory", "district_seed_index": 0, "active_lines": ["turbofan_engine", "turbojet_engine", "ejection_seat"]},
-    {"business_type": "engine_plant", "district_seed_index": 0, "active_lines": ["engine", "engine_block"]}
+    {
+      "active_lines": [
+        "turbofan_engine",
+        "turbojet_engine",
+        "ejection_seat"
+      ],
+      "business_type": "defense_electronics_factory",
+      "district_seed_index": 0
+    },
+    {
+      "active_lines": [
+        "engine",
+        "engine_block"
+      ],
+      "business_type": "engine_plant",
+      "district_seed_index": 0
+    }
   ],
   "buy_items": {
-    "titanium_alloy": {"target_inventory": 5000, "reorder_at": 1000, "max_price_multiplier": 1.1, "market": "regular"},
-    "carbon_fiber": {"target_inventory": 3000, "reorder_at": 600, "max_price_multiplier": 1.1, "market": "regular"},
-    "copper_wire": {"target_inventory": 3000, "reorder_at": 600, "max_price_multiplier": 1.1, "market": "regular"},
-    "steel": {"target_inventory": 10000, "reorder_at": 2000, "max_price_multiplier": 1.1, "market": "regular"},
-    "energy": {"target_inventory": 1000000, "reorder_at": 200000, "max_price_multiplier": 1.1, "market": "regular"},
-    "paper": {"target_inventory": 5000, "reorder_at": 1000, "max_price_multiplier": 1.05, "market": "regular"}
+    "carbon_fiber": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "copper_wire": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "energy": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 200000,
+      "target_inventory": 1000000
+    },
+    "paper": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "steel": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 2000,
+      "target_inventory": 10000
+    },
+    "titanium_alloy": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    }
+  },
+  "cash_caps": {
+    "hard_high": 80000000,
+    "hard_low": 3000000,
+    "soft_high": 35000000,
+    "soft_low": 10000000
+  },
+  "description": "Aerospace and defense propulsion manufacturer producing turbofan engines, turbojet engines, and diesel engines for military aircraft, naval vessels, and armored vehicles.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "AXPS",
+    "total_shares": 1000000
+  },
+  "player_id": -2081,
+  "seed": {
+    "districts": [
+      {
+        "district_type": "aerospace",
+        "plots_merged": 4,
+        "size": 4
+      }
+    ],
+    "land_plots": [],
+    "starting_cash": 20000000
   },
   "sell_items": {
-    "turbofan_engine": {"min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular"},
-    "turbojet_engine": {"min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular"},
-    "ejection_seat": {"min_inventory_to_keep": 10, "max_order_quantity": 50, "market": "regular"},
-    "engine": {"min_inventory_to_keep": 10, "max_order_quantity": 50, "market": "regular"},
-    "engine_block": {"min_inventory_to_keep": 20, "max_order_quantity": 100, "market": "regular"}
-  },
-  "ipo": {"ticker": "AXPS", "total_shares": 1000000, "shares_to_offer": 600000}
+    "ejection_seat": {
+      "market": "regular",
+      "max_order_quantity": 50,
+      "min_inventory_to_keep": 10
+    },
+    "engine": {
+      "market": "regular",
+      "max_order_quantity": 50,
+      "min_inventory_to_keep": 10
+    },
+    "engine_block": {
+      "market": "regular",
+      "max_order_quantity": 100,
+      "min_inventory_to_keep": 20
+    },
+    "turbofan_engine": {
+      "market": "regular",
+      "max_order_quantity": 20,
+      "min_inventory_to_keep": 5
+    },
+    "turbojet_engine": {
+      "market": "regular",
+      "max_order_quantity": 20,
+      "min_inventory_to_keep": 5
+    }
+  }
 }

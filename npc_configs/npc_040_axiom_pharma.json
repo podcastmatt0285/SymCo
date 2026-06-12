@@ -1,49 +1,15 @@
 {
-  "player_id": -2040,
   "business_name": "Axiom Pharmaceuticals",
-  "description": "Integrated pharmaceutical manufacturer. Synthesizes active ingredients in on-site labs, then processes them into the full range of prescription drugs, vaccines, and medical consumables. Also runs a medical supplies factory producing surgical gloves, syringes, IV bags, and gauze for hospitals.",
-  "cash_caps": {
-    "hard_high": 80000000,
-    "soft_high": 35000000,
-    "soft_low": 10000000,
-    "hard_low": 3000000
-  },
-  "seed": {
-    "starting_cash": 18000000,
-    "land_plots": [
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      }
-    ],
-    "districts": [
-      {
-        "district_type": "medical",
-        "size": 4,
-        "plots_merged": 4
-      }
-    ]
-  },
   "businesses": [
     {
+      "active_lines": [],
       "business_type": "pharmaceutical_lab",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "pharmaceutical_lab",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
       "business_type": "pharmaceutical_plant",
@@ -55,345 +21,443 @@
     }
   ],
   "buy_items": {
-    "bio_fuel": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "urchin": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "pill_bottle": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "glass": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "rubber": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "cotton": {
-      "target_inventory": 4000,
-      "reorder_at": 800,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "polyester": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "plastic": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "steel": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "silk": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "salt": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
-    "cement": {
-      "target_inventory": 500,
-      "reorder_at": 100,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "water": {
-      "target_inventory": 30000,
-      "reorder_at": 6000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
-    "energy": {
-      "target_inventory": 300000,
-      "reorder_at": 60000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "paper": {
-      "target_inventory": 8000,
-      "reorder_at": 1600,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
     "apple_essential_oil": {
-      "target_inventory": 300,
-      "reorder_at": 60,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 60,
+      "target_inventory": 300
+    },
+    "bio_fuel": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
     },
     "biotech_compound": {
-      "target_inventory": 200,
-      "reorder_at": 40,
+      "market": "regular",
       "max_price_multiplier": 1.2,
-      "market": "regular"
+      "reorder_at": 40,
+      "target_inventory": 200
     },
     "bismuth": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
     },
     "bottle": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 400,
+      "target_inventory": 2000
     },
     "caramel": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
     },
     "carrots": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "cement": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 100,
+      "target_inventory": 500
     },
     "cherry_essential_oil": {
-      "target_inventory": 300,
-      "reorder_at": 60,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 60,
+      "target_inventory": 300
     },
     "chitin": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
     },
     "cocoa_essential_oil": {
-      "target_inventory": 300,
-      "reorder_at": 60,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 60,
+      "target_inventory": 300
     },
     "collagen_powder": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "cotton": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 800,
+      "target_inventory": 4000
     },
     "cotton_essential_oil": {
-      "target_inventory": 300,
-      "reorder_at": 60,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 60,
+      "target_inventory": 300
     },
     "echinacea": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "energy": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 60000,
+      "target_inventory": 300000
     },
     "fish_oil": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 200,
+      "target_inventory": 1000
     },
     "foxglove": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
     },
     "gelatin": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "glass": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
     },
     "honey": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 200,
+      "target_inventory": 1000
     },
     "jar": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 400,
+      "target_inventory": 2000
     },
     "lard": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "medical_supply_kit": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 18,
+      "target_inventory": 74
     },
     "obsidian": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
     },
     "onion_essential_oil": {
-      "target_inventory": 300,
-      "reorder_at": 60,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 60,
+      "target_inventory": 300
     },
     "oranges": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "paper": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 1600,
+      "target_inventory": 8000
     },
     "passionflower": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "pill_bottle": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "plastic": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
     },
     "pollen": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "polyester": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "prescription_bundle": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 5,
+      "target_inventory": 21
     },
     "research_enzyme": {
-      "target_inventory": 200,
-      "reorder_at": 40,
+      "market": "regular",
       "max_price_multiplier": 1.2,
-      "market": "regular"
+      "reorder_at": 40,
+      "target_inventory": 200
+    },
+    "rubber": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "salt": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "silk": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "steel": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 200,
+      "target_inventory": 1000
     },
     "tea_essential_oil": {
-      "target_inventory": 300,
-      "reorder_at": 60,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 60,
+      "target_inventory": 300
+    },
+    "urchin": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "water": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 6000,
+      "target_inventory": 30000
     }
+  },
+  "cash_caps": {
+    "hard_high": 80000000,
+    "hard_low": 3000000,
+    "soft_high": 35000000,
+    "soft_low": 10000000
+  },
+  "description": "Integrated pharmaceutical manufacturer. Synthesizes active ingredients in on-site labs, then processes them into the full range of prescription drugs, vaccines, and medical consumables. Also runs a medical supplies factory producing surgical gloves, syringes, IV bags, and gauze for hospitals.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "AXPH",
+    "total_shares": 1000000
+  },
+  "player_id": -2040,
+  "seed": {
+    "districts": [
+      {
+        "district_type": "medical",
+        "plots_merged": 4,
+        "size": 4
+      }
+    ],
+    "land_plots": [
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      }
+    ],
+    "starting_cash": 18000000
   },
   "sell_items": {
     "active_ingredient": {
-      "min_inventory_to_keep": 2000,
+      "market": "regular",
       "max_order_quantity": 3000,
-      "market": "regular"
-    },
-    "antibiotic": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 2000,
-      "market": "regular"
-    },
-    "painkiller": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 2000,
-      "market": "regular"
-    },
-    "insulin": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 500,
-      "market": "regular"
-    },
-    "vaccine": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 2000,
-      "market": "regular"
+      "min_inventory_to_keep": 2000
     },
     "anesthesia": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 300,
-      "market": "regular"
+      "min_inventory_to_keep": 0
+    },
+    "antibiotic": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 0
     },
     "antidepressant": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
-    "blood_pressure_med": {
-      "min_inventory_to_keep": 0,
+    "antiseptic": {
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
-    "chemotherapy_drug": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 100,
-      "market": "regular"
-    },
-    "surgical_gloves": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 3000,
-      "market": "regular"
-    },
-    "surgical_mask": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 3000,
-      "market": "regular"
-    },
-    "syringe": {
-      "min_inventory_to_keep": 500,
+    "bandage": {
+      "market": "regular",
       "max_order_quantity": 2000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
-    "iv_bag": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
+    "bismuth_subsalicylate": {
+      "market": "regular",
+      "max_order_quantity": 500,
+      "min_inventory_to_keep": 0
     },
     "blood_bag": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 500,
-      "market": "regular"
+      "min_inventory_to_keep": 0
+    },
+    "blood_pressure_med": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "cardiac_drug": {
+      "market": "regular",
+      "max_order_quantity": 300,
+      "min_inventory_to_keep": 0
+    },
+    "cast_material": {
+      "market": "regular",
+      "max_order_quantity": 500,
+      "min_inventory_to_keep": 0
+    },
+    "chemotherapy_drug": {
+      "market": "regular",
+      "max_order_quantity": 100,
+      "min_inventory_to_keep": 0
+    },
+    "cough_syrup": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "echinacea_extract": {
+      "market": "regular",
+      "max_order_quantity": 500,
+      "min_inventory_to_keep": 0
+    },
+    "foxglove_extract": {
+      "market": "regular",
+      "max_order_quantity": 300,
+      "min_inventory_to_keep": 0
     },
     "gauze": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 2000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
+    },
+    "insulin": {
+      "market": "regular",
+      "max_order_quantity": 500,
+      "min_inventory_to_keep": 0
+    },
+    "iv_bag": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "medicine": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 0
+    },
+    "ointment": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "painkiller": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 0
+    },
+    "passionflower_extract": {
+      "market": "regular",
+      "max_order_quantity": 300,
+      "min_inventory_to_keep": 0
+    },
+    "surgical_gloves": {
+      "market": "regular",
+      "max_order_quantity": 3000,
+      "min_inventory_to_keep": 0
+    },
+    "surgical_mask": {
+      "market": "regular",
+      "max_order_quantity": 3000,
+      "min_inventory_to_keep": 0
+    },
+    "surgical_scalpel": {
+      "market": "regular",
+      "max_order_quantity": 500,
+      "min_inventory_to_keep": 0
     },
     "sutures": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
-    "cast_material": { "min_inventory_to_keep": 0, "max_order_quantity": 500, "market": "regular" },
-    "surgical_scalpel": { "min_inventory_to_keep": 0, "max_order_quantity": 500, "market": "regular" },
-    "medicine": { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
-    "vitamins": { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
-    "cough_syrup": { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
-    "antiseptic": { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
-    "bandage": { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
-    "ointment": { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
-    "bismuth_subsalicylate": { "min_inventory_to_keep": 0, "max_order_quantity": 500, "market": "regular" },
-    "echinacea_extract": { "min_inventory_to_keep": 0, "max_order_quantity": 500, "market": "regular" },
-    "foxglove_extract": { "min_inventory_to_keep": 0, "max_order_quantity": 300, "market": "regular" },
-    "passionflower_extract": { "min_inventory_to_keep": 0, "max_order_quantity": 300, "market": "regular" },
-    "cardiac_drug": { "min_inventory_to_keep": 0, "max_order_quantity": 300, "market": "regular" }
-  },
-  "ipo": {
-    "ticker": "AXPH",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
+    "syringe": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 500
+    },
+    "vaccine": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 0
+    },
+    "vitamins": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 0
+    }
   }
 }

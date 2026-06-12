@@ -1,232 +1,328 @@
 {
-  "player_id": -2005,
   "business_name": "Pure Aura Co.",
-  "description": "Personal care manufacturer producing perfume, shampoo, lotion, soap, and toothpaste using essential oils sourced from the open market.",
-  "cash_caps": {
-    "hard_high": 25000000,
-    "soft_high": 10000000,
-    "soft_low": 5000000,
-    "hard_low": 1000000
-  },
-  "seed": {
-    "starting_cash": 6000000,
-    "land_plots": [
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "urban"
-        ],
-        "size": 1
-      }
-    ]
-  },
   "businesses": [
     {
-      "business_type": "personal_care_factory",
-      "district_id": null,
       "active_lines": [
         "perfume",
         "shampoo",
         "lotion",
         "soap",
         "toothpaste"
-      ]
+      ],
+      "business_type": "personal_care_factory",
+      "district_id": null
     }
   ],
   "buy_items": {
-    "orange_essential_oil": {
-      "target_inventory": 500,
-      "reorder_at": 80,
+    "apple_essential_oil": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "grape_essential_oil": {
-      "target_inventory": 400,
-      "reorder_at": 60,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "cherry_essential_oil": {
-      "target_inventory": 400,
-      "reorder_at": 60,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "tobacco_essential_oil": {
-      "target_inventory": 400,
-      "reorder_at": 60,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "tea_essential_oil": {
-      "target_inventory": 300,
-      "reorder_at": 50,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "coffee_essential_oil": {
-      "target_inventory": 250,
-      "reorder_at": 40,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 120,
+      "target_inventory": 800
     },
     "barley_essential_oil": {
-      "target_inventory": 500,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 80,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "cocoa_essential_oil": {
-      "target_inventory": 500,
-      "reorder_at": 80,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "rice_essential_oil": {
-      "target_inventory": 600,
-      "reorder_at": 100,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "tomato_essential_oil": {
-      "target_inventory": 600,
-      "reorder_at": 100,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "apple_essential_oil": {
-      "target_inventory": 800,
-      "reorder_at": 120,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "cotton_essential_oil": {
-      "target_inventory": 500,
-      "reorder_at": 80,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "corn_essential_oil": {
-      "target_inventory": 600,
-      "reorder_at": 100,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "wheat_essential_oil": {
-      "target_inventory": 500,
-      "reorder_at": 80,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "bottle": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "water": {
-      "target_inventory": 3000,
-      "reorder_at": 300,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
-    "energy": {
-      "target_inventory": 2000,
-      "reorder_at": 200,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "paper": {
-      "target_inventory": 500,
-      "reorder_at": 50,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "salt": {
-      "target_inventory": 500,
-      "reorder_at": 50,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "plastic": {
-      "target_inventory": 1000,
-      "reorder_at": 100,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "oil": {
-      "target_inventory": 1000,
-      "reorder_at": 100,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "lard": {
-      "target_inventory": 600,
-      "reorder_at": 100,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "fish_oil": {
-      "target_inventory": 600,
-      "reorder_at": 100,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "potassium_hydroxide": {
-      "target_inventory": 500,
-      "reorder_at": 80,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "collagen_powder": {
-      "target_inventory": 400,
-      "reorder_at": 60,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 500
     },
     "beeswax": {
-      "target_inventory": 400,
-      "reorder_at": 60,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 60,
+      "target_inventory": 400
+    },
+    "black_pearl": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 2,
+      "target_inventory": 10
+    },
+    "bottle": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "cheap_luggage": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 321,
+      "target_inventory": 1287
+    },
+    "cherry_essential_oil": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 60,
+      "target_inventory": 400
+    },
+    "chrysanthemum_essential_oil": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 48,
+      "target_inventory": 192
+    },
+    "cocoa_essential_oil": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 80,
+      "target_inventory": 500
+    },
+    "coffee_essential_oil": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 40,
+      "target_inventory": 250
+    },
+    "collagen_powder": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 60,
+      "target_inventory": 400
+    },
+    "cologne": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 27,
+      "target_inventory": 111
+    },
+    "corn_essential_oil": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 100,
+      "target_inventory": 600
+    },
+    "cotton_essential_oil": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 80,
+      "target_inventory": 500
+    },
+    "diamond_ring": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "energy": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 200,
+      "target_inventory": 2000
+    },
+    "fish_oil": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 100,
+      "target_inventory": 600
+    },
+    "gem_pendant": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 14,
+      "target_inventory": 58
+    },
+    "grape_essential_oil": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 60,
+      "target_inventory": 400
+    },
+    "jasmine_essential_oil": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 38,
+      "target_inventory": 153
+    },
+    "jewelry": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 86,
+      "target_inventory": 347
+    },
+    "lard": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 100,
+      "target_inventory": 600
+    },
+    "liturgical_lamb_light": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "mother_of_pearl": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 129,
+      "target_inventory": 519
+    },
+    "neroli_oil": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 72,
+      "target_inventory": 288
+    },
+    "oil": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 100,
+      "target_inventory": 1000
+    },
+    "orange_essential_oil": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 80,
+      "target_inventory": 500
+    },
+    "paper": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 50,
+      "target_inventory": 500
     },
     "paraffin_wax": {
-      "target_inventory": 400,
-      "reorder_at": 60,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 60,
+      "target_inventory": 400
+    },
+    "plastic": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 100,
+      "target_inventory": 1000
+    },
+    "potassium_hydroxide": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 80,
+      "target_inventory": 500
+    },
+    "purse": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 120,
+      "target_inventory": 482
+    },
+    "rams_horn": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "rice_essential_oil": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 100,
+      "target_inventory": 600
+    },
+    "sacred_lamb_offering": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "salt": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 50,
+      "target_inventory": 500
+    },
+    "sapphire_bracelet": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 4,
+      "target_inventory": 18
+    },
+    "tea_essential_oil": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 50,
+      "target_inventory": 300
+    },
+    "tobacco_essential_oil": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 60,
+      "target_inventory": 400
+    },
+    "tomato_essential_oil": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 100,
+      "target_inventory": 600
+    },
+    "vellum": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 18,
+      "target_inventory": 72
+    },
+    "water": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 300,
+      "target_inventory": 3000
+    },
+    "wheat_essential_oil": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 80,
+      "target_inventory": 500
     }
+  },
+  "cash_caps": {
+    "hard_high": 25000000,
+    "hard_low": 1000000,
+    "soft_high": 10000000,
+    "soft_low": 5000000
+  },
+  "description": "Personal care manufacturer producing perfume, shampoo, lotion, soap, and toothpaste using essential oils sourced from the open market.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "PURA",
+    "total_shares": 1000000
+  },
+  "player_id": -2005,
+  "seed": {
+    "land_plots": [
+      {
+        "proximity_features": [
+          "urban"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      }
+    ],
+    "starting_cash": 6000000
   },
   "sell_items": {
+    "lotion": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 20
+    },
     "perfume": {
-      "min_inventory_to_keep": 10,
+      "market": "regular",
       "max_order_quantity": 500,
-      "market": "regular"
+      "min_inventory_to_keep": 10
     },
     "shampoo": {
-      "min_inventory_to_keep": 20,
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "lotion": {
-      "min_inventory_to_keep": 20,
-      "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 20
     },
     "soap": {
-      "min_inventory_to_keep": 20,
+      "market": "regular",
       "max_order_quantity": 2000,
-      "market": "regular"
+      "min_inventory_to_keep": 20
     },
     "toothpaste": {
-      "min_inventory_to_keep": 20,
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 20
     }
-  },
-  "ipo": {
-    "ticker": "PURA",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

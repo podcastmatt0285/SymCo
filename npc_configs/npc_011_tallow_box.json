@@ -1,76 +1,76 @@
 {
-  "player_id": -2011,
   "business_name": "Tallow Box Inc.",
-  "description": "Renders lamb fat into lard through low-temperature boiling and straining. The primary industrial buyer of lamb_meat on the market \u2014 keeping the sheep and lamb supply chains economically viable.",
-  "cash_caps": {
-    "hard_high": 5000000,
-    "soft_high": 2000000,
-    "soft_low": 800000,
-    "hard_low": 200000
-  },
-  "seed": {
-    "starting_cash": 1500000,
-    "land_plots": [
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "urban"
-        ],
-        "size": 1
-      }
-    ]
-  },
   "businesses": [
     {
-      "business_type": "tallow_works",
-      "district_id": null,
       "active_lines": [
         "lard"
-      ]
+      ],
+      "business_type": "tallow_works",
+      "district_id": null
     }
   ],
   "buy_items": {
-    "lamb_meat": {
-      "target_inventory": 150,
-      "reorder_at": 50,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "salt": {
-      "target_inventory": 80,
-      "reorder_at": 25,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
-    "water": {
-      "target_inventory": 60,
-      "reorder_at": 20,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
     "energy": {
-      "target_inventory": 20000,
-      "reorder_at": 6000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 6000,
+      "target_inventory": 20000
+    },
+    "lamb_meat": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 50,
+      "target_inventory": 150
     },
     "paper": {
-      "target_inventory": 15,
-      "reorder_at": 5,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 5,
+      "target_inventory": 15
+    },
+    "salt": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 25,
+      "target_inventory": 80
+    },
+    "water": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 20,
+      "target_inventory": 60
     }
+  },
+  "cash_caps": {
+    "hard_high": 5000000,
+    "hard_low": 200000,
+    "soft_high": 2000000,
+    "soft_low": 800000
+  },
+  "description": "Renders lamb fat into lard through low-temperature boiling and straining. The primary industrial buyer of lamb_meat on the market \u2014 keeping the sheep and lamb supply chains economically viable.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "TLBX",
+    "total_shares": 1000000
+  },
+  "player_id": -2011,
+  "seed": {
+    "land_plots": [
+      {
+        "proximity_features": [
+          "urban"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      }
+    ],
+    "starting_cash": 1500000
   },
   "sell_items": {
     "lard": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 100,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     }
-  },
-  "ipo": {
-    "ticker": "TLBX",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

@@ -1,117 +1,117 @@
 {
-  "player_id": -2089,
   "business_name": "Bloom Artisan Florals",
-  "description": "Artisan floral studio hand-crafting bouquets for street flower carts and florists. Buys cut flowers from the market and assembles them into retail-ready bouquets. No hoarding \u2014 everything goes straight to market.",
-  "cash_caps": {
-    "hard_high": 6000000,
-    "soft_high": 2500000,
-    "soft_low": 600000,
-    "hard_low": 180000
-  },
-  "seed": {
-    "starting_cash": 1200000,
-    "land_plots": [
-      {
-        "terrain_type": "urban",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "urban",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "urban",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      }
-    ],
-    "districts": []
-  },
   "businesses": [
     {
-      "business_type": "floral_studio",
-      "district_id": null,
       "active_lines": [
         "bouquet"
-      ]
+      ],
+      "business_type": "floral_studio",
+      "district_id": null
     },
     {
-      "business_type": "floral_studio",
-      "district_id": null,
       "active_lines": [
         "bouquet"
-      ]
+      ],
+      "business_type": "floral_studio",
+      "district_id": null
     },
     {
-      "business_type": "floral_studio",
-      "district_id": null,
       "active_lines": [
         "bouquet"
-      ]
+      ],
+      "business_type": "floral_studio",
+      "district_id": null
     }
   ],
   "buy_items": {
-    "rose": {
-      "target_inventory": 2000,
-      "reorder_at": 500,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "lily": {
-      "target_inventory": 1500,
-      "reorder_at": 400,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
     "carnation": {
-      "target_inventory": 2500,
+      "market": "regular",
+      "max_price_multiplier": 1.15,
       "reorder_at": 600,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "tulip": {
-      "target_inventory": 1500,
-      "reorder_at": 400,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "pollen": {
-      "target_inventory": 600000,
-      "reorder_at": 150000,
-      "max_price_multiplier": 1.2,
-      "market": "regular"
+      "target_inventory": 2500
     },
     "energy": {
-      "target_inventory": 5000,
-      "reorder_at": 1200,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 1200,
+      "target_inventory": 5000
+    },
+    "lily": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 400,
+      "target_inventory": 1500
     },
     "paper": {
-      "target_inventory": 1500,
-      "reorder_at": 400,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 400,
+      "target_inventory": 1500
+    },
+    "pollen": {
+      "market": "regular",
+      "max_price_multiplier": 1.2,
+      "reorder_at": 150000,
+      "target_inventory": 600000
+    },
+    "rose": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 500,
+      "target_inventory": 2000
+    },
+    "tulip": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 400,
+      "target_inventory": 1500
     }
+  },
+  "cash_caps": {
+    "hard_high": 6000000,
+    "hard_low": 180000,
+    "soft_high": 2500000,
+    "soft_low": 600000
+  },
+  "description": "Artisan floral studio hand-crafting bouquets for street flower carts and florists. Buys cut flowers from the market and assembles them into retail-ready bouquets. No hoarding \u2014 everything goes straight to market.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "BLAF",
+    "total_shares": 1000000
+  },
+  "player_id": -2089,
+  "seed": {
+    "districts": [],
+    "land_plots": [
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "urban"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "urban"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "urban"
+      }
+    ],
+    "starting_cash": 1200000
   },
   "sell_items": {
     "bouquet": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 500,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     }
-  },
-  "ipo": {
-    "ticker": "BLAF",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

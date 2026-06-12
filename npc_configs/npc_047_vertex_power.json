@@ -1,24 +1,5 @@
 {
-  "player_id": -2047,
   "business_name": "Vertex Power & Grid",
-  "description": "Public utility operator running a power company and water treatment plant. Distributes residential electricity and drinking water to the district market \u2014 the essential infrastructure every neighborhood district depends on from day one.",
-  "cash_caps": {
-    "hard_high": 50000000,
-    "soft_high": 20000000,
-    "soft_low": 5000000,
-    "hard_low": 1500000
-  },
-  "seed": {
-    "starting_cash": 10000000,
-    "land_plots": [],
-    "districts": [
-      {
-        "district_type": "utilities",
-        "size": 4,
-        "plots_merged": 4
-      }
-    ]
-  },
   "businesses": [
     {
       "business_type": "power_company",
@@ -30,117 +11,136 @@
     }
   ],
   "buy_items": {
-    "energy": {
-      "target_inventory": 300000,
-      "reorder_at": 60000,
+    "activated_carbon": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 200,
+      "target_inventory": 1000
     },
     "copper_wire": {
-      "target_inventory": 3000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "energy": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "water": {
-      "target_inventory": 50000,
-      "reorder_at": 10000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
-    "paper": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
-    "activated_carbon": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 60000,
+      "target_inventory": 300000
     },
     "gas_turbine": {
-      "target_inventory": 5,
-      "reorder_at": 1,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 1,
+      "target_inventory": 5
     },
     "grid_battery_lfp": {
-      "target_inventory": 10,
-      "reorder_at": 2,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 2,
+      "target_inventory": 10
     },
     "grid_battery_sodium": {
-      "target_inventory": 10,
-      "reorder_at": 2,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 2,
+      "target_inventory": 10
     },
     "natural_gas": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 1000,
+      "target_inventory": 5000
     },
     "nuclear_reactor_core": {
-      "target_inventory": 2,
-      "reorder_at": 1,
+      "market": "regular",
       "max_price_multiplier": 1.2,
-      "market": "regular"
+      "reorder_at": 1,
+      "target_inventory": 2
+    },
+    "paper": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 1000,
+      "target_inventory": 5000
     },
     "solar_panel": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
     },
     "steel": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 600,
+      "target_inventory": 3000
     },
     "transformer": {
-      "target_inventory": 50,
-      "reorder_at": 10,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 10,
+      "target_inventory": 50
     },
     "uranium_oxide": {
-      "target_inventory": 100,
-      "reorder_at": 20,
+      "market": "regular",
       "max_price_multiplier": 1.2,
-      "market": "regular"
+      "reorder_at": 20,
+      "target_inventory": 100
+    },
+    "water": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 10000,
+      "target_inventory": 50000
     },
     "wind_turbine_blade": {
-      "target_inventory": 100,
-      "reorder_at": 20,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 20,
+      "target_inventory": 100
     }
+  },
+  "cash_caps": {
+    "hard_high": 50000000,
+    "hard_low": 1500000,
+    "soft_high": 20000000,
+    "soft_low": 5000000
+  },
+  "description": "Public utility operator running a power company and water treatment plant. Distributes residential electricity and drinking water to the district market \u2014 the essential infrastructure every neighborhood district depends on from day one.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "VTPG",
+    "total_shares": 1000000
+  },
+  "player_id": -2047,
+  "seed": {
+    "districts": [
+      {
+        "district_type": "utilities",
+        "plots_merged": 4,
+        "size": 4
+      }
+    ],
+    "land_plots": [],
+    "starting_cash": 10000000
   },
   "sell_items": {
-    "residential_electricity": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 3000,
-      "market": "district"
-    },
     "drinking_water": {
-      "min_inventory_to_keep": 0,
+      "market": "district",
       "max_order_quantity": 4000,
-      "market": "district"
+      "min_inventory_to_keep": 0
+    },
+    "residential_electricity": {
+      "market": "district",
+      "max_order_quantity": 3000,
+      "min_inventory_to_keep": 0
     },
     "wastewater_service": {
-      "min_inventory_to_keep": 0,
+      "market": "district",
       "max_order_quantity": 2000,
-      "market": "district"
+      "min_inventory_to_keep": 0
     }
-  },
-  "ipo": {
-    "ticker": "VTPG",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

@@ -1,211 +1,319 @@
 {
-  "player_id": -2030,
   "business_name": "Threadneedle & Fastener Co.",
-  "description": "Fibre and fastener manufacturer covering the full soft-goods input chain. Spins wool into yarn, twists yarn into thread, weaves cotton into rope, and stamps brass and iron into zippers, buttons, and nails. Supplies the notions and cordage that apparel factories and shipyards depend on.",
-  "cash_caps": {
-    "hard_high": 30000000,
-    "soft_high": 12000000,
-    "soft_low": 2500000,
-    "hard_low": 750000
-  },
-  "seed": {
-    "starting_cash": 5000000,
-    "land_plots": [
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "hills",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "hills",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      }
-    ]
-  },
   "businesses": [
     {
+      "active_lines": [],
       "business_type": "yarn_mill",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "thread_mill",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "thread_mill",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "fastener_factory",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "fastener_factory",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "rope_works",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     }
   ],
   "buy_items": {
-    "wool": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "cotton": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
+    "avionics_module": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 125,
+      "target_inventory": 500
     },
     "brass": {
-      "target_inventory": 3000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "copper": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "iron": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "sawdust": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
-    "glue": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 3000
     },
     "burlap": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 400,
+      "target_inventory": 2000
     },
-    "rice": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
+    "compute_credit": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 500,
+      "target_inventory": 2000
+    },
+    "copper": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "cotton": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "destroyer_hull": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
     },
     "energy": {
-      "target_inventory": 30000,
-      "reorder_at": 6000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 6000,
+      "target_inventory": 30000
+    },
+    "enterprise_software_suite": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 7,
+      "target_inventory": 29
+    },
+    "glue": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "gold_bond_wire": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 14,
+      "target_inventory": 56
+    },
+    "heating_element": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 30,
+      "target_inventory": 121
+    },
+    "industrial_robot": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "iron": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "jet_airframe": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "lfp_cell": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 27,
+      "target_inventory": 110
+    },
+    "network_switch": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
     },
     "paper": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "payload_fairing": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "power_electronics_module": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 7
+    },
+    "quartz_crystal_blank": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "rice": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "samarium_cobalt_magnet": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 2,
+      "target_inventory": 9
+    },
+    "satellite_payload": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "sawdust": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "sodium_ion_cell": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 40,
+      "target_inventory": 160
+    },
+    "solid_state_cell": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 6,
+      "target_inventory": 26
+    },
+    "superconducting_wire": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
     },
     "water": {
-      "target_inventory": 10000,
-      "reorder_at": 2000,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 2000,
+      "target_inventory": 10000
+    },
+    "wool": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 1000,
+      "target_inventory": 5000
     }
+  },
+  "cash_caps": {
+    "hard_high": 30000000,
+    "hard_low": 750000,
+    "soft_high": 12000000,
+    "soft_low": 2500000
+  },
+  "description": "Fibre and fastener manufacturer covering the full soft-goods input chain. Spins wool into yarn, twists yarn into thread, weaves cotton into rope, and stamps brass and iron into zippers, buttons, and nails. Supplies the notions and cordage that apparel factories and shipyards depend on.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "TNFC",
+    "total_shares": 1000000
+  },
+  "player_id": -2030,
+  "seed": {
+    "land_plots": [
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "hills"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "hills"
+      }
+    ],
+    "starting_cash": 5000000
   },
   "sell_items": {
-    "yarn": {
-      "min_inventory_to_keep": 200,
-      "max_order_quantity": 2000,
-      "market": "regular"
-    },
-    "thread": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 5000,
-      "market": "regular"
-    },
-    "zippers": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 3000,
-      "market": "regular"
-    },
     "buttons": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 5000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "nails": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 5000,
-      "market": "regular"
-    },
-    "rope": {
-      "min_inventory_to_keep": 500,
-      "max_order_quantity": 3000,
-      "market": "regular"
-    },
-    "rope_wick": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "rice_sack": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
+    },
+    "rope": {
+      "market": "regular",
+      "max_order_quantity": 3000,
+      "min_inventory_to_keep": 500
+    },
+    "rope_wick": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "thread": {
+      "market": "regular",
+      "max_order_quantity": 5000,
+      "min_inventory_to_keep": 0
+    },
+    "yarn": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 200
+    },
+    "zippers": {
+      "market": "regular",
+      "max_order_quantity": 3000,
+      "min_inventory_to_keep": 0
     }
-  },
-  "ipo": {
-    "ticker": "TNFC",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

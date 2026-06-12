@@ -1,221 +1,221 @@
 {
-  "player_id": -2073,
   "business_name": "Terroir Specialty Foods",
-  "description": "Artisan and international specialty cuisine producer. Runs a gourmet kitchen, pastry kitchen, soup kitchen, industrial bakery, and cannery to supply satay, lamb stew, peanut butter cookies, spaghetti, and canned lamb.",
-  "cash_caps": {
-    "hard_high": 8000000,
-    "soft_high": 3000000,
-    "soft_low": 800000,
-    "hard_low": 300000
-  },
-  "seed": {
-    "starting_cash": 1500000,
-    "land_plots": [
-      {
-        "terrain_type": "urban",
-        "proximity_features": [
-          "urban"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "urban",
-        "proximity_features": [
-          "urban"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "hills",
-        "proximity_features": [
-          "urban"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "coastal",
-        "proximity_features": [
-          "coastal"
-        ],
-        "size": 1
-      }
-    ],
-    "districts": []
-  },
   "businesses": [
     {
-      "business_type": "gourmet_kitchen",
-      "district_id": null,
       "active_lines": [
         "satay",
         "seafood_tower",
         "duck_confit",
         "lobster_bisque"
-      ]
+      ],
+      "business_type": "gourmet_kitchen",
+      "district_id": null
     },
     {
-      "business_type": "pastry_kitchen",
-      "district_id": null,
       "active_lines": [
         "peanut_butter_cookie",
         "croissant",
         "muffin"
-      ]
+      ],
+      "business_type": "pastry_kitchen",
+      "district_id": null
     },
     {
-      "business_type": "soup_kitchen",
-      "district_id": null,
       "active_lines": [
         "lamb_stew",
         "stew"
-      ]
+      ],
+      "business_type": "soup_kitchen",
+      "district_id": null
     },
     {
-      "business_type": "industrial_bakery",
-      "district_id": null,
       "active_lines": [
         "spaghetti",
         "pasta",
         "bread"
-      ]
+      ],
+      "business_type": "industrial_bakery",
+      "district_id": null
     },
     {
-      "business_type": "cannery",
-      "district_id": null,
       "active_lines": [
         "canned_lamb",
         "canned_salmon",
         "canned_tuna"
-      ]
+      ],
+      "business_type": "cannery",
+      "district_id": null
     }
   ],
   "buy_items": {
-    "flour": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "eggs": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "sugar": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
     "butter": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "lamb_meat": {
-      "target_inventory": 2000,
       "reorder_at": 400,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 2000
     },
     "chicken": {
-      "target_inventory": 2000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 400,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "salmon": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "shrimp": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "spices": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "peanut": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
+      "target_inventory": 2000
     },
     "chocolate": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "eggs": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
     },
     "energy": {
-      "target_inventory": 200000,
-      "reorder_at": 40000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 40000,
+      "target_inventory": 200000
+    },
+    "flour": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "lamb_meat": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 400,
+      "target_inventory": 2000
     },
     "paper": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "peanut": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "salmon": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "shrimp": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "spices": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "sugar": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
     }
+  },
+  "cash_caps": {
+    "hard_high": 8000000,
+    "hard_low": 300000,
+    "soft_high": 3000000,
+    "soft_low": 800000
+  },
+  "description": "Artisan and international specialty cuisine producer. Runs a gourmet kitchen, pastry kitchen, soup kitchen, industrial bakery, and cannery to supply satay, lamb stew, peanut butter cookies, spaghetti, and canned lamb.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "TRSF",
+    "total_shares": 1000000
+  },
+  "player_id": -2073,
+  "seed": {
+    "districts": [],
+    "land_plots": [
+      {
+        "proximity_features": [
+          "urban"
+        ],
+        "size": 1,
+        "terrain_type": "urban"
+      },
+      {
+        "proximity_features": [
+          "urban"
+        ],
+        "size": 1,
+        "terrain_type": "urban"
+      },
+      {
+        "proximity_features": [
+          "urban"
+        ],
+        "size": 1,
+        "terrain_type": "hills"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "coastal"
+        ],
+        "size": 1,
+        "terrain_type": "coastal"
+      }
+    ],
+    "starting_cash": 1500000
   },
   "sell_items": {
-    "satay": {
-      "min_inventory_to_keep": 0,
+    "canned_lamb": {
+      "market": "regular",
       "max_order_quantity": 500,
-      "market": "regular"
-    },
-    "seafood_tower": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 200,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "duck_confit": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 300,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "lamb_stew": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 500,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "peanut_butter_cookie": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
+    },
+    "satay": {
+      "market": "regular",
+      "max_order_quantity": 500,
+      "min_inventory_to_keep": 0
+    },
+    "seafood_tower": {
+      "market": "regular",
+      "max_order_quantity": 200,
+      "min_inventory_to_keep": 0
     },
     "spaghetti": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "canned_lamb": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 500,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     }
-  },
-  "ipo": {
-    "ticker": "TRSF",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

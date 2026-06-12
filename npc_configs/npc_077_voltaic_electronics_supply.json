@@ -1,105 +1,111 @@
 {
-  "player_id": -2077,
   "business_name": "Voltaic Electronics Supply",
-  "description": "Semiconductor fabrication and electronics component supplier producing processors, memory modules, circuit boards, and microchips to support the tech supply chain.",
-  "cash_caps": {
-    "hard_high": 25000000,
-    "soft_high": 10000000,
-    "soft_low": 3000000,
-    "hard_low": 1000000
-  },
-  "seed": {
-    "starting_cash": 5000000,
-    "land_plots": [],
-    "districts": [
-      {
-        "district_type": "tech",
-        "size": 3,
-        "plots_merged": 3
-      }
-    ]
-  },
   "businesses": [
     {
+      "active_lines": [
+        "processor",
+        "memory_module",
+        "circuit_board",
+        "microchip",
+        "silicon_wafer"
+      ],
       "business_type": "semiconductor_fab",
-      "district_seed_index": 0,
-      "active_lines": ["processor", "memory_module", "circuit_board", "microchip", "silicon_wafer"]
+      "district_seed_index": 0
     }
   ],
   "buy_items": {
-    "silicon": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
+    "aluminum": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 600,
+      "target_inventory": 3000
     },
     "copper": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "gold": {
-      "target_inventory": 500,
-      "reorder_at": 100,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "aluminum": {
-      "target_inventory": 3000,
       "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "gallium_arsenide": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
+      "target_inventory": 3000
     },
     "energy": {
-      "target_inventory": 500000,
-      "reorder_at": 100000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 100000,
+      "target_inventory": 500000
+    },
+    "gallium_arsenide": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "gold": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 100,
+      "target_inventory": 500
     },
     "paper": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "silicon": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
     }
+  },
+  "cash_caps": {
+    "hard_high": 25000000,
+    "hard_low": 1000000,
+    "soft_high": 10000000,
+    "soft_low": 3000000
+  },
+  "description": "Semiconductor fabrication and electronics component supplier producing processors, memory modules, circuit boards, and microchips to support the tech supply chain.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "VLTC",
+    "total_shares": 1000000
+  },
+  "player_id": -2077,
+  "seed": {
+    "districts": [
+      {
+        "district_type": "tech",
+        "plots_merged": 3,
+        "size": 3
+      }
+    ],
+    "land_plots": [],
+    "starting_cash": 5000000
   },
   "sell_items": {
-    "processor": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 500,
-      "market": "regular"
+    "circuit_board": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
     },
     "memory_module": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 500,
-      "market": "regular"
-    },
-    "circuit_board": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "microchip": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 2000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
+    },
+    "processor": {
+      "market": "regular",
+      "max_order_quantity": 500,
+      "min_inventory_to_keep": 0
     },
     "silicon_wafer": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     }
-  },
-  "ipo": {
-    "ticker": "VLTC",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

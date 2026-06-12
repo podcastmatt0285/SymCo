@@ -1,164 +1,164 @@
 {
-  "player_id": -2076,
   "business_name": "Hawthorne Grain & Feed",
-  "description": "Large-scale grain operation growing wheat, barley, and corn across prairie and savanna plots to provide sustained liquidity for agricultural commodity markets.",
-  "cash_caps": {
-    "hard_high": 15000000,
-    "soft_high": 6000000,
-    "soft_low": 1500000,
-    "hard_low": 500000
-  },
-  "seed": {
-    "starting_cash": 3000000,
-    "starting_inventory": {
-      "wheat_seeds": 500,
-      "barley_seeds": 500,
-      "corn_seeds": 500
-    },
-    "land_plots": [
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "riverside"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "savanna",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "savanna",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      }
-    ],
-    "districts": []
-  },
   "businesses": [
     {
-      "business_type": "grain_farm",
-      "district_id": null,
       "active_lines": [
         "wheat",
         "barley",
         "corn"
-      ]
+      ],
+      "business_type": "grain_farm",
+      "district_id": null
     },
     {
-      "business_type": "grain_farm",
-      "district_id": null,
       "active_lines": [
         "wheat",
         "corn",
         "barley"
-      ]
+      ],
+      "business_type": "grain_farm",
+      "district_id": null
     },
     {
-      "business_type": "grain_farm",
-      "district_id": null,
       "active_lines": [
         "wheat",
         "barley"
-      ]
+      ],
+      "business_type": "grain_farm",
+      "district_id": null
     }
   ],
   "buy_items": {
-    "wheat_seeds": {
-      "target_inventory": 500,
-      "reorder_at": 100,
-      "max_price_multiplier": 1.2,
-      "market": "regular"
-    },
     "barley_seeds": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.2,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
     },
     "corn_seeds": {
-      "target_inventory": 500,
+      "market": "regular",
+      "max_price_multiplier": 1.2,
       "reorder_at": 100,
-      "max_price_multiplier": 1.2,
-      "market": "regular"
-    },
-    "pollen": {
-      "target_inventory": 4000,
-      "reorder_at": 800,
-      "max_price_multiplier": 1.2,
-      "market": "regular"
-    },
-    "fertilizer_npk": {
-      "target_inventory": 4000,
-      "reorder_at": 800,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "water": {
-      "target_inventory": 30000,
-      "reorder_at": 6000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
+      "target_inventory": 500
     },
     "energy": {
-      "target_inventory": 200000,
-      "reorder_at": 40000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 40000,
+      "target_inventory": 200000
+    },
+    "fertilizer_npk": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 800,
+      "target_inventory": 4000
     },
     "paper": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "pollen": {
+      "market": "regular",
+      "max_price_multiplier": 1.2,
+      "reorder_at": 800,
+      "target_inventory": 4000
+    },
+    "water": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 6000,
+      "target_inventory": 30000
+    },
+    "wheat_seeds": {
+      "market": "regular",
+      "max_price_multiplier": 1.2,
+      "reorder_at": 100,
+      "target_inventory": 500
+    }
+  },
+  "cash_caps": {
+    "hard_high": 15000000,
+    "hard_low": 500000,
+    "soft_high": 6000000,
+    "soft_low": 1500000
+  },
+  "description": "Large-scale grain operation growing wheat, barley, and corn across prairie and savanna plots to provide sustained liquidity for agricultural commodity markets.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "HGFD",
+    "total_shares": 1000000
+  },
+  "player_id": -2076,
+  "seed": {
+    "districts": [],
+    "land_plots": [
+      {
+        "proximity_features": [
+          "riverside"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "savanna"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "savanna"
+      }
+    ],
+    "starting_cash": 3000000,
+    "starting_inventory": {
+      "barley_seeds": 500,
+      "corn_seeds": 500,
+      "wheat_seeds": 500
     }
   },
   "sell_items": {
-    "wheat": {
-      "min_inventory_to_keep": 0,
+    "barley": {
+      "market": "regular",
       "max_order_quantity": 5000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "corn": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 5000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
-    "barley": {
-      "min_inventory_to_keep": 0,
+    "wheat": {
+      "market": "regular",
       "max_order_quantity": 5000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     }
-  },
-  "ipo": {
-    "ticker": "HGFD",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

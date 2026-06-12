@@ -1,24 +1,5 @@
 {
-  "player_id": -2046,
   "business_name": "Sentinel Systems",
-  "description": "Security and surveillance equipment manufacturer. Produces security cameras, alarm systems, full surveillance networks, and body scanners from circuit boards, plastics, and copper wire. Primary supplier to prison operators, defense contractors, and commercial security buyers.",
-  "cash_caps": {
-    "hard_high": 35000000,
-    "soft_high": 15000000,
-    "soft_low": 4000000,
-    "hard_low": 1200000
-  },
-  "seed": {
-    "starting_cash": 8000000,
-    "land_plots": [],
-    "districts": [
-      {
-        "district_type": "tech",
-        "size": 3,
-        "plots_merged": 3
-      }
-    ]
-  },
   "businesses": [
     {
       "business_type": "security_equipment_factory",
@@ -26,104 +7,123 @@
     }
   ],
   "buy_items": {
+    "alkaline_battery": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
     "circuit_board": {
-      "target_inventory": 3000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "lcd_panel": {
-      "target_inventory": 1500,
-      "reorder_at": 300,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "plastic": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 3000
     },
     "copper_wire": {
-      "target_inventory": 3000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "processor": {
-      "target_inventory": 500,
-      "reorder_at": 100,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "steel": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "server": {
-      "target_inventory": 50,
-      "reorder_at": 10,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "router": {
-      "target_inventory": 100,
-      "reorder_at": 20,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 3000
     },
     "energy": {
-      "target_inventory": 200000,
-      "reorder_at": 40000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 40000,
+      "target_inventory": 200000
+    },
+    "lcd_panel": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 300,
+      "target_inventory": 1500
     },
     "paper": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 600,
+      "target_inventory": 3000
     },
-    "alkaline_battery": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
+    "plastic": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 600,
+      "target_inventory": 3000
     },
     "precision_spring": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "processor": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "router": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 20,
+      "target_inventory": 100
+    },
+    "server": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 10,
+      "target_inventory": 50
+    },
+    "steel": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 400,
+      "target_inventory": 2000
     }
+  },
+  "cash_caps": {
+    "hard_high": 35000000,
+    "hard_low": 1200000,
+    "soft_high": 15000000,
+    "soft_low": 4000000
+  },
+  "description": "Security and surveillance equipment manufacturer. Produces security cameras, alarm systems, full surveillance networks, and body scanners from circuit boards, plastics, and copper wire. Primary supplier to prison operators, defense contractors, and commercial security buyers.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "SNTS",
+    "total_shares": 1000000
+  },
+  "player_id": -2046,
+  "seed": {
+    "districts": [
+      {
+        "district_type": "tech",
+        "plots_merged": 3,
+        "size": 3
+      }
+    ],
+    "land_plots": [],
+    "starting_cash": 8000000
   },
   "sell_items": {
-    "security_camera": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 500,
-      "market": "regular"
-    },
     "alarm_system": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 300,
-      "market": "regular"
-    },
-    "surveillance_system": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 100,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "body_scanner": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 40,
-      "market": "regular"
+      "min_inventory_to_keep": 0
+    },
+    "security_camera": {
+      "market": "regular",
+      "max_order_quantity": 500,
+      "min_inventory_to_keep": 0
+    },
+    "surveillance_system": {
+      "market": "regular",
+      "max_order_quantity": 100,
+      "min_inventory_to_keep": 0
     }
-  },
-  "ipo": {
-    "ticker": "SNTS",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

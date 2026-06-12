@@ -1,76 +1,242 @@
 {
-  "player_id": -2094,
   "business_name": "Axleworks Auto Parts Co.",
-  "description": "Automotive components manufacturer running two factories that build fuel tanks and car batteries — the two automotive parts every boat yard and vehicle assembler needs. A second source alongside Blackvein so the marine and vehicle trades stay stocked. Hoards nothing.",
-  "cash_caps": {
-    "hard_high": 40000000,
-    "soft_high": 16000000,
-    "soft_low": 4000000,
-    "hard_low": 1200000
-  },
-  "seed": {
-    "starting_cash": 10000000,
-    "land_plots": [
-      { "terrain_type": "prairie", "proximity_features": ["road"],  "size": 1 },
-      { "terrain_type": "prairie", "proximity_features": ["urban"], "size": 1 }
-    ],
-    "districts": []
-  },
   "businesses": [
-    { "business_type": "auto_parts_factory", "district_id": null, "active_lines": ["fuel_tank", "car_battery"] },
-    { "business_type": "auto_parts_factory", "district_id": null, "active_lines": ["fuel_tank", "car_battery"] }
+    {
+      "active_lines": [
+        "fuel_tank",
+        "car_battery"
+      ],
+      "business_type": "auto_parts_factory",
+      "district_id": null
+    },
+    {
+      "active_lines": [
+        "fuel_tank",
+        "car_battery"
+      ],
+      "business_type": "auto_parts_factory",
+      "district_id": null
+    }
   ],
   "buy_items": {
-    "iron": {
-      "target_inventory": 30000,
-      "reorder_at": 7000,
+    "armored_car": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 2,
+      "target_inventory": 8
     },
-    "rubber": {
-      "target_inventory": 10000,
-      "reorder_at": 2500,
+    "attack_helicopter": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 1,
+      "target_inventory": 5
     },
-    "lead_acid_battery": {
-      "target_inventory": 8000,
-      "reorder_at": 2000,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "plastic": {
-      "target_inventory": 8000,
-      "reorder_at": 2000,
+    "cargo_freighter": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 1,
+      "target_inventory": 5
     },
     "copper_wire": {
-      "target_inventory": 4000,
-      "reorder_at": 1000,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 1000,
+      "target_inventory": 4000
+    },
+    "cruise_ship": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "electric_bus": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "electric_truck": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
     },
     "energy": {
-      "target_inventory": 600000,
-      "reorder_at": 140000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 140000,
+      "target_inventory": 600000
+    },
+    "fighter_jet": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "freight_car": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "garbage_truck": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "hydrogen_vehicle": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "iron": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 7000,
+      "target_inventory": 30000
+    },
+    "lead_acid_battery": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 2000,
+      "target_inventory": 8000
+    },
+    "locomotive": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "locomotive_engine": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "main_battle_tank": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "military_helicopter": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "nanosatellite": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
     },
     "paper": {
-      "target_inventory": 8000,
-      "reorder_at": 2000,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 2000,
+      "target_inventory": 8000
+    },
+    "passenger_train": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "plastic": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 2000,
+      "target_inventory": 8000
+    },
+    "reusable_rocket_stage": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "rubber": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 2500,
+      "target_inventory": 10000
+    },
+    "ship_hull": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "submarine": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "transport_helicopter": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "tugboat": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "yacht": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
     }
   },
-  "sell_items": {
-    "fuel_tank":   { "min_inventory_to_keep": 0, "max_order_quantity": 3000, "market": "regular" },
-    "car_battery": { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" }
+  "cash_caps": {
+    "hard_high": 40000000,
+    "hard_low": 1200000,
+    "soft_high": 16000000,
+    "soft_low": 4000000
   },
+  "description": "Automotive components manufacturer running two factories that build fuel tanks and car batteries \u2014 the two automotive parts every boat yard and vehicle assembler needs. A second source alongside Blackvein so the marine and vehicle trades stay stocked. Hoards nothing.",
   "ipo": {
+    "shares_to_offer": 600000,
     "ticker": "AXLE",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
+    "total_shares": 1000000
+  },
+  "player_id": -2094,
+  "seed": {
+    "districts": [],
+    "land_plots": [
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "urban"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      }
+    ],
+    "starting_cash": 10000000
+  },
+  "sell_items": {
+    "car_battery": {
+      "market": "regular",
+      "max_order_quantity": 5000,
+      "min_inventory_to_keep": 0
+    },
+    "fuel_tank": {
+      "market": "regular",
+      "max_order_quantity": 3000,
+      "min_inventory_to_keep": 0
+    }
   }
 }

@@ -1,24 +1,5 @@
 {
-  "player_id": -2048,
   "business_name": "Pacific Wire & Cable",
-  "description": "Industrial wire and plastics manufacturer. Draws copper wire from raw copper and rubber, and processes crude oil into plastic. Supplies the copper wire and plastic that electronics factories, appliance makers, construction firms, and vehicle manufacturers consume in bulk.",
-  "cash_caps": {
-    "hard_high": 40000000,
-    "soft_high": 16000000,
-    "soft_low": 4000000,
-    "hard_low": 1200000
-  },
-  "seed": {
-    "starting_cash": 9000000,
-    "land_plots": [],
-    "districts": [
-      {
-        "district_type": "industrial",
-        "size": 4,
-        "plots_merged": 4
-      }
-    ]
-  },
   "businesses": [
     {
       "business_type": "wire_plant",
@@ -30,64 +11,83 @@
     }
   ],
   "buy_items": {
+    "acid_solution": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
     "copper": {
-      "target_inventory": 8000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 1600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "rubber": {
-      "target_inventory": 4000,
-      "reorder_at": 800,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "oil": {
-      "target_inventory": 8000,
-      "reorder_at": 1600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 8000
     },
     "energy": {
-      "target_inventory": 250000,
-      "reorder_at": 50000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 50000,
+      "target_inventory": 250000
     },
-    "water": {
-      "target_inventory": 15000,
-      "reorder_at": 3000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
+    "oil": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1600,
+      "target_inventory": 8000
     },
     "paper": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 600,
+      "target_inventory": 3000
     },
-    "acid_solution": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
+    "rubber": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 800,
+      "target_inventory": 4000
+    },
+    "water": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 3000,
+      "target_inventory": 15000
     }
+  },
+  "cash_caps": {
+    "hard_high": 40000000,
+    "hard_low": 1200000,
+    "soft_high": 16000000,
+    "soft_low": 4000000
+  },
+  "description": "Industrial wire and plastics manufacturer. Draws copper wire from raw copper and rubber, and processes crude oil into plastic. Supplies the copper wire and plastic that electronics factories, appliance makers, construction firms, and vehicle manufacturers consume in bulk.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "PCWC",
+    "total_shares": 1000000
+  },
+  "player_id": -2048,
+  "seed": {
+    "districts": [
+      {
+        "district_type": "industrial",
+        "plots_merged": 4,
+        "size": 4
+      }
+    ],
+    "land_plots": [],
+    "starting_cash": 9000000
   },
   "sell_items": {
     "copper_wire": {
-      "min_inventory_to_keep": 500,
+      "market": "regular",
       "max_order_quantity": 3000,
-      "market": "regular"
+      "min_inventory_to_keep": 500
     },
     "plastic": {
-      "min_inventory_to_keep": 500,
+      "market": "regular",
       "max_order_quantity": 3000,
-      "market": "regular"
+      "min_inventory_to_keep": 500
     }
-  },
-  "ipo": {
-    "ticker": "PCWC",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

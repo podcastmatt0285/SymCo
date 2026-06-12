@@ -1,39 +1,5 @@
 {
-  "player_id": -2013,
   "business_name": "Critter Co.",
-  "description": "Operates three pet stores across varied terrain, stocking birds, fish, and an extensive roster of herding and working dog breeds. Buys all animals from the open market.",
-  "cash_caps": {
-    "hard_high": 5000000,
-    "soft_high": 2000000,
-    "soft_low": 500000,
-    "hard_low": 100000
-  },
-  "seed": {
-    "starting_cash": 750000,
-    "land_plots": [
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "urban"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "hills",
-        "proximity_features": [
-          "urban"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "forest",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      }
-    ]
-  },
   "businesses": [
     {
       "business_type": "pet_store",
@@ -49,408 +15,538 @@
     }
   ],
   "buy_items": {
-    "tropical_fish": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+    "appenzeller_sennenhund": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "canary": {
-      "target_inventory": 200,
-      "reorder_at": 50,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "parrot": {
-      "target_inventory": 100,
-      "reorder_at": 25,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "border_collie": {
-      "target_inventory": 100,
-      "reorder_at": 25,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "german_shepherd": {
-      "target_inventory": 100,
-      "reorder_at": 25,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "belgian_shepherd": {
-      "target_inventory": 100,
-      "reorder_at": 25,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "belgian_malinois": {
-      "target_inventory": 100,
-      "reorder_at": 25,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "pembroke_welsh_corgi": {
-      "target_inventory": 100,
-      "reorder_at": 25,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "rottweiler": {
-      "target_inventory": 100,
-      "reorder_at": 25,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "samoyed": {
-      "target_inventory": 100,
-      "reorder_at": 25,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 5,
+      "target_inventory": 20
     },
     "australian_kelpie": {
-      "target_inventory": 100,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 25,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "finnish_lapphund": {
-      "target_inventory": 100,
-      "reorder_at": 25,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "old_english_sheepdog": {
-      "target_inventory": 100,
-      "reorder_at": 25,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "white_swiss_shepherd": {
-      "target_inventory": 50,
-      "reorder_at": 15,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "icelandic_sheepdog": {
-      "target_inventory": 50,
-      "reorder_at": 15,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "miniature_american_shepherd": {
-      "target_inventory": 50,
-      "reorder_at": 15,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "english_shepherd": {
-      "target_inventory": 50,
-      "reorder_at": 15,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "pyrenean_sheepdog": {
-      "target_inventory": 50,
-      "reorder_at": 15,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "beauceron": {
-      "target_inventory": 50,
-      "reorder_at": 15,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "belgian_tervuren": {
-      "target_inventory": 50,
-      "reorder_at": 15,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "carpathian_shepherd": {
-      "target_inventory": 50,
-      "reorder_at": 15,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "bearded_collie": {
-      "target_inventory": 50,
-      "reorder_at": 15,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "catahoula_leopard_dog": {
-      "target_inventory": 50,
-      "reorder_at": 15,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "cardigan_welsh_corgi": {
-      "target_inventory": 50,
-      "reorder_at": 15,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "bouvier_des_flandres": {
-      "target_inventory": 50,
-      "reorder_at": 15,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "catalan_sheepdog": {
-      "target_inventory": 20,
-      "reorder_at": 5,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "lapponian_herder": {
-      "target_inventory": 20,
-      "reorder_at": 5,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "scotch_collie": {
-      "target_inventory": 20,
-      "reorder_at": 5,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "bergamasco_shepherd": {
-      "target_inventory": 20,
-      "reorder_at": 5,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "polish_lowland_sheepdog": {
-      "target_inventory": 20,
-      "reorder_at": 5,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "schipperke": {
-      "target_inventory": 20,
-      "reorder_at": 5,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "appenzeller_sennenhund": {
-      "target_inventory": 20,
-      "reorder_at": 5,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "belgian_laekenois": {
-      "target_inventory": 20,
-      "reorder_at": 5,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "tibetan_terrier": {
-      "target_inventory": 20,
-      "reorder_at": 5,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 100
     },
     "basque_shepherd": {
-      "target_inventory": 20,
-      "reorder_at": 5,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 5,
+      "target_inventory": 20
+    },
+    "bearded_collie": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 15,
+      "target_inventory": 50
+    },
+    "beauceron": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 15,
+      "target_inventory": 50
+    },
+    "belgian_laekenois": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 5,
+      "target_inventory": 20
+    },
+    "belgian_malinois": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 25,
+      "target_inventory": 100
+    },
+    "belgian_shepherd": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 25,
+      "target_inventory": 100
+    },
+    "belgian_tervuren": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 15,
+      "target_inventory": 50
+    },
+    "bergamasco_shepherd": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 5,
+      "target_inventory": 20
+    },
+    "border_collie": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 25,
+      "target_inventory": 100
+    },
+    "bouvier_des_flandres": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 15,
+      "target_inventory": 50
+    },
+    "canary": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 50,
+      "target_inventory": 200
+    },
+    "cardigan_welsh_corgi": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 15,
+      "target_inventory": 50
+    },
+    "carpathian_shepherd": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 15,
+      "target_inventory": 50
+    },
+    "catahoula_leopard_dog": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 15,
+      "target_inventory": 50
+    },
+    "catalan_sheepdog": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 5,
+      "target_inventory": 20
+    },
+    "chimpanzee": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
     },
     "croatian_sheepdog": {
-      "target_inventory": 20,
-      "reorder_at": 5,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 5,
+      "target_inventory": 20
+    },
+    "crocodile": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "eagle": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "english_shepherd": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 15,
+      "target_inventory": 50
+    },
+    "finnish_lapphund": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 25,
+      "target_inventory": 100
+    },
+    "flamingo": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 4,
+      "target_inventory": 16
+    },
+    "german_shepherd": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 25,
+      "target_inventory": 100
+    },
+    "gorilla": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "icelandic_sheepdog": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 15,
+      "target_inventory": 50
+    },
+    "jellyfish": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 8,
+      "target_inventory": 32
+    },
+    "koala": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "lapponian_herder": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 5,
+      "target_inventory": 20
+    },
+    "livestock_product_supply": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 25,
+      "target_inventory": 101
+    },
+    "manta_ray": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "miniature_american_shepherd": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 15,
+      "target_inventory": 50
+    },
+    "old_english_sheepdog": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 25,
+      "target_inventory": 100
+    },
+    "panda": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "parrot": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 25,
+      "target_inventory": 100
+    },
+    "pembroke_welsh_corgi": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 25,
+      "target_inventory": 100
+    },
+    "polish_lowland_sheepdog": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 5,
+      "target_inventory": 20
+    },
+    "puffer_fish": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 4,
+      "target_inventory": 18
+    },
+    "pyrenean_sheepdog": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 15,
+      "target_inventory": 50
+    },
+    "rhino": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "rottweiler": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 25,
+      "target_inventory": 100
+    },
+    "samoyed": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 25,
+      "target_inventory": 100
+    },
+    "schipperke": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 5,
+      "target_inventory": 20
+    },
+    "scotch_collie": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 5,
+      "target_inventory": 20
+    },
+    "sea_turtle": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "shark": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "tibetan_terrier": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 5,
+      "target_inventory": 20
+    },
+    "tiger": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "tropical_fish": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "white_swiss_shepherd": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 15,
+      "target_inventory": 50
+    },
+    "zebra": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
     }
+  },
+  "cash_caps": {
+    "hard_high": 5000000,
+    "hard_low": 100000,
+    "soft_high": 2000000,
+    "soft_low": 500000
+  },
+  "description": "Operates three pet stores across varied terrain, stocking birds, fish, and an extensive roster of herding and working dog breeds. Buys all animals from the open market.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "CRIT",
+    "total_shares": 1000000
+  },
+  "player_id": -2013,
+  "seed": {
+    "land_plots": [
+      {
+        "proximity_features": [
+          "urban"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "urban"
+        ],
+        "size": 1,
+        "terrain_type": "hills"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "forest"
+      }
+    ],
+    "starting_cash": 750000
   },
   "sell_items": {
-    "tropical_fish": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "canary": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 500,
-      "market": "regular"
-    },
-    "parrot": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 200,
-      "market": "regular"
-    },
-    "border_collie": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 200,
-      "market": "regular"
-    },
-    "german_shepherd": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 200,
-      "market": "regular"
-    },
-    "belgian_shepherd": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 200,
-      "market": "regular"
-    },
-    "belgian_malinois": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 200,
-      "market": "regular"
-    },
-    "pembroke_welsh_corgi": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 200,
-      "market": "regular"
-    },
-    "rottweiler": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 200,
-      "market": "regular"
-    },
-    "samoyed": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 200,
-      "market": "regular"
+    "appenzeller_sennenhund": {
+      "market": "regular",
+      "max_order_quantity": 50,
+      "min_inventory_to_keep": 0
     },
     "australian_kelpie": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 200,
-      "market": "regular"
-    },
-    "finnish_lapphund": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 200,
-      "market": "regular"
-    },
-    "old_english_sheepdog": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 200,
-      "market": "regular"
-    },
-    "white_swiss_shepherd": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 100,
-      "market": "regular"
-    },
-    "icelandic_sheepdog": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 100,
-      "market": "regular"
-    },
-    "miniature_american_shepherd": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 100,
-      "market": "regular"
-    },
-    "english_shepherd": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 100,
-      "market": "regular"
-    },
-    "pyrenean_sheepdog": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 100,
-      "market": "regular"
-    },
-    "beauceron": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 100,
-      "market": "regular"
-    },
-    "belgian_tervuren": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 100,
-      "market": "regular"
-    },
-    "carpathian_shepherd": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 100,
-      "market": "regular"
-    },
-    "bearded_collie": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 100,
-      "market": "regular"
-    },
-    "catahoula_leopard_dog": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 100,
-      "market": "regular"
-    },
-    "cardigan_welsh_corgi": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 100,
-      "market": "regular"
-    },
-    "bouvier_des_flandres": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 100,
-      "market": "regular"
-    },
-    "catalan_sheepdog": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 50,
-      "market": "regular"
-    },
-    "lapponian_herder": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 50,
-      "market": "regular"
-    },
-    "scotch_collie": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 50,
-      "market": "regular"
-    },
-    "bergamasco_shepherd": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 50,
-      "market": "regular"
-    },
-    "polish_lowland_sheepdog": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 50,
-      "market": "regular"
-    },
-    "schipperke": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 50,
-      "market": "regular"
-    },
-    "appenzeller_sennenhund": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 50,
-      "market": "regular"
-    },
-    "belgian_laekenois": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 50,
-      "market": "regular"
-    },
-    "tibetan_terrier": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 50,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "basque_shepherd": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 50,
-      "market": "regular"
+      "min_inventory_to_keep": 0
+    },
+    "bearded_collie": {
+      "market": "regular",
+      "max_order_quantity": 100,
+      "min_inventory_to_keep": 0
+    },
+    "beauceron": {
+      "market": "regular",
+      "max_order_quantity": 100,
+      "min_inventory_to_keep": 0
+    },
+    "belgian_laekenois": {
+      "market": "regular",
+      "max_order_quantity": 50,
+      "min_inventory_to_keep": 0
+    },
+    "belgian_malinois": {
+      "market": "regular",
+      "max_order_quantity": 200,
+      "min_inventory_to_keep": 0
+    },
+    "belgian_shepherd": {
+      "market": "regular",
+      "max_order_quantity": 200,
+      "min_inventory_to_keep": 0
+    },
+    "belgian_tervuren": {
+      "market": "regular",
+      "max_order_quantity": 100,
+      "min_inventory_to_keep": 0
+    },
+    "bergamasco_shepherd": {
+      "market": "regular",
+      "max_order_quantity": 50,
+      "min_inventory_to_keep": 0
+    },
+    "border_collie": {
+      "market": "regular",
+      "max_order_quantity": 200,
+      "min_inventory_to_keep": 0
+    },
+    "bouvier_des_flandres": {
+      "market": "regular",
+      "max_order_quantity": 100,
+      "min_inventory_to_keep": 0
+    },
+    "canary": {
+      "market": "regular",
+      "max_order_quantity": 500,
+      "min_inventory_to_keep": 0
+    },
+    "cardigan_welsh_corgi": {
+      "market": "regular",
+      "max_order_quantity": 100,
+      "min_inventory_to_keep": 0
+    },
+    "carpathian_shepherd": {
+      "market": "regular",
+      "max_order_quantity": 100,
+      "min_inventory_to_keep": 0
+    },
+    "catahoula_leopard_dog": {
+      "market": "regular",
+      "max_order_quantity": 100,
+      "min_inventory_to_keep": 0
+    },
+    "catalan_sheepdog": {
+      "market": "regular",
+      "max_order_quantity": 50,
+      "min_inventory_to_keep": 0
     },
     "croatian_sheepdog": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 50,
-      "market": "regular"
+      "min_inventory_to_keep": 0
+    },
+    "english_shepherd": {
+      "market": "regular",
+      "max_order_quantity": 100,
+      "min_inventory_to_keep": 0
+    },
+    "finnish_lapphund": {
+      "market": "regular",
+      "max_order_quantity": 200,
+      "min_inventory_to_keep": 0
+    },
+    "german_shepherd": {
+      "market": "regular",
+      "max_order_quantity": 200,
+      "min_inventory_to_keep": 0
+    },
+    "icelandic_sheepdog": {
+      "market": "regular",
+      "max_order_quantity": 100,
+      "min_inventory_to_keep": 0
+    },
+    "lapponian_herder": {
+      "market": "regular",
+      "max_order_quantity": 50,
+      "min_inventory_to_keep": 0
+    },
+    "miniature_american_shepherd": {
+      "market": "regular",
+      "max_order_quantity": 100,
+      "min_inventory_to_keep": 0
+    },
+    "old_english_sheepdog": {
+      "market": "regular",
+      "max_order_quantity": 200,
+      "min_inventory_to_keep": 0
+    },
+    "parrot": {
+      "market": "regular",
+      "max_order_quantity": 200,
+      "min_inventory_to_keep": 0
+    },
+    "pembroke_welsh_corgi": {
+      "market": "regular",
+      "max_order_quantity": 200,
+      "min_inventory_to_keep": 0
+    },
+    "polish_lowland_sheepdog": {
+      "market": "regular",
+      "max_order_quantity": 50,
+      "min_inventory_to_keep": 0
+    },
+    "pyrenean_sheepdog": {
+      "market": "regular",
+      "max_order_quantity": 100,
+      "min_inventory_to_keep": 0
+    },
+    "rottweiler": {
+      "market": "regular",
+      "max_order_quantity": 200,
+      "min_inventory_to_keep": 0
+    },
+    "samoyed": {
+      "market": "regular",
+      "max_order_quantity": 200,
+      "min_inventory_to_keep": 0
+    },
+    "schipperke": {
+      "market": "regular",
+      "max_order_quantity": 50,
+      "min_inventory_to_keep": 0
+    },
+    "scotch_collie": {
+      "market": "regular",
+      "max_order_quantity": 50,
+      "min_inventory_to_keep": 0
+    },
+    "tibetan_terrier": {
+      "market": "regular",
+      "max_order_quantity": 50,
+      "min_inventory_to_keep": 0
+    },
+    "tropical_fish": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "white_swiss_shepherd": {
+      "market": "regular",
+      "max_order_quantity": 100,
+      "min_inventory_to_keep": 0
     }
-  },
-  "ipo": {
-    "ticker": "CRIT",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

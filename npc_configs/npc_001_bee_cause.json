@@ -1,127 +1,127 @@
 {
-  "player_id": -2001,
   "business_name": "Bee Cause",
-  "description": "Produces and sells pollen, honey, and sugar on the open market.",
-  "cash_caps": {
-    "hard_high": 25000000,
-    "soft_high": 10000000,
-    "soft_low": 5000000,
-    "hard_low": 1000000
-  },
-  "seed": {
-    "starting_cash": 6000000,
-    "starting_inventory": {
-      "honey": 2000,
-      "sugar": 3000,
-      "pollen": 1000,
-      "beeswax": 500,
-      "bees": 500,
-      "queen_bee": 50
-    },
-    "land_plots": [
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "remote"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "savanna",
-        "proximity_features": [
-          "remote"
-        ],
-        "size": 1
-      }
-    ]
-  },
   "businesses": [
     {
-      "business_type": "apiary",
-      "district_id": null,
       "active_lines": [
         "pollen",
         "honey",
         "bees",
         "beeswax"
-      ]
+      ],
+      "business_type": "apiary",
+      "district_id": null
     },
     {
-      "business_type": "cane_plantation",
-      "district_id": null,
       "active_lines": [
         "sugar"
-      ]
+      ],
+      "business_type": "cane_plantation",
+      "district_id": null
     }
   ],
   "buy_items": {
     "bees": {
-      "target_inventory": 500,
-      "reorder_at": 50,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "queen_bee": {
-      "target_inventory": 500,
       "reorder_at": 50,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "water": {
-      "target_inventory": 1000,
-      "reorder_at": 100,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
+      "target_inventory": 500
     },
     "cane": {
-      "target_inventory": 2000,
-      "reorder_at": 500,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 500,
+      "target_inventory": 2000
     },
     "energy": {
-      "target_inventory": 1000,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 1000
     },
     "paper": {
-      "target_inventory": 200,
-      "reorder_at": 20,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 20,
+      "target_inventory": 200
+    },
+    "queen_bee": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 50,
+      "target_inventory": 500
+    },
+    "water": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 100,
+      "target_inventory": 1000
+    }
+  },
+  "cash_caps": {
+    "hard_high": 25000000,
+    "hard_low": 1000000,
+    "soft_high": 10000000,
+    "soft_low": 5000000
+  },
+  "description": "Produces and sells pollen, honey, and sugar on the open market.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "BEE",
+    "total_shares": 1000000
+  },
+  "player_id": -2001,
+  "seed": {
+    "land_plots": [
+      {
+        "proximity_features": [
+          "remote"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "remote"
+        ],
+        "size": 1,
+        "terrain_type": "savanna"
+      }
+    ],
+    "starting_cash": 6000000,
+    "starting_inventory": {
+      "bees": 500,
+      "beeswax": 500,
+      "honey": 2000,
+      "pollen": 1000,
+      "queen_bee": 50,
+      "sugar": 3000
     }
   },
   "sell_items": {
-    "pollen": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 500000,
-      "market": "regular"
+    "beeswax": {
+      "market": "regular",
+      "max_order_quantity": 500,
+      "min_inventory_to_keep": 0
     },
     "honey": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
-    "sugar": {
-      "min_inventory_to_keep": 500,
-      "max_order_quantity": 5000,
-      "market": "regular"
-    },
-    "beeswax": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 500,
-      "market": "regular"
+    "pollen": {
+      "market": "regular",
+      "max_order_quantity": 500000,
+      "min_inventory_to_keep": 0
     },
     "queen_bee": {
-      "min_inventory_to_keep": 10,
+      "market": "regular",
       "max_order_quantity": 200,
-      "market": "regular"
+      "min_inventory_to_keep": 10
+    },
+    "sugar": {
+      "market": "regular",
+      "max_order_quantity": 5000,
+      "min_inventory_to_keep": 500
     }
-  },
-  "ipo": {
-    "ticker": "BEE",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

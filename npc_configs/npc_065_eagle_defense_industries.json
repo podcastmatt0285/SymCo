@@ -1,180 +1,306 @@
 {
-  "player_id": -2065,
   "business_name": "Eagle Defense Industries",
-  "description": "US small-arms and armored vehicle manufacturer. Produces M4 carbines, M249 SAWs, and M1A2 Abrams tanks for government contracts and allied nations.",
-  "cash_caps": {
-    "hard_high": 120000000,
-    "soft_high": 55000000,
-    "soft_low": 15000000,
-    "hard_low": 5000000
-  },
-  "seed": {
-    "starting_cash": 30000000,
-    "land_plots": [],
-    "districts": [
-      {
-        "district_type": "military",
-        "size": 6,
-        "plots_merged": 6
-      }
-    ]
-  },
   "businesses": [
     {
+      "active_lines": [
+        "m4_carbine",
+        "m249_saw",
+        "machine_gun",
+        "ammunition",
+        "grenade",
+        "missile"
+      ],
       "business_type": "weapons_factory",
-      "district_seed_index": 0,
-      "active_lines": ["m4_carbine", "m249_saw", "machine_gun", "ammunition", "grenade", "missile"]
+      "district_seed_index": 0
     },
     {
+      "active_lines": [
+        "m1a2_abrams",
+        "humvee",
+        "apc",
+        "military_truck"
+      ],
       "business_type": "military_vehicle_plant",
-      "district_seed_index": 0,
-      "active_lines": ["m1a2_abrams", "humvee", "apc", "military_truck"]
+      "district_seed_index": 0
     }
   ],
   "buy_items": {
-    "rifle_barrel": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
+    "al_riyadh_frigate": {
+      "market": "district",
       "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "rifle_receiver": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "polymer_compound": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "steel": {
-      "target_inventory": 20000,
-      "reorder_at": 4000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "tank_hull": {
-      "target_inventory": 20,
-      "reorder_at": 4,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "tank_turret": {
-      "target_inventory": 20,
-      "reorder_at": 4,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "tank_cannon": {
-      "target_inventory": 20,
-      "reorder_at": 4,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "diesel_engine": {
-      "target_inventory": 50,
-      "reorder_at": 10,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "composite_armor_panel": {
-      "target_inventory": 500,
-      "reorder_at": 100,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "explosive_reactive_armor": {
-      "target_inventory": 200,
-      "reorder_at": 40,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "titanium_alloy": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "copper_wire": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 1,
+      "target_inventory": 5
     },
     "apc_hull": {
-      "target_inventory": 20,
+      "market": "regular",
+      "max_price_multiplier": 1.15,
       "reorder_at": 4,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
+      "target_inventory": 20
     },
-    "rdx_explosive": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "grenade_body": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
+    "arihant_class_sub": {
+      "market": "district",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "barracuda_class_sub": {
+      "market": "district",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "challenger_3": {
+      "market": "district",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "composite_armor_panel": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "copper_wire": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "diesel_engine": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 10,
+      "target_inventory": 50
+    },
+    "ee_t1_osorio": {
+      "market": "district",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
     },
     "energy": {
-      "target_inventory": 1000000,
-      "reorder_at": 200000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 200000,
+      "target_inventory": 1000000
+    },
+    "explosive_reactive_armor": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 40,
+      "target_inventory": 200
+    },
+    "famas_f1": {
+      "market": "district",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 6,
+      "target_inventory": 26
+    },
+    "fx05_xiuhcoatl": {
+      "market": "district",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 6,
+      "target_inventory": 26
+    },
+    "grenade_body": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "hk416": {
+      "market": "district",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 6,
+      "target_inventory": 24
+    },
+    "imbel_md97": {
+      "market": "district",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 6,
+      "target_inventory": 27
+    },
+    "insas_rifle": {
+      "market": "district",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 6,
+      "target_inventory": 26
+    },
+    "k2_rifle": {
+      "market": "district",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 6,
+      "target_inventory": 26
+    },
+    "l85a2": {
+      "market": "district",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 6,
+      "target_inventory": 26
+    },
+    "mpt_76": {
+      "market": "district",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 6,
+      "target_inventory": 26
     },
     "paper": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "polymer_compound": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "rafale": {
+      "market": "district",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "rdx_explosive": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "rifle_barrel": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "rifle_receiver": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "smoke_grenade": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 9,
+      "target_inventory": 38
+    },
+    "steel": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 4000,
+      "target_inventory": 20000
+    },
+    "t129_atak": {
+      "market": "district",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "tank_cannon": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 4,
+      "target_inventory": 20
+    },
+    "tank_hull": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 4,
+      "target_inventory": 20
+    },
+    "tank_turret": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 4,
+      "target_inventory": 20
+    },
+    "titanium_alloy": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "type093_sub": {
+      "market": "district",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "vektor_r4": {
+      "market": "district",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 6,
+      "target_inventory": 27
+    },
+    "z10_thunderbolt": {
+      "market": "district",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
     }
+  },
+  "cash_caps": {
+    "hard_high": 120000000,
+    "hard_low": 5000000,
+    "soft_high": 55000000,
+    "soft_low": 15000000
+  },
+  "description": "US small-arms and armored vehicle manufacturer. Produces M4 carbines, M249 SAWs, and M1A2 Abrams tanks for government contracts and allied nations.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "EGLD",
+    "total_shares": 1000000
+  },
+  "player_id": -2065,
+  "seed": {
+    "districts": [
+      {
+        "district_type": "military",
+        "plots_merged": 6,
+        "size": 6
+      }
+    ],
+    "land_plots": [],
+    "starting_cash": 30000000
   },
   "sell_items": {
-    "m4_carbine": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 500,
-      "market": "regular"
-    },
-    "m249_saw": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 200,
-      "market": "regular"
-    },
-    "m1a2_abrams": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 10,
-      "market": "regular"
-    },
-    "humvee": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 50,
-      "market": "regular"
-    },
-    "machine_gun": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 100,
-      "market": "regular"
-    },
     "ammunition": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 10000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "grenade": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 2000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
+    },
+    "humvee": {
+      "market": "regular",
+      "max_order_quantity": 50,
+      "min_inventory_to_keep": 0
+    },
+    "m1a2_abrams": {
+      "market": "regular",
+      "max_order_quantity": 10,
+      "min_inventory_to_keep": 0
+    },
+    "m249_saw": {
+      "market": "regular",
+      "max_order_quantity": 200,
+      "min_inventory_to_keep": 0
+    },
+    "m4_carbine": {
+      "market": "regular",
+      "max_order_quantity": 500,
+      "min_inventory_to_keep": 0
+    },
+    "machine_gun": {
+      "market": "regular",
+      "max_order_quantity": 100,
+      "min_inventory_to_keep": 0
     }
-  },
-  "ipo": {
-    "ticker": "EGLD",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

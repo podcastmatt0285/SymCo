@@ -1,29 +1,16 @@
 {
-  "player_id": -2045,
   "business_name": "Ironkeel Naval Works",
-  "description": "Military naval shipyard and support complex. Constructs destroyers and submarines for government contracts, and runs a military support facility producing MREs, uniforms, and barracks supplies for naval operations.",
-  "cash_caps": {
-    "hard_high": 150000000,
-    "soft_high": 70000000,
-    "soft_low": 20000000,
-    "hard_low": 6000000
-  },
-  "seed": {
-    "starting_cash": 40000000,
-    "land_plots": [],
-    "districts": [
-      {
-        "district_type": "military",
-        "size": 5,
-        "plots_merged": 5
-      }
-    ]
-  },
   "businesses": [
     {
+      "active_lines": [
+        "arleigh_burke_destroyer",
+        "type055_destroyer",
+        "virginia_class_sub",
+        "yasen_class_sub",
+        "gorshkov_frigate"
+      ],
       "business_type": "naval_shipyard",
-      "district_seed_index": 0,
-      "active_lines": ["arleigh_burke_destroyer", "type055_destroyer", "virginia_class_sub", "yasen_class_sub", "gorshkov_frigate"]
+      "district_seed_index": 0
     },
     {
       "business_type": "military_support_facility",
@@ -31,183 +18,202 @@
     }
   ],
   "buy_items": {
-    "steel": {
-      "target_inventory": 20000,
-      "reorder_at": 4000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "missile": {
-      "target_inventory": 200,
-      "reorder_at": 50,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
     "beef": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 400,
+      "target_inventory": 2000
     },
     "bread": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 600,
+      "target_inventory": 3000
     },
     "carrots": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "potatoes": {
-      "target_inventory": 2000,
       "reorder_at": 400,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 2000
     },
     "cotton": {
-      "target_inventory": 2000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 400,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "polyester": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "leather": {
-      "target_inventory": 500,
-      "reorder_at": 100,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "lumber": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 2000
     },
     "energy": {
-      "target_inventory": 1000000,
-      "reorder_at": 200000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "paper": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 200000,
+      "target_inventory": 1000000
     },
     "fire_control_system": {
-      "target_inventory": 5,
-      "reorder_at": 1,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "leather": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "lumber": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 200,
+      "target_inventory": 1000
     },
     "marine_piping": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "missile": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 50,
+      "target_inventory": 200
     },
     "naval_gun_system": {
-      "target_inventory": 5,
-      "reorder_at": 1,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 1,
+      "target_inventory": 5
     },
     "nuclear_reactor_core": {
-      "target_inventory": 3,
-      "reorder_at": 1,
+      "market": "regular",
       "max_price_multiplier": 1.2,
-      "market": "regular"
+      "reorder_at": 1,
+      "target_inventory": 3
+    },
+    "paper": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 1000,
+      "target_inventory": 5000
     },
     "plastic": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "polyester": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "potatoes": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 400,
+      "target_inventory": 2000
     },
     "radar_system": {
-      "target_inventory": 5,
-      "reorder_at": 1,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 1,
+      "target_inventory": 5
     },
     "sonar_system": {
-      "target_inventory": 5,
-      "reorder_at": 1,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "steel": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 4000,
+      "target_inventory": 20000
     },
     "torpedo": {
-      "target_inventory": 200,
-      "reorder_at": 40,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 40,
+      "target_inventory": 200
     },
     "turbofan_engine": {
-      "target_inventory": 5,
-      "reorder_at": 1,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 1,
+      "target_inventory": 5
     }
+  },
+  "cash_caps": {
+    "hard_high": 150000000,
+    "hard_low": 6000000,
+    "soft_high": 70000000,
+    "soft_low": 20000000
+  },
+  "description": "Military naval shipyard and support complex. Constructs destroyers and submarines for government contracts, and runs a military support facility producing MREs, uniforms, and barracks supplies for naval operations.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "IKNW",
+    "total_shares": 1000000
+  },
+  "player_id": -2045,
+  "seed": {
+    "districts": [
+      {
+        "district_type": "military",
+        "plots_merged": 5,
+        "size": 5
+      }
+    ],
+    "land_plots": [],
+    "starting_cash": 40000000
   },
   "sell_items": {
-    "virginia_class_sub": {
-      "min_inventory_to_keep": 0,
+    "arleigh_burke_destroyer": {
+      "market": "regular",
       "max_order_quantity": 3,
-      "market": "regular"
-    },
-    "yasen_class_sub": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 3,
-      "market": "regular"
-    },
-    "mre": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 3000,
-      "market": "regular"
-    },
-    "military_uniform": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "dog_tags": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 2000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "barracks_bunk": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 200,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
-    "arleigh_burke_destroyer": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 3,
-      "market": "regular"
-    },
-    "type055_destroyer": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 3,
-      "market": "regular"
+    "dog_tags": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 0
     },
     "gorshkov_frigate": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 3,
-      "market": "regular"
+      "min_inventory_to_keep": 0
+    },
+    "military_uniform": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "mre": {
+      "market": "regular",
+      "max_order_quantity": 3000,
+      "min_inventory_to_keep": 0
+    },
+    "type055_destroyer": {
+      "market": "regular",
+      "max_order_quantity": 3,
+      "min_inventory_to_keep": 0
+    },
+    "virginia_class_sub": {
+      "market": "regular",
+      "max_order_quantity": 3,
+      "min_inventory_to_keep": 0
+    },
+    "yasen_class_sub": {
+      "market": "regular",
+      "max_order_quantity": 3,
+      "min_inventory_to_keep": 0
     }
-  },
-  "ipo": {
-    "ticker": "IKNW",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

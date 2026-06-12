@@ -1,91 +1,145 @@
 {
-  "player_id": -2093,
   "business_name": "Keelson Marine Manufacturing",
-  "description": "Marine parts manufacturer running three coastal plants that turn out boat hulls, outboard motors, and propellers. Built as a second source alongside Blue Horizon so the boat yards never run dry. Hoards nothing — every hull, motor, and propeller goes straight to market.",
-  "cash_caps": {
-    "hard_high": 50000000,
-    "soft_high": 20000000,
-    "soft_low": 5000000,
-    "hard_low": 1500000
-  },
-  "seed": {
-    "starting_cash": 12000000,
-    "land_plots": [
-      { "terrain_type": "marsh",  "proximity_features": ["coastal"],   "size": 1 },
-      { "terrain_type": "island", "proximity_features": ["coastal"],   "size": 1 },
-      { "terrain_type": "island", "proximity_features": ["riverside"], "size": 1 }
-    ],
-    "districts": []
-  },
   "businesses": [
-    { "business_type": "marine_factory", "district_id": null, "active_lines": ["hull", "outboard_motor", "propeller"] },
-    { "business_type": "marine_factory", "district_id": null, "active_lines": ["hull", "outboard_motor", "propeller"] },
-    { "business_type": "marine_factory", "district_id": null, "active_lines": ["hull", "outboard_motor", "propeller"] }
+    {
+      "active_lines": [
+        "hull",
+        "outboard_motor",
+        "propeller"
+      ],
+      "business_type": "marine_factory",
+      "district_id": null
+    },
+    {
+      "active_lines": [
+        "hull",
+        "outboard_motor",
+        "propeller"
+      ],
+      "business_type": "marine_factory",
+      "district_id": null
+    },
+    {
+      "active_lines": [
+        "hull",
+        "outboard_motor",
+        "propeller"
+      ],
+      "business_type": "marine_factory",
+      "district_id": null
+    }
   ],
   "buy_items": {
-    "fiberglass": {
-      "target_inventory": 12000,
-      "reorder_at": 3000,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "lumber": {
-      "target_inventory": 8000,
-      "reorder_at": 2000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "engine_block": {
-      "target_inventory": 3000,
-      "reorder_at": 800,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
     "bronze": {
-      "target_inventory": 40000,
-      "reorder_at": 10000,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "iron": {
-      "target_inventory": 40000,
       "reorder_at": 10000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 40000
     },
     "copper": {
-      "target_inventory": 8000,
-      "reorder_at": 2000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "rubber": {
-      "target_inventory": 8000,
       "reorder_at": 2000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 8000
     },
     "energy": {
-      "target_inventory": 1500000,
-      "reorder_at": 350000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 350000,
+      "target_inventory": 1500000
+    },
+    "engine_block": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 800,
+      "target_inventory": 3000
+    },
+    "fiberglass": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 3000,
+      "target_inventory": 12000
+    },
+    "iron": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 10000,
+      "target_inventory": 40000
+    },
+    "lumber": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 2000,
+      "target_inventory": 8000
     },
     "paper": {
-      "target_inventory": 10000,
-      "reorder_at": 2500,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 2500,
+      "target_inventory": 10000
+    },
+    "rubber": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 2000,
+      "target_inventory": 8000
     }
   },
-  "sell_items": {
-    "hull":           { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
-    "outboard_motor": { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
-    "propeller":      { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" }
+  "cash_caps": {
+    "hard_high": 50000000,
+    "hard_low": 1500000,
+    "soft_high": 20000000,
+    "soft_low": 5000000
   },
+  "description": "Marine parts manufacturer running three coastal plants that turn out boat hulls, outboard motors, and propellers. Built as a second source alongside Blue Horizon so the boat yards never run dry. Hoards nothing \u2014 every hull, motor, and propeller goes straight to market.",
   "ipo": {
+    "shares_to_offer": 600000,
     "ticker": "KELS",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
+    "total_shares": 1000000
+  },
+  "player_id": -2093,
+  "seed": {
+    "districts": [],
+    "land_plots": [
+      {
+        "proximity_features": [
+          "coastal"
+        ],
+        "size": 1,
+        "terrain_type": "marsh"
+      },
+      {
+        "proximity_features": [
+          "coastal"
+        ],
+        "size": 1,
+        "terrain_type": "island"
+      },
+      {
+        "proximity_features": [
+          "riverside"
+        ],
+        "size": 1,
+        "terrain_type": "island"
+      }
+    ],
+    "starting_cash": 12000000
+  },
+  "sell_items": {
+    "hull": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 0
+    },
+    "outboard_motor": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 0
+    },
+    "propeller": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 0
+    }
   }
 }

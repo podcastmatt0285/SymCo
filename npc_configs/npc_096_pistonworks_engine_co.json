@@ -1,57 +1,85 @@
 {
-  "player_id": -2096,
   "business_name": "Pistonworks Engine Co.",
-  "description": "Engine plant casting engine blocks for the marine and automotive trades. Engine blocks are the core of every outboard motor; this NPC adds a steady market supply so Keelson Marine and Blue Horizon never stall their motor lines. Hoards nothing.",
-  "cash_caps": {
-    "hard_high": 30000000,
-    "soft_high": 12000000,
-    "soft_low": 3000000,
-    "hard_low": 1000000
-  },
-  "seed": {
-    "starting_cash": 7000000,
-    "land_plots": [
-      { "terrain_type": "prairie", "proximity_features": ["road"],  "size": 1 },
-      { "terrain_type": "prairie", "proximity_features": ["urban"], "size": 1 }
-    ],
-    "districts": []
-  },
   "businesses": [
-    { "business_type": "engine_plant", "district_id": null, "active_lines": ["engine_block"] },
-    { "business_type": "engine_plant", "district_id": null, "active_lines": ["engine_block"] }
+    {
+      "active_lines": [
+        "engine_block"
+      ],
+      "business_type": "engine_plant",
+      "district_id": null
+    },
+    {
+      "active_lines": [
+        "engine_block"
+      ],
+      "business_type": "engine_plant",
+      "district_id": null
+    }
   ],
   "buy_items": {
-    "iron": {
-      "target_inventory": 50000,
-      "reorder_at": 12000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
     "copper": {
-      "target_inventory": 10000,
-      "reorder_at": 2500,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 2500,
+      "target_inventory": 10000
     },
     "energy": {
-      "target_inventory": 200000,
-      "reorder_at": 45000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 45000,
+      "target_inventory": 200000
+    },
+    "iron": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 12000,
+      "target_inventory": 50000
     },
     "paper": {
-      "target_inventory": 6000,
-      "reorder_at": 1500,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 1500,
+      "target_inventory": 6000
     }
   },
-  "sell_items": {
-    "engine_block": { "min_inventory_to_keep": 0, "max_order_quantity": 3000, "market": "regular" }
+  "cash_caps": {
+    "hard_high": 30000000,
+    "hard_low": 1000000,
+    "soft_high": 12000000,
+    "soft_low": 3000000
   },
+  "description": "Engine plant casting engine blocks for the marine and automotive trades. Engine blocks are the core of every outboard motor; this NPC adds a steady market supply so Keelson Marine and Blue Horizon never stall their motor lines. Hoards nothing.",
   "ipo": {
+    "shares_to_offer": 600000,
     "ticker": "PSTN",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
+    "total_shares": 1000000
+  },
+  "player_id": -2096,
+  "seed": {
+    "districts": [],
+    "land_plots": [
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "urban"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      }
+    ],
+    "starting_cash": 7000000
+  },
+  "sell_items": {
+    "engine_block": {
+      "market": "regular",
+      "max_order_quantity": 3000,
+      "min_inventory_to_keep": 0
+    }
   }
 }

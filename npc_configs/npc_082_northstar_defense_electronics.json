@@ -1,34 +1,132 @@
 {
-  "player_id": -2082,
   "business_name": "Northstar Defense Electronics",
-  "description": "Military electronics integrator producing radar systems, fire control systems, avionics suites, sonar systems, torpedoes, and naval gun systems for the defense industry.",
-  "cash_caps": {"hard_high": 100000000, "soft_high": 45000000, "soft_low": 12000000, "hard_low": 4000000},
-  "seed": {
-    "starting_cash": 25000000,
-    "land_plots": [],
-    "districts": [{"district_type": "tech", "size": 4, "plots_merged": 4}]
-  },
   "businesses": [
-    {"business_type": "defense_electronics_factory", "district_seed_index": 0, "active_lines": ["radar_system", "fire_control_system", "avionics_suite", "sonar_system", "torpedo", "naval_gun_system"]},
-    {"business_type": "defense_electronics_factory", "district_seed_index": 0, "active_lines": ["radar_system", "fire_control_system", "sonar_system"]}
+    {
+      "active_lines": [
+        "radar_system",
+        "fire_control_system",
+        "avionics_suite",
+        "sonar_system",
+        "torpedo",
+        "naval_gun_system"
+      ],
+      "business_type": "defense_electronics_factory",
+      "district_seed_index": 0
+    },
+    {
+      "active_lines": [
+        "radar_system",
+        "fire_control_system",
+        "sonar_system"
+      ],
+      "business_type": "defense_electronics_factory",
+      "district_seed_index": 0
+    }
   ],
   "buy_items": {
-    "processor": {"target_inventory": 3000, "reorder_at": 600, "max_price_multiplier": 1.1, "market": "regular"},
-    "circuit_board": {"target_inventory": 5000, "reorder_at": 1000, "max_price_multiplier": 1.1, "market": "regular"},
-    "copper_wire": {"target_inventory": 3000, "reorder_at": 600, "max_price_multiplier": 1.1, "market": "regular"},
-    "titanium_alloy": {"target_inventory": 1000, "reorder_at": 200, "max_price_multiplier": 1.1, "market": "regular"},
-    "steel": {"target_inventory": 5000, "reorder_at": 1000, "max_price_multiplier": 1.1, "market": "regular"},
-    "rdx_explosive": {"target_inventory": 1000, "reorder_at": 200, "max_price_multiplier": 1.15, "market": "regular"},
-    "energy": {"target_inventory": 1000000, "reorder_at": 200000, "max_price_multiplier": 1.1, "market": "regular"},
-    "paper": {"target_inventory": 5000, "reorder_at": 1000, "max_price_multiplier": 1.05, "market": "regular"}
+    "circuit_board": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "copper_wire": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "energy": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 200000,
+      "target_inventory": 1000000
+    },
+    "paper": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "processor": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "rdx_explosive": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "steel": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "titanium_alloy": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 200,
+      "target_inventory": 1000
+    }
+  },
+  "cash_caps": {
+    "hard_high": 100000000,
+    "hard_low": 4000000,
+    "soft_high": 45000000,
+    "soft_low": 12000000
+  },
+  "description": "Military electronics integrator producing radar systems, fire control systems, avionics suites, sonar systems, torpedoes, and naval gun systems for the defense industry.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "NSDE",
+    "total_shares": 1000000
+  },
+  "player_id": -2082,
+  "seed": {
+    "districts": [
+      {
+        "district_type": "tech",
+        "plots_merged": 4,
+        "size": 4
+      }
+    ],
+    "land_plots": [],
+    "starting_cash": 25000000
   },
   "sell_items": {
-    "radar_system": {"min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular"},
-    "fire_control_system": {"min_inventory_to_keep": 5, "max_order_quantity": 20, "market": "regular"},
-    "avionics_suite": {"min_inventory_to_keep": 5, "max_order_quantity": 15, "market": "regular"},
-    "sonar_system": {"min_inventory_to_keep": 5, "max_order_quantity": 15, "market": "regular"},
-    "torpedo": {"min_inventory_to_keep": 20, "max_order_quantity": 100, "market": "regular"},
-    "naval_gun_system": {"min_inventory_to_keep": 5, "max_order_quantity": 15, "market": "regular"}
-  },
-  "ipo": {"ticker": "NSDE", "total_shares": 1000000, "shares_to_offer": 600000}
+    "avionics_suite": {
+      "market": "regular",
+      "max_order_quantity": 15,
+      "min_inventory_to_keep": 5
+    },
+    "fire_control_system": {
+      "market": "regular",
+      "max_order_quantity": 20,
+      "min_inventory_to_keep": 5
+    },
+    "naval_gun_system": {
+      "market": "regular",
+      "max_order_quantity": 15,
+      "min_inventory_to_keep": 5
+    },
+    "radar_system": {
+      "market": "regular",
+      "max_order_quantity": 20,
+      "min_inventory_to_keep": 5
+    },
+    "sonar_system": {
+      "market": "regular",
+      "max_order_quantity": 15,
+      "min_inventory_to_keep": 5
+    },
+    "torpedo": {
+      "market": "regular",
+      "max_order_quantity": 100,
+      "min_inventory_to_keep": 20
+    }
+  }
 }

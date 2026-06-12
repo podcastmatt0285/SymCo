@@ -1,150 +1,150 @@
 {
-  "player_id": -2032,
   "business_name": "First Furrow Seed Co.",
-  "description": "Dedicated seed and tobacco leaf producer. Cotton fields self-generate cotton seeds without any seed input; tobacco farms produce both leaf and seeds once bootstrapped. Supplies cotton seeds to the apparel industry and tobacco seeds to cigarette and cigar manufacturers.",
-  "cash_caps": {
-    "hard_high": 25000000,
-    "soft_high": 10000000,
-    "soft_low": 2000000,
-    "hard_low": 500000
-  },
-  "seed": {
-    "starting_cash": 4000000,
-    "starting_inventory": {
-      "tobacco_seeds": 200
-    },
-    "land_plots": [
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "hills",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "hills",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      }
-    ]
-  },
   "businesses": [
     {
+      "active_lines": [],
       "business_type": "cotton_fields",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "cotton_fields",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "cotton_fields",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "virginia_tobacco_farm",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "burley_tobacco_farm",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     }
   ],
   "buy_items": {
-    "water": {
-      "target_inventory": 30000,
-      "reorder_at": 6000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
     "energy": {
-      "target_inventory": 20000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 4000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "paper": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "tobacco_seeds": {
-      "target_inventory": 200,
-      "reorder_at": 40,
-      "max_price_multiplier": 1.2,
-      "market": "regular"
+      "target_inventory": 20000
     },
     "fish_emulsion": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "paper": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "tobacco_seeds": {
+      "market": "regular",
+      "max_price_multiplier": 1.2,
+      "reorder_at": 40,
+      "target_inventory": 200
+    },
+    "water": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 6000,
+      "target_inventory": 30000
+    }
+  },
+  "cash_caps": {
+    "hard_high": 25000000,
+    "hard_low": 500000,
+    "soft_high": 10000000,
+    "soft_low": 2000000
+  },
+  "description": "Dedicated seed and tobacco leaf producer. Cotton fields self-generate cotton seeds without any seed input; tobacco farms produce both leaf and seeds once bootstrapped. Supplies cotton seeds to the apparel industry and tobacco seeds to cigarette and cigar manufacturers.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "FFSC",
+    "total_shares": 1000000
+  },
+  "player_id": -2032,
+  "seed": {
+    "land_plots": [
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "hills"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "hills"
+      }
+    ],
+    "starting_cash": 4000000,
+    "starting_inventory": {
+      "tobacco_seeds": 200
     }
   },
   "sell_items": {
+    "burley_leaf": {
+      "market": "regular",
+      "max_order_quantity": 3000,
+      "min_inventory_to_keep": 500
+    },
     "cotton": {
-      "min_inventory_to_keep": 500,
+      "market": "regular",
       "max_order_quantity": 5000,
-      "market": "regular"
+      "min_inventory_to_keep": 500
     },
     "cotton_seeds": {
-      "min_inventory_to_keep": 500,
+      "market": "regular",
       "max_order_quantity": 3000,
-      "market": "regular"
-    },
-    "virginia_leaf": {
-      "min_inventory_to_keep": 500,
-      "max_order_quantity": 3000,
-      "market": "regular"
-    },
-    "burley_leaf": {
-      "min_inventory_to_keep": 500,
-      "max_order_quantity": 3000,
-      "market": "regular"
+      "min_inventory_to_keep": 500
     },
     "golden_burley_leaf": {
-      "min_inventory_to_keep": 200,
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 200
     },
     "tobacco_seeds": {
-      "min_inventory_to_keep": 100,
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 100
+    },
+    "virginia_leaf": {
+      "market": "regular",
+      "max_order_quantity": 3000,
+      "min_inventory_to_keep": 500
     }
-  },
-  "ipo": {
-    "ticker": "FFSC",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

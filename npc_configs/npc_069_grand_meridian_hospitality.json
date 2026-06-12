@@ -1,131 +1,142 @@
 {
-  "player_id": -2069,
   "business_name": "Grand Meridian Hospitality",
-  "description": "Luxury hotel and casino complex offering penthouse suites, VIP gaming packages, fine dining, and premium entertainment experiences.",
-  "cash_caps": {
-    "hard_high": 60000000,
-    "soft_high": 25000000,
-    "soft_low": 8000000,
-    "hard_low": 2000000
-  },
-  "seed": {
-    "starting_cash": 15000000,
-    "land_plots": [],
-    "districts": [
-      {
-        "district_type": "entertainment",
-        "size": 5,
-        "plots_merged": 5
-      }
-    ]
-  },
   "businesses": [
     {
+      "active_lines": [
+        "penthouse_night",
+        "suite_night",
+        "standard_room_night",
+        "concierge_package",
+        "vip_lounge_pass"
+      ],
       "business_type": "hotel",
-      "district_seed_index": 0,
-      "active_lines": ["penthouse_night", "suite_night", "standard_room_night", "concierge_package", "vip_lounge_pass"]
+      "district_seed_index": 0
     },
     {
+      "active_lines": [
+        "vip_gaming_package",
+        "casino_dining",
+        "premium_show_ticket",
+        "casino_floor_credit"
+      ],
       "business_type": "casino",
-      "district_seed_index": 0,
-      "active_lines": ["vip_gaming_package", "casino_dining", "premium_show_ticket", "casino_floor_credit"]
+      "district_seed_index": 0
     }
   ],
   "buy_items": {
+    "casino_chips": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
     "champagne": {
-      "target_inventory": 500,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 100,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "wine": {
-      "target_inventory": 500,
-      "reorder_at": 100,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "linen": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "laundry_detergent": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 500
     },
     "cleaning_supplies": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "casino_chips": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 200,
+      "target_inventory": 1000
     },
     "energy": {
-      "target_inventory": 500000,
-      "reorder_at": 100000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 100000,
+      "target_inventory": 500000
+    },
+    "laundry_detergent": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "linen": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 400,
+      "target_inventory": 2000
     },
     "paper": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "wine": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 100,
+      "target_inventory": 500
     }
+  },
+  "cash_caps": {
+    "hard_high": 60000000,
+    "hard_low": 2000000,
+    "soft_high": 25000000,
+    "soft_low": 8000000
+  },
+  "description": "Luxury hotel and casino complex offering penthouse suites, VIP gaming packages, fine dining, and premium entertainment experiences.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "GRMH",
+    "total_shares": 1000000
+  },
+  "player_id": -2069,
+  "seed": {
+    "districts": [
+      {
+        "district_type": "entertainment",
+        "plots_merged": 5,
+        "size": 5
+      }
+    ],
+    "land_plots": [],
+    "starting_cash": 15000000
   },
   "sell_items": {
-    "penthouse_night": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 50,
-      "market": "district"
-    },
-    "suite_night": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 200,
-      "market": "district"
-    },
-    "standard_room_night": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 500,
-      "market": "district"
+    "casino_dining": {
+      "market": "district",
+      "max_order_quantity": 300,
+      "min_inventory_to_keep": 0
     },
     "concierge_package": {
-      "min_inventory_to_keep": 0,
+      "market": "district",
       "max_order_quantity": 100,
-      "market": "district"
+      "min_inventory_to_keep": 0
     },
-    "vip_lounge_pass": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 200,
-      "market": "district"
-    },
-    "vip_gaming_package": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 100,
-      "market": "district"
-    },
-    "casino_dining": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 300,
-      "market": "district"
+    "penthouse_night": {
+      "market": "district",
+      "max_order_quantity": 50,
+      "min_inventory_to_keep": 0
     },
     "premium_show_ticket": {
-      "min_inventory_to_keep": 0,
+      "market": "district",
       "max_order_quantity": 200,
-      "market": "district"
+      "min_inventory_to_keep": 0
+    },
+    "standard_room_night": {
+      "market": "district",
+      "max_order_quantity": 500,
+      "min_inventory_to_keep": 0
+    },
+    "suite_night": {
+      "market": "district",
+      "max_order_quantity": 200,
+      "min_inventory_to_keep": 0
+    },
+    "vip_gaming_package": {
+      "market": "district",
+      "max_order_quantity": 100,
+      "min_inventory_to_keep": 0
+    },
+    "vip_lounge_pass": {
+      "market": "district",
+      "max_order_quantity": 200,
+      "min_inventory_to_keep": 0
     }
-  },
-  "ipo": {
-    "ticker": "GRMH",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

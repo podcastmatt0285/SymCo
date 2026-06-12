@@ -1,24 +1,5 @@
 {
-  "player_id": -2037,
   "business_name": "Crestgate Tech",
-  "description": "Vertically integrated semiconductor and consumer electronics manufacturer. Fabricates its own microchips, processors, and circuit boards, then assembles them into smartphones, laptops, televisions, servers, and routers \u2014 the full compute stack under one district roof.",
-  "cash_caps": {
-    "hard_high": 100000000,
-    "soft_high": 45000000,
-    "soft_low": 12000000,
-    "hard_low": 4000000
-  },
-  "seed": {
-    "starting_cash": 25000000,
-    "land_plots": [],
-    "districts": [
-      {
-        "district_type": "tech",
-        "size": 5,
-        "plots_merged": 5
-      }
-    ]
-  },
   "businesses": [
     {
       "business_type": "semiconductor_fab",
@@ -30,365 +11,402 @@
     }
   ],
   "buy_items": {
-    "copper": {
-      "target_inventory": 8000,
-      "reorder_at": 1600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "glass": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+    "alnico_magnet": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 100,
+      "target_inventory": 500
     },
     "aluminum": {
-      "target_inventory": 4000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 800,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "plastic": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "copper_wire": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "steel": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "lead": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "energy": {
-      "target_inventory": 800000,
-      "reorder_at": 160000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "water": {
-      "target_inventory": 30000,
-      "reorder_at": 6000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
-    "paper": {
-      "target_inventory": 8000,
-      "reorder_at": 1600,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
+      "target_inventory": 4000
     },
     "ammonia": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 200,
+      "target_inventory": 1000
     },
     "arsenic": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "cobalt": {
-      "target_inventory": 500,
       "reorder_at": 100,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "cut_sapphire": {
-      "target_inventory": 200,
-      "reorder_at": 40,
-      "max_price_multiplier": 1.2,
-      "market": "regular"
-    },
-    "diamond_dust": {
-      "target_inventory": 200,
-      "reorder_at": 40,
-      "max_price_multiplier": 1.2,
-      "market": "regular"
-    },
-    "epoxy_resin": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "europium": {
-      "target_inventory": 200,
-      "reorder_at": 40,
-      "max_price_multiplier": 1.2,
-      "market": "regular"
-    },
-    "fiberglass": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "gallium": {
-      "target_inventory": 500,
-      "reorder_at": 100,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "gold": {
-      "target_inventory": 200,
-      "reorder_at": 40,
-      "max_price_multiplier": 1.2,
-      "market": "regular"
-    },
-    "graphite": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "hydrofluoric_acid": {
-      "target_inventory": 500,
-      "reorder_at": 100,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "indium": {
-      "target_inventory": 300,
-      "reorder_at": 60,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "iron": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "lanthanum": {
-      "target_inventory": 300,
-      "reorder_at": 60,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "lithium": {
-      "target_inventory": 500,
-      "reorder_at": 100,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "manganese": {
-      "target_inventory": 500,
-      "reorder_at": 100,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "nickel": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "phosphoric_acid": {
-      "target_inventory": 500,
-      "reorder_at": 100,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "polishing_compound": {
-      "target_inventory": 500,
-      "reorder_at": 100,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "silicon": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "solder": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "sulfuric_acid": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "tantalum": {
-      "target_inventory": 300,
-      "reorder_at": 60,
-      "max_price_multiplier": 1.2,
-      "market": "regular"
-    },
-    "terbium": {
-      "target_inventory": 200,
-      "reorder_at": 40,
-      "max_price_multiplier": 1.2,
-      "market": "regular"
-    },
-    "zirconium": {
-      "target_inventory": 300,
-      "reorder_at": 60,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "alnico_magnet": {
-      "target_inventory": 500,
-      "reorder_at": 100,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
+      "target_inventory": 500
     },
     "ceramic": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "cobalt": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "copper": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1600,
+      "target_inventory": 8000
+    },
+    "copper_wire": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
     },
     "crystal_oscillator": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
     },
     "cupronickel": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "cut_sapphire": {
+      "market": "regular",
+      "max_price_multiplier": 1.2,
+      "reorder_at": 40,
+      "target_inventory": 200
+    },
+    "diamond_dust": {
+      "market": "regular",
+      "max_price_multiplier": 1.2,
+      "reorder_at": 40,
+      "target_inventory": 200
+    },
+    "energy": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 160000,
+      "target_inventory": 800000
+    },
+    "epoxy_resin": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "europium": {
+      "market": "regular",
+      "max_price_multiplier": 1.2,
+      "reorder_at": 40,
+      "target_inventory": 200
+    },
+    "fiberglass": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "gallium": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "glass": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "gold": {
+      "market": "regular",
+      "max_price_multiplier": 1.2,
+      "reorder_at": 40,
+      "target_inventory": 200
+    },
+    "graphite": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "hard_drive": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "hydrofluoric_acid": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "indium": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 60,
+      "target_inventory": 300
+    },
+    "iron": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "lanthanum": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 60,
+      "target_inventory": 300
+    },
+    "lead": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "lithium": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 100,
+      "target_inventory": 500
     },
     "lithium_battery_pack": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "manganese": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 100,
+      "target_inventory": 500
     },
     "mica": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
     },
     "monel": {
-      "target_inventory": 300,
-      "reorder_at": 60,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 60,
+      "target_inventory": 300
     },
     "nichrome": {
-      "target_inventory": 300,
-      "reorder_at": 60,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 60,
+      "target_inventory": 300
+    },
+    "nickel": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 200,
+      "target_inventory": 1000
     },
     "oled_panel": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
     },
     "optical_glass": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "paper": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 1600,
+      "target_inventory": 8000
     },
     "phosphor_bronze": {
-      "target_inventory": 300,
-      "reorder_at": 60,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 60,
+      "target_inventory": 300
+    },
+    "phosphoric_acid": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "plastic": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "polishing_compound": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 100,
+      "target_inventory": 500
     },
     "sensor_array": {
-      "target_inventory": 300,
-      "reorder_at": 60,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 60,
+      "target_inventory": 300
+    },
+    "silicon": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "smartwatch": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "solder": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "steel": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "sulfuric_acid": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "tantalum": {
+      "market": "regular",
+      "max_price_multiplier": 1.2,
+      "reorder_at": 60,
+      "target_inventory": 300
+    },
+    "terbium": {
+      "market": "regular",
+      "max_price_multiplier": 1.2,
+      "reorder_at": 40,
+      "target_inventory": 200
+    },
+    "touch_screen": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "water": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 6000,
+      "target_inventory": 30000
+    },
+    "zirconium": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 60,
+      "target_inventory": 300
     }
+  },
+  "cash_caps": {
+    "hard_high": 100000000,
+    "hard_low": 4000000,
+    "soft_high": 45000000,
+    "soft_low": 12000000
+  },
+  "description": "Vertically integrated semiconductor and consumer electronics manufacturer. Fabricates its own microchips, processors, and circuit boards, then assembles them into smartphones, laptops, televisions, servers, and routers \u2014 the full compute stack under one district roof.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "CGTK",
+    "total_shares": 1000000
+  },
+  "player_id": -2037,
+  "seed": {
+    "districts": [
+      {
+        "district_type": "tech",
+        "plots_merged": 5,
+        "size": 5
+      }
+    ],
+    "land_plots": [],
+    "starting_cash": 25000000
   },
   "sell_items": {
-    "microchip": {
-      "min_inventory_to_keep": 500,
-      "max_order_quantity": 2000,
-      "market": "regular"
-    },
-    "processor": {
-      "min_inventory_to_keep": 300,
+    "battery_cell": {
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "memory_module": {
-      "min_inventory_to_keep": 300,
-      "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 300
     },
     "circuit_board": {
-      "min_inventory_to_keep": 500,
+      "market": "regular",
       "max_order_quantity": 2000,
-      "market": "regular"
-    },
-    "lcd_panel": {
-      "min_inventory_to_keep": 300,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "battery_cell": {
-      "min_inventory_to_keep": 300,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "smartphone": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 500,
-      "market": "regular"
-    },
-    "laptop": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 300,
-      "market": "regular"
-    },
-    "tablet": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 400,
-      "market": "regular"
-    },
-    "television": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 300,
-      "market": "regular"
+      "min_inventory_to_keep": 500
     },
     "desktop_computer": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 200,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
-    "server": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 100,
-      "market": "regular"
+    "laptop": {
+      "market": "regular",
+      "max_order_quantity": 300,
+      "min_inventory_to_keep": 0
+    },
+    "lcd_panel": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 300
+    },
+    "memory_module": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 300
+    },
+    "microchip": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 500
+    },
+    "processor": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 300
     },
     "router": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 500,
-      "market": "regular"
+      "min_inventory_to_keep": 0
+    },
+    "server": {
+      "market": "regular",
+      "max_order_quantity": 100,
+      "min_inventory_to_keep": 0
+    },
+    "smartphone": {
+      "market": "regular",
+      "max_order_quantity": 500,
+      "min_inventory_to_keep": 0
+    },
+    "tablet": {
+      "market": "regular",
+      "max_order_quantity": 400,
+      "min_inventory_to_keep": 0
+    },
+    "television": {
+      "market": "regular",
+      "max_order_quantity": 300,
+      "min_inventory_to_keep": 0
     }
-  },
-  "ipo": {
-    "ticker": "CGTK",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

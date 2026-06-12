@@ -1,36 +1,7 @@
 {
-  "player_id": -2003,
   "business_name": "EO Co",
-  "description": "Cold-presses all 15 essential oil varieties from market-sourced seeds and fruits, and blends them into cooking oil for market.",
-  "cash_caps": {
-    "hard_high": 25000000,
-    "soft_high": 10000000,
-    "soft_low": 5000000,
-    "hard_low": 1000000
-  },
-  "seed": {
-    "starting_cash": 6000000,
-    "land_plots": [
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "remote"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "riverside"
-        ],
-        "size": 1
-      }
-    ]
-  },
   "businesses": [
     {
-      "business_type": "essential_oil_distillery",
-      "district_id": null,
       "active_lines": [
         "apple_essential_oil",
         "orange_essential_oil",
@@ -48,216 +19,245 @@
         "tomato_essential_oil",
         "wheat_essential_oil",
         "cooking_oil"
-      ]
+      ],
+      "business_type": "essential_oil_distillery",
+      "district_id": null
     }
   ],
   "buy_items": {
     "apple_seeds": {
-      "target_inventory": 5000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "orange_seeds": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "cotton_seeds": {
-      "target_inventory": 15000,
-      "reorder_at": 5000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 5000
     },
     "barley_seeds": {
-      "target_inventory": 8000,
-      "reorder_at": 2000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 2000,
+      "target_inventory": 8000
     },
     "cherry_seeds": {
-      "target_inventory": 4000,
-      "reorder_at": 800,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 800,
+      "target_inventory": 4000
     },
     "cocoa_seeds": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 600,
+      "target_inventory": 3000
     },
     "coffee_seeds": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 400,
+      "target_inventory": 2000
     },
     "corn_seeds": {
-      "target_inventory": 6000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 1500,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 6000
     },
-    "grape_seeds": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
+    "cotton_seeds": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "onion_seeds": {
-      "target_inventory": 12000,
-      "reorder_at": 3000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "rice_seeds": {
-      "target_inventory": 8000,
-      "reorder_at": 2000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "tea_seeds": {
-      "target_inventory": 4000,
-      "reorder_at": 800,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "tobacco_seeds": {
-      "target_inventory": 15000,
       "reorder_at": 5000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "tomato_seeds": {
-      "target_inventory": 10000,
-      "reorder_at": 2500,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "wheat_seeds": {
-      "target_inventory": 8000,
-      "reorder_at": 2000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "pollen": {
-      "target_inventory": 20000,
-      "reorder_at": 5000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "peanut_oil": {
-      "target_inventory": 500,
-      "reorder_at": 100,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "water": {
-      "target_inventory": 2000,
-      "reorder_at": 200,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
+      "target_inventory": 15000
     },
     "energy": {
-      "target_inventory": 1000,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 1000
+    },
+    "grape_seeds": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "onion_seeds": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 3000,
+      "target_inventory": 12000
+    },
+    "orange_seeds": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
     },
     "paper": {
-      "target_inventory": 500,
-      "reorder_at": 50,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 50,
+      "target_inventory": 500
+    },
+    "peanut_oil": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "pollen": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 5000,
+      "target_inventory": 20000
+    },
+    "rice_seeds": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 2000,
+      "target_inventory": 8000
+    },
+    "tea_seeds": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 800,
+      "target_inventory": 4000
+    },
+    "tobacco_seeds": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 5000,
+      "target_inventory": 15000
+    },
+    "tomato_seeds": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 2500,
+      "target_inventory": 10000
+    },
+    "water": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 200,
+      "target_inventory": 2000
+    },
+    "wheat_seeds": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 2000,
+      "target_inventory": 8000
     }
+  },
+  "cash_caps": {
+    "hard_high": 25000000,
+    "hard_low": 1000000,
+    "soft_high": 10000000,
+    "soft_low": 5000000
+  },
+  "description": "Cold-presses all 15 essential oil varieties from market-sourced seeds and fruits, and blends them into cooking oil for market.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "EOCO",
+    "total_shares": 1000000
+  },
+  "player_id": -2003,
+  "seed": {
+    "land_plots": [
+      {
+        "proximity_features": [
+          "remote"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "riverside"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      }
+    ],
+    "starting_cash": 6000000
   },
   "sell_items": {
     "apple_essential_oil": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "orange_essential_oil": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "cotton_essential_oil": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "barley_essential_oil": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "cherry_essential_oil": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "cocoa_essential_oil": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "coffee_essential_oil": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "corn_essential_oil": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "grape_essential_oil": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "onion_essential_oil": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "rice_essential_oil": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "tea_essential_oil": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "tobacco_essential_oil": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "tomato_essential_oil": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "wheat_essential_oil": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "cooking_oil": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 2000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
+    },
+    "corn_essential_oil": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "cotton_essential_oil": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "grape_essential_oil": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "onion_essential_oil": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "orange_essential_oil": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "rice_essential_oil": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "tea_essential_oil": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "tobacco_essential_oil": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "tomato_essential_oil": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "wheat_essential_oil": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
     }
-  },
-  "ipo": {
-    "ticker": "EOCO",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

@@ -1,82 +1,178 @@
 {
-  "player_id": -2009,
   "business_name": "Resin Works",
-  "description": "Oil refinery running exclusively the plastic production line, supplying manufacturers with plastic.",
-  "cash_caps": {
-    "hard_high": 25000000,
-    "soft_high": 10000000,
-    "soft_low": 4000000,
-    "hard_low": 1000000
-  },
-  "seed": {
-    "starting_cash": 5000000,
-    "land_plots": [
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "remote"
-        ],
-        "size": 1
-      }
-    ]
-  },
   "businesses": [
     {
-      "business_type": "oil_refinery",
-      "district_id": null,
       "active_lines": [
         "plastic",
         "diesel",
         "gasoline"
-      ]
+      ],
+      "business_type": "oil_refinery",
+      "district_id": null
     }
   ],
   "buy_items": {
-    "oil": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
+    "acetone": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 90,
+      "target_inventory": 362
+    },
+    "alumina": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 77,
+      "target_inventory": 308
+    },
+    "argon": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "boric_acid": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 81,
+      "target_inventory": 326
+    },
+    "c4_explosive": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 6,
+      "target_inventory": 26
+    },
+    "chlorine": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 133,
+      "target_inventory": 535
     },
     "energy": {
-      "target_inventory": 8000,
-      "reorder_at": 1600,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 1600,
+      "target_inventory": 8000
     },
-    "water": {
-      "target_inventory": 800,
-      "reorder_at": 150,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
+    "glycerin": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 80,
+      "target_inventory": 320
+    },
+    "helium": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "hydrochloric_acid": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 89,
+      "target_inventory": 359
+    },
+    "medical_isotope": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "monopropellant": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 16,
+      "target_inventory": 67
+    },
+    "nitrocellulose": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 23,
+      "target_inventory": 95
+    },
+    "oil": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 400,
+      "target_inventory": 2000
     },
     "paper": {
-      "target_inventory": 50,
-      "reorder_at": 10,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 10,
+      "target_inventory": 50
+    },
+    "phenylenediamine": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 33,
+      "target_inventory": 132
+    },
+    "potassium_nitrate": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 97,
+      "target_inventory": 389
+    },
+    "refined_ore_concentrate": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 31,
+      "target_inventory": 124
+    },
+    "terephthaloyl_chloride": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 35,
+      "target_inventory": 143
+    },
+    "water": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 150,
+      "target_inventory": 800
     }
+  },
+  "cash_caps": {
+    "hard_high": 25000000,
+    "hard_low": 1000000,
+    "soft_high": 10000000,
+    "soft_low": 4000000
+  },
+  "description": "Oil refinery running exclusively the plastic production line, supplying manufacturers with plastic.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "RESN",
+    "total_shares": 1000000
+  },
+  "player_id": -2009,
+  "seed": {
+    "land_plots": [
+      {
+        "proximity_features": [
+          "remote"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      }
+    ],
+    "starting_cash": 5000000
   },
   "sell_items": {
-    "plastic": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
     "diesel": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 2000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "gasoline": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 2000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
+    },
+    "plastic": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
     }
-  },
-  "ipo": {
-    "ticker": "RESN",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

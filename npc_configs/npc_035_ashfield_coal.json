@@ -1,98 +1,146 @@
 {
-  "player_id": -2035,
   "business_name": "Ashfield Coal Co.",
-  "description": "Coal mining operation extracting anthracite and bituminous coal from hill seams. The sole market supplier of coal \u2014 the critical reducing agent for steel mills, cement kilns, and smelting furnaces across the economy.",
-  "cash_caps": {
-    "hard_high": 20000000,
-    "soft_high": 8000000,
-    "soft_low": 2000000,
-    "hard_low": 600000
-  },
-  "seed": {
-    "starting_cash": 4000000,
-    "land_plots": [
-      {
-        "terrain_type": "hills",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "hills",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "hills",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "hills",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      }
-    ]
-  },
   "businesses": [
     {
+      "active_lines": [],
       "business_type": "coal_mine",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "coal_mine",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "coal_mine",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "coal_mine",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     }
   ],
   "buy_items": {
-    "energy": {
-      "target_inventory": 60000,
-      "reorder_at": 12000,
+    "aviation_fuel": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 500,
+      "target_inventory": 2000
     },
-    "water": {
-      "target_inventory": 20000,
-      "reorder_at": 4000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
+    "chromite": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 305,
+      "target_inventory": 1220
+    },
+    "deuterium": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "energy": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 12000,
+      "target_inventory": 60000
+    },
+    "ilmenite": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 254,
+      "target_inventory": 1017
+    },
+    "jet_fuel_additive": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 18,
+      "target_inventory": 74
+    },
+    "liquid_hydrogen": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
     },
     "paper": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "pegmatite_ore": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 500,
+      "target_inventory": 2000
+    },
+    "tritium": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "water": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 4000,
+      "target_inventory": 20000
     }
+  },
+  "cash_caps": {
+    "hard_high": 20000000,
+    "hard_low": 600000,
+    "soft_high": 8000000,
+    "soft_low": 2000000
+  },
+  "description": "Coal mining operation extracting anthracite and bituminous coal from hill seams. The sole market supplier of coal \u2014 the critical reducing agent for steel mills, cement kilns, and smelting furnaces across the economy.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "AFCO",
+    "total_shares": 1000000
+  },
+  "player_id": -2035,
+  "seed": {
+    "land_plots": [
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "hills"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "hills"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "hills"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "hills"
+      }
+    ],
+    "starting_cash": 4000000
   },
   "sell_items": {
     "coal": {
-      "min_inventory_to_keep": 500,
+      "market": "regular",
       "max_order_quantity": 10000,
-      "market": "regular"
+      "min_inventory_to_keep": 500
     }
-  },
-  "ipo": {
-    "ticker": "AFCO",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

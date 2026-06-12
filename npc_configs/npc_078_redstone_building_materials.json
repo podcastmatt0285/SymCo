@@ -1,93 +1,93 @@
 {
-  "player_id": -2078,
   "business_name": "Redstone Building Materials",
-  "description": "Construction materials supplier producing timber and lumber from forested plots to keep the building supply chain well stocked.",
-  "cash_caps": {
-    "hard_high": 12000000,
-    "soft_high": 5000000,
-    "soft_low": 1200000,
-    "hard_low": 400000
-  },
-  "seed": {
-    "starting_cash": 2500000,
-    "land_plots": [
-      {
-        "terrain_type": "forest",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "forest",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "mountain",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      }
-    ],
-    "districts": []
-  },
   "businesses": [
     {
-      "business_type": "lumber_mill",
-      "district_id": null,
       "active_lines": [
         "lumber",
         "timber",
         "sawdust"
-      ]
+      ],
+      "business_type": "lumber_mill",
+      "district_id": null
     },
     {
-      "business_type": "lumber_mill",
-      "district_id": null,
       "active_lines": [
         "lumber",
         "timber"
-      ]
+      ],
+      "business_type": "lumber_mill",
+      "district_id": null
     }
   ],
   "buy_items": {
     "energy": {
-      "target_inventory": 200000,
-      "reorder_at": 40000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 40000,
+      "target_inventory": 200000
     },
     "paper": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 400,
+      "target_inventory": 2000
     }
+  },
+  "cash_caps": {
+    "hard_high": 12000000,
+    "hard_low": 400000,
+    "soft_high": 5000000,
+    "soft_low": 1200000
+  },
+  "description": "Construction materials supplier producing timber and lumber from forested plots to keep the building supply chain well stocked.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "RDBM",
+    "total_shares": 1000000
+  },
+  "player_id": -2078,
+  "seed": {
+    "districts": [],
+    "land_plots": [
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "forest"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "forest"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "mountain"
+      }
+    ],
+    "starting_cash": 2500000
   },
   "sell_items": {
     "lumber": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 5000,
-      "market": "regular"
-    },
-    "timber": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 5000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "sawdust": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 2000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
+    },
+    "timber": {
+      "market": "regular",
+      "max_order_quantity": 5000,
+      "min_inventory_to_keep": 0
     }
-  },
-  "ipo": {
-    "ticker": "RDBM",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

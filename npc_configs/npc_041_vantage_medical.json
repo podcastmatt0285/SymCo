@@ -1,24 +1,5 @@
 {
-  "player_id": -2041,
   "business_name": "Vantage Medical Systems",
-  "description": "Medical equipment manufacturer producing the full range of hospital hardware. Assembles medical scanners, surgical tools, hospital beds, defibrillators, ventilators, IV pumps, wheelchairs, and prosthetics from steel, electronics, and polymer components.",
-  "cash_caps": {
-    "hard_high": 55000000,
-    "soft_high": 22000000,
-    "soft_low": 6000000,
-    "hard_low": 2000000
-  },
-  "seed": {
-    "starting_cash": 12000000,
-    "land_plots": [],
-    "districts": [
-      {
-        "district_type": "medical",
-        "size": 3,
-        "plots_merged": 3
-      }
-    ]
-  },
   "businesses": [
     {
       "business_type": "medical_equipment_factory",
@@ -26,177 +7,208 @@
     }
   ],
   "buy_items": {
-    "steel": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
     "aluminum": {
-      "target_inventory": 2000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 400,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "copper_wire": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "processor": {
-      "target_inventory": 500,
-      "reorder_at": 100,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "circuit_board": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "lcd_panel": {
-      "target_inventory": 300,
-      "reorder_at": 60,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 2000
     },
     "battery_cell": {
-      "target_inventory": 1000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 200,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "plastic": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "rubber": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "cotton": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "energy": {
-      "target_inventory": 400000,
-      "reorder_at": 80000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "paper": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
+      "target_inventory": 1000
     },
     "carbon_fiber": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "circuit_board": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "copper_wire": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "cotton": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "energy": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 80000,
+      "target_inventory": 400000
     },
     "gadolinium": {
-      "target_inventory": 200,
-      "reorder_at": 40,
+      "market": "regular",
       "max_price_multiplier": 1.2,
-      "market": "regular"
+      "reorder_at": 40,
+      "target_inventory": 200
+    },
+    "lcd_panel": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 60,
+      "target_inventory": 300
     },
     "neodymium_magnet": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
     },
     "nitinol": {
-      "target_inventory": 300,
-      "reorder_at": 60,
+      "market": "regular",
       "max_price_multiplier": 1.2,
-      "market": "regular"
+      "reorder_at": 60,
+      "target_inventory": 300
+    },
+    "painkillers": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 500,
+      "target_inventory": 2000
+    },
+    "paper": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "plastic": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "processor": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "rubber": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "steel": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "surgical_stent": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 12,
+      "target_inventory": 49
     },
     "titanium": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 200,
+      "target_inventory": 1000
     },
     "titanium_alloy": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 200,
+      "target_inventory": 1000
     },
     "tungsten": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
     },
     "tungsten_carbide": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
     }
+  },
+  "cash_caps": {
+    "hard_high": 55000000,
+    "hard_low": 2000000,
+    "soft_high": 22000000,
+    "soft_low": 6000000
+  },
+  "description": "Medical equipment manufacturer producing the full range of hospital hardware. Assembles medical scanners, surgical tools, hospital beds, defibrillators, ventilators, IV pumps, wheelchairs, and prosthetics from steel, electronics, and polymer components.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "VTMS",
+    "total_shares": 1000000
+  },
+  "player_id": -2041,
+  "seed": {
+    "districts": [
+      {
+        "district_type": "medical",
+        "plots_merged": 3,
+        "size": 3
+      }
+    ],
+    "land_plots": [],
+    "starting_cash": 12000000
   },
   "sell_items": {
-    "medical_scanner": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 20,
-      "market": "regular"
-    },
-    "surgical_tools": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 200,
-      "market": "regular"
-    },
-    "hospital_bed": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 100,
-      "market": "regular"
+    "crutches": {
+      "market": "regular",
+      "max_order_quantity": 400,
+      "min_inventory_to_keep": 0
     },
     "defibrillator": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 100,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
-    "ventilator": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 50,
-      "market": "regular"
+    "hospital_bed": {
+      "market": "regular",
+      "max_order_quantity": 100,
+      "min_inventory_to_keep": 0
     },
     "iv_pump": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 150,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
-    "wheelchair": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 200,
-      "market": "regular"
-    },
-    "crutches": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 400,
-      "market": "regular"
+    "medical_scanner": {
+      "market": "regular",
+      "max_order_quantity": 20,
+      "min_inventory_to_keep": 0
     },
     "prosthetic": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 80,
-      "market": "regular"
+      "min_inventory_to_keep": 0
+    },
+    "surgical_tools": {
+      "market": "regular",
+      "max_order_quantity": 200,
+      "min_inventory_to_keep": 0
+    },
+    "ventilator": {
+      "market": "regular",
+      "max_order_quantity": 50,
+      "min_inventory_to_keep": 0
+    },
+    "wheelchair": {
+      "market": "regular",
+      "max_order_quantity": 200,
+      "min_inventory_to_keep": 0
     }
-  },
-  "ipo": {
-    "ticker": "VTMS",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

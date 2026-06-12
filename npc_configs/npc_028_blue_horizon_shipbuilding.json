@@ -1,245 +1,245 @@
 {
-  "player_id": -2028,
   "business_name": "Blue Horizon Shipbuilding",
-  "description": "Full-stack marine manufacturing and shipyard complex. Smelts rubber and fiberglass, machines hulls, motors, and propellers, builds engines, and assembles trawlers, purse seiners, and smaller vessels. The only supplier of fishing vessels to the Atlantic Harvest fleet.",
-  "cash_caps": {
-    "hard_high": 60000000,
-    "soft_high": 25000000,
-    "soft_low": 5000000,
-    "hard_low": 2000000
-  },
-  "seed": {
-    "starting_cash": 15000000,
-    "land_plots": [
-      {
-        "terrain_type": "marsh",
-        "proximity_features": [
-          "ocean"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "marsh",
-        "proximity_features": [
-          "ocean"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "island",
-        "proximity_features": [
-          "ocean"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "marsh",
-        "proximity_features": [
-          "ocean"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      }
-    ]
-  },
   "businesses": [
     {
+      "active_lines": [],
       "business_type": "boat_yard",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "boat_yard",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "marine_factory",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "rubber_plant",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "engine_plant",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     }
   ],
   "buy_items": {
-    "oil": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "glass": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "lumber": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "iron": {
-      "target_inventory": 10000,
-      "reorder_at": 2000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "copper": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
     "brass": {
-      "target_inventory": 3000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "rope": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "fuel_tank": {
-      "target_inventory": 500,
-      "reorder_at": 100,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
+      "target_inventory": 3000
     },
     "car_battery": {
-      "target_inventory": 500,
+      "market": "regular",
+      "max_price_multiplier": 1.15,
       "reorder_at": 100,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
+      "target_inventory": 500
     },
-    "spark_plugs": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
+    "copper": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
     },
     "energy": {
-      "target_inventory": 50000,
-      "reorder_at": 10000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 10000,
+      "target_inventory": 50000
+    },
+    "fuel_tank": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "glass": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "iron": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 2000,
+      "target_inventory": 10000
+    },
+    "lumber": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "oil": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
     },
     "paper": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "rope": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "spark_plugs": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 200,
+      "target_inventory": 1000
     },
     "water": {
-      "target_inventory": 10000,
-      "reorder_at": 2000,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 2000,
+      "target_inventory": 10000
     }
+  },
+  "cash_caps": {
+    "hard_high": 60000000,
+    "hard_low": 2000000,
+    "soft_high": 25000000,
+    "soft_low": 5000000
+  },
+  "description": "Full-stack marine manufacturing and shipyard complex. Smelts rubber and fiberglass, machines hulls, motors, and propellers, builds engines, and assembles trawlers, purse seiners, and smaller vessels. The only supplier of fishing vessels to the Atlantic Harvest fleet.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "BLHS",
+    "total_shares": 1000000
+  },
+  "player_id": -2028,
+  "seed": {
+    "land_plots": [
+      {
+        "proximity_features": [
+          "ocean"
+        ],
+        "size": 1,
+        "terrain_type": "marsh"
+      },
+      {
+        "proximity_features": [
+          "ocean"
+        ],
+        "size": 1,
+        "terrain_type": "marsh"
+      },
+      {
+        "proximity_features": [
+          "ocean"
+        ],
+        "size": 1,
+        "terrain_type": "island"
+      },
+      {
+        "proximity_features": [
+          "ocean"
+        ],
+        "size": 1,
+        "terrain_type": "marsh"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      }
+    ],
+    "starting_cash": 15000000
   },
   "sell_items": {
-    "trawler": {
-      "min_inventory_to_keep": 5,
-      "max_order_quantity": 20,
-      "market": "regular"
-    },
-    "purse_seiner": {
-      "min_inventory_to_keep": 5,
-      "max_order_quantity": 20,
-      "market": "regular"
+    "aquaculture_raft": {
+      "market": "regular",
+      "max_order_quantity": 10,
+      "min_inventory_to_keep": 3
     },
     "boat": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 20,
-      "market": "regular"
-    },
-    "lobster_boat": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 10,
-      "market": "regular"
-    },
-    "hull": {
-      "min_inventory_to_keep": 10,
-      "max_order_quantity": 50,
-      "market": "regular"
-    },
-    "propeller": {
-      "min_inventory_to_keep": 10,
-      "max_order_quantity": 50,
-      "market": "regular"
-    },
-    "outboard_motor": {
-      "min_inventory_to_keep": 10,
-      "max_order_quantity": 30,
-      "market": "regular"
-    },
-    "engine_block": {
-      "min_inventory_to_keep": 20,
-      "max_order_quantity": 50,
-      "market": "regular"
-    },
-    "rubber": {
-      "min_inventory_to_keep": 200,
-      "max_order_quantity": 2000,
-      "market": "regular"
-    },
-    "fiberglass": {
-      "min_inventory_to_keep": 200,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "shrimp_trawler": {
-      "min_inventory_to_keep": 3,
-      "max_order_quantity": 10,
-      "market": "regular"
-    },
-    "aquaculture_raft": {
-      "min_inventory_to_keep": 3,
-      "max_order_quantity": 10,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "dredger": {
-      "min_inventory_to_keep": 2,
+      "market": "regular",
       "max_order_quantity": 8,
-      "market": "regular"
-    },
-    "longliner": {
-      "min_inventory_to_keep": 2,
-      "max_order_quantity": 6,
-      "market": "regular"
+      "min_inventory_to_keep": 2
     },
     "engine": {
-      "min_inventory_to_keep": 50,
+      "market": "regular",
       "max_order_quantity": 500,
-      "market": "regular"
+      "min_inventory_to_keep": 50
+    },
+    "engine_block": {
+      "market": "regular",
+      "max_order_quantity": 50,
+      "min_inventory_to_keep": 20
+    },
+    "fiberglass": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 200
+    },
+    "hull": {
+      "market": "regular",
+      "max_order_quantity": 50,
+      "min_inventory_to_keep": 10
+    },
+    "lobster_boat": {
+      "market": "regular",
+      "max_order_quantity": 10,
+      "min_inventory_to_keep": 0
+    },
+    "longliner": {
+      "market": "regular",
+      "max_order_quantity": 6,
+      "min_inventory_to_keep": 2
+    },
+    "outboard_motor": {
+      "market": "regular",
+      "max_order_quantity": 30,
+      "min_inventory_to_keep": 10
+    },
+    "propeller": {
+      "market": "regular",
+      "max_order_quantity": 50,
+      "min_inventory_to_keep": 10
+    },
+    "purse_seiner": {
+      "market": "regular",
+      "max_order_quantity": 20,
+      "min_inventory_to_keep": 5
+    },
+    "rubber": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 200
+    },
+    "shrimp_trawler": {
+      "market": "regular",
+      "max_order_quantity": 10,
+      "min_inventory_to_keep": 3
     },
     "transmission": {
-      "min_inventory_to_keep": 50,
+      "market": "regular",
       "max_order_quantity": 500,
-      "market": "regular"
+      "min_inventory_to_keep": 50
+    },
+    "trawler": {
+      "market": "regular",
+      "max_order_quantity": 20,
+      "min_inventory_to_keep": 5
     }
-  },
-  "ipo": {
-    "ticker": "BLHS",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

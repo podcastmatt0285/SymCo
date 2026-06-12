@@ -1,89 +1,95 @@
 {
-  "player_id": -2007,
   "business_name": "Cotton Paper Co",
-  "description": "Paper mill running exclusively on cotton feedstock, supplying the market with paper.",
-  "cash_caps": {
-    "hard_high": 20000000,
-    "soft_high": 8000000,
-    "soft_low": 3000000,
-    "hard_low": 500000
-  },
-  "seed": {
-    "starting_cash": 3000000,
-    "starting_inventory": {
-      "paper": 50000,
-      "cotton": 20000,
-      "cotton_seeds": 15000,
-      "glue": 2000,
-      "water": 2000
-    },
-    "land_plots": [
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "remote"
-        ],
-        "size": 1
-      }
-    ]
-  },
   "businesses": [
     {
-      "business_type": "paper_mill",
-      "district_id": null,
       "active_lines": [
         "paper",
         "cardboard"
-      ]
+      ],
+      "business_type": "paper_mill",
+      "district_id": null
     }
   ],
   "buy_items": {
-    "cotton": {
-      "target_inventory": 10000,
-      "reorder_at": 2000,
+    "cardboard_box": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 500,
+      "target_inventory": 2000
+    },
+    "cotton": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 2000,
+      "target_inventory": 10000
     },
     "cotton_seeds": {
-      "target_inventory": 6000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 1200,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "glue": {
-      "target_inventory": 500,
-      "reorder_at": 100,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "water": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
+      "target_inventory": 6000
     },
     "energy": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "glue": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "water": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 400,
+      "target_inventory": 2000
+    }
+  },
+  "cash_caps": {
+    "hard_high": 20000000,
+    "hard_low": 500000,
+    "soft_high": 8000000,
+    "soft_low": 3000000
+  },
+  "description": "Paper mill running exclusively on cotton feedstock, supplying the market with paper.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "CTPX",
+    "total_shares": 1000000
+  },
+  "player_id": -2007,
+  "seed": {
+    "land_plots": [
+      {
+        "proximity_features": [
+          "remote"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      }
+    ],
+    "starting_cash": 3000000,
+    "starting_inventory": {
+      "cotton": 20000,
+      "cotton_seeds": 15000,
+      "glue": 2000,
+      "paper": 50000,
+      "water": 2000
     }
   },
   "sell_items": {
-    "paper": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 10000,
-      "market": "regular"
-    },
     "cardboard": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 2000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
+    },
+    "paper": {
+      "market": "regular",
+      "max_order_quantity": 10000,
+      "min_inventory_to_keep": 0
     }
-  },
-  "ipo": {
-    "ticker": "CTPX",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

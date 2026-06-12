@@ -1,32 +1,402 @@
 {
-  "player_id": -2080,
   "business_name": "Vanguard Advanced Materials",
-  "description": "Advanced metallurgy and composites producer. Supplies titanium alloys, carbon fiber, duralumin, and composite armor panels to the defense, aerospace, and medical industries.",
-  "cash_caps": {"hard_high": 60000000, "soft_high": 25000000, "soft_low": 7000000, "hard_low": 2000000},
-  "seed": {
-    "starting_cash": 15000000,
-    "land_plots": [],
-    "districts": [{"district_type": "industrial", "size": 4, "plots_merged": 4}]
-  },
   "businesses": [
-    {"business_type": "advanced_materials_plant", "district_seed_index": 0, "active_lines": ["titanium_alloy", "carbon_fiber", "duralumin", "composite_armor_panel"]},
-    {"business_type": "advanced_materials_plant", "district_seed_index": 0, "active_lines": ["titanium_alloy", "carbon_fiber", "duralumin"]}
+    {
+      "active_lines": [
+        "titanium_alloy",
+        "carbon_fiber",
+        "duralumin",
+        "composite_armor_panel"
+      ],
+      "business_type": "advanced_materials_plant",
+      "district_seed_index": 0
+    },
+    {
+      "active_lines": [
+        "titanium_alloy",
+        "carbon_fiber",
+        "duralumin"
+      ],
+      "business_type": "advanced_materials_plant",
+      "district_seed_index": 0
+    }
   ],
   "buy_items": {
-    "titanium": {"target_inventory": 5000, "reorder_at": 1000, "max_price_multiplier": 1.1, "market": "regular"},
-    "aluminum": {"target_inventory": 8000, "reorder_at": 1600, "max_price_multiplier": 1.05, "market": "regular"},
-    "copper": {"target_inventory": 3000, "reorder_at": 600, "max_price_multiplier": 1.1, "market": "regular"},
-    "polymer_compound": {"target_inventory": 5000, "reorder_at": 1000, "max_price_multiplier": 1.1, "market": "regular"},
-    "carbon_fiber": {"target_inventory": 2000, "reorder_at": 400, "max_price_multiplier": 1.1, "market": "regular"},
-    "titanium_alloy": {"target_inventory": 1000, "reorder_at": 200, "max_price_multiplier": 1.1, "market": "regular"},
-    "energy": {"target_inventory": 1000000, "reorder_at": 200000, "max_price_multiplier": 1.1, "market": "regular"},
-    "paper": {"target_inventory": 5000, "reorder_at": 1000, "max_price_multiplier": 1.05, "market": "regular"}
+    "ablative_coating": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "acrylonitrile": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 61,
+      "target_inventory": 247
+    },
+    "aluminum": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 1600,
+      "target_inventory": 8000
+    },
+    "aluminum_oxide": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 328,
+      "target_inventory": 1313
+    },
+    "antenna_array": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "antimatter_trace": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "black_powder": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 58,
+      "target_inventory": 232
+    },
+    "boron_carbide": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 16,
+      "target_inventory": 66
+    },
+    "carbon_fiber": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "caviar": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "cellulose": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 119,
+      "target_inventory": 477
+    },
+    "cloud_storage_unit": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 500,
+      "target_inventory": 2000
+    },
+    "copper": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "cryostat": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "ct_scanner": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "encrypted_radio": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 4,
+      "target_inventory": 18
+    },
+    "energy": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 200000,
+      "target_inventory": 1000000
+    },
+    "event_supply_kit": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 18,
+      "target_inventory": 74
+    },
+    "exotic_isotope": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "feldspar": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 384,
+      "target_inventory": 1539
+    },
+    "gallium_nitride": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "heat_shield_tile": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "heavy_water": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "helium_3": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "humanoid_robot": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "hydrogen_fuel_cell": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 3,
+      "target_inventory": 15
+    },
+    "hydrogen_peroxide": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 100,
+      "target_inventory": 402
+    },
+    "industrial_robot_arm": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "ion_thruster": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "led_chip": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "lithium_nmc_cell": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 23,
+      "target_inventory": 95
+    },
+    "mixed_rare_earth_oxide": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 25,
+      "target_inventory": 102
+    },
+    "nitric_acid": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 99,
+      "target_inventory": 399
+    },
+    "nuclear_waste_container": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "pan_precursor": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 31,
+      "target_inventory": 127
+    },
+    "paper": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "particle_detector": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "plasma_chamber": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "polycarbonate": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 54,
+      "target_inventory": 218
+    },
+    "polymer_compound": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "ppta_polymer": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 13,
+      "target_inventory": 55
+    },
+    "quantum_processor": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "radiation_therapy_unit": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "robotic_arm_assembly": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "satellite_bus": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "silicon_carbide": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 30,
+      "target_inventory": 122
+    },
+    "silicon_carbide_wafer": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 11,
+      "target_inventory": 44
+    },
+    "solid_state_battery_pack": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "steam": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 341,
+      "target_inventory": 1365
+    },
+    "superconducting_magnet": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "titanium": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "titanium_alloy": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "tranquilizer": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 22,
+      "target_inventory": 88
+    },
+    "vacuum_vessel": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "xenon": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    }
+  },
+  "cash_caps": {
+    "hard_high": 60000000,
+    "hard_low": 2000000,
+    "soft_high": 25000000,
+    "soft_low": 7000000
+  },
+  "description": "Advanced metallurgy and composites producer. Supplies titanium alloys, carbon fiber, duralumin, and composite armor panels to the defense, aerospace, and medical industries.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "VGAM",
+    "total_shares": 1000000
+  },
+  "player_id": -2080,
+  "seed": {
+    "districts": [
+      {
+        "district_type": "industrial",
+        "plots_merged": 4,
+        "size": 4
+      }
+    ],
+    "land_plots": [],
+    "starting_cash": 15000000
   },
   "sell_items": {
-    "titanium_alloy": {"min_inventory_to_keep": 100, "max_order_quantity": 1000, "market": "regular"},
-    "carbon_fiber": {"min_inventory_to_keep": 100, "max_order_quantity": 800, "market": "regular"},
-    "duralumin": {"min_inventory_to_keep": 100, "max_order_quantity": 800, "market": "regular"},
-    "composite_armor_panel": {"min_inventory_to_keep": 50, "max_order_quantity": 300, "market": "regular"}
-  },
-  "ipo": {"ticker": "VGAM", "total_shares": 1000000, "shares_to_offer": 600000}
+    "carbon_fiber": {
+      "market": "regular",
+      "max_order_quantity": 800,
+      "min_inventory_to_keep": 100
+    },
+    "composite_armor_panel": {
+      "market": "regular",
+      "max_order_quantity": 300,
+      "min_inventory_to_keep": 50
+    },
+    "duralumin": {
+      "market": "regular",
+      "max_order_quantity": 800,
+      "min_inventory_to_keep": 100
+    },
+    "titanium_alloy": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 100
+    }
+  }
 }

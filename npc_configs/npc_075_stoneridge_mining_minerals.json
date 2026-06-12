@@ -1,51 +1,7 @@
 {
-  "player_id": -2075,
   "business_name": "Stoneridge Mining & Minerals",
-  "description": "Raw mineral extraction and processing operation producing polymer compounds, rough diamonds, rubies, garnets, emeralds, and various industrial minerals from mountain and hillside mines.",
-  "cash_caps": {
-    "hard_high": 20000000,
-    "soft_high": 9000000,
-    "soft_low": 2500000,
-    "hard_low": 800000
-  },
-  "seed": {
-    "starting_cash": 5000000,
-    "land_plots": [
-      {
-        "terrain_type": "mountain",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "mountain",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "hills",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      }
-    ],
-    "districts": []
-  },
   "businesses": [
     {
-      "business_type": "mineral_processing_plant",
-      "district_id": null,
       "active_lines": [
         "rough_diamond",
         "rough_ruby",
@@ -56,104 +12,148 @@
         "rough_tourmaline",
         "rough_topaz",
         "polishing_compound"
-      ]
+      ],
+      "business_type": "mineral_processing_plant",
+      "district_id": null
     },
     {
-      "business_type": "oil_refinery",
-      "district_id": null,
       "active_lines": [
         "polymer_compound",
         "diesel"
-      ]
+      ],
+      "business_type": "oil_refinery",
+      "district_id": null
     }
   ],
   "buy_items": {
-    "oil": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
     "drill_bit": {
-      "target_inventory": 200,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 40,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "heavy_machinery": {
-      "target_inventory": 50,
-      "reorder_at": 10,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 200
     },
     "energy": {
-      "target_inventory": 300000,
-      "reorder_at": 60000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 60000,
+      "target_inventory": 300000
+    },
+    "heavy_machinery": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 10,
+      "target_inventory": 50
+    },
+    "oil": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
     },
     "paper": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 400,
+      "target_inventory": 2000
     }
+  },
+  "cash_caps": {
+    "hard_high": 20000000,
+    "hard_low": 800000,
+    "soft_high": 9000000,
+    "soft_low": 2500000
+  },
+  "description": "Raw mineral extraction and processing operation producing polymer compounds, rough diamonds, rubies, garnets, emeralds, and various industrial minerals from mountain and hillside mines.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "STMM",
+    "total_shares": 1000000
+  },
+  "player_id": -2075,
+  "seed": {
+    "districts": [],
+    "land_plots": [
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "mountain"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "mountain"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "hills"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      }
+    ],
+    "starting_cash": 5000000
   },
   "sell_items": {
+    "polishing_compound": {
+      "market": "regular",
+      "max_order_quantity": 500,
+      "min_inventory_to_keep": 0
+    },
     "polymer_compound": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 2000,
-      "market": "regular"
-    },
-    "rough_diamond": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 200,
-      "market": "regular"
-    },
-    "rough_ruby": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 200,
-      "market": "regular"
-    },
-    "rough_sapphire": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 200,
-      "market": "regular"
-    },
-    "rough_emerald": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 200,
-      "market": "regular"
-    },
-    "rough_garnet": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 300,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "rough_aquamarine": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 200,
-      "market": "regular"
+      "min_inventory_to_keep": 0
+    },
+    "rough_diamond": {
+      "market": "regular",
+      "max_order_quantity": 200,
+      "min_inventory_to_keep": 0
+    },
+    "rough_emerald": {
+      "market": "regular",
+      "max_order_quantity": 200,
+      "min_inventory_to_keep": 0
+    },
+    "rough_garnet": {
+      "market": "regular",
+      "max_order_quantity": 300,
+      "min_inventory_to_keep": 0
+    },
+    "rough_ruby": {
+      "market": "regular",
+      "max_order_quantity": 200,
+      "min_inventory_to_keep": 0
+    },
+    "rough_sapphire": {
+      "market": "regular",
+      "max_order_quantity": 200,
+      "min_inventory_to_keep": 0
     },
     "rough_topaz": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 300,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "rough_tourmaline": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 200,
-      "market": "regular"
-    },
-    "polishing_compound": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 500,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     }
-  },
-  "ipo": {
-    "ticker": "STMM",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

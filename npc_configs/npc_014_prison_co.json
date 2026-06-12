@@ -1,24 +1,5 @@
 {
-  "player_id": -2014,
   "business_name": "Corrections Corp.",
-  "description": "State-contracted operator running the full prison supply chain: uniforms, meals, security hardware, rehabilitation materials, and the district itself. Buys all raw inputs from the open market.",
-  "cash_caps": {
-    "hard_high": 20000000,
-    "soft_high": 8000000,
-    "soft_low": 2000000,
-    "hard_low": 500000
-  },
-  "seed": {
-    "starting_cash": 5000000,
-    "land_plots": [],
-    "districts": [
-      {
-        "district_type": "prison",
-        "size": 5.0,
-        "plots_merged": 5
-      }
-    ]
-  },
   "businesses": [
     {
       "business_type": "prison_supply_factory",
@@ -42,311 +23,330 @@
     }
   ],
   "buy_items": {
-    "cotton": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
+    "battery_cell": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "polyester": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "soap": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "toothpaste": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "shampoo": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "towel": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "plastic": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "candy_bar": {
-      "target_inventory": 4000,
-      "reorder_at": 800,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "lollipop": {
-      "target_inventory": 4000,
-      "reorder_at": 800,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "soda": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "bread": {
-      "target_inventory": 10000,
-      "reorder_at": 2000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 300,
+      "target_inventory": 1500
     },
     "beef": {
-      "target_inventory": 6000,
-      "reorder_at": 1200,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 1200,
+      "target_inventory": 6000
+    },
+    "bread": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 2000,
+      "target_inventory": 10000
+    },
+    "candy_bar": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 800,
+      "target_inventory": 4000
     },
     "carrots": {
-      "target_inventory": 8000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 1600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "potatoes": {
-      "target_inventory": 10000,
-      "reorder_at": 2000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "milk": {
-      "target_inventory": 6000,
-      "reorder_at": 1200,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "pasta": {
-      "target_inventory": 6000,
-      "reorder_at": 1200,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "vinegar": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "cooking_oil": {
-      "target_inventory": 1500,
-      "reorder_at": 300,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "steel": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "copper_wire": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 8000
     },
     "circuit_board": {
-      "target_inventory": 1500,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 300,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "battery_cell": {
-      "target_inventory": 1500,
-      "reorder_at": 300,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "textbook": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "ink": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "lumber": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "laptop": {
-      "target_inventory": 500,
-      "reorder_at": 100,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "law_book": {
-      "target_inventory": 1500,
-      "reorder_at": 300,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "diploma_certificate": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "surveillance_system": {
-      "target_inventory": 200,
-      "reorder_at": 40,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 1500
     },
     "concrete": {
-      "target_inventory": 5000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 5000
     },
-    "prison_bus": {
-      "target_inventory": 20,
-      "reorder_at": 5,
+    "cooking_oil": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 300,
+      "target_inventory": 1500
     },
-    "paper": {
-      "target_inventory": 10000,
-      "reorder_at": 2000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
+    "copper_wire": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "cotton": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "diploma_certificate": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 200,
+      "target_inventory": 1000
     },
     "energy": {
-      "target_inventory": 100000,
-      "reorder_at": 20000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 20000,
+      "target_inventory": 100000
+    },
+    "ink": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "laptop": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "law_book": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 300,
+      "target_inventory": 1500
+    },
+    "lollipop": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 800,
+      "target_inventory": 4000
+    },
+    "lumber": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "milk": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1200,
+      "target_inventory": 6000
+    },
+    "paper": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 2000,
+      "target_inventory": 10000
+    },
+    "pasta": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1200,
+      "target_inventory": 6000
+    },
+    "plastic": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "polyester": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "potatoes": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 2000,
+      "target_inventory": 10000
+    },
+    "prison_bus": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 5,
+      "target_inventory": 20
+    },
+    "shampoo": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "soap": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "soda": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "steel": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "surveillance_system": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 40,
+      "target_inventory": 200
+    },
+    "textbook": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "toothpaste": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "towel": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "vinegar": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 200,
+      "target_inventory": 1000
     },
     "water": {
-      "target_inventory": 20000,
-      "reorder_at": 4000,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 4000,
+      "target_inventory": 20000
     }
+  },
+  "cash_caps": {
+    "hard_high": 20000000,
+    "hard_low": 500000,
+    "soft_high": 8000000,
+    "soft_low": 2000000
+  },
+  "description": "State-contracted operator running the full prison supply chain: uniforms, meals, security hardware, rehabilitation materials, and the district itself. Buys all raw inputs from the open market.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "CXCP",
+    "total_shares": 1000000
+  },
+  "player_id": -2014,
+  "seed": {
+    "districts": [
+      {
+        "district_type": "prison",
+        "plots_merged": 5,
+        "size": 5.0
+      }
+    ],
+    "land_plots": [],
+    "starting_cash": 5000000
   },
   "sell_items": {
-    "inmate_jumpsuit": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 5000,
-      "market": "regular"
-    },
-    "prison_bedding": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 3000,
-      "market": "regular"
-    },
-    "hygiene_kit": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 5000,
-      "market": "regular"
-    },
-    "commissary_snacks": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 5000,
-      "market": "regular"
-    },
-    "phone_card": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 5000,
-      "market": "regular"
-    },
-    "prison_meal": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 20000,
-      "market": "regular"
-    },
     "cell_door": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "razor_wire": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 5000,
-      "market": "regular"
-    },
-    "handcuffs": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 5000,
-      "market": "regular"
-    },
-    "taser": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "ged_materials": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 2000,
-      "market": "regular"
-    },
-    "counseling_materials": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 2000,
-      "market": "regular"
-    },
-    "vocational_kit": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "inmate_housing": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 500,
-      "market": "regular"
-    },
-    "rehabilitation_program": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 500,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "commissary_package": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 2000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
-    "work_release": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 200,
-      "market": "regular"
+    "commissary_snacks": {
+      "market": "regular",
+      "max_order_quantity": 5000,
+      "min_inventory_to_keep": 0
+    },
+    "counseling_materials": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 0
+    },
+    "ged_materials": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 0
+    },
+    "handcuffs": {
+      "market": "regular",
+      "max_order_quantity": 5000,
+      "min_inventory_to_keep": 0
+    },
+    "hygiene_kit": {
+      "market": "regular",
+      "max_order_quantity": 5000,
+      "min_inventory_to_keep": 0
+    },
+    "inmate_housing": {
+      "market": "regular",
+      "max_order_quantity": 500,
+      "min_inventory_to_keep": 0
+    },
+    "inmate_jumpsuit": {
+      "market": "regular",
+      "max_order_quantity": 5000,
+      "min_inventory_to_keep": 0
     },
     "legal_aid": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 500,
-      "market": "regular"
+      "min_inventory_to_keep": 0
+    },
+    "phone_card": {
+      "market": "regular",
+      "max_order_quantity": 5000,
+      "min_inventory_to_keep": 0
+    },
+    "prison_bedding": {
+      "market": "regular",
+      "max_order_quantity": 3000,
+      "min_inventory_to_keep": 0
+    },
+    "prison_meal": {
+      "market": "regular",
+      "max_order_quantity": 20000,
+      "min_inventory_to_keep": 0
+    },
+    "razor_wire": {
+      "market": "regular",
+      "max_order_quantity": 5000,
+      "min_inventory_to_keep": 0
     },
     "reentry_package": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 500,
-      "market": "regular"
+      "min_inventory_to_keep": 0
+    },
+    "rehabilitation_program": {
+      "market": "regular",
+      "max_order_quantity": 500,
+      "min_inventory_to_keep": 0
+    },
+    "taser": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "vocational_kit": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "work_release": {
+      "market": "regular",
+      "max_order_quantity": 200,
+      "min_inventory_to_keep": 0
     }
-  },
-  "ipo": {
-    "ticker": "CXCP",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

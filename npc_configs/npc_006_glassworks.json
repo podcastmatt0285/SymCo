@@ -1,95 +1,155 @@
 {
-  "player_id": -2006,
   "business_name": "Glassworks",
-  "description": "Quarries its own sand and processes it into glass and bottles, supplying the market with surplus.",
-  "cash_caps": {
-    "hard_high": 20000000,
-    "soft_high": 8000000,
-    "soft_low": 3000000,
-    "hard_low": 750000
-  },
-  "seed": {
-    "starting_cash": 3000000,
-    "land_plots": [
-      {
-        "terrain_type": "hills",
-        "proximity_features": [
-          "remote"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "hills",
-        "proximity_features": [
-          "remote"
-        ],
-        "size": 1
-      }
-    ]
-  },
   "businesses": [
     {
-      "business_type": "sand_quarry",
-      "district_id": null,
       "active_lines": [
         "sand"
-      ]
+      ],
+      "business_type": "sand_quarry",
+      "district_id": null
     },
     {
-      "business_type": "glass_works",
-      "district_id": null,
       "active_lines": [
         "glass",
         "bottle",
         "jar"
-      ]
+      ],
+      "business_type": "glass_works",
+      "district_id": null
     }
   ],
   "buy_items": {
-    "energy": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
+    "artisan_fragrance": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 24,
+      "target_inventory": 96
     },
-    "water": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
+    "blessed_sheep": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "cut_peridot": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 81,
+      "target_inventory": 326
+    },
+    "cut_tourmaline": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 40,
+      "target_inventory": 161
+    },
+    "energy": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "golden_pearl": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "live_lake_scrolls": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
     },
     "paper": {
-      "target_inventory": 600,
-      "reorder_at": 120,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 120,
+      "target_inventory": 600
+    },
+    "pink_pearl": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 4,
+      "target_inventory": 16
+    },
+    "rare_orchid_specimen": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 6
+    },
+    "signature_perfume": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 14,
+      "target_inventory": 59
+    },
+    "water": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "white_pearl": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 6,
+      "target_inventory": 24
     }
+  },
+  "cash_caps": {
+    "hard_high": 20000000,
+    "hard_low": 750000,
+    "soft_high": 8000000,
+    "soft_low": 3000000
+  },
+  "description": "Quarries its own sand and processes it into glass and bottles, supplying the market with surplus.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "GLWK",
+    "total_shares": 1000000
+  },
+  "player_id": -2006,
+  "seed": {
+    "land_plots": [
+      {
+        "proximity_features": [
+          "remote"
+        ],
+        "size": 1,
+        "terrain_type": "hills"
+      },
+      {
+        "proximity_features": [
+          "remote"
+        ],
+        "size": 1,
+        "terrain_type": "hills"
+      }
+    ],
+    "starting_cash": 3000000
   },
   "sell_items": {
     "bottle": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 2000,
-      "market": "regular"
-    },
-    "jar": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 2000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "glass": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
+    },
+    "jar": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 0
     },
     "sand": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 2000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     }
-  },
-  "ipo": {
-    "ticker": "GLWK",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

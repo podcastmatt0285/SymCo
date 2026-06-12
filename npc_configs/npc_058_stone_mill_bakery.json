@@ -1,169 +1,169 @@
 {
-  "player_id": -2058,
   "business_name": "Stone Mill Bakery",
-  "description": "Vertically integrated grain operation: grain farm, flour mill, and industrial bakery. Supplies wheat, corn, flour, bread, baguette, and noodles to the open market.",
-  "cash_caps": {
-    "hard_high": 30000000,
-    "soft_high": 12000000,
-    "soft_low": 3500000,
-    "hard_low": 900000
-  },
-  "seed": {
-    "starting_cash": 7000000,
-    "starting_inventory": {
-      "wheat": 3000,
-      "corn": 2000,
-      "flour": 1000,
-      "bread": 2000,
-      "baguette": 1500,
-      "noodles": 1000,
-      "wheat_seeds": 500,
-      "corn_seeds": 500,
-      "barley_seeds": 200,
-      "yeast": 300
-    },
-    "land_plots": [
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "riverside",
-          "remote"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "riverside",
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "urban",
-        "proximity_features": [
-          "urban",
-          "road"
-        ],
-        "size": 1
-      }
-    ]
-  },
   "businesses": [
     {
-      "business_type": "grain_farm",
-      "district_id": null,
       "active_lines": [
         "wheat",
         "corn",
         "wheat_seeds",
         "corn_seeds"
-      ]
+      ],
+      "business_type": "grain_farm",
+      "district_id": null
     },
     {
-      "business_type": "flour_mill",
-      "district_id": null,
       "active_lines": [
         "flour",
         "yeast"
-      ]
+      ],
+      "business_type": "flour_mill",
+      "district_id": null
     },
     {
-      "business_type": "industrial_bakery",
-      "district_id": null,
       "active_lines": [
         "dough",
         "bread",
         "baguette",
         "noodles"
-      ]
+      ],
+      "business_type": "industrial_bakery",
+      "district_id": null
     }
   ],
   "buy_items": {
-    "water": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
+    "eggs": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 400,
+      "target_inventory": 2000
     },
     "energy": {
-      "target_inventory": 8000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 1500,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "paper": {
-      "target_inventory": 800,
-      "reorder_at": 150,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "pollen": {
-      "target_inventory": 200000,
-      "reorder_at": 50000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 8000
     },
     "fertilizer_npk": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "paper": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 150,
+      "target_inventory": 800
+    },
+    "pollen": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 50000,
+      "target_inventory": 200000
     },
     "salt": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
     },
     "sugar": {
-      "target_inventory": 500,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 100,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 500
     },
-    "eggs": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+    "water": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    }
+  },
+  "cash_caps": {
+    "hard_high": 30000000,
+    "hard_low": 900000,
+    "soft_high": 12000000,
+    "soft_low": 3500000
+  },
+  "description": "Vertically integrated grain operation: grain farm, flour mill, and industrial bakery. Supplies wheat, corn, flour, bread, baguette, and noodles to the open market.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "STMB",
+    "total_shares": 1000000
+  },
+  "player_id": -2058,
+  "seed": {
+    "land_plots": [
+      {
+        "proximity_features": [
+          "riverside",
+          "remote"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "riverside",
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "urban",
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "urban"
+      }
+    ],
+    "starting_cash": 7000000,
+    "starting_inventory": {
+      "baguette": 1500,
+      "barley_seeds": 200,
+      "bread": 2000,
+      "corn": 2000,
+      "corn_seeds": 500,
+      "flour": 1000,
+      "noodles": 1000,
+      "wheat": 3000,
+      "wheat_seeds": 500,
+      "yeast": 300
     }
   },
   "sell_items": {
-    "wheat": {
-      "min_inventory_to_keep": 2000,
-      "max_order_quantity": 5000,
-      "market": "regular"
-    },
-    "corn": {
-      "min_inventory_to_keep": 2000,
-      "max_order_quantity": 5000,
-      "market": "regular"
-    },
-    "flour": {
-      "min_inventory_to_keep": 1500,
-      "max_order_quantity": 4000,
-      "market": "regular"
+    "baguette": {
+      "market": "regular",
+      "max_order_quantity": 1500,
+      "min_inventory_to_keep": 300
     },
     "bread": {
-      "min_inventory_to_keep": 1000,
+      "market": "regular",
       "max_order_quantity": 3000,
-      "market": "regular"
+      "min_inventory_to_keep": 1000
     },
-    "baguette": {
-      "min_inventory_to_keep": 300,
-      "max_order_quantity": 1500,
-      "market": "regular"
+    "corn": {
+      "market": "regular",
+      "max_order_quantity": 5000,
+      "min_inventory_to_keep": 2000
+    },
+    "flour": {
+      "market": "regular",
+      "max_order_quantity": 4000,
+      "min_inventory_to_keep": 1500
     },
     "noodles": {
-      "min_inventory_to_keep": 500,
+      "market": "regular",
       "max_order_quantity": 2000,
-      "market": "regular"
+      "min_inventory_to_keep": 500
+    },
+    "wheat": {
+      "market": "regular",
+      "max_order_quantity": 5000,
+      "min_inventory_to_keep": 2000
     }
-  },
-  "ipo": {
-    "ticker": "STMB",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

@@ -1,24 +1,5 @@
 {
-  "player_id": -2038,
   "business_name": "Continental Motor Works",
-  "description": "Full-spectrum bus and commercial truck manufacturer. Stamps and assembles bus chassis, engines, and seats in-house, then builds school buses, city buses, charter coaches, and commercial trucks for the open market.",
-  "cash_caps": {
-    "hard_high": 70000000,
-    "soft_high": 30000000,
-    "soft_low": 8000000,
-    "hard_low": 2500000
-  },
-  "seed": {
-    "starting_cash": 15000000,
-    "land_plots": [],
-    "districts": [
-      {
-        "district_type": "industrial",
-        "size": 5,
-        "plots_merged": 5
-      }
-    ]
-  },
   "businesses": [
     {
       "business_type": "bus_parts_factory",
@@ -34,195 +15,340 @@
     }
   ],
   "buy_items": {
-    "steel": {
-      "target_inventory": 8000,
-      "reorder_at": 1600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
     "aluminum": {
-      "target_inventory": 4000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 800,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 4000
     },
-    "iron": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
+    "ambulance": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 1,
+      "target_inventory": 5
     },
-    "rubber": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
+    "armored_personnel_carrier": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 1,
+      "target_inventory": 5
     },
-    "glass": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
+    "car": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "paint": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "copper_wire": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "leather": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "circuit_board": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "television": {
-      "target_inventory": 200,
-      "reorder_at": 40,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 1,
+      "target_inventory": 6
     },
     "chassis": {
-      "target_inventory": 500,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 100,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 500
     },
-    "engine": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+    "circuit_board": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 200,
+      "target_inventory": 1000
     },
-    "handcuffs": {
-      "target_inventory": 200,
-      "reorder_at": 40,
+    "comms_satellite": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 125,
+      "target_inventory": 500
     },
-    "diesel": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
+    "copper_wire": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "energy": {
-      "target_inventory": 300000,
-      "reorder_at": 60000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "paper": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 600,
+      "target_inventory": 3000
     },
     "cotton": {
-      "target_inventory": 2000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 400,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 2000
     },
-    "polyester": {
-      "target_inventory": 1500,
-      "reorder_at": 300,
+    "diesel": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "drone_swarm_unit": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "electric_car": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "energy": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 60000,
+      "target_inventory": 300000
+    },
+    "engine": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "ferry": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "fire_truck": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "freshwater_boat": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 4,
+      "target_inventory": 18
+    },
+    "glass": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "handcuffs": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 40,
+      "target_inventory": 200
+    },
+    "hybrid_car": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 7
+    },
+    "iron": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "launch_vehicle": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "leather": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 200,
+      "target_inventory": 1000
     },
     "lithium_battery_pack": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "luxury_car": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "marine_engine": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "military_drone": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "motorcycle": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 3,
+      "target_inventory": 13
+    },
+    "naval_destroyer": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
     },
     "neodymium_magnet": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "paint": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "paper": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "polyester": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 300,
+      "target_inventory": 1500
+    },
+    "premium_ev": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "rubber": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "self_propelled_artillery": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "steel": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1600,
+      "target_inventory": 8000
+    },
+    "television": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 40,
+      "target_inventory": 200
     },
     "tires": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "train_car_frame": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
     },
     "transmission": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "truck": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 7
+    },
+    "weather_satellite": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
     },
     "windshield": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 200,
+      "target_inventory": 1000
     }
+  },
+  "cash_caps": {
+    "hard_high": 70000000,
+    "hard_low": 2500000,
+    "soft_high": 30000000,
+    "soft_low": 8000000
+  },
+  "description": "Full-spectrum bus and commercial truck manufacturer. Stamps and assembles bus chassis, engines, and seats in-house, then builds school buses, city buses, charter coaches, and commercial trucks for the open market.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "CNMW",
+    "total_shares": 1000000
+  },
+  "player_id": -2038,
+  "seed": {
+    "districts": [
+      {
+        "district_type": "industrial",
+        "plots_merged": 5,
+        "size": 5
+      }
+    ],
+    "land_plots": [],
+    "starting_cash": 15000000
   },
   "sell_items": {
     "bus_chassis": {
-      "min_inventory_to_keep": 50,
+      "market": "regular",
       "max_order_quantity": 200,
-      "market": "regular"
+      "min_inventory_to_keep": 50
     },
     "bus_engine": {
-      "min_inventory_to_keep": 50,
+      "market": "regular",
       "max_order_quantity": 200,
-      "market": "regular"
+      "min_inventory_to_keep": 50
     },
     "bus_seats": {
-      "min_inventory_to_keep": 200,
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "school_bus": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 50,
-      "market": "regular"
-    },
-    "city_bus": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 40,
-      "market": "regular"
+      "min_inventory_to_keep": 200
     },
     "charter_bus": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 25,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
-    "prison_bus": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 20,
-      "market": "regular"
+    "city_bus": {
+      "market": "regular",
+      "max_order_quantity": 40,
+      "min_inventory_to_keep": 0
     },
     "delivery_truck": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 50,
-      "market": "regular"
+      "min_inventory_to_keep": 0
+    },
+    "prison_bus": {
+      "market": "regular",
+      "max_order_quantity": 20,
+      "min_inventory_to_keep": 0
+    },
+    "school_bus": {
+      "market": "regular",
+      "max_order_quantity": 50,
+      "min_inventory_to_keep": 0
     },
     "semi_truck": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 30,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     }
-  },
-  "ipo": {
-    "ticker": "CNMW",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

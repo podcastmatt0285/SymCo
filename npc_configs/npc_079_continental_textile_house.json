@@ -1,142 +1,142 @@
 {
-  "player_id": -2079,
   "business_name": "Continental Textile House",
-  "description": "Fabric and textile liquidity provider growing cotton and producing leather, polyester, and silk from savanna and forest plots.",
-  "cash_caps": {
-    "hard_high": 12000000,
-    "soft_high": 5000000,
-    "soft_low": 1200000,
-    "hard_low": 400000
-  },
-  "seed": {
-    "starting_cash": 2500000,
-    "land_plots": [
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "riverside"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "savanna",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "savanna",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "forest",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      }
-    ],
-    "districts": []
-  },
   "businesses": [
     {
-      "business_type": "cotton_fields",
-      "district_id": null,
       "active_lines": [
         "cotton"
-      ]
+      ],
+      "business_type": "cotton_fields",
+      "district_id": null
     },
     {
-      "business_type": "cotton_fields",
-      "district_id": null,
       "active_lines": [
         "cotton"
-      ]
+      ],
+      "business_type": "cotton_fields",
+      "district_id": null
     },
     {
-      "business_type": "textile_and_tannery",
-      "district_id": null,
       "active_lines": [
         "leather",
         "polyester",
         "silk"
-      ]
+      ],
+      "business_type": "textile_and_tannery",
+      "district_id": null
     }
   ],
   "buy_items": {
     "animal_hide": {
-      "target_inventory": 2000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 400,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "dye": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 2000
     },
     "chemical_solvent": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 200,
+      "target_inventory": 1000
     },
-    "water": {
-      "target_inventory": 20000,
-      "reorder_at": 4000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
+    "dye": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 200,
+      "target_inventory": 1000
     },
     "energy": {
-      "target_inventory": 200000,
-      "reorder_at": 40000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 40000,
+      "target_inventory": 200000
     },
     "paper": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "water": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 4000,
+      "target_inventory": 20000
     }
+  },
+  "cash_caps": {
+    "hard_high": 12000000,
+    "hard_low": 400000,
+    "soft_high": 5000000,
+    "soft_low": 1200000
+  },
+  "description": "Fabric and textile liquidity provider growing cotton and producing leather, polyester, and silk from savanna and forest plots.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "CTXH",
+    "total_shares": 1000000
+  },
+  "player_id": -2079,
+  "seed": {
+    "districts": [],
+    "land_plots": [
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "riverside"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "savanna"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "savanna"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "forest"
+      }
+    ],
+    "starting_cash": 2500000
   },
   "sell_items": {
     "cotton": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 5000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "leather": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 2000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "polyester": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 2000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "silk": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     }
-  },
-  "ipo": {
-    "ticker": "CTXH",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

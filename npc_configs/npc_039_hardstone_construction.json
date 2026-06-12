@@ -1,24 +1,5 @@
 {
-  "player_id": -2039,
   "business_name": "Hardstone Construction Group",
-  "description": "Concrete and cement producer running a large-scale district plant. Burns limestone-sourced sand and coal into quicklime cement, then mixes it into reinforced concrete. The primary supplier of structural materials for district construction across the economy.",
-  "cash_caps": {
-    "hard_high": 35000000,
-    "soft_high": 15000000,
-    "soft_low": 4000000,
-    "hard_low": 1200000
-  },
-  "seed": {
-    "starting_cash": 8000000,
-    "land_plots": [],
-    "districts": [
-      {
-        "district_type": "industrial",
-        "size": 3,
-        "plots_merged": 3
-      }
-    ]
-  },
   "businesses": [
     {
       "business_type": "concrete_plant",
@@ -26,64 +7,83 @@
     }
   ],
   "buy_items": {
-    "sand": {
-      "target_inventory": 15000,
-      "reorder_at": 3000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
     "coal": {
-      "target_inventory": 8000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 1600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "rebar": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "water": {
-      "target_inventory": 20000,
-      "reorder_at": 4000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
+      "target_inventory": 8000
     },
     "energy": {
-      "target_inventory": 200000,
-      "reorder_at": 40000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 40000,
+      "target_inventory": 200000
     },
     "paper": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "rebar": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "sand": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 3000,
+      "target_inventory": 15000
     },
     "volcanic_ash": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "water": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 4000,
+      "target_inventory": 20000
     }
+  },
+  "cash_caps": {
+    "hard_high": 35000000,
+    "hard_low": 1200000,
+    "soft_high": 15000000,
+    "soft_low": 4000000
+  },
+  "description": "Concrete and cement producer running a large-scale district plant. Burns limestone-sourced sand and coal into quicklime cement, then mixes it into reinforced concrete. The primary supplier of structural materials for district construction across the economy.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "HSCG",
+    "total_shares": 1000000
+  },
+  "player_id": -2039,
+  "seed": {
+    "districts": [
+      {
+        "district_type": "industrial",
+        "plots_merged": 3,
+        "size": 3
+      }
+    ],
+    "land_plots": [],
+    "starting_cash": 8000000
   },
   "sell_items": {
     "cement": {
-      "min_inventory_to_keep": 500,
+      "market": "regular",
       "max_order_quantity": 3000,
-      "market": "regular"
+      "min_inventory_to_keep": 500
     },
     "concrete": {
-      "min_inventory_to_keep": 500,
+      "market": "regular",
       "max_order_quantity": 3000,
-      "market": "regular"
+      "min_inventory_to_keep": 500
     }
-  },
-  "ipo": {
-    "ticker": "HSCG",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

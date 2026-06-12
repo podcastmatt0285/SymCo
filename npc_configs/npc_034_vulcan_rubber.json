@@ -1,103 +1,103 @@
 {
-  "player_id": -2034,
   "business_name": "Vulcan Rubber & Fiber",
-  "description": "Industrial rubber and fibre processor. Vulcanizes crude oil into synthetic rubber and fiberglass, and weaves cotton into burlap \u2014 three foundational materials that vehicle manufacturers, shipbuilders, sack producers, and dozens of downstream industries depend on.",
-  "cash_caps": {
-    "hard_high": 30000000,
-    "soft_high": 12000000,
-    "soft_low": 3000000,
-    "hard_low": 800000
-  },
-  "seed": {
-    "starting_cash": 5000000,
-    "land_plots": [
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      }
-    ]
-  },
   "businesses": [
     {
+      "active_lines": [],
       "business_type": "rubber_plant",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "rubber_plant",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "rubber_plant",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     }
   ],
   "buy_items": {
-    "oil": {
-      "target_inventory": 10000,
-      "reorder_at": 2000,
+    "energy": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 20000,
+      "target_inventory": 100000
     },
     "glass": {
-      "target_inventory": 5000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 5000
     },
-    "water": {
-      "target_inventory": 20000,
-      "reorder_at": 4000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
-    "energy": {
-      "target_inventory": 100000,
-      "reorder_at": 20000,
+    "oil": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 2000,
+      "target_inventory": 10000
     },
     "paper": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "water": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 4000,
+      "target_inventory": 20000
     }
+  },
+  "cash_caps": {
+    "hard_high": 30000000,
+    "hard_low": 800000,
+    "soft_high": 12000000,
+    "soft_low": 3000000
+  },
+  "description": "Industrial rubber and fibre processor. Vulcanizes crude oil into synthetic rubber and fiberglass, and weaves cotton into burlap \u2014 three foundational materials that vehicle manufacturers, shipbuilders, sack producers, and dozens of downstream industries depend on.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "VCRF",
+    "total_shares": 1000000
+  },
+  "player_id": -2034,
+  "seed": {
+    "land_plots": [
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      }
+    ],
+    "starting_cash": 5000000
   },
   "sell_items": {
-    "rubber": {
-      "min_inventory_to_keep": 1000,
-      "max_order_quantity": 5000,
-      "market": "regular"
-    },
     "fiberglass": {
-      "min_inventory_to_keep": 500,
+      "market": "regular",
       "max_order_quantity": 2000,
-      "market": "regular"
+      "min_inventory_to_keep": 500
+    },
+    "rubber": {
+      "market": "regular",
+      "max_order_quantity": 5000,
+      "min_inventory_to_keep": 1000
     }
-  },
-  "ipo": {
-    "ticker": "VCRF",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

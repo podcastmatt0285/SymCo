@@ -1,80 +1,119 @@
 {
-  "player_id": -2088,
   "business_name": "Fizz & Flow Beverages Co.",
-  "description": "Industrial bottling operation producing carbonated soda and purified bottled water for the retail market. Supplies the soda and bottled water that burrito trucks, fish carts, and hot dog carts need to stock their coolers.",
-  "cash_caps": {
-    "hard_high": 20000000,
-    "soft_high": 8000000,
-    "soft_low": 2000000,
-    "hard_low": 600000
-  },
-  "seed": {
-    "starting_cash": 4000000,
-    "land_plots": [
-      { "terrain_type": "urban", "proximity_features": ["road"], "size": 1 },
-      { "terrain_type": "urban", "proximity_features": ["road"], "size": 1 },
-      { "terrain_type": "urban", "proximity_features": ["road"], "size": 1 }
-    ],
-    "districts": []
-  },
   "businesses": [
-    { "business_type": "bottling_plant", "district_id": null, "active_lines": ["soda", "bottled_water"] },
-    { "business_type": "bottling_plant", "district_id": null, "active_lines": ["soda", "bottled_water"] },
-    { "business_type": "bottling_plant", "district_id": null, "active_lines": ["soda", "bottled_water"] }
+    {
+      "active_lines": [
+        "soda",
+        "bottled_water"
+      ],
+      "business_type": "bottling_plant",
+      "district_id": null
+    },
+    {
+      "active_lines": [
+        "soda",
+        "bottled_water"
+      ],
+      "business_type": "bottling_plant",
+      "district_id": null
+    },
+    {
+      "active_lines": [
+        "soda",
+        "bottled_water"
+      ],
+      "business_type": "bottling_plant",
+      "district_id": null
+    }
   ],
   "buy_items": {
-    "water": {
-      "target_inventory": 50000,
-      "reorder_at": 12000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
-    "sugar": {
-      "target_inventory": 15000,
-      "reorder_at": 3500,
+    "bottle": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 20000,
+      "target_inventory": 80000
     },
     "corn_syrup": {
-      "target_inventory": 10000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 2500,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "bottle": {
-      "target_inventory": 80000,
-      "reorder_at": 20000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 10000
     },
     "energy": {
-      "target_inventory": 20000,
-      "reorder_at": 5000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 5000,
+      "target_inventory": 20000
     },
     "paper": {
-      "target_inventory": 5000,
-      "reorder_at": 1200,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 1200,
+      "target_inventory": 5000
+    },
+    "sugar": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 3500,
+      "target_inventory": 15000
+    },
+    "water": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 12000,
+      "target_inventory": 50000
     }
+  },
+  "cash_caps": {
+    "hard_high": 20000000,
+    "hard_low": 600000,
+    "soft_high": 8000000,
+    "soft_low": 2000000
+  },
+  "description": "Industrial bottling operation producing carbonated soda and purified bottled water for the retail market. Supplies the soda and bottled water that burrito trucks, fish carts, and hot dog carts need to stock their coolers.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "FIZZ",
+    "total_shares": 1000000
+  },
+  "player_id": -2088,
+  "seed": {
+    "districts": [],
+    "land_plots": [
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "urban"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "urban"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "urban"
+      }
+    ],
+    "starting_cash": 4000000
   },
   "sell_items": {
-    "soda": {
-      "min_inventory_to_keep": 200,
-      "max_order_quantity": 8000,
-      "market": "regular"
-    },
     "bottled_water": {
-      "min_inventory_to_keep": 200,
+      "market": "regular",
       "max_order_quantity": 8000,
-      "market": "regular"
+      "min_inventory_to_keep": 200
+    },
+    "soda": {
+      "market": "regular",
+      "max_order_quantity": 8000,
+      "min_inventory_to_keep": 200
     }
-  },
-  "ipo": {
-    "ticker": "FIZZ",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

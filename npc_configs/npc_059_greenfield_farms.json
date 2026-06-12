@@ -1,134 +1,134 @@
 {
-  "player_id": -2059,
   "business_name": "Greenfield Farms",
-  "description": "Vegetable farm and orchard plantation. Supplies onions, tomatoes, apples, potatoes, lettuce, and carrots to the open market.",
-  "cash_caps": {
-    "hard_high": 25000000,
-    "soft_high": 10000000,
-    "soft_low": 3000000,
-    "hard_low": 800000
-  },
-  "seed": {
-    "starting_cash": 6000000,
-    "starting_inventory": {
-      "onions": 1000,
-      "tomato": 1000,
-      "apples": 1500,
-      "potatoes": 3000,
-      "lettuce": 1500,
-      "carrots": 3000,
-      "onion_seeds": 400,
-      "tomato_seeds": 400,
-      "apple_seeds": 200,
-      "potato_sack": 200,
-      "carrot_sack": 200
-    },
-    "land_plots": [
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "riverside",
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "riverside",
-          "remote"
-        ],
-        "size": 1
-      }
-    ]
-  },
   "businesses": [
     {
-      "business_type": "vegetable_farm",
-      "district_id": null,
       "active_lines": [
         "onions",
         "tomato"
-      ]
+      ],
+      "business_type": "vegetable_farm",
+      "district_id": null
     },
     {
-      "business_type": "plantation",
-      "district_id": null,
       "active_lines": [
         "apples",
         "potatoes",
         "lettuce",
         "carrots"
-      ]
+      ],
+      "business_type": "plantation",
+      "district_id": null
     }
   ],
   "buy_items": {
-    "water": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
     "energy": {
-      "target_inventory": 3000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "paper": {
-      "target_inventory": 500,
-      "reorder_at": 100,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "pollen": {
-      "target_inventory": 300000,
-      "reorder_at": 60000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 3000
     },
     "fertilizer_npk": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "paper": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "pollen": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 60000,
+      "target_inventory": 300000
+    },
+    "water": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    }
+  },
+  "cash_caps": {
+    "hard_high": 25000000,
+    "hard_low": 800000,
+    "soft_high": 10000000,
+    "soft_low": 3000000
+  },
+  "description": "Vegetable farm and orchard plantation. Supplies onions, tomatoes, apples, potatoes, lettuce, and carrots to the open market.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "GRFD",
+    "total_shares": 1000000
+  },
+  "player_id": -2059,
+  "seed": {
+    "land_plots": [
+      {
+        "proximity_features": [
+          "riverside",
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "riverside",
+          "remote"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      }
+    ],
+    "starting_cash": 6000000,
+    "starting_inventory": {
+      "apple_seeds": 200,
+      "apples": 1500,
+      "carrot_sack": 200,
+      "carrots": 3000,
+      "lettuce": 1500,
+      "onion_seeds": 400,
+      "onions": 1000,
+      "potato_sack": 200,
+      "potatoes": 3000,
+      "tomato": 1000,
+      "tomato_seeds": 400
     }
   },
   "sell_items": {
-    "onions": {
-      "min_inventory_to_keep": 1500,
-      "max_order_quantity": 3000,
-      "market": "regular"
-    },
-    "tomato": {
-      "min_inventory_to_keep": 1500,
-      "max_order_quantity": 3000,
-      "market": "regular"
-    },
     "apples": {
-      "min_inventory_to_keep": 500,
+      "market": "regular",
       "max_order_quantity": 2000,
-      "market": "regular"
-    },
-    "potatoes": {
-      "min_inventory_to_keep": 1500,
-      "max_order_quantity": 3000,
-      "market": "regular"
-    },
-    "lettuce": {
-      "min_inventory_to_keep": 1000,
-      "max_order_quantity": 3000,
-      "market": "regular"
+      "min_inventory_to_keep": 500
     },
     "carrots": {
-      "min_inventory_to_keep": 500,
+      "market": "regular",
       "max_order_quantity": 2000,
-      "market": "regular"
+      "min_inventory_to_keep": 500
+    },
+    "lettuce": {
+      "market": "regular",
+      "max_order_quantity": 3000,
+      "min_inventory_to_keep": 1000
+    },
+    "onions": {
+      "market": "regular",
+      "max_order_quantity": 3000,
+      "min_inventory_to_keep": 1500
+    },
+    "potatoes": {
+      "market": "regular",
+      "max_order_quantity": 3000,
+      "min_inventory_to_keep": 1500
+    },
+    "tomato": {
+      "market": "regular",
+      "max_order_quantity": 3000,
+      "min_inventory_to_keep": 1500
     }
-  },
-  "ipo": {
-    "ticker": "GRFD",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

@@ -1,265 +1,265 @@
 {
-  "player_id": -2018,
   "business_name": "Green Gate Farmers Market",
-  "description": "Operates five farmers markets, buying fresh artisan farm goods and creating steady demand for dairy, egg, honey, and fresh fruit producers.",
-  "cash_caps": {
-    "hard_high": 40000000,
-    "soft_high": 15000000,
-    "soft_low": 4000000,
-    "hard_low": 1000000
-  },
-  "seed": {
-    "starting_cash": 8000000,
-    "land_plots": [
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "hills",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "savanna",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "urban"
-        ],
-        "size": 1
-      }
-    ],
-    "starting_inventory": {
-      "eggs": 2000,
-      "milk": 3000,
-      "butter": 2000,
-      "cream": 1500,
-      "yogurt": 1000,
-      "honey": 800,
-      "jam": 600,
-      "peanut_butter": 500,
-      "apples": 1500,
-      "cherries": 800,
-      "grapes": 1000
-    }
-  },
   "businesses": [
     {
+      "active_lines": [],
       "business_type": "farmers_market",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "farmers_market",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "farmers_market",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "farmers_market",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "farmers_market",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     }
   ],
   "buy_items": {
-    "eggs": {
-      "target_inventory": 8000,
-      "reorder_at": 1600,
+    "apples": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "milk": {
-      "target_inventory": 6000,
-      "reorder_at": 1200,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "yogurt": {
-      "target_inventory": 5000,
       "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 5000
     },
     "butter": {
-      "target_inventory": 5000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "cream": {
-      "target_inventory": 4000,
-      "reorder_at": 800,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "honey": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "jam": {
-      "target_inventory": 4000,
-      "reorder_at": 800,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "jelly": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "peanut_butter": {
-      "target_inventory": 4000,
-      "reorder_at": 800,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "apples": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 5000
     },
     "cherries": {
-      "target_inventory": 4000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 800,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "grapes": {
-      "target_inventory": 4000,
-      "reorder_at": 800,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "sheep_milk": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "mussels": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 4000
     },
     "crawfish": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "cream": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 800,
+      "target_inventory": 4000
+    },
+    "eggs": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1600,
+      "target_inventory": 8000
+    },
+    "grapes": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 800,
+      "target_inventory": 4000
+    },
+    "honey": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "jam": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 800,
+      "target_inventory": 4000
+    },
+    "jelly": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "milk": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1200,
+      "target_inventory": 6000
+    },
+    "mussels": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "peanut_butter": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 800,
+      "target_inventory": 4000
+    },
+    "sheep_milk": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "yogurt": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    }
+  },
+  "cash_caps": {
+    "hard_high": 40000000,
+    "hard_low": 1000000,
+    "soft_high": 15000000,
+    "soft_low": 4000000
+  },
+  "description": "Operates five farmers markets, buying fresh artisan farm goods and creating steady demand for dairy, egg, honey, and fresh fruit producers.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "GGFM",
+    "total_shares": 1000000
+  },
+  "player_id": -2018,
+  "seed": {
+    "land_plots": [
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "hills"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "savanna"
+      },
+      {
+        "proximity_features": [
+          "urban"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      }
+    ],
+    "starting_cash": 8000000,
+    "starting_inventory": {
+      "apples": 1500,
+      "butter": 2000,
+      "cherries": 800,
+      "cream": 1500,
+      "eggs": 2000,
+      "grapes": 1000,
+      "honey": 800,
+      "jam": 600,
+      "milk": 3000,
+      "peanut_butter": 500,
+      "yogurt": 1000
     }
   },
   "sell_items": {
-    "eggs": {
-      "min_inventory_to_keep": 0,
+    "apples": {
+      "market": "regular",
       "max_order_quantity": 2000,
-      "market": "regular"
-    },
-    "milk": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 2000,
-      "market": "regular"
-    },
-    "yogurt": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1500,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "butter": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 1500,
-      "market": "regular"
-    },
-    "cream": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "honey": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1500,
-      "market": "regular"
-    },
-    "jam": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1500,
-      "market": "regular"
-    },
-    "jelly": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "peanut_butter": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1500,
-      "market": "regular"
-    },
-    "apples": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 2000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "cherries": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 1500,
-      "market": "regular"
-    },
-    "grapes": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1500,
-      "market": "regular"
-    },
-    "sheep_milk": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "mussels": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "crawfish": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
+    },
+    "cream": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "eggs": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 0
+    },
+    "grapes": {
+      "market": "regular",
+      "max_order_quantity": 1500,
+      "min_inventory_to_keep": 0
+    },
+    "honey": {
+      "market": "regular",
+      "max_order_quantity": 1500,
+      "min_inventory_to_keep": 0
+    },
+    "jam": {
+      "market": "regular",
+      "max_order_quantity": 1500,
+      "min_inventory_to_keep": 0
+    },
+    "jelly": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "milk": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 0
+    },
+    "mussels": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "peanut_butter": {
+      "market": "regular",
+      "max_order_quantity": 1500,
+      "min_inventory_to_keep": 0
+    },
+    "sheep_milk": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "yogurt": {
+      "market": "regular",
+      "max_order_quantity": 1500,
+      "min_inventory_to_keep": 0
     }
-  },
-  "ipo": {
-    "ticker": "GGFM",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

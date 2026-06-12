@@ -1,267 +1,310 @@
 {
-  "player_id": -2085,
   "business_name": "Golden Crust Bakery",
-  "description": "Full-stack artisan bakery producing bread, pastries, pies, cakes, and cookies. Operates an industrial bakery, pastry kitchen, pie bakery, cookie factory, and an on-site spice plantation for self-supplied vanilla and cinnamon. The primary market source for baked goods.",
-  "cash_caps": {
-    "hard_high": 20000000,
-    "soft_high": 8000000,
-    "soft_low": 2000000,
-    "hard_low": 600000
-  },
-  "seed": {
-    "starting_cash": 4000000,
-    "starting_inventory": {
-      "vanilla_beans": 500,
-      "cinnamon": 500,
-      "yeast": 300
-    },
-    "land_plots": [
-      {"terrain_type": "urban", "proximity_features": ["road"], "size": 1},
-      {"terrain_type": "urban", "proximity_features": ["road"], "size": 1},
-      {"terrain_type": "urban", "proximity_features": ["road"], "size": 1},
-      {"terrain_type": "urban", "proximity_features": ["road"], "size": 1},
-      {"terrain_type": "jungle", "proximity_features": ["riverside"], "size": 1}
-    ],
-    "districts": []
-  },
   "businesses": [
     {
+      "active_lines": [],
       "business_type": "industrial_bakery",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [
+        "croissant",
+        "donut",
+        "cinnamon_roll",
+        "muffin",
+        "peanut_butter_cookie"
+      ],
       "business_type": "pastry_kitchen",
-      "district_id": null,
-      "active_lines": ["croissant", "donut", "cinnamon_roll", "muffin", "peanut_butter_cookie"]
+      "district_id": null
     },
     {
+      "active_lines": [
+        "apple_pie",
+        "cherry_pie",
+        "cheesecake",
+        "chocolate_cake"
+      ],
       "business_type": "pie_bakery",
-      "district_id": null,
-      "active_lines": ["apple_pie", "cherry_pie", "cheesecake", "chocolate_cake"]
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "cookie_factory",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [
+        "vanilla_beans"
+      ],
       "business_type": "spice_plantation",
-      "district_id": null,
-      "active_lines": ["vanilla_beans"]
+      "district_id": null
     }
   ],
   "buy_items": {
-    "flour": {
-      "target_inventory": 20000,
-      "reorder_at": 4000,
+    "apples": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "water": {
-      "target_inventory": 20000,
-      "reorder_at": 4000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
-    "yeast": {
-      "target_inventory": 3000,
       "reorder_at": 600,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "salt": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
-    "eggs": {
-      "target_inventory": 8000,
-      "reorder_at": 1600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 3000
     },
     "butter": {
-      "target_inventory": 8000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 1600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "sugar": {
-      "target_inventory": 10000,
-      "reorder_at": 2000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
-    "cream": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "chocolate": {
-      "target_inventory": 4000,
-      "reorder_at": 800,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "lard": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "jam": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "apples": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 8000
     },
     "cherries": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "chocolate": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 800,
+      "target_inventory": 4000
     },
     "condensed_milk": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "peanut_butter": {
-      "target_inventory": 2000,
       "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "cream": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 1000,
+      "target_inventory": 5000
     },
-    "peanut_flour": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
+    "eggs": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "pollen": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
-      "max_price_multiplier": 1.2,
-      "market": "regular"
+      "reorder_at": 1600,
+      "target_inventory": 8000
     },
     "energy": {
-      "target_inventory": 80000,
-      "reorder_at": 16000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 16000,
+      "target_inventory": 80000
+    },
+    "flour": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 4000,
+      "target_inventory": 20000
+    },
+    "jam": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "lard": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
     },
     "paper": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "peanut_butter": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "peanut_flour": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "pollen": {
+      "market": "regular",
+      "max_price_multiplier": 1.2,
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "salt": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "sugar": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 2000,
+      "target_inventory": 10000
+    },
+    "water": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 4000,
+      "target_inventory": 20000
+    },
+    "yeast": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    }
+  },
+  "cash_caps": {
+    "hard_high": 20000000,
+    "hard_low": 600000,
+    "soft_high": 8000000,
+    "soft_low": 2000000
+  },
+  "description": "Full-stack artisan bakery producing bread, pastries, pies, cakes, and cookies. Operates an industrial bakery, pastry kitchen, pie bakery, cookie factory, and an on-site spice plantation for self-supplied vanilla and cinnamon. The primary market source for baked goods.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "GCBK",
+    "total_shares": 1000000
+  },
+  "player_id": -2085,
+  "seed": {
+    "districts": [],
+    "land_plots": [
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "urban"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "urban"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "urban"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "urban"
+      },
+      {
+        "proximity_features": [
+          "riverside"
+        ],
+        "size": 1,
+        "terrain_type": "jungle"
+      }
+    ],
+    "starting_cash": 4000000,
+    "starting_inventory": {
+      "cinnamon": 500,
+      "vanilla_beans": 500,
+      "yeast": 300
     }
   },
   "sell_items": {
-    "bread": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 2000,
-      "market": "regular"
+    "apple_pie": {
+      "market": "regular",
+      "max_order_quantity": 800,
+      "min_inventory_to_keep": 0
     },
     "baguette": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 1500,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
-    "pretzel": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1500,
-      "market": "regular"
-    },
-    "pasta": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1500,
-      "market": "regular"
-    },
-    "spaghetti": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1500,
-      "market": "regular"
-    },
-    "noodles": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1500,
-      "market": "regular"
-    },
-    "croissant": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "donut": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "cinnamon_roll": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "muffin": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "peanut_butter_cookie": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 800,
-      "market": "regular"
-    },
-    "apple_pie": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 800,
-      "market": "regular"
-    },
-    "cherry_pie": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 800,
-      "market": "regular"
-    },
-    "cheesecake": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 600,
-      "market": "regular"
-    },
-    "chocolate_cake": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 600,
-      "market": "regular"
-    },
-    "cookie": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1500,
-      "market": "regular"
+    "bread": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 0
     },
     "brownie": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
+    },
+    "cheesecake": {
+      "market": "regular",
+      "max_order_quantity": 600,
+      "min_inventory_to_keep": 0
+    },
+    "cherry_pie": {
+      "market": "regular",
+      "max_order_quantity": 800,
+      "min_inventory_to_keep": 0
+    },
+    "chocolate_cake": {
+      "market": "regular",
+      "max_order_quantity": 600,
+      "min_inventory_to_keep": 0
+    },
+    "cinnamon_roll": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "cookie": {
+      "market": "regular",
+      "max_order_quantity": 1500,
+      "min_inventory_to_keep": 0
+    },
+    "croissant": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "donut": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "muffin": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "noodles": {
+      "market": "regular",
+      "max_order_quantity": 1500,
+      "min_inventory_to_keep": 0
+    },
+    "pasta": {
+      "market": "regular",
+      "max_order_quantity": 1500,
+      "min_inventory_to_keep": 0
+    },
+    "peanut_butter_cookie": {
+      "market": "regular",
+      "max_order_quantity": 800,
+      "min_inventory_to_keep": 0
+    },
+    "pretzel": {
+      "market": "regular",
+      "max_order_quantity": 1500,
+      "min_inventory_to_keep": 0
+    },
+    "spaghetti": {
+      "market": "regular",
+      "max_order_quantity": 1500,
+      "min_inventory_to_keep": 0
     },
     "vanilla_beans": {
-      "min_inventory_to_keep": 200,
+      "market": "regular",
       "max_order_quantity": 500,
-      "market": "regular"
+      "min_inventory_to_keep": 200
     }
-  },
-  "ipo": {
-    "ticker": "GCBK",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

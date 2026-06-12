@@ -1,177 +1,177 @@
 {
-  "player_id": -2061,
   "business_name": "Coastal Catch Fisheries",
-  "description": "Integrated seafood operation: shrimp fleet, salmon aquaculture, fish processing plant, and seafood condiment factory. Supplies salmon, shrimp, salmon fillet, shrimp paste, fish meal, and fish oil to the open market.",
-  "cash_caps": {
-    "hard_high": 30000000,
-    "soft_high": 12000000,
-    "soft_low": 3500000,
-    "hard_low": 900000
-  },
-  "seed": {
-    "starting_cash": 7500000,
-    "starting_inventory": {
-      "shrimp": 1500,
-      "salmon": 500,
-      "salmon_fillet": 2000,
-      "fish_meal": 2000,
-      "fish_oil": 800,
-      "shrimp_trawler": 2,
-      "aquaculture_raft": 3,
-      "bio_fuel": 1000,
-      "sardines": 5000,
-      "salt": 500
-    },
-    "land_plots": [
-      {
-        "terrain_type": "coastal",
-        "proximity_features": [
-          "coastal"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "coastal",
-        "proximity_features": [
-          "coastal"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "coastal",
-        "proximity_features": [
-          "coastal",
-          "urban"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "coastal",
-        "proximity_features": [
-          "coastal",
-          "urban"
-        ],
-        "size": 1
-      }
-    ]
-  },
   "businesses": [
     {
-      "business_type": "shrimp_fleet",
-      "district_id": null,
       "active_lines": [
         "shrimp"
-      ]
+      ],
+      "business_type": "shrimp_fleet",
+      "district_id": null
     },
     {
-      "business_type": "aquaculture_farm",
-      "district_id": null,
       "active_lines": [
         "salmon"
-      ]
+      ],
+      "business_type": "aquaculture_farm",
+      "district_id": null
     },
     {
-      "business_type": "fish_processing_plant",
-      "district_id": null,
       "active_lines": [
         "salmon_fillet",
         "fish_meal",
         "fish_oil"
-      ]
+      ],
+      "business_type": "fish_processing_plant",
+      "district_id": null
     },
     {
-      "business_type": "seafood_condiment_factory",
-      "district_id": null,
       "active_lines": [
         "shrimp_paste"
-      ]
+      ],
+      "business_type": "seafood_condiment_factory",
+      "district_id": null
     }
   ],
   "buy_items": {
-    "bio_fuel": {
-      "target_inventory": 2500,
-      "reorder_at": 500,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "sardines": {
-      "target_inventory": 8000,
-      "reorder_at": 1500,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "shrimp_trawler": {
-      "target_inventory": 5,
-      "reorder_at": 1,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
     "aquaculture_raft": {
-      "target_inventory": 5,
-      "reorder_at": 1,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 1,
+      "target_inventory": 5
     },
-    "salt": {
-      "target_inventory": 1500,
-      "reorder_at": 300,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
-    "water": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
+    "bio_fuel": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 500,
+      "target_inventory": 2500
     },
     "energy": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 1000,
+      "target_inventory": 5000
     },
     "paper": {
-      "target_inventory": 300,
-      "reorder_at": 60,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 60,
+      "target_inventory": 300
+    },
+    "salt": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 300,
+      "target_inventory": 1500
+    },
+    "sardines": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1500,
+      "target_inventory": 8000
+    },
+    "shrimp_trawler": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "water": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    }
+  },
+  "cash_caps": {
+    "hard_high": 30000000,
+    "hard_low": 900000,
+    "soft_high": 12000000,
+    "soft_low": 3500000
+  },
+  "description": "Integrated seafood operation: shrimp fleet, salmon aquaculture, fish processing plant, and seafood condiment factory. Supplies salmon, shrimp, salmon fillet, shrimp paste, fish meal, and fish oil to the open market.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "CCFC",
+    "total_shares": 1000000
+  },
+  "player_id": -2061,
+  "seed": {
+    "land_plots": [
+      {
+        "proximity_features": [
+          "coastal"
+        ],
+        "size": 1,
+        "terrain_type": "coastal"
+      },
+      {
+        "proximity_features": [
+          "coastal"
+        ],
+        "size": 1,
+        "terrain_type": "coastal"
+      },
+      {
+        "proximity_features": [
+          "coastal",
+          "urban"
+        ],
+        "size": 1,
+        "terrain_type": "coastal"
+      },
+      {
+        "proximity_features": [
+          "coastal",
+          "urban"
+        ],
+        "size": 1,
+        "terrain_type": "coastal"
+      }
+    ],
+    "starting_cash": 7500000,
+    "starting_inventory": {
+      "aquaculture_raft": 3,
+      "bio_fuel": 1000,
+      "fish_meal": 2000,
+      "fish_oil": 800,
+      "salmon": 500,
+      "salmon_fillet": 2000,
+      "salt": 500,
+      "sardines": 5000,
+      "shrimp": 1500,
+      "shrimp_trawler": 2
     }
   },
   "sell_items": {
-    "shrimp": {
-      "min_inventory_to_keep": 1000,
-      "max_order_quantity": 3000,
-      "market": "regular"
-    },
-    "salmon": {
-      "min_inventory_to_keep": 500,
-      "max_order_quantity": 2000,
-      "market": "regular"
-    },
-    "salmon_fillet": {
-      "min_inventory_to_keep": 500,
-      "max_order_quantity": 1500,
-      "market": "regular"
-    },
-    "shrimp_paste": {
-      "min_inventory_to_keep": 300,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
     "fish_meal": {
-      "min_inventory_to_keep": 2000,
+      "market": "regular",
       "max_order_quantity": 3000,
-      "market": "regular"
+      "min_inventory_to_keep": 2000
     },
     "fish_oil": {
-      "min_inventory_to_keep": 200,
+      "market": "regular",
       "max_order_quantity": 800,
-      "market": "regular"
+      "min_inventory_to_keep": 200
+    },
+    "salmon": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 500
+    },
+    "salmon_fillet": {
+      "market": "regular",
+      "max_order_quantity": 1500,
+      "min_inventory_to_keep": 500
+    },
+    "shrimp": {
+      "market": "regular",
+      "max_order_quantity": 3000,
+      "min_inventory_to_keep": 1000
+    },
+    "shrimp_paste": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 300
     }
-  },
-  "ipo": {
-    "ticker": "CCFC",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

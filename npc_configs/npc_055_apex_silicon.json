@@ -1,24 +1,5 @@
 {
-  "player_id": -2055,
   "business_name": "Apex Silicon",
-  "description": "Dedicated B2B semiconductor fabrication plant. Produces microchips, processors, memory modules, circuit boards, LCD panels, and battery cells exclusively for the open market \u2014 supplying electronics manufacturers, defense contractors, medical equipment makers, and anyone else downstream who needs precision components.",
-  "cash_caps": {
-    "hard_high": 60000000,
-    "soft_high": 25000000,
-    "soft_low": 7000000,
-    "hard_low": 2000000
-  },
-  "seed": {
-    "starting_cash": 15000000,
-    "land_plots": [],
-    "districts": [
-      {
-        "district_type": "tech",
-        "size": 3,
-        "plots_merged": 3
-      }
-    ]
-  },
   "businesses": [
     {
       "business_type": "semiconductor_fab",
@@ -26,246 +7,283 @@
     }
   ],
   "buy_items": {
-    "copper": {
-      "target_inventory": 8000,
-      "reorder_at": 1600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "glass": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "plastic": {
-      "target_inventory": 4000,
-      "reorder_at": 800,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "lead": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "copper_wire": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "energy": {
-      "target_inventory": 600000,
-      "reorder_at": 120000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "water": {
-      "target_inventory": 20000,
-      "reorder_at": 4000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
-    "paper": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
     "ammonia": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 200,
+      "target_inventory": 1000
     },
     "arsenic": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
     },
     "cobalt": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "copper": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1600,
+      "target_inventory": 8000
+    },
+    "copper_wire": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
     },
     "cut_sapphire": {
-      "target_inventory": 200,
-      "reorder_at": 40,
+      "market": "regular",
       "max_price_multiplier": 1.2,
-      "market": "regular"
+      "reorder_at": 40,
+      "target_inventory": 200
     },
     "diamond_dust": {
-      "target_inventory": 200,
-      "reorder_at": 40,
+      "market": "regular",
       "max_price_multiplier": 1.2,
-      "market": "regular"
+      "reorder_at": 40,
+      "target_inventory": 200
+    },
+    "energy": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 120000,
+      "target_inventory": 600000
     },
     "epoxy_resin": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 200,
+      "target_inventory": 1000
     },
     "europium": {
-      "target_inventory": 200,
-      "reorder_at": 40,
+      "market": "regular",
       "max_price_multiplier": 1.2,
-      "market": "regular"
+      "reorder_at": 40,
+      "target_inventory": 200
     },
     "fiberglass": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 400,
+      "target_inventory": 2000
     },
     "gallium": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "glass": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
     },
     "gold": {
-      "target_inventory": 200,
-      "reorder_at": 40,
+      "market": "regular",
       "max_price_multiplier": 1.2,
-      "market": "regular"
+      "reorder_at": 40,
+      "target_inventory": 200
     },
     "graphite": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 200,
+      "target_inventory": 1000
     },
     "hydrofluoric_acid": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
     },
     "indium": {
-      "target_inventory": 300,
-      "reorder_at": 60,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 60,
+      "target_inventory": 300
     },
     "iron": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 400,
+      "target_inventory": 2000
     },
     "lanthanum": {
-      "target_inventory": 300,
-      "reorder_at": 60,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 60,
+      "target_inventory": 300
+    },
+    "lead": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "led_panel": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
     },
     "lithium": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
     },
     "manganese": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
     },
     "nickel": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "paper": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 1000,
+      "target_inventory": 5000
     },
     "phosphoric_acid": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "plastic": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 800,
+      "target_inventory": 4000
     },
     "polishing_compound": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
     },
     "silicon": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 600,
+      "target_inventory": 3000
     },
     "solder": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 200,
+      "target_inventory": 1000
+    },
+    "solid_state_drive": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
     },
     "sulfuric_acid": {
-      "target_inventory": 1000,
-      "reorder_at": 200,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 200,
+      "target_inventory": 1000
     },
     "tantalum": {
-      "target_inventory": 300,
-      "reorder_at": 60,
+      "market": "regular",
       "max_price_multiplier": 1.2,
-      "market": "regular"
+      "reorder_at": 60,
+      "target_inventory": 300
     },
     "terbium": {
-      "target_inventory": 200,
-      "reorder_at": 40,
+      "market": "regular",
       "max_price_multiplier": 1.2,
-      "market": "regular"
+      "reorder_at": 40,
+      "target_inventory": 200
+    },
+    "vr_headset": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "water": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 4000,
+      "target_inventory": 20000
     },
     "zirconium": {
-      "target_inventory": 300,
-      "reorder_at": 60,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 60,
+      "target_inventory": 300
     }
+  },
+  "cash_caps": {
+    "hard_high": 60000000,
+    "hard_low": 2000000,
+    "soft_high": 25000000,
+    "soft_low": 7000000
+  },
+  "description": "Dedicated B2B semiconductor fabrication plant. Produces microchips, processors, memory modules, circuit boards, LCD panels, and battery cells exclusively for the open market \u2014 supplying electronics manufacturers, defense contractors, medical equipment makers, and anyone else downstream who needs precision components.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "APXS",
+    "total_shares": 1000000
+  },
+  "player_id": -2055,
+  "seed": {
+    "districts": [
+      {
+        "district_type": "tech",
+        "plots_merged": 3,
+        "size": 3
+      }
+    ],
+    "land_plots": [],
+    "starting_cash": 15000000
   },
   "sell_items": {
-    "microchip": {
-      "min_inventory_to_keep": 200,
-      "max_order_quantity": 2000,
-      "market": "regular"
-    },
-    "processor": {
-      "min_inventory_to_keep": 100,
+    "battery_cell": {
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "memory_module": {
-      "min_inventory_to_keep": 100,
-      "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 100
     },
     "circuit_board": {
-      "min_inventory_to_keep": 200,
+      "market": "regular",
       "max_order_quantity": 2000,
-      "market": "regular"
+      "min_inventory_to_keep": 200
     },
     "lcd_panel": {
-      "min_inventory_to_keep": 100,
+      "market": "regular",
       "max_order_quantity": 800,
-      "market": "regular"
+      "min_inventory_to_keep": 100
     },
-    "battery_cell": {
-      "min_inventory_to_keep": 100,
+    "memory_module": {
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 100
+    },
+    "microchip": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 200
+    },
+    "processor": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 100
     }
-  },
-  "ipo": {
-    "ticker": "APXS",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

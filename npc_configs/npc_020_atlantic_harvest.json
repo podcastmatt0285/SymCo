@@ -1,293 +1,413 @@
 {
-  "player_id": -2020,
   "business_name": "Atlantic Harvest Co.",
-  "description": "Integrated commercial fishing and seafood processing operation. Runs trawler fleets, purse seine vessels, and crustacean trappers along the coast; processes fresh catch into fillets, fish fingers, fish meal, fish oil, omega-3 capsules, surimi, and canned goods. Also renders surplus fish meal into industrial glue.",
-  "cash_caps": {
-    "hard_high": 80000000,
-    "soft_high": 35000000,
-    "soft_low": 8000000,
-    "hard_low": 3000000
-  },
-  "seed": {
-    "starting_cash": 15000000,
-    "land_plots": [
-      {
-        "terrain_type": "coastal",
-        "proximity_features": [
-          "ocean"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "coastal",
-        "proximity_features": [
-          "ocean"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "coastal",
-        "proximity_features": [
-          "marsh"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "coastal",
-        "proximity_features": [
-          "urban"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "coastal",
-        "proximity_features": [
-          "urban"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      }
-    ],
-    "starting_inventory": {
-      "cod": 1500,
-      "haddock": 1000,
-      "sardines": 1200,
-      "anchovies": 1000,
-      "mackerel": 1000,
-      "herring": 1000,
-      "yellowfin_tuna": 600,
-      "lobster": 400,
-      "fish_fillet": 2000,
-      "fish_meal": 3000,
-      "fish_oil": 800,
-      "omega_3_capsule": 500
-    }
-  },
   "businesses": [
     {
+      "active_lines": [],
       "business_type": "trawler_fleet",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "purse_seine_fleet",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "crustacean_trappers",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "fish_processing_plant",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "cannery",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
-      "business_type": "rendering_plant",
-      "district_id": null,
       "active_lines": [
         "glue"
-      ]
+      ],
+      "business_type": "rendering_plant",
+      "district_id": null
     }
   ],
   "buy_items": {
-    "bio_fuel": {
-      "target_inventory": 10000,
-      "reorder_at": 2000,
+    "bass": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 500,
+      "target_inventory": 2000
     },
-    "trawler": {
-      "target_inventory": 20,
-      "reorder_at": 5,
-      "max_price_multiplier": 1.2,
-      "market": "regular"
+    "bio_fuel": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 2000,
+      "target_inventory": 10000
     },
-    "purse_seiner": {
-      "target_inventory": 20,
-      "reorder_at": 5,
-      "max_price_multiplier": 1.2,
-      "market": "regular"
+    "canned_salmon": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 362,
+      "target_inventory": 1451
     },
-    "salt": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
+    "canned_sardines": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 348,
+      "target_inventory": 1394
+    },
+    "canned_tuna": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 105,
+      "target_inventory": 423
+    },
+    "catfish": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 500,
+      "target_inventory": 2000
+    },
+    "dab": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 149,
+      "target_inventory": 599
     },
     "energy": {
-      "target_inventory": 50000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 10000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "paper": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 50000
     },
     "flour": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "gurnard": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 112,
+      "target_inventory": 449
+    },
+    "halibut_steak": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 41,
+      "target_inventory": 167
+    },
+    "monkfish": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 17,
+      "target_inventory": 70
+    },
+    "paper": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "perch": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 500,
+      "target_inventory": 2000
+    },
+    "purse_seiner": {
+      "market": "regular",
+      "max_price_multiplier": 1.2,
+      "reorder_at": 5,
+      "target_inventory": 20
+    },
+    "salt": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "scallop_meat": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 200,
+      "target_inventory": 800
+    },
+    "sea_trout": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 23,
+      "target_inventory": 93
+    },
+    "shrimp_peeled": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 396,
+      "target_inventory": 1587
+    },
+    "skate": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 89,
+      "target_inventory": 358
+    },
+    "smoked_trout": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 245,
+      "target_inventory": 980
+    },
+    "sole": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 74,
+      "target_inventory": 297
+    },
+    "swordfish": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 15,
+      "target_inventory": 62
+    },
+    "tilefish": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 17,
+      "target_inventory": 70
+    },
+    "tobacco_cured_fish": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "trawler": {
+      "market": "regular",
+      "max_price_multiplier": 1.2,
+      "reorder_at": 5,
+      "target_inventory": 20
+    },
+    "turbot": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 44,
+      "target_inventory": 176
     },
     "water": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    }
+  },
+  "cash_caps": {
+    "hard_high": 80000000,
+    "hard_low": 3000000,
+    "soft_high": 35000000,
+    "soft_low": 8000000
+  },
+  "description": "Integrated commercial fishing and seafood processing operation. Runs trawler fleets, purse seine vessels, and crustacean trappers along the coast; processes fresh catch into fillets, fish fingers, fish meal, fish oil, omega-3 capsules, surimi, and canned goods. Also renders surplus fish meal into industrial glue.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "ATHV",
+    "total_shares": 1000000
+  },
+  "player_id": -2020,
+  "seed": {
+    "land_plots": [
+      {
+        "proximity_features": [
+          "ocean"
+        ],
+        "size": 1,
+        "terrain_type": "coastal"
+      },
+      {
+        "proximity_features": [
+          "ocean"
+        ],
+        "size": 1,
+        "terrain_type": "coastal"
+      },
+      {
+        "proximity_features": [
+          "marsh"
+        ],
+        "size": 1,
+        "terrain_type": "coastal"
+      },
+      {
+        "proximity_features": [
+          "urban"
+        ],
+        "size": 1,
+        "terrain_type": "coastal"
+      },
+      {
+        "proximity_features": [
+          "urban"
+        ],
+        "size": 1,
+        "terrain_type": "coastal"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      }
+    ],
+    "starting_cash": 15000000,
+    "starting_inventory": {
+      "anchovies": 1000,
+      "cod": 1500,
+      "fish_fillet": 2000,
+      "fish_meal": 3000,
+      "fish_oil": 800,
+      "haddock": 1000,
+      "herring": 1000,
+      "lobster": 400,
+      "mackerel": 1000,
+      "omega_3_capsule": 500,
+      "sardines": 1200,
+      "yellowfin_tuna": 600
     }
   },
   "sell_items": {
-    "cod": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 2000,
-      "market": "regular"
-    },
-    "haddock": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 2000,
-      "market": "regular"
-    },
-    "pollock": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 2000,
-      "market": "regular"
-    },
-    "sardines": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 3000,
-      "market": "regular"
-    },
     "anchovies": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 3000,
-      "market": "regular"
-    },
-    "mackerel": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 2000,
-      "market": "regular"
-    },
-    "herring": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 2000,
-      "market": "regular"
-    },
-    "yellowfin_tuna": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "lobster": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 500,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "blue_crab": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 800,
-      "market": "regular"
-    },
-    "dungeness_crab": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 800,
-      "market": "regular"
-    },
-    "langoustine": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 500,
-      "market": "regular"
-    },
-    "fish_fillet": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 2000,
-      "market": "regular"
-    },
-    "fish_fingers": {
-      "min_inventory_to_keep": 500,
-      "max_order_quantity": 2000,
-      "market": "regular"
-    },
-    "canned_mackerel": {
-      "min_inventory_to_keep": 500,
-      "max_order_quantity": 2000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "canned_anchovies": {
-      "min_inventory_to_keep": 500,
+      "market": "regular",
       "max_order_quantity": 1500,
-      "market": "regular"
+      "min_inventory_to_keep": 500
     },
     "canned_crab": {
-      "min_inventory_to_keep": 500,
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 500
     },
-    "fish_meal": {
-      "min_inventory_to_keep": 2000,
-      "max_order_quantity": 3000,
-      "market": "regular"
-    },
-    "glue": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "fish_oil": {
-      "min_inventory_to_keep": 500,
-      "max_order_quantity": 1500,
-      "market": "regular"
-    },
-    "omega_3_capsule": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "surimi": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1500,
-      "market": "regular"
-    },
-    "imitation_crab": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
+    "canned_mackerel": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 500
     },
     "chitin": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 2000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
+    },
+    "cod": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 0
     },
     "collagen_powder": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
+    },
+    "dungeness_crab": {
+      "market": "regular",
+      "max_order_quantity": 800,
+      "min_inventory_to_keep": 0
     },
     "fish_emulsion": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 2000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
+    },
+    "fish_fillet": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 0
+    },
+    "fish_fingers": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 500
+    },
+    "fish_meal": {
+      "market": "regular",
+      "max_order_quantity": 3000,
+      "min_inventory_to_keep": 2000
+    },
+    "fish_oil": {
+      "market": "regular",
+      "max_order_quantity": 1500,
+      "min_inventory_to_keep": 500
+    },
+    "glue": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "haddock": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 0
+    },
+    "herring": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 0
+    },
+    "imitation_crab": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "langoustine": {
+      "market": "regular",
+      "max_order_quantity": 500,
+      "min_inventory_to_keep": 0
+    },
+    "lobster": {
+      "market": "regular",
+      "max_order_quantity": 500,
+      "min_inventory_to_keep": 0
+    },
+    "mackerel": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 0
+    },
+    "omega_3_capsule": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
+    },
+    "pollock": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 0
+    },
+    "sardines": {
+      "market": "regular",
+      "max_order_quantity": 3000,
+      "min_inventory_to_keep": 0
+    },
+    "surimi": {
+      "market": "regular",
+      "max_order_quantity": 1500,
+      "min_inventory_to_keep": 0
+    },
+    "yellowfin_tuna": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
     }
-  },
-  "ipo": {
-    "ticker": "ATHV",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

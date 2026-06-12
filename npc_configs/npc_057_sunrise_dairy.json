@@ -1,144 +1,144 @@
 {
-  "player_id": -2057,
   "business_name": "Sunrise Dairy Co.",
-  "description": "Dairy and fermentation plant plus a dedicated creamery. Supplies milk, cheese, ice cream, yogurt, butter, and cream to the open market.",
-  "cash_caps": {
-    "hard_high": 25000000,
-    "soft_high": 10000000,
-    "soft_low": 3000000,
-    "hard_low": 800000
-  },
-  "seed": {
-    "starting_cash": 6000000,
-    "starting_inventory": {
-      "milk": 2000,
-      "cream": 200,
-      "cheese": 1500,
-      "ice_cream": 1000,
-      "butter": 2500,
-      "yogurt": 1500,
-      "cow": 30,
-      "grass": 15000,
-      "sugar": 500
-    },
-    "land_plots": [
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "riverside",
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "hills",
-        "proximity_features": [
-          "road",
-          "urban"
-        ],
-        "size": 1
-      }
-    ]
-  },
   "businesses": [
     {
-      "business_type": "dairy_and_fermentation",
-      "district_id": null,
       "active_lines": [
         "milk",
         "cream",
         "ice_cream",
         "butter",
         "yogurt"
-      ]
+      ],
+      "business_type": "dairy_and_fermentation",
+      "district_id": null
     },
     {
-      "business_type": "creamery",
-      "district_id": null,
       "active_lines": [
         "cheese"
-      ]
+      ],
+      "business_type": "creamery",
+      "district_id": null
     }
   ],
   "buy_items": {
     "cow": {
-      "target_inventory": 60,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 15,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "grass": {
-      "target_inventory": 25000,
-      "reorder_at": 5000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "sugar": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "salt": {
-      "target_inventory": 500,
-      "reorder_at": 100,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
-    "water": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
+      "target_inventory": 60
     },
     "energy": {
-      "target_inventory": 8000,
-      "reorder_at": 1500,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 1500,
+      "target_inventory": 8000
+    },
+    "grass": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 5000,
+      "target_inventory": 25000
     },
     "paper": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "salt": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "sugar": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "water": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    }
+  },
+  "cash_caps": {
+    "hard_high": 25000000,
+    "hard_low": 800000,
+    "soft_high": 10000000,
+    "soft_low": 3000000
+  },
+  "description": "Dairy and fermentation plant plus a dedicated creamery. Supplies milk, cheese, ice cream, yogurt, butter, and cream to the open market.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "SDCO",
+    "total_shares": 1000000
+  },
+  "player_id": -2057,
+  "seed": {
+    "land_plots": [
+      {
+        "proximity_features": [
+          "riverside",
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "road",
+          "urban"
+        ],
+        "size": 1,
+        "terrain_type": "hills"
+      }
+    ],
+    "starting_cash": 6000000,
+    "starting_inventory": {
+      "butter": 2500,
+      "cheese": 1500,
+      "cow": 30,
+      "cream": 200,
+      "grass": 15000,
+      "ice_cream": 1000,
+      "milk": 2000,
+      "sugar": 500,
+      "yogurt": 1500
     }
   },
   "sell_items": {
-    "milk": {
-      "min_inventory_to_keep": 1000,
-      "max_order_quantity": 3000,
-      "market": "regular"
-    },
-    "cream": {
-      "min_inventory_to_keep": 100,
-      "max_order_quantity": 500,
-      "market": "regular"
+    "butter": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 200
     },
     "cheese": {
-      "min_inventory_to_keep": 500,
+      "market": "regular",
       "max_order_quantity": 1500,
-      "market": "regular"
+      "min_inventory_to_keep": 500
+    },
+    "cream": {
+      "market": "regular",
+      "max_order_quantity": 500,
+      "min_inventory_to_keep": 100
     },
     "ice_cream": {
-      "min_inventory_to_keep": 500,
+      "market": "regular",
       "max_order_quantity": 2000,
-      "market": "regular"
+      "min_inventory_to_keep": 500
     },
-    "butter": {
-      "min_inventory_to_keep": 200,
-      "max_order_quantity": 1000,
-      "market": "regular"
+    "milk": {
+      "market": "regular",
+      "max_order_quantity": 3000,
+      "min_inventory_to_keep": 1000
     },
     "yogurt": {
-      "min_inventory_to_keep": 300,
+      "market": "regular",
       "max_order_quantity": 1500,
-      "market": "regular"
+      "min_inventory_to_keep": 300
     }
-  },
-  "ipo": {
-    "ticker": "SDCO",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }

@@ -1,97 +1,161 @@
 {
-  "player_id": -2016,
   "business_name": "GreenGro Agri-Chem",
-  "description": "Fully vertically integrated fertilizer producer. Mines its own phosphate, potash, and sulfur; extracts natural gas; and synthesizes the full NPK fertilizer chain in-house. Only buys utilities from the market.",
-  "cash_caps": {
-    "hard_high": 70000000,
-    "soft_high": 30000000,
-    "soft_low": 8000000,
-    "hard_low": 2000000
-  },
-  "seed": {
-    "starting_cash": 12000000,
-    "starting_inventory": {
-      "sulfuric_acid": 1000,
-      "ammonia": 1000,
-      "phosphoric_acid": 1000,
-      "phosphate_rock": 2000,
-      "potash_ore": 2000,
-      "natural_gas": 2000,
-      "fertilizer_npk": 10000
-    },
-    "land_plots": [
-      {"terrain_type": "mountain", "proximity_features": ["remote"], "size": 1},
-      {"terrain_type": "desert", "proximity_features": ["coastal"], "size": 1}
-    ],
-    "districts": [
-      {"district_type": "industrial", "size": 5.0, "plots_merged": 5}
-    ]
-  },
   "businesses": [
     {
+      "active_lines": [
+        "phosphate_rock",
+        "potash_ore",
+        "sulfur"
+      ],
       "business_type": "mineral_mine",
-      "district_id": null,
-      "active_lines": ["phosphate_rock", "potash_ore", "sulfur"]
+      "district_id": null
     },
     {
+      "active_lines": [
+        "oil",
+        "natural_gas"
+      ],
       "business_type": "oil_rig",
-      "district_id": null,
-      "active_lines": ["oil", "natural_gas"]
+      "district_id": null
     },
     {
+      "active_lines": [
+        "sulfuric_acid",
+        "ammonia",
+        "phosphoric_acid",
+        "fertilizer_npk"
+      ],
       "business_type": "chemical_plant",
-      "district_seed_index": 0,
-      "active_lines": ["sulfuric_acid", "ammonia", "phosphoric_acid", "fertilizer_npk"]
+      "district_seed_index": 0
     }
   ],
   "buy_items": {
-    "water": {
-      "target_inventory": 20000,
-      "reorder_at": 4000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
+    "bunker_fuel": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 253,
+      "target_inventory": 1015
     },
     "energy": {
-      "target_inventory": 500000,
-      "reorder_at": 100000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 100000,
+      "target_inventory": 500000
+    },
+    "heating_oil": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 88,
+      "target_inventory": 353
+    },
+    "liquid_helium": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "liquid_oxygen": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
     },
     "paper": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "water": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 4000,
+      "target_inventory": 20000
+    }
+  },
+  "cash_caps": {
+    "hard_high": 70000000,
+    "hard_low": 2000000,
+    "soft_high": 30000000,
+    "soft_low": 8000000
+  },
+  "description": "Fully vertically integrated fertilizer producer. Mines its own phosphate, potash, and sulfur; extracts natural gas; and synthesizes the full NPK fertilizer chain in-house. Only buys utilities from the market.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "GGAC",
+    "total_shares": 1000000
+  },
+  "player_id": -2016,
+  "seed": {
+    "districts": [
+      {
+        "district_type": "industrial",
+        "plots_merged": 5,
+        "size": 5.0
+      }
+    ],
+    "land_plots": [
+      {
+        "proximity_features": [
+          "remote"
+        ],
+        "size": 1,
+        "terrain_type": "mountain"
+      },
+      {
+        "proximity_features": [
+          "coastal"
+        ],
+        "size": 1,
+        "terrain_type": "desert"
+      }
+    ],
+    "starting_cash": 12000000,
+    "starting_inventory": {
+      "ammonia": 1000,
+      "fertilizer_npk": 10000,
+      "natural_gas": 2000,
+      "phosphate_rock": 2000,
+      "phosphoric_acid": 1000,
+      "potash_ore": 2000,
+      "sulfuric_acid": 1000
     }
   },
   "sell_items": {
     "fertilizer_npk": {
-      "min_inventory_to_keep": 2000,
+      "market": "regular",
       "max_order_quantity": 10000,
-      "market": "regular"
-    },
-    "oil": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 5000,
-      "market": "regular"
+      "min_inventory_to_keep": 2000
     },
     "natural_gas": {
-      "min_inventory_to_keep": 2000,
+      "market": "regular",
       "max_order_quantity": 5000,
-      "market": "regular"
+      "min_inventory_to_keep": 2000
+    },
+    "oil": {
+      "market": "regular",
+      "max_order_quantity": 5000,
+      "min_inventory_to_keep": 0
+    },
+    "phosphate_rock": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 500
+    },
+    "potash_ore": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 500
+    },
+    "sulfur": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 500
     },
     "sulfuric_acid": {
-      "min_inventory_to_keep": 3000,
+      "market": "regular",
       "max_order_quantity": 3000,
-      "market": "regular"
-    },
-    "phosphate_rock": {"min_inventory_to_keep": 500, "max_order_quantity": 2000, "market": "regular"},
-    "potash_ore": {"min_inventory_to_keep": 500, "max_order_quantity": 1000, "market": "regular"},
-    "sulfur": {"min_inventory_to_keep": 500, "max_order_quantity": 2000, "market": "regular"}
-  },
-  "ipo": {
-    "ticker": "GGAC",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
+      "min_inventory_to_keep": 3000
+    }
   }
 }

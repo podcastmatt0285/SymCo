@@ -1,252 +1,306 @@
 {
-  "player_id": -2023,
   "business_name": "Golden Grain Beverage Co.",
-  "description": "Craft and commercial beverage producer spanning the full grain-to-glass pipeline. Grows hops, malts barley, brews lager, stout, ale, and cider, distills spirits, and serves the public through an on-site pub.",
-  "cash_caps": {
-    "hard_high": 40000000,
-    "soft_high": 16000000,
-    "soft_low": 4000000,
-    "hard_low": 1000000
-  },
-  "seed": {
-    "starting_cash": 8000000,
-    "land_plots": [
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "prairie",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "urban",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "urban",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      },
-      {
-        "terrain_type": "urban",
-        "proximity_features": [
-          "road"
-        ],
-        "size": 1
-      }
-    ],
-    "starting_inventory": {
-      "hops": 1000,
-      "malt": 1500,
-      "beer": 2000,
-      "lager": 1500,
-      "whiskey": 600,
-      "vodka": 600,
-      "rum": 500,
-      "mint": 2000,
-      "juniper_berries": 500
-    }
-  },
   "businesses": [
     {
+      "active_lines": [],
       "business_type": "hop_farm",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "malting_house",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "brewery",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "distillery",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     },
     {
+      "active_lines": [],
       "business_type": "pub",
-      "district_id": null,
-      "active_lines": []
+      "district_id": null
     }
   ],
   "buy_items": {
-    "barley": {
-      "target_inventory": 20000,
-      "reorder_at": 4000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
-    },
     "apples": {
-      "target_inventory": 8000,
-      "reorder_at": 1600,
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
-    },
-    "potatoes": {
-      "target_inventory": 8000,
       "reorder_at": 1600,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
+      "target_inventory": 8000
     },
-    "corn": {
-      "target_inventory": 8000,
-      "reorder_at": 1600,
+    "barley": {
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 4000,
+      "target_inventory": 20000
     },
     "bottle": {
-      "target_inventory": 20000,
+      "market": "regular",
+      "max_price_multiplier": 1.05,
       "reorder_at": 4000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
+      "target_inventory": 20000
     },
-    "wine_barrel": {
-      "target_inventory": 150,
-      "reorder_at": 30,
-      "max_price_multiplier": 1.15,
-      "market": "regular"
-    },
-    "rum_molasses": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
+    "cappuccino": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 500,
+      "target_inventory": 2000
     },
-    "sugar": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
+    "corn": {
+      "market": "regular",
       "max_price_multiplier": 1.05,
-      "market": "regular"
+      "reorder_at": 1600,
+      "target_inventory": 8000
     },
-    "water": {
-      "target_inventory": 40000,
-      "reorder_at": 8000,
-      "max_price_multiplier": 1.05,
-      "market": "regular"
+    "elderflower_cordial": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 125,
+      "target_inventory": 500
+    },
+    "elderflower_gin": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 156,
+      "target_inventory": 627
     },
     "energy": {
-      "target_inventory": 40000,
+      "market": "regular",
+      "max_price_multiplier": 1.1,
       "reorder_at": 8000,
-      "max_price_multiplier": 1.1,
-      "market": "regular"
+      "target_inventory": 40000
     },
-    "paper": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
+    "espresso": {
+      "market": "regular",
       "max_price_multiplier": 1.1,
-      "market": "regular"
+      "reorder_at": 500,
+      "target_inventory": 2000
+    },
+    "hot_chocolate": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 500,
+      "target_inventory": 2000
+    },
+    "iced_tea": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 500,
+      "target_inventory": 2000
     },
     "isinglass": {
-      "target_inventory": 500,
-      "reorder_at": 100,
+      "market": "regular",
       "max_price_multiplier": 1.2,
-      "market": "regular"
+      "reorder_at": 100,
+      "target_inventory": 500
     },
     "juniper_berries": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "latte": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 500,
+      "target_inventory": 2000
     },
     "mint": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
+      "market": "regular",
       "max_price_multiplier": 1.15,
-      "market": "regular"
+      "reorder_at": 400,
+      "target_inventory": 2000
+    },
+    "paper": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "potatoes": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 1600,
+      "target_inventory": 8000
+    },
+    "rum_molasses": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "sugar": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 1000,
+      "target_inventory": 5000
+    },
+    "tea": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 500,
+      "target_inventory": 2000
+    },
+    "tequila": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 500,
+      "target_inventory": 2000
+    },
+    "water": {
+      "market": "regular",
+      "max_price_multiplier": 1.05,
+      "reorder_at": 8000,
+      "target_inventory": 40000
+    },
+    "wine_barrel": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 30,
+      "target_inventory": 150
+    }
+  },
+  "cash_caps": {
+    "hard_high": 40000000,
+    "hard_low": 1000000,
+    "soft_high": 16000000,
+    "soft_low": 4000000
+  },
+  "description": "Craft and commercial beverage producer spanning the full grain-to-glass pipeline. Grows hops, malts barley, brews lager, stout, ale, and cider, distills spirits, and serves the public through an on-site pub.",
+  "ipo": {
+    "shares_to_offer": 600000,
+    "ticker": "GGBV",
+    "total_shares": 1000000
+  },
+  "player_id": -2023,
+  "seed": {
+    "land_plots": [
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "prairie"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "urban"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "urban"
+      },
+      {
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1,
+        "terrain_type": "urban"
+      }
+    ],
+    "starting_cash": 8000000,
+    "starting_inventory": {
+      "beer": 2000,
+      "hops": 1000,
+      "juniper_berries": 500,
+      "lager": 1500,
+      "malt": 1500,
+      "mint": 2000,
+      "rum": 500,
+      "vodka": 600,
+      "whiskey": 600
     }
   },
   "sell_items": {
-    "hops": {
-      "min_inventory_to_keep": 2000,
-      "max_order_quantity": 5000,
-      "market": "regular"
-    },
-    "malt": {
-      "min_inventory_to_keep": 2000,
-      "max_order_quantity": 5000,
-      "market": "regular"
+    "apple_cider_vinegar": {
+      "market": "regular",
+      "max_order_quantity": 1000,
+      "min_inventory_to_keep": 0
     },
     "beer": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 5000,
-      "market": "regular"
-    },
-    "lager": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 5000,
-      "market": "regular"
-    },
-    "stout": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 3000,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "cider": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 3000,
-      "market": "regular"
-    },
-    "apple_cider_vinegar": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1000,
-      "market": "regular"
-    },
-    "vodka": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 2000,
-      "market": "regular"
-    },
-    "whiskey": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 2000,
-      "market": "regular"
-    },
-    "rum": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 2000,
-      "market": "regular"
-    },
-    "moonshine": {
-      "min_inventory_to_keep": 0,
-      "max_order_quantity": 1500,
-      "market": "regular"
+      "min_inventory_to_keep": 0
     },
     "gin": {
-      "min_inventory_to_keep": 0,
+      "market": "regular",
       "max_order_quantity": 1500,
-      "market": "regular"
+      "min_inventory_to_keep": 0
+    },
+    "hops": {
+      "market": "regular",
+      "max_order_quantity": 5000,
+      "min_inventory_to_keep": 2000
     },
     "juniper_berries": {
-      "min_inventory_to_keep": 500,
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 500
+    },
+    "lager": {
+      "market": "regular",
+      "max_order_quantity": 5000,
+      "min_inventory_to_keep": 0
+    },
+    "malt": {
+      "market": "regular",
+      "max_order_quantity": 5000,
+      "min_inventory_to_keep": 2000
     },
     "mint": {
-      "min_inventory_to_keep": 500,
+      "market": "regular",
       "max_order_quantity": 1000,
-      "market": "regular"
+      "min_inventory_to_keep": 500
+    },
+    "moonshine": {
+      "market": "regular",
+      "max_order_quantity": 1500,
+      "min_inventory_to_keep": 0
+    },
+    "rum": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 0
+    },
+    "stout": {
+      "market": "regular",
+      "max_order_quantity": 3000,
+      "min_inventory_to_keep": 0
+    },
+    "vodka": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 0
+    },
+    "whiskey": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 0
     }
-  },
-  "ipo": {
-    "ticker": "GGBV",
-    "total_shares": 1000000,
-    "shares_to_offer": 600000
   }
 }
