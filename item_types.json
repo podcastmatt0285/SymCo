@@ -6,13 +6,13 @@
     "name": "Industrial 3D Printer"
   },
   "5g_antenna": {
-    "base_price": 0,
+    "base_price": 41936.6031,
     "category": "components",
     "description": "Integrated 5G base station antenna with MIMO array and fiber backhaul connection.",
     "name": "5G Antenna Unit"
   },
   "ablative_coating": {
-    "base_price": 0,
+    "base_price": 2132.3953,
     "category": "materials",
     "description": "Sacrificial thermal protection coating applied to reentry vehicles. Burns away to carry heat away from the vehicle.",
     "name": "Ablative Coating"
@@ -54,7 +54,7 @@
     "name": "Aerospace Fastener"
   },
   "agate": {
-    "base_price": 0,
+    "base_price": 32.6549,
     "category": "gem",
     "description": "Banded chalcedony with concentric colour layers from mineral-rich groundwater. Polished slices are sold as decorative specimens.",
     "name": "Agate"
@@ -72,7 +72,7 @@
     "name": "Agave Flower"
   },
   "ai_training_run": {
-    "base_price": 0,
+    "base_price": 313236.5359,
     "category": "services",
     "description": "Large-scale machine learning training job on GPU or quantum hardware. Output is a trained model license.",
     "name": "AI Training Run"
@@ -258,7 +258,7 @@
     "name": "Animal Microchip"
   },
   "antenna_array": {
-    "base_price": 0,
+    "base_price": 15912.0236,
     "category": "components",
     "description": "Beamforming antenna array for 5G/6G millimeter-wave communications. Uses gallium nitride amplifiers.",
     "name": "Phased Antenna Array"
@@ -276,7 +276,7 @@
     "name": "Antidepressant"
   },
   "antimatter_trace": {
-    "base_price": 0,
+    "base_price": 4140390.1044,
     "category": "materials",
     "description": "Nanogram quantities of antihydrogen produced and magnetically trapped in a particle accelerator. Extraordinary value.",
     "name": "Antimatter Trace"
@@ -390,7 +390,7 @@
     "name": "Aramid Fabric"
   },
   "argon": {
-    "base_price": 0,
+    "base_price": 323.95,
     "category": "materials",
     "description": "Noble gas extracted from air by fractional distillation. Used in welding, semiconductor processing, and cryogenics.",
     "name": "Argon Gas"
@@ -476,13 +476,13 @@
     "name": "Australian White Sheep"
   },
   "autonomous_model_license": {
-    "base_price": 0,
+    "base_price": 544082.4065,
     "category": "services",
     "description": "Commercial license for a trained autonomous driving or robotics AI model stack.",
     "name": "Autonomous System License"
   },
   "av_certification": {
-    "base_price": 0,
+    "base_price": 82983.4325,
     "category": "services",
     "description": "Regulatory certification for autonomous vehicle systems following simulation and road testing programs.",
     "name": "AV Certification"
@@ -494,7 +494,7 @@
     "name": "Aviation Fuel"
   },
   "avionics_module": {
-    "base_price": 0,
+    "base_price": 42030.2982,
     "category": "components",
     "description": "Flight computer and sensor suite for rocket guidance, navigation, and control.",
     "name": "Avionics Module"
@@ -824,7 +824,7 @@
     "name": "Blast-Resistant Glass"
   },
   "blessed_sheep": {
-    "base_price": 0,
+    "base_price": 594.5463,
     "category": "luxury",
     "description": "A sheep consecrated through sacred ritual; offered as sacrifice in religious ceremonies.",
     "name": "Blessed Sheep"
@@ -1124,7 +1124,7 @@
     "name": "Canned Crab"
   },
   "canned_lamb": {
-    "base_price": 0,
+    "base_price": 28.2265,
     "category": "food",
     "description": "Salt-preserved lamb packed in tins \u2014 a durable provisions staple with a long shelf life, traded across supply chains and consumed far from any slaughterhouse.",
     "name": "Canned Lamb"
@@ -1238,7 +1238,7 @@
     "name": "Cargo Plane"
   },
   "carnation": {
-    "base_price": 0,
+    "base_price": 1.3916,
     "category": "flowers",
     "description": "Mass-market cut flower with long vase life",
     "name": "Carnation"
@@ -1354,7 +1354,7 @@
     "name": "Caviar"
   },
   "cdn_service": {
-    "base_price": 0,
+    "base_price": 22930.1437,
     "category": "services",
     "description": "Content delivery network caching and distribution service reducing latency for global users.",
     "name": "CDN Service"
@@ -1366,7 +1366,7 @@
     "name": "Cell Door"
   },
   "cell_tower_kit": {
-    "base_price": 0,
+    "base_price": 118662.9239,
     "base_sale_chance": 0.002,
     "category": "components",
     "description": "Complete cellular tower installation package including antenna, backhaul, and power systems.",
@@ -1398,7 +1398,7 @@
     "name": "Cerium"
   },
   "chalcedony": {
-    "base_price": 0,
+    "base_price": 28.1598,
     "category": "gem",
     "description": "Microcrystalline quartz from sedimentary and volcanic deposits. Waxy lustre; includes blue and white varieties used in carving and cabochons.",
     "name": "Chalcedony"
@@ -1578,13 +1578,13 @@
     "name": "Chromium Ore"
   },
   "chromium_oxide": {
-    "base_price": 0,
+    "base_price": 219.7709,
     "category": "industrial",
     "description": "Magnetic coating material derived from chromium. Deposited onto hard disk platters for data storage.",
     "name": "Chromium Oxide"
   },
   "chrysanthemum": {
-    "base_price": 0,
+    "base_price": 1.4125,
     "category": "flowers",
     "description": "High-volume cut flower; used in teas and arrangements",
     "name": "Chrysanthemum"
@@ -1668,7 +1668,7 @@
     "name": "Clay"
   },
   "cloud_service_contract": {
-    "base_price": 0,
+    "base_price": 47315.7853,
     "category": "services",
     "description": "Enterprise cloud computing subscription covering compute, storage, and network services.",
     "name": "Cloud Service Contract"
@@ -1814,7 +1814,7 @@
     "name": "Marine Collagen Powder"
   },
   "colocation_service": {
-    "base_price": 0,
+    "base_price": 19234.4302,
     "category": "services",
     "description": "Data center space and power rental for third-party server equipment.",
     "name": "Colocation Service"
@@ -1868,7 +1868,7 @@
     "name": "Commissary Snacks"
   },
   "comms_satellite": {
-    "base_price": 0,
+    "base_price": 845072.76,
     "category": "vehicles",
     "description": "Geostationary or LEO satellite providing broadband internet, TV, and voice communications.",
     "name": "Communications Satellite"
@@ -1898,7 +1898,7 @@
     "name": "Compute Credit"
   },
   "computing_time_contract": {
-    "base_price": 0,
+    "base_price": 106553.22,
     "category": "services",
     "description": "Access contract for quantum computing time measured in qubit-hours. Used for cryptography, drug discovery, and optimization.",
     "name": "Quantum Computing Contract"
@@ -2168,19 +2168,19 @@
     "name": "Crutches"
   },
   "cryogenic_tank": {
-    "base_price": 0,
+    "base_price": 7545.9514,
     "category": "components",
     "description": "Vacuum-jacketed dewar vessel for storing and transporting liquid helium, liquid hydrogen, or liquid nitrogen.",
     "name": "Cryogenic Tank"
   },
   "cryostat": {
-    "base_price": 0,
+    "base_price": 186022.581,
     "category": "components",
     "description": "Multi-stage cooling system reaching 15 millikelvin. Required to operate superconducting quantum processors.",
     "name": "Dilution Refrigerator Cryostat"
   },
   "crystal_oscillator": {
-    "base_price": 0,
+    "base_price": 468.6423,
     "category": "components",
     "description": "Precision quartz timing component. Required in every circuit board for clock signal generation.",
     "name": "Crystal Oscillator"
@@ -2354,7 +2354,7 @@
     "name": "Detonation Cord"
   },
   "deuterium": {
-    "base_price": 0,
+    "base_price": 187567.6474,
     "category": "fuel",
     "description": "Stable hydrogen isotope (H-2) extracted from heavy water. Primary fusion fuel component.",
     "name": "Deuterium"
@@ -2614,7 +2614,7 @@
     "name": "Elderflower"
   },
   "elderflower_cordial": {
-    "base_price": 0,
+    "base_price": 61.1675,
     "category": "beverages",
     "description": "Light syrup made from elderflowers and sugar",
     "name": "Elderflower Cordial"
@@ -2672,7 +2672,7 @@
     "name": "Emergency Room Visit"
   },
   "encrypted_comms_contract": {
-    "base_price": 0,
+    "base_price": 29463.6073,
     "category": "services",
     "description": "End-to-end encrypted satellite communications service for enterprise and government clients.",
     "name": "Encrypted Comms Contract"
@@ -2780,7 +2780,7 @@
     "name": "Exhaust System"
   },
   "exotic_isotope": {
-    "base_price": 0,
+    "base_price": 449397.0018,
     "category": "materials",
     "description": "Short-lived radioactive isotope produced in particle accelerator collisions. Used in medical imaging and nuclear research.",
     "name": "Exotic Isotope"
@@ -2960,7 +2960,7 @@
     "name": "Flamingo"
   },
   "fleet_automation_contract": {
-    "base_price": 0,
+    "base_price": 307019.1821,
     "category": "services",
     "description": "End-to-end autonomous vehicle fleet deployment contract covering software, sensors, and maintenance.",
     "name": "Fleet Automation Contract"
@@ -3290,7 +3290,7 @@
     "name": "Gorilla"
   },
   "gps_license": {
-    "base_price": 0,
+    "base_price": 70842.6753,
     "category": "services",
     "description": "Commercial license for high-precision differential GPS positioning data.",
     "name": "GPS Data License"
@@ -3440,13 +3440,13 @@
     "name": "Hard Candy"
   },
   "hard_drive": {
-    "base_price": 0,
+    "base_price": 5843.0472,
     "category": "electronics",
     "description": "Mechanical magnetic storage device built from stacked chromium-coated platters and read/write heads.",
     "name": "Hard Drive"
   },
   "hdd_platter": {
-    "base_price": 0,
+    "base_price": 805.4711,
     "category": "components",
     "description": "Precision-polished aluminum disk coated with chromium oxide magnetic material. Core component of hard drives.",
     "name": "Hard Disk Platter"
@@ -3458,7 +3458,7 @@
     "name": "Headlight Assembly"
   },
   "heat_shield_tile": {
-    "base_price": 0,
+    "base_price": 1374.7017,
     "category": "components",
     "description": "Ablative reentry protection tile made from carbon-silicon carbide composite with ceramic coating. Withstands 1,600\u00b0C.",
     "name": "Heat Shield Tile"
@@ -3488,13 +3488,13 @@
     "name": "Heavy Machinery"
   },
   "heavy_payload_launch": {
-    "base_price": 0,
+    "base_price": 2130939.1223,
     "category": "services",
     "description": "Super-heavy lift rocket launch service for payloads exceeding 50 tonnes to low Earth orbit.",
     "name": "Heavy Payload Launch"
   },
   "heavy_water": {
-    "base_price": 0,
+    "base_price": 13681.9714,
     "category": "materials",
     "description": "Deuterium oxide (D\u2082O) used as neutron moderator in research reactors and as deuterium source for fusion fuel.",
     "name": "Heavy Water"
@@ -3512,13 +3512,13 @@
     "name": "Helicopter Rotor"
   },
   "helium": {
-    "base_price": 0,
+    "base_price": 819.2029,
     "category": "materials",
     "description": "Noble gas extracted from natural gas wells or air separation. Liquefied for cryogenic cooling applications.",
     "name": "Helium Gas"
   },
   "helium_3": {
-    "base_price": 0,
+    "base_price": 2686140.1195,
     "category": "materials",
     "description": "Rare light isotope with applications in quantum computing, neutron detection, and advanced fusion concepts.",
     "name": "Helium-3"
@@ -3620,7 +3620,7 @@
     "name": "Boat Hull"
   },
   "humanoid_robot": {
-    "base_price": 0,
+    "base_price": 397336.597,
     "category": "industrial",
     "description": "Bipedal autonomous robot with dexterous hands, computer vision, and AI-driven motion planning. Capable of general-purpose physical labor.",
     "name": "Humanoid Robot"
@@ -3782,7 +3782,7 @@
     "name": "Infantry Fighting Vehicle"
   },
   "inference_api_credit": {
-    "base_price": 0,
+    "base_price": 38589.8336,
     "category": "services",
     "description": "Prepaid API credit for running inference on trained AI models at data center scale.",
     "name": "AI Inference Credit"
@@ -3818,7 +3818,7 @@
     "name": "Insulin"
   },
   "international_bandwidth": {
-    "base_price": 0,
+    "base_price": 43150.1808,
     "base_sale_chance": 0.01,
     "category": "services",
     "description": "Transoceanic internet capacity measured in terabits per second. Traded between carriers and content networks.",
@@ -3838,7 +3838,7 @@
     "name": "Internet Bundle"
   },
   "ion_thruster": {
-    "base_price": 0,
+    "base_price": 73008.142,
     "category": "components",
     "description": "Electric propulsion system using xenon gas ionized by electromagnetic fields. Provides efficient orbital maneuvering.",
     "name": "Ion Thruster"
@@ -4048,7 +4048,7 @@
     "name": "Lamb Meat"
   },
   "lamb_stew": {
-    "base_price": 0,
+    "base_price": 20.1879,
     "category": "food",
     "description": "A hearty slow-cooked stew of tender lamb, root vegetables, and lard-based broth \u2014 a warming staple served at soup kitchens and roadside inns.",
     "name": "Lamb Stew"
@@ -4102,7 +4102,7 @@
     "name": "Caff\u00e8 Latte"
   },
   "launch_contract": {
-    "base_price": 0,
+    "base_price": 1589203.4639,
     "category": "services",
     "description": "Commercial rocket launch service for satellite, cargo, or crewed payloads to orbit.",
     "name": "Launch Contract"
@@ -4114,7 +4114,7 @@
     "name": "Launch Vehicle"
   },
   "lavender": {
-    "base_price": 0,
+    "base_price": 1.4866,
     "category": "flowers",
     "description": "Aromatic herb-flower; base of lavender essential oil",
     "name": "Lavender"
@@ -4168,13 +4168,13 @@
     "name": "Leather"
   },
   "led_chip": {
-    "base_price": 0,
+    "base_price": 4364.4,
     "category": "components",
     "description": "Gallium nitride die grown on a sapphire substrate. Basis of all modern LED and display technology.",
     "name": "LED Chip"
   },
   "led_panel": {
-    "base_price": 0,
+    "base_price": 12329.4347,
     "base_sale_chance": 0.005,
     "category": "electronics",
     "description": "Tiled array of LED chips on an aluminum backplane. Used in displays, signage, and general illumination.",
@@ -4224,7 +4224,7 @@
     "name": "Licorice"
   },
   "lidar_sensor": {
-    "base_price": 0,
+    "base_price": 25332.3106,
     "category": "components",
     "description": "Pulsed ruby laser range-finder producing real-time 3D point clouds. Essential for autonomous vehicles and robotics.",
     "name": "LiDAR Sensor"
@@ -4242,7 +4242,7 @@
     "name": "Lilac"
   },
   "lily": {
-    "base_price": 0,
+    "base_price": 1.4466,
     "category": "flowers",
     "description": "Elegant long-stemmed flower for arrangements and funerals",
     "name": "Lily"
@@ -4266,19 +4266,19 @@
     "name": "Lion"
   },
   "liquid_helium": {
-    "base_price": 0,
+    "base_price": 4309.6605,
     "category": "fuel",
     "description": "Cryogenic coolant at 4 Kelvin (-269\u00b0C). Required for superconducting magnets in MRI machines, quantum computers, and particle accelerators.",
     "name": "Liquid Helium"
   },
   "liquid_hydrogen": {
-    "base_price": 0,
+    "base_price": 1611.3486,
     "category": "fuel",
     "description": "Cryogenic rocket propellant (LH2) produced by electrolysis and liquefaction of hydrogen gas.",
     "name": "Liquid Hydrogen"
   },
   "liquid_oxygen": {
-    "base_price": 0,
+    "base_price": 617.615,
     "category": "fuel",
     "description": "Cryogenic oxidizer (LOX) produced by fractional distillation of air. Paired with liquid hydrogen in rocket engines.",
     "name": "Liquid Oxygen"
@@ -4314,13 +4314,13 @@
     "name": "Lithium Ore"
   },
   "liturgical_lamb_light": {
-    "base_price": 0,
+    "base_price": 4501.2824,
     "category": "luxury",
     "description": "A devotional tallow candle hand-dipped from rendered lamb fat, scented with cinnamon and vanilla, adorned with a golden pearl and set in richly dyed wax \u2014 lit only during the highest religious ceremonies.",
     "name": "Liturgical Lamb Light"
   },
   "live_lake_scrolls": {
-    "base_price": 0,
+    "base_price": 62699.4362,
     "category": "luxury",
     "description": "Extraordinarily rare sacred scrolls inscribed on lambskin vellum with concentrated ink, gilded with golden pearls, sealed in clay jars anointed with precious essential oils, cinnamon and beeswax \u2014 a once-in-a-generation religious artefact of incalculable spiritual and monetary value.",
     "name": "Live Lake Scrolls"
@@ -4548,7 +4548,7 @@
     "name": "Maternity Package"
   },
   "medical_isotope": {
-    "base_price": 0,
+    "base_price": 56746.1815,
     "category": "materials",
     "description": "Short-lived radioisotope such as Tc-99m or I-131 used in nuclear medicine imaging and cancer therapy.",
     "name": "Medical Isotope"
@@ -4821,7 +4821,7 @@
     "name": "Nails"
   },
   "nanosatellite": {
-    "base_price": 0,
+    "base_price": 313419.2863,
     "category": "vehicles",
     "description": "CubeSat-class satellite under 10kg. Used for Earth observation, IoT, and communications swarms.",
     "name": "Nanosatellite"
@@ -4869,13 +4869,13 @@
     "name": "Neroli Oil"
   },
   "network_switch": {
-    "base_price": 0,
+    "base_price": 5768.4208,
     "category": "components",
     "description": "High-throughput packet-switching device connecting servers and network segments at data center scale.",
     "name": "Network Switch"
   },
   "neutron_flux_data": {
-    "base_price": 0,
+    "base_price": 1103119.2946,
     "category": "services",
     "description": "High-fidelity neutron flux measurements from fusion reactor operation. Sold to materials science and nuclear engineering programs.",
     "name": "Neutron Flux Data"
@@ -4995,7 +4995,7 @@
     "name": "Nylon"
   },
   "obsidian": {
-    "base_price": 0,
+    "base_price": 13.564,
     "category": "gem",
     "description": "Volcanic glass formed from rapidly cooling lava. Deep black with conchoidal fracture; prized as a specimen and for ornamental carving.",
     "name": "Obsidian"
@@ -5043,7 +5043,7 @@
     "name": "Old English Sheepdog"
   },
   "oled_panel": {
-    "base_price": 0,
+    "base_price": 35416.423,
     "category": "electronics",
     "description": "Organic light-emitting diode panel offering per-pixel brightness control. Used in premium smartphones, watches, and VR headsets.",
     "name": "OLED Panel"
@@ -5079,7 +5079,7 @@
     "name": "Optical Glass"
   },
   "optical_interferometer": {
-    "base_price": 0,
+    "base_price": 887593.386,
     "category": "components",
     "description": "Precision laser interferometer with diamond-polished mirrors capable of detecting spacetime distortions smaller than a proton.",
     "name": "Optical Interferometer"
@@ -5235,7 +5235,7 @@
     "name": "Parrot"
   },
   "particle_detector": {
-    "base_price": 0,
+    "base_price": 721413.4388,
     "category": "components",
     "description": "Silicon strip tracking detector combined with lead tungstate calorimeter crystals for particle collision analysis.",
     "name": "Particle Detector"
@@ -5283,7 +5283,7 @@
     "name": "P\u00e2t\u00e9"
   },
   "payload_fairing": {
-    "base_price": 0,
+    "base_price": 130531.3657,
     "category": "components",
     "description": "Aerodynamic nose cone protecting satellite payloads during ascent. Jettisoned at altitude.",
     "name": "Payload Fairing"
@@ -5307,7 +5307,7 @@
     "name": "Peanut Butter"
   },
   "peanut_butter_cookie": {
-    "base_price": 0,
+    "base_price": 147.6597,
     "category": "food",
     "description": "Classic baked cookie made with creamy peanut butter",
     "name": "Peanut Butter Cookie"
@@ -5457,7 +5457,7 @@
     "name": "Pizza Slice"
   },
   "plasma_chamber": {
-    "base_price": 0,
+    "base_price": 1712635.6539,
     "category": "components",
     "description": "Tungsten-lined toroidal vacuum vessel where fusion plasma is confined by superconducting magnets at 150 million\u00b0C.",
     "name": "Plasma Containment Chamber"
@@ -5505,7 +5505,7 @@
     "name": "Polish Lowland Sheepdog"
   },
   "polishing_compound": {
-    "base_price": 0,
+    "base_price": 143.6911,
     "category": "industrial",
     "description": "Chemical-mechanical planarization slurry of diamond dust and aluminum oxide. Used to achieve atomic-level flatness on silicon wafers.",
     "name": "CMP Polishing Compound"
@@ -5775,19 +5775,19 @@
     "name": "Python"
   },
   "quantum_bit": {
-    "base_price": 0,
+    "base_price": 14013.8152,
     "category": "components",
     "description": "Individual superconducting qubit unit with control electronics. Building block of a quantum processor.",
     "name": "Qubit Module"
   },
   "quantum_encryption_key": {
-    "base_price": 0,
+    "base_price": 22937.7286,
     "category": "services",
     "description": "Quantum key distribution (QKD) cryptographic key with provable information-theoretic security.",
     "name": "Quantum Encryption Key"
   },
   "quantum_processor": {
-    "base_price": 0,
+    "base_price": 287548.1564,
     "category": "components",
     "description": "Superconducting qubit processor chip fabricated on a sapphire substrate with niobium Josephson junctions.",
     "name": "Quantum Processor"
@@ -5799,7 +5799,7 @@
     "name": "Quartz"
   },
   "quartz_crystal_blank": {
-    "base_price": 0,
+    "base_price": 47.1259,
     "category": "components",
     "description": "Precision-cut quartz disk lapped to a specific thickness determining its resonant frequency. Intermediate step in oscillator production.",
     "name": "Quartz Crystal Blank"
@@ -5835,13 +5835,13 @@
     "name": "Radiator"
   },
   "radio_astronomy_data": {
-    "base_price": 0,
+    "base_price": 88207.4726,
     "category": "services",
     "description": "Processed radio telescope observations covering pulsars, quasars, cosmic microwave background, and SETI scans.",
     "name": "Radio Astronomy Data"
   },
   "radio_dish": {
-    "base_price": 0,
+    "base_price": 38372.4631,
     "category": "components",
     "description": "Large-diameter parabolic steel and aluminum dish antenna for receiving microwave and radio signals from deep space.",
     "name": "Parabolic Radio Dish"
@@ -5949,7 +5949,7 @@
     "name": "Rehabilitation Program"
   },
   "religious_book": {
-    "base_price": 0,
+    "base_price": 195.039,
     "category": "luxury",
     "description": "A thick, leather-bound spiritual manuscript. High value.",
     "name": "Religious Text"
@@ -5967,7 +5967,7 @@
     "name": "Rental Car"
   },
   "research_data_package": {
-    "base_price": 0,
+    "base_price": 220198.8418,
     "category": "services",
     "description": "Curated dataset from particle physics, radio astronomy, or gravitational wave experiments. Licensed to universities worldwide.",
     "name": "Research Data Package"
@@ -5991,7 +5991,7 @@
     "name": "Residential Electricity"
   },
   "reusable_rocket_stage": {
-    "base_price": 0,
+    "base_price": 2797494.8335,
     "category": "vehicles",
     "description": "Propulsive first stage capable of autonomous landing via grid fins and engine relighting. Dramatically reduces launch costs.",
     "name": "Reusable Rocket Stage"
@@ -6081,7 +6081,7 @@
     "name": "Roasted Coffee"
   },
   "robot_labor_contract": {
-    "base_price": 0,
+    "base_price": 193504.4862,
     "category": "services",
     "description": "Fleet robotics-as-a-service contract for warehouse, logistics, or manufacturing automation.",
     "name": "Robot Labor Contract"
@@ -6129,7 +6129,7 @@
     "name": "Rope Wick"
   },
   "rose": {
-    "base_price": 0,
+    "base_price": 1.5076,
     "category": "flowers",
     "description": "Prized cut flower; base of rose oil and rose water",
     "name": "Rose"
@@ -6159,7 +6159,7 @@
     "name": "Rottweiler"
   },
   "rough_amethyst": {
-    "base_price": 0,
+    "base_price": 38.9146,
     "category": "gem",
     "description": "Purple quartz crystal formed in volcanic geodes. Common and beautiful; sold raw as a specimen or cut into faceted stones.",
     "name": "Rough Amethyst"
@@ -6183,7 +6183,7 @@
     "name": "Rough Emerald"
   },
   "rough_garnet": {
-    "base_price": 0,
+    "base_price": 39.5127,
     "category": "gem",
     "description": "Garnet crystal recovered from kimberlite processing and alluvial gravel. Deep red pyrope variety most common.",
     "name": "Rough Garnet"
@@ -6195,7 +6195,7 @@
     "name": "Rough Opal"
   },
   "rough_peridot": {
-    "base_price": 0,
+    "base_price": 34.0558,
     "category": "gem",
     "description": "Gem-quality olivine from volcanic and mantle-derived rock. Olive-green colour; only gem formed deep in the mantle.",
     "name": "Rough Peridot"
@@ -6279,7 +6279,7 @@
     "name": "Rum Molasses"
   },
   "sacred_lamb_offering": {
-    "base_price": 0,
+    "base_price": 227.7733,
     "category": "luxury",
     "description": "A ritually slaughtered and dressed lamb offering, prepared according to ancient rites and anointed with salt and beeswax \u2014 presented at consecrated altars as a sacrificial act of devotion.",
     "name": "Sacred Lamb Offering"
@@ -6369,7 +6369,7 @@
     "name": "Sapphire Bracelet"
   },
   "sapphire_wafer": {
-    "base_price": 0,
+    "base_price": 13822.8559,
     "category": "components",
     "description": "Precision-sliced synthetic sapphire substrate for GaN-on-sapphire LED and semiconductor manufacturing.",
     "name": "Sapphire Wafer"
@@ -6381,31 +6381,31 @@
     "name": "Sardines"
   },
   "satay": {
-    "base_price": 0,
+    "base_price": 667.2215,
     "category": "food",
     "description": "Grilled skewered pork served with a rich peanut dipping sauce",
     "name": "Satay"
   },
   "satellite_broadband_subscription": {
-    "base_price": 0,
+    "base_price": 37152.3844,
     "category": "services",
     "description": "Low-earth orbit satellite internet service providing global high-speed connectivity.",
     "name": "Satellite Broadband Subscription"
   },
   "satellite_bus": {
-    "base_price": 0,
+    "base_price": 137555.2067,
     "category": "components",
     "description": "Structural platform of a satellite providing power, attitude control, telemetry, and thermal management.",
     "name": "Satellite Bus"
   },
   "satellite_deployment_contract": {
-    "base_price": 0,
+    "base_price": 1562974.68,
     "category": "services",
     "description": "End-to-end service covering satellite manufacture, launch, and on-orbit commissioning.",
     "name": "Satellite Deployment Contract"
   },
   "satellite_payload": {
-    "base_price": 0,
+    "base_price": 134677.1978,
     "category": "components",
     "description": "Mission-specific sensor and communications package for satellites, including cameras, transceivers, and antennas.",
     "name": "Satellite Payload"
@@ -6583,7 +6583,7 @@
     "name": "Semi Truck"
   },
   "sensor_array": {
-    "base_price": 0,
+    "base_price": 17160.1833,
     "category": "components",
     "description": "Integrated suite of silicon MEMS sensors including IMU, lidar, camera, radar, and temperature sensors.",
     "name": "Sensor Array"
@@ -6595,7 +6595,7 @@
     "name": "Server"
   },
   "server_rack": {
-    "base_price": 0,
+    "base_price": 119237.818,
     "category": "components",
     "description": "19-inch equipment rack loaded with dense server blades, network switches, and power distribution units.",
     "name": "Server Rack"
@@ -6757,7 +6757,7 @@
     "name": "Smartphone"
   },
   "smartwatch": {
-    "base_price": 0,
+    "base_price": 46927.0001,
     "category": "electronics",
     "description": "Wrist-worn smart device with a sapphire crystal face, OLED display, health sensors, and wireless connectivity.",
     "name": "Smartwatch"
@@ -6907,7 +6907,7 @@
     "name": "Solid-State Cell"
   },
   "solid_state_drive": {
-    "base_price": 0,
+    "base_price": 6826.7659,
     "category": "electronics",
     "description": "Flash-based storage device using NAND memory cells on silicon wafers. Faster and more durable than HDDs.",
     "name": "Solid State Drive"
@@ -6937,13 +6937,13 @@
     "name": "Southdown"
   },
   "space_tourism_seat": {
-    "base_price": 0,
+    "base_price": 648304.6546,
     "category": "services",
     "description": "Suborbital or orbital spaceflight experience for private passengers. Includes pre-flight training.",
     "name": "Space Tourism Seat"
   },
   "spaghetti": {
-    "base_price": 0,
+    "base_price": 33.5439,
     "category": "food",
     "description": "Long thin pasta strands made from durum wheat",
     "name": "Spaghetti"
@@ -6999,7 +6999,7 @@
     "name": "Sports Package"
   },
   "spy_satellite": {
-    "base_price": 0,
+    "base_price": 1178168.3997,
     "base_sale_chance": 0.0002,
     "category": "military",
     "description": "Military-grade imaging satellite with sub-meter optical resolution and signals intelligence capability.",
@@ -7157,19 +7157,19 @@
     "name": "Sun-Cured Tobacco"
   },
   "sunflower": {
-    "base_price": 0,
+    "base_price": 1.4517,
     "category": "flowers",
     "description": "Large bright flower; seeds yield sunflower oil",
     "name": "Sunflower"
   },
   "superconducting_magnet": {
-    "base_price": 0,
+    "base_price": 263793.0864,
     "category": "components",
     "description": "Niobium-titanium or niobium-tin coil cooled to near absolute zero, producing magnetic fields exceeding 8 Tesla.",
     "name": "Superconducting Magnet"
   },
   "superconducting_wire": {
-    "base_price": 0,
+    "base_price": 14461.3103,
     "category": "components",
     "description": "Niobium-titanium wire that conducts electricity with zero resistance when cooled below critical temperature.",
     "name": "Superconducting Wire"
@@ -7601,7 +7601,7 @@
     "name": "Tortoise"
   },
   "touch_screen": {
-    "base_price": 0,
+    "base_price": 35591.3236,
     "base_sale_chance": 0.005,
     "category": "electronics",
     "description": "Capacitive multi-touch display combining an indium tin oxide touch layer with an LED or OLED panel.",
@@ -7657,7 +7657,7 @@
     "name": "Trawler"
   },
   "tritium": {
-    "base_price": 0,
+    "base_price": 498676.1883,
     "category": "fuel",
     "description": "Radioactive hydrogen isotope (H-3) used as fusion fuel. Produced by neutron bombardment of lithium in nuclear reactors.",
     "name": "Tritium"
@@ -7699,7 +7699,7 @@
     "name": "Tugboat"
   },
   "tulip": {
-    "base_price": 0,
+    "base_price": 1.4029,
     "category": "flowers",
     "description": "Spring bulb flower; one of the most traded cut flowers",
     "name": "Tulip"
@@ -7759,7 +7759,7 @@
     "name": "Unagi Kabayaki"
   },
   "undersea_cable_segment": {
-    "base_price": 0,
+    "base_price": 232198.3136,
     "category": "components",
     "description": "Armored submarine fiber optic cable segment rated for deep-sea deployment.",
     "name": "Undersea Cable Segment"
@@ -7795,7 +7795,7 @@
     "name": "Vaccine"
   },
   "vacuum_vessel": {
-    "base_price": 0,
+    "base_price": 96524.773,
     "category": "components",
     "description": "Stainless steel chamber capable of achieving pressures below 10^-9 mbar. Required for particle accelerators and fusion reactors.",
     "name": "Ultra-High Vacuum Vessel"
@@ -7915,7 +7915,7 @@
     "name": "Volcanic Ash"
   },
   "vr_headset": {
-    "base_price": 0,
+    "base_price": 99049.0068,
     "category": "electronics",
     "description": "Virtual reality headset with dual OLED micro-displays, optical lenses, and spatial tracking sensors.",
     "name": "VR Headset"
@@ -7957,7 +7957,7 @@
     "name": "Water Heater"
   },
   "weather_satellite": {
-    "base_price": 0,
+    "base_price": 862096.9674,
     "base_sale_chance": 0.0003,
     "category": "vehicles",
     "description": "Earth observation satellite with multispectral imaging and atmospheric sensors for meteorological data.",
@@ -8085,7 +8085,7 @@
     "name": "White Phosphorus Grenade"
   },
   "xenon": {
-    "base_price": 0,
+    "base_price": 3281.4411,
     "category": "materials",
     "description": "Noble gas used as propellant in ion thrusters and as fill gas in lighting and plasma displays.",
     "name": "Xenon Gas"
