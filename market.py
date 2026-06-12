@@ -16,7 +16,7 @@ Handles:
 from datetime import datetime, timedelta
 from typing import Optional, List, Tuple
 from enum import Enum
-from sqlalchemy import Column, String, Float, DateTime, Integer, Boolean, Index
+from sqlalchemy import Column, String, Float, DateTime, Integer, Boolean, Index, func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from stats_ux import log_transaction
@@ -207,11 +207,35 @@ def create_order(
         try:
             import inventory
             current_quantity = inventory.get_item_quantity(player_id, item_type)
-            if current_quantity < quantity:
-                print(f"[Market] Player {player_id} has insufficient inventory for sell order (has {current_quantity}, needs {quantity} {item_type})")
-                _push_market(player_id, "Order Rejected — Insufficient Inventory",
-                             f"You have {current_quantity:,.4g} {item_type.replace('_',' ')} "
+            # Sell orders do not deduct inventory until they fill, so a player can
+            # otherwise stack multiple sell orders that together exceed what they
+            # actually hold — each passes a naive total-inventory check, then the
+            # matching engine cancels the surplus later. Validate against the
+            # AVAILABLE quantity (total minus what is already committed to the
+            # player's own active/partial sell orders) instead.
+            already_listed = db.query(
+                func.coalesce(func.sum(MarketOrder.quantity - MarketOrder.quantity_filled), 0.0)
+            ).filter(
+                MarketOrder.player_id == player_id,
+                MarketOrder.item_type == item_type,
+                MarketOrder.order_type == OrderType.SELL.value,
+                MarketOrder.status.in_([OrderStatus.ACTIVE.value,
+                                        OrderStatus.PARTIALLY_FILLED.value]),
+            ).scalar() or 0.0
+            available = current_quantity - already_listed
+            if available < quantity:
+                print(f"[Market] Player {player_id} has insufficient AVAILABLE inventory for sell "
+                      f"order (holds {current_quantity}, {already_listed} already listed, "
+                      f"{available} available, needs {quantity} {item_type})")
+                _label = item_type.replace('_', ' ')
+                if already_listed > 0:
+                    _body = (f"You hold {current_quantity:,.4g} {_label} but {already_listed:,.4g} "
+                             f"is already listed for sale, leaving {available:,.4g} available. "
+                             f"You tried to list {quantity:,.4g}.")
+                else:
+                    _body = (f"You have {current_quantity:,.4g} {_label} "
                              f"but the order requires {quantity:,.4g}.")
+                _push_market(player_id, "Order Rejected — Insufficient Inventory", _body)
                 db.close()
                 return None
         except Exception as e:

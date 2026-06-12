@@ -4788,10 +4788,12 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
         return shell("Businesses", f"Error loading terminal: {e}", player.cash_balance, player.id)
 
 @router.get("/inventory", response_class=HTMLResponse)
-def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "all", sort: str = "name", dir: str = "asc"):
-    return _inventory_page_impl(session_token, filter, sort, dir)
+def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "all", sort: str = "name", dir: str = "asc",
+                   list_err: Optional[str] = None, list_ok: Optional[str] = None):
+    return _inventory_page_impl(session_token, filter, sort, dir, list_err, list_ok)
 
-def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all", sort: str = "name", dir: str = "asc"):
+def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all", sort: str = "name", dir: str = "asc",
+                         list_err: Optional[str] = None, list_ok: Optional[str] = None):
     """Inventory management view."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
@@ -4929,7 +4931,7 @@ def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all
                     ).filter(
                         _MktOrder.item_type.in_(item_set),
                         _MktOrder.order_type == 'sell',
-                        _MktOrder.status.in_(['active', 'partially_filled'])
+                        _MktOrder.status.in_(['active', 'partial'])
                     ).group_by(_MktOrder.item_type).all()
                     _ask_map = {r.item_type: float(r.best_ask) for r in _ask_rows if r.best_ask is not None}
 
@@ -4940,7 +4942,7 @@ def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all
                     ).filter(
                         _MktOrder.item_type.in_(item_set),
                         _MktOrder.order_type == 'buy',
-                        _MktOrder.status.in_(['active', 'partially_filled'])
+                        _MktOrder.status.in_(['active', 'partial'])
                     ).group_by(_MktOrder.item_type).all()
                     _bid_map = {r.item_type: float(r.best_bid) for r in _bid_rows if r.best_bid is not None}
                     bid_ask = {it: (_bid_map.get(it), _ask_map.get(it)) for it in set(list(_ask_map) + list(_bid_map))}
@@ -4992,7 +4994,7 @@ def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all
                     ).filter(
                         _MktOrder.player_id == player.id,
                         _MktOrder.order_type == 'sell',
-                        _MktOrder.status.in_(['active', 'partially_filled']),
+                        _MktOrder.status.in_(['active', 'partial']),
                     ).group_by(_MktOrder.item_type).all()
                     player_listed = {r.item_type: (int(r.qty_rem or 0), float(r.avg_px or 0)) for r in _sell_rows}
 
@@ -5003,7 +5005,7 @@ def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all
                     ).filter(
                         _MktOrder.item_type.in_(item_set),
                         _MktOrder.order_type == 'sell',
-                        _MktOrder.status.in_(['active', 'partially_filled'])
+                        _MktOrder.status.in_(['active', 'partial'])
                     ).group_by(_MktOrder.item_type).all()
                     market_depth = {r.item_type: int(r.depth) for r in _dep_rows if r.depth is not None}
 
@@ -5346,6 +5348,13 @@ def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all
                 else:
                     desc_elem_html = f'<span class="inv-desc-text">{description}</span>'
 
+                # Available = total held minus quantity already committed to the
+                # player's own active/partial sell orders. Sell orders don't
+                # deduct inventory until they fill, so listing against the gross
+                # quantity lets a player over-list and get cancelled later.
+                _listed_qty = (player_listed.get(item) or (0, 0))[0] or 0
+                _available = max(0, int(qty) - int(_listed_qty))
+
                 # Action area: list form, quick-bid, or ETF link
                 form_id = f"invform-{item}"
                 _ask_attr = f' data-ask="{_best_ask}"' if _best_ask else ''
@@ -5353,6 +5362,9 @@ def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all
                     list_btn_html = '<a href="/brokerage/trading?mode=etf" class="btn-blue" style="font-size:0.75rem;">ETF Floor →</a>'
                     quick_bid_html = ''
                 else:
+                    _avail_hint = (f'<div style="font-size:0.68rem;color:#64748b;margin-bottom:4px;">'
+                                   f'{_available:,} available to list'
+                                   f'{f" ({_listed_qty:,} already listed)" if _listed_qty > 0 else ""}</div>')
                     list_btn_html = (
                         f'<button class="inv-list-toggle" onclick="invToggleForm(\'{form_id}\', this)" type="button">'
                         f'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>'
@@ -5360,15 +5372,17 @@ def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all
                         f'<div class="inv-list-form" id="{form_id}">'
                         f'<form action="/api/inventory/list" method="post" class="inv-list-inner" onsubmit="return invListSubmit(event,this)">'
                         f'<input type="hidden" name="item_type" value="{item}">'
+                        f'{_avail_hint}'
                         f'<div class="inv-list-fields">'
-                        f'<input type="number" name="quantity" placeholder="Qty" min="0" max="{qty:.0f}" class="inv-input" required>'
+                        f'<input type="number" name="quantity" placeholder="Qty" min="0" max="{_available}" class="inv-input" required>'
                         f'<input type="number" name="price" step="0.0001" placeholder="Price ({disp["code"]})" class="inv-input" required>'
                         f'<button type="submit" class="btn-blue inv-submit-btn">List →</button>'
                         f'</div></form></div>'
                     )
-                    # Quick-sell at best bid (capped at 500 units); ignore sub-penny placeholder bids
-                    if _best_bid and _best_bid > 0.001:
-                        _cap = min(int(qty), 500)
+                    # Quick-sell at best bid (capped at 500 units); ignore sub-penny placeholder bids.
+                    # Cap against AVAILABLE (not gross) so quick-bid can't over-list either.
+                    if _best_bid and _best_bid > 0.001 and _available > 0:
+                        _cap = min(_available, 500)
                         quick_bid_html = (
                             f'<button class="inv-quick-bid" type="button" '
                             f'onclick="invQuickBid(\'{form_id}\', {_best_bid:.4f}, {_cap})">'
@@ -5570,12 +5584,25 @@ def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all
                 btn.dataset.expanded = "1";
             }
         }
+        function _invToast(msg, ok) {
+            var d = document.createElement('div');
+            d.textContent = msg;
+            d.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);' +
+                'padding:11px 18px;border-radius:8px;font-size:0.82rem;z-index:99999;max-width:92%;text-align:center;' +
+                'line-height:1.35;box-shadow:0 6px 18px rgba(0,0,0,0.5);' +
+                'background:' + (ok ? '#15803d' : '#991b1b') + ';color:#fff;';
+            document.body.appendChild(d);
+            setTimeout(function() { d.remove(); }, ok ? 2500 : 6000);
+        }
         function _doListFetch(form) {
             var btn = form.querySelector('button[type="submit"]');
             var itemType = form.querySelector('input[name="item_type"]').value;
             var quantity = form.querySelector('input[name="quantity"]').value;
             var price = form.querySelector('input[name="price"]').value;
-            if (!quantity || !price || parseFloat(quantity) <= 0 || parseFloat(price) <= 0) return;
+            if (!quantity || !price || parseFloat(quantity) <= 0 || parseFloat(price) <= 0) {
+                _invToast('Enter a positive quantity and price.', false);
+                return;
+            }
             if (btn) { btn.disabled = true; btn.textContent = '…'; }
             fetch('/api/inventory/list', {
                 method: 'POST',
@@ -5585,12 +5612,19 @@ def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all
             .then(function(r) { return r.json(); })
             .then(function(d) {
                 if (d.ok) {
-                    if (btn) { btn.textContent = '✓'; setTimeout(function() { btn.textContent = 'List →'; btn.disabled = false; }, 1500); }
+                    if (btn) { btn.textContent = '✓'; }
+                    _invToast('Listed ' + Number(quantity).toLocaleString() + ' for sale.', true);
+                    // Reload so the quantity badge, available max, and "Listed" line refresh.
+                    setTimeout(function() { window.location.reload(); }, 900);
                 } else {
-                    if (btn) { btn.textContent = d.error || '✗'; btn.disabled = false; }
+                    if (btn) { btn.textContent = 'List →'; btn.disabled = false; }
+                    _invToast(d.error || 'Order rejected.', false);
                 }
             })
-            .catch(function() { if (btn) { btn.textContent = '✗'; btn.disabled = false; } });
+            .catch(function() {
+                if (btn) { btn.textContent = 'List →'; btn.disabled = false; }
+                _invToast('Network error — please try again.', false);
+            });
         }
         function invListSubmit(event, form) {
             event.preventDefault();
@@ -5624,9 +5658,19 @@ def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all
         }
         </script>'''
 
+        _banner = ''
+        if list_err:
+            import html as _html
+            _banner = (f'<div style="background:#991b1b;color:#fff;padding:10px 14px;border-radius:8px;'
+                       f'margin:8px 0;font-size:0.82rem;">{_html.escape(list_err)}</div>')
+        elif list_ok:
+            _banner = ('<div style="background:#15803d;color:#fff;padding:10px 14px;border-radius:8px;'
+                       'margin:8px 0;font-size:0.82rem;">Listed for sale successfully.</div>')
+
         inv_body = (
             page_assets
             + '<a href="/" style="color:#38bdf8;font-size:0.85rem;">← Dashboard</a>'
+            + _banner
             + '<div class="inv-page-header">'
             + '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>'
             + '<h1>Inventory</h1>'
@@ -15429,7 +15473,7 @@ def api_widget_p2p_contacts(device_id: Optional[str] = None,
                 try:
                     _com_orders = _mdb.query(MarketOrder).filter(
                         MarketOrder.player_id == other_id,
-                        MarketOrder.status.in_(["active", "partially_filled"]),
+                        MarketOrder.status.in_(["active", "partial"]),
                     ).all()
                     commodity_orders = len(_com_orders)
                     _coparts = []
@@ -16034,12 +16078,41 @@ async def list_to_market(request: Request, item_type: str = Form(...), quantity:
     disp = get_player_display_currency(player.id)
     import market
     price_usd = price * disp["usd_per_unit"]
-    market.create_order(player.id, market.OrderType.SELL, market.OrderMode.LIMIT, item_type, quantity, price_usd)
+    order = market.create_order(player.id, market.OrderType.SELL, market.OrderMode.LIMIT, item_type, quantity, price_usd)
+    if order is None:
+        # Order rejected (insufficient available inventory, market closed, etc.).
+        # Surface a clear reason instead of silently reporting success.
+        import inventory as _inv
+        from market import MarketOrder as _MO, OrderType as _OT, OrderStatus as _OS, get_db as _mdb_fn
+        held = _inv.get_item_quantity(player.id, item_type)
+        _mdb = _mdb_fn()
+        try:
+            from sqlalchemy import func as _f
+            listed = _mdb.query(
+                _f.coalesce(_f.sum(_MO.quantity - _MO.quantity_filled), 0.0)
+            ).filter(
+                _MO.player_id == player.id, _MO.item_type == item_type,
+                _MO.order_type == _OT.SELL.value,
+                _MO.status.in_([_OS.ACTIVE.value, _OS.PARTIALLY_FILLED.value]),
+            ).scalar() or 0.0
+        finally:
+            _mdb.close()
+        avail = held - listed
+        item_label = item_type.replace("_", " ").title()
+        if listed > 0:
+            err = (f"Order rejected: you hold {held:,.4g} {item_label}, but {listed:,.4g} is "
+                   f"already listed — only {avail:,.4g} available. You tried to list {quantity:,.4g}.")
+        else:
+            err = f"Order rejected: you have {avail:,.4g} {item_label} but tried to list {quantity:,.4g}."
+        if is_ajax:
+            return JSONResponse({"ok": False, "error": err})
+        import urllib.parse
+        return RedirectResponse(url=f"/inventory?list_err={urllib.parse.quote(err)}", status_code=303)
     from market_ws import push_market_snapshot_now
     asyncio.create_task(push_market_snapshot_now())
     if is_ajax:
         return JSONResponse({"ok": True})
-    return RedirectResponse(url="/inventory", status_code=303)
+    return RedirectResponse(url="/inventory?list_ok=1", status_code=303)
 
 @router.post("/api/market/order")
 async def place_order(item_type: str = Form(...), order_type: str = Form(...), quantity: float = Form(...), price: float = Form(...), session_token: Optional[str] = Cookie(None)):
