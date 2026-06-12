@@ -81,7 +81,8 @@ COUNTY_STYLES = """
     .grid-2 { grid-template-columns: repeat(2, 1fr); }
     .grid-3 { grid-template-columns: repeat(3, 1fr); }
     @media (max-width: 768px) {
-        .grid-2, .grid-3 { grid-template-columns: 1fr; }
+        /* !important so the collapse also beats any inline grid styles */
+        .grid-2, .grid-3 { grid-template-columns: 1fr !important; }
     }
 
     .stat {
@@ -839,7 +840,7 @@ async def view_county(
         alert_html = f'<div class="alert alert-info">{msg}</div>'
 
     # Member cities
-    cities_html = '<div class="grid grid-2" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">'
+    cities_html = '<div class="grid grid-2">'
     total_members = 0
     for link in county_city_links:
         city = db.query(City).filter(City.id == link.city_id).first()
@@ -932,7 +933,7 @@ async def view_county(
         parliament_html = '''
         <div class="card">
             <h2>County Parliament</h2>
-            <div class="grid grid-2" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            <div class="grid grid-2">
                 <div>
                     <h3>Lower House</h3>
                     <p style="color: var(--text-secondary,#94a3b8); font-size: 13px;">
@@ -991,7 +992,7 @@ async def view_county(
             {alert_html}
             {member_nav}
 
-            <div class="grid grid-2" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            <div class="grid grid-2">
                 <div class="card">
                     <h2>County Info</h2>
                     <div class="stat">
@@ -1352,7 +1353,7 @@ async def county_mining_node(
     </div>
 
     <!-- Stats row -->
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
+    <div class="grid grid-3" style="margin-bottom:20px;">
         <div style="background:var(--bg-card,#0d0f1e);border:1px solid var(--bg-card-2,#1e293b);border-radius:16px;padding:14px;text-align:center;">
             <div style="font-size:11px;color:var(--text-muted,#64748b);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Block Reward</div>
             <div style="font-size:20px;font-weight:700;color:var(--accent,#a78bfa);">{block_reward:,.6f}</div>
@@ -1382,7 +1383,7 @@ async def county_mining_node(
     <!-- How it works -->
     <div class="card" style="margin-bottom:16px;">
         <div style="font-size:14px;font-weight:700;color:var(--accent,#a78bfa);margin-bottom:12px;">How Mining Works</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="grid grid-2">
             <div style="font-size:13px;color:var(--text-secondary,#94a3b8);line-height:1.6;">
                 <strong style="color:var(--text-bright,#f1f5f9);">Energy System</strong><br>
                 Deposit your city currency as mining energy. Energy powers the blockchain — without it, no transactions can occur. Rewards distribute proportionally each hour.
@@ -1914,7 +1915,7 @@ async def token_info_page(
             </div>
 
             <!-- Supply & Mining -->
-            <div class="grid grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div class="grid grid-2">
                 <div class="card">
                     <h2>Supply & Tokenomics</h2>
                     {supply_bar_html}
@@ -1976,7 +1977,7 @@ async def token_info_page(
             <!-- Treasury & Safety -->
             <div class="card">
                 <h2>Treasury & Trust</h2>
-                <div class="grid grid-3" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+                <div class="grid grid-3">
                     <div>
                         <div class="stat">
                             <span class="stat-label">Treasury Balance</span>
@@ -2761,7 +2762,7 @@ async def county_governance(
                     <span class="badge badge-crypto">{county.crypto_symbol}</span> blockchain.
                     County members who hold {county.crypto_symbol} can participate.
                 </p>
-                <div class="grid grid-3" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px;">
+                <div class="grid grid-3">
                     <div>
                         <h3 style="color: var(--color-warning,#f59e0b);">1. Proposal Phase (3 days)</h3>
                         <p style="color: var(--text-secondary,#94a3b8); font-size: 13px;">
