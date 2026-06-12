@@ -286,12 +286,76 @@ def _update_wbc50_divisor(new_cap: float, old_level: float) -> float:
     return new_divisor
 
 
+def get_npc_enterprise_values() -> dict:
+    """Return {npc_player_id: (enterprise_value_usd, business_name)} for every NPC.
+
+    Enterprise value = USD-valued cash across ALL currencies + land value
+    (monthly_tax × 120). Shared by both the WBC-50 index level and the WBC-50
+    index fund so they value NPC private enterprises identically.
+    """
+    out: dict = {}
+    try:
+        from auth import Player
+        from land import LandPlot
+        db_main = _get_db()
+        try:
+            npc_players = db_main.query(Player).filter(Player.is_npc == True).all()
+            if not npc_players:
+                return {}
+            npc_ids = [p.id for p in npc_players]
+            land_rows = (db_main.query(LandPlot.owner_id,
+                                       func.sum(LandPlot.monthly_tax * 120))
+                         .filter(LandPlot.owner_id.in_(npc_ids))
+                         .group_by(LandPlot.owner_id).all())
+            land_by_id = {row[0]: float(row[1] or 0.0) for row in land_rows}
+            names = {p.id: p.business_name for p in npc_players}
+        finally:
+            db_main.close()
+
+        # Value ALL currency holdings in USD (not just the USD row).
+        cash_by_id: dict = {}
+        from database import ReserveSessionLocal
+        from reserve_banks import PlayerCurrencyBalance, StateReserveBank
+        rdb = ReserveSessionLocal()
+        try:
+            rates = {b.currency_code: float(b.usd_per_unit or 0.0)
+                     for b in rdb.query(StateReserveBank).all()}
+            rates.setdefault("USD", 1.0)
+            bal_rows = (rdb.query(PlayerCurrencyBalance.player_id,
+                                  PlayerCurrencyBalance.currency_code,
+                                  func.sum(PlayerCurrencyBalance.balance))
+                        .filter(PlayerCurrencyBalance.player_id.in_(npc_ids),
+                                PlayerCurrencyBalance.balance > 0)
+                        .group_by(PlayerCurrencyBalance.player_id,
+                                  PlayerCurrencyBalance.currency_code)
+                        .all())
+            for pid, ccode, amt in bal_rows:
+                cash_by_id[pid] = (cash_by_id.get(pid, 0.0)
+                                   + float(amt or 0.0) * rates.get(ccode, 0.0))
+        finally:
+            rdb.close()
+
+        for pid, name in names.items():
+            val = cash_by_id.get(pid, 0.0) + land_by_id.get(pid, 0.0)
+            out[pid] = (val, name)
+    except Exception as e:
+        print(f"[Indices] get_npc_enterprise_values error: {e}")
+    return out
+
+
 def _collect_wbc50_caps() -> list[dict]:
-    """Gather market caps for all public companies + NPC private enterprises."""
+    """Gather market caps for all public companies + NPC private enterprises.
+
+    Each entry carries a stable id so the index level and the index fund can
+    agree on exactly which constituents make the top-50:
+      • public companies → company_id (CompanyShares.id), is_public=True
+      • NPC enterprises   → npc_id (Player.id),           is_public=False
+    """
     from banks.brokerage_firm import CompanyShares, get_db as firm_db
     db = firm_db()
     try:
-        rows = (db.query(CompanyShares.ticker_symbol,
+        rows = (db.query(CompanyShares.id,
+                         CompanyShares.ticker_symbol,
                          CompanyShares.company_name,
                          CompanyShares.shares_outstanding,
                          CompanyShares.current_price)
@@ -301,60 +365,40 @@ def _collect_wbc50_caps() -> list[dict]:
         db.close()
     caps = [{"label": r.ticker_symbol, "name": r.company_name,
              "value": r.shares_outstanding * r.current_price,
-             "is_public": True}
+             "is_public": True, "company_id": r.id, "npc_id": None}
             for r in rows if r.shares_outstanding and r.current_price]
 
     # NPC players as private enterprise entries (cash + land value).
-    try:
-        from auth import Player
-        from land import LandPlot
-        db_main = _get_db()
-        try:
-            npc_players = db_main.query(Player).filter(Player.is_npc == True).all()
-            if npc_players:
-                npc_ids = [p.id for p in npc_players]
-                land_rows = (db_main.query(LandPlot.owner_id,
-                                           func.sum(LandPlot.monthly_tax * 120))
-                             .filter(LandPlot.owner_id.in_(npc_ids))
-                             .group_by(LandPlot.owner_id).all())
-                land_by_id = {row[0]: float(row[1] or 0.0) for row in land_rows}
-
-                # Value ALL currency holdings in USD (not just the USD row).
-                cash_by_id: dict = {}
-                from database import ReserveSessionLocal
-                from reserve_banks import PlayerCurrencyBalance, StateReserveBank
-                rdb = ReserveSessionLocal()
-                try:
-                    rates = {b.currency_code: float(b.usd_per_unit or 0.0)
-                             for b in rdb.query(StateReserveBank).all()}
-                    rates.setdefault("USD", 1.0)
-                    bal_rows = (rdb.query(PlayerCurrencyBalance.player_id,
-                                          PlayerCurrencyBalance.currency_code,
-                                          func.sum(PlayerCurrencyBalance.balance))
-                                .filter(PlayerCurrencyBalance.player_id.in_(npc_ids),
-                                        PlayerCurrencyBalance.balance > 0)
-                                .group_by(PlayerCurrencyBalance.player_id,
-                                          PlayerCurrencyBalance.currency_code)
-                                .all())
-                    for pid, ccode, amt in bal_rows:
-                        cash_by_id[pid] = (cash_by_id.get(pid, 0.0)
-                                           + float(amt or 0.0) * rates.get(ccode, 0.0))
-                finally:
-                    rdb.close()
-
-                for npc in npc_players:
-                    npc_val = cash_by_id.get(npc.id, 0.0) + land_by_id.get(npc.id, 0.0)
-                    if npc_val > 0:
-                        caps.append({"label": npc.business_name,
-                                     "name": npc.business_name,
-                                     "value": npc_val,
-                                     "is_public": False})
-        finally:
-            db_main.close()
-    except Exception as e:
-        print(f"[Indices] WBC50 NPC valuation error: {e}")
+    for pid, (npc_val, name) in get_npc_enterprise_values().items():
+        if npc_val > 0:
+            caps.append({"label": name, "name": name, "value": npc_val,
+                         "is_public": False, "company_id": None, "npc_id": pid})
 
     return caps
+
+
+def get_wbc50_basket() -> dict:
+    """Unified top-50 selection shared by the WBC-50 index level and its ETF.
+
+    Returns the constituents split by type so the fund can hold the SAME basket
+    the index measures — equities it buys on the brokerage, NPC enterprises it
+    holds as synthetic (cash-settled) stakes:
+
+        {
+          "equities": [{"company_id", "ticker", "cap"}, ...],
+          "npcs":     [{"npc_id", "name", "value"}, ...],
+          "aggregate_cap": float,
+        }
+    """
+    caps = _collect_wbc50_caps()
+    caps.sort(key=lambda x: x["value"], reverse=True)
+    top50 = caps[:50]
+    equities = [{"company_id": c["company_id"], "ticker": c["label"], "cap": c["value"]}
+                for c in top50 if c.get("is_public")]
+    npcs = [{"npc_id": c["npc_id"], "name": c["name"], "value": c["value"]}
+            for c in top50 if not c.get("is_public")]
+    return {"equities": equities, "npcs": npcs,
+            "aggregate_cap": sum(c["value"] for c in top50)}
 
 
 def calc_WBC50() -> tuple[float, dict]:

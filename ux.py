@@ -8699,9 +8699,10 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
                 <details style="margin-top:14px;">
                 <summary style="cursor:pointer;color:#38bdf8;font-size:0.78rem;font-weight:600;letter-spacing:.04em;">HOW THIS ETF WORKS ▾</summary>
                 <div style="margin-top:10px;font-size:0.75rem;color:#cbd5e1;line-height:1.7;border-top:1px solid #1e293b;padding-top:10px;">
-                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Backing</span> — Backed by equity positions in every company in the Wadsworth Blue-Chip 50 (top 50 public companies by market cap). NAV = cash buffer + sum of (shares held × current price) for all 50 constituents.</div>
-                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Full Replication Strategy</span> — The fund targets holding 19.5 % of each constituent's outstanding shares. A position is only rebalanced when it drifts outside the 18–21 % band, avoiding constant churn. Weights are proportional to each company's share of the total WBC-50 market cap.</div>
-                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Index Changes</span> — When a company enters the WBC-50 the fund buys to 19.5 % of its outstanding shares. When a company exits the WBC-50 the fund sells its entire position and recycles the proceeds into the cash buffer.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Backing</span> — Backed by positions in every constituent of the Wadsworth Blue-Chip 50 — public companies (real equity) and NPC private enterprises (cash-settled synthetic stakes). NAV = cash buffer + equity value (shares × price) + NPC stake value (stake fraction × live enterprise value), so the fund mirrors the full index basket.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Full Replication Strategy</span> — The fund targets holding 19.5 % of each constituent — 19.5 % of a public company's outstanding shares, or a 19.5 % synthetic stake in an NPC enterprise's value. A position is only rebalanced when it drifts outside the 18–21 % band, avoiding constant churn.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Private Enterprises</span> — NPC businesses have no tradeable shares, so the fund tracks them as cash-settled synthetic stakes valued at the enterprise's live cash + land value. This is how the ETF tracks index constituents the open market can't actually buy.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Index Changes</span> — When a constituent enters the WBC-50 the fund builds to a 19.5 % position. When one exits, the fund unwinds its entire position (selling shares, or cash-settling the synthetic stake) and recycles the proceeds into the cash buffer.</div>
                 <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Rebalancing</span> — Portfolio is checked every 720 ticks (~60 min). Buy and sell orders are executed at current market price directly against the fund's cash reserves.</div>
                 <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Brokerage Firm Funding</span> — Seeded at launch with $50,000,000 from the Brokerage Firm. During each rebalance cycle the Firm may top up the fund's cash by up to $5,000,000 to cover new buy requirements, up to a lifetime cap of $500,000,000.</div>
                 <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Cash Buffer</span> — The fund always keeps ≥ 2 % of NAV as liquid cash to cover redemptions and fees.</div>
@@ -9187,10 +9188,25 @@ def wbc50_index_fund_dashboard(session_token: Optional[str] = Cookie(None)):
         try:
             holdings = db.query(IndexFundHolding).filter(
                 IndexFundHolding.in_index == True,
+                IndexFundHolding.is_npc == False,
                 IndexFundHolding.shares_held > 0,
+            ).order_by(IndexFundHolding.ticker).all()
+            npc_holdings = db.query(IndexFundHolding).filter(
+                IndexFundHolding.in_index == True,
+                IndexFundHolding.is_npc == True,
+                IndexFundHolding.stake_fraction > 0,
             ).order_by(IndexFundHolding.ticker).all()
         finally:
             db.close()
+
+        # Live NPC enterprise valuations for the synthetic-stake rows.
+        npc_vals = {}
+        if npc_holdings:
+            try:
+                from banks.indices import get_npc_enterprise_values
+                npc_vals = get_npc_enterprise_values()
+            except Exception:
+                npc_vals = {}
 
         holding_rows = ""
         for h in holdings:
@@ -9211,9 +9227,27 @@ def wbc50_index_fund_dashboard(session_token: Optional[str] = Cookie(None)):
                     f'</tr>'
                 )
 
+        # NPC synthetic-stake rows (cash-settled positions in private enterprises).
+        for h in npc_holdings:
+            ent_val, name = npc_vals.get(h.npc_player_id, (0.0, h.ticker))
+            mkt_val = h.stake_fraction * ent_val
+            port_wt = mkt_val / entity.asset_value * 100 if entity.asset_value else 0
+            holding_rows += (
+                f'<tr>'
+                f'<td style="font-weight:600;">🏢 {h.ticker}</td>'
+                f'<td style="color:#94a3b8;">{name} <span style="color:#64748b;font-size:.75em;">(private)</span></td>'
+                f'<td style="color:#64748b;">—</td>'
+                f'<td style="color:#64748b;">synthetic</td>'
+                f'<td>{h.stake_fraction*100:.2f}%</td>'
+                f'<td>{fmt_usd(mkt_val, disp)}</td>'
+                f'<td>{port_wt:.2f}%</td>'
+                f'</tr>'
+            )
+
+        total_positions = len(holdings) + len(npc_holdings)
         holdings_section = f"""
         <div class="card">
-            <h3>Portfolio Holdings ({len(holdings)}/50 constituents)</h3>
+            <h3>Portfolio Holdings ({total_positions}/50 constituents · {len(npc_holdings)} private)</h3>
             <div class="table-wrap">
                 <table>
                     <tr>
@@ -9224,6 +9258,7 @@ def wbc50_index_fund_dashboard(session_token: Optional[str] = Cookie(None)):
                     {holding_rows if holding_rows else '<tr><td colspan="7" style="color:#64748b;">No positions yet — awaiting first rebalance.</td></tr>'}
                 </table>
             </div>
+            <p style="color:#64748b;font-size:.75rem;margin-top:8px;">🏢 Private-enterprise rows are NPC businesses the index includes but which have no tradeable shares — the fund holds them as cash-settled synthetic stakes valued at the enterprise's live cash + land value.</p>
         </div>
         """ if True else ""
 
