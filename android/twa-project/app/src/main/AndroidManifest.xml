@@ -20,7 +20,7 @@
      application, the package attribute will need to reflect the correct path in order to use
      the abbreviated format. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="cc.notifly.wadsworth.twa">
+   >
 
     
         <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
@@ -33,7 +33,8 @@
     
 
     <application
-        android:name="Application"
+        android:banner="@drawable/tv_banner"
+        android:name="cc.notifly.wadsworth.WadsworthApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/appName"
@@ -153,6 +154,7 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
 
             <intent-filter android:autoVerify="true">
@@ -232,5 +234,19 @@
             </intent-filter>
         </service> 
         
+            <receiver android:name="cc.notifly.wadsworth.WadsworthWidget" android:label="Balance + Alerts" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/><action android:name="cc.notifly.wadsworth.WIDGET_REFRESH"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/wadsworth_widget_info"/></receiver>
+            <activity android:name="cc.notifly.wadsworth.WadsworthTokenActivity" android:exported="true" android:theme="@android:style/Theme.NoDisplay"><intent-filter><action android:name="android.intent.action.VIEW"/><category android:name="android.intent.category.DEFAULT"/><category android:name="android.intent.category.BROWSABLE"/><data android:scheme="wadsworth" android:host="widget-auth"/></intent-filter></activity>
+            <receiver android:name="cc.notifly.wadsworth.WBCWidget" android:label="WBC-50 Index" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/><action android:name="cc.notifly.wadsworth.WBC_REFRESH"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/wbc_widget_info"/></receiver>
+            <receiver android:name="cc.notifly.wadsworth.GlobalChatWidget" android:label="Global Chat" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/><action android:name="cc.notifly.wadsworth.GLOBAL_CHAT_REFRESH"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/global_chat_widget_info"/></receiver>
+            <receiver android:name="cc.notifly.wadsworth.TradeChatWidget" android:label="Trade Chat" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/><action android:name="cc.notifly.wadsworth.TRADE_CHAT_REFRESH"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/trade_chat_widget_info"/></receiver>
+            <receiver android:name="cc.notifly.wadsworth.BondsWidget" android:label="Bond Yields" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/><action android:name="cc.notifly.wadsworth.BONDS_REFRESH"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/bonds_widget_info"/></receiver>
+            <receiver android:name="cc.notifly.wadsworth.ForexWidget" android:label="Forex Rates" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/><action android:name="cc.notifly.wadsworth.FOREX_REFRESH"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/forex_widget_info"/></receiver>
+            <receiver android:name="cc.notifly.wadsworth.P2PWidget" android:label="P2P Contacts" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/><action android:name="cc.notifly.wadsworth.P2P_PREV"/><action android:name="cc.notifly.wadsworth.P2P_NEXT"/><action android:name="cc.notifly.wadsworth.P2P_REFRESH"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/p2p_widget_info"/></receiver>
     </application>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
+    <uses-feature android:name="android.hardware.faketouch" android:required="false"/>
+    <uses-feature android:name="android.hardware.screen.portrait" android:required="false"/>
+    <uses-feature android:name="android.hardware.screen.landscape" android:required="false"/>
+    <uses-feature android:name="android.software.leanback" android:required="false"/>
 </manifest>
