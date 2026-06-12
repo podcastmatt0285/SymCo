@@ -36,25 +36,13 @@
       "reorder_at": 100,
       "target_inventory": 500
     },
-    "cleaning_supplies": {
-      "market": "regular",
-      "max_price_multiplier": 1.1,
-      "reorder_at": 200,
-      "target_inventory": 1000
-    },
     "energy": {
       "market": "regular",
       "max_price_multiplier": 1.1,
       "reorder_at": 100000,
       "target_inventory": 500000
     },
-    "laundry_detergent": {
-      "market": "regular",
-      "max_price_multiplier": 1.1,
-      "reorder_at": 200,
-      "target_inventory": 1000
-    },
-    "linen": {
+    "hospitality_linen_set": {
       "market": "regular",
       "max_price_multiplier": 1.1,
       "reorder_at": 400,
@@ -66,11 +54,17 @@
       "reorder_at": 600,
       "target_inventory": 3000
     },
-    "wine": {
+    "red_wine": {
       "market": "regular",
       "max_price_multiplier": 1.1,
       "reorder_at": 100,
       "target_inventory": 500
+    },
+    "soap": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 200,
+      "target_inventory": 1000
     }
   },
   "cash_caps": {
