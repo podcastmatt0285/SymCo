@@ -102,6 +102,64 @@ else
     echo "  (could not locate app.py to verify assetlinks — skipping preflight check)"
 fi
 
+echo "=== Step 2b: Ensure Web Manifest is reachable for the build ==="
+# bubblewrap downloads the Web Manifest + icons at generation time. The deploy
+# sequence runs this build BEFORE starting app.py, and the public domain is only
+# healthy when the server (and its Cloudflare tunnel) is up — so a fresh deploy
+# reliably hit "cli ERROR Failed to download Web Manifest ... status 502". Rather
+# than depend on the live site being up mid-build, probe it; if it isn't serving
+# the manifest we serve the repo's own static/ files from a throwaway localhost
+# server and point only the build-time-fetched URLs at it. The TWA's runtime
+# origin (host / startUrl / fullScopeUrl) always stays the production domain.
+FETCH_BASE="https://${DOMAIN}"
+LOCAL_SRV_PID=""
+LOCAL_DOCROOT=""
+_cleanup_local_srv() {
+    [ -n "$LOCAL_SRV_PID" ] && kill "$LOCAL_SRV_PID" 2>/dev/null
+    [ -n "$LOCAL_DOCROOT" ] && rm -rf "$LOCAL_DOCROOT" 2>/dev/null
+}
+trap _cleanup_local_srv EXIT
+
+_manifest_ok=0
+for _try in 1 2 3; do
+    if curl -fsS --max-time 8 "https://${DOMAIN}/manifest.json" -o /dev/null 2>/dev/null; then
+        _manifest_ok=1; break
+    fi
+    echo "  manifest not reachable at https://${DOMAIN}/manifest.json (attempt ${_try}/3) — retrying in 3s..."
+    sleep 3
+done
+
+if [ "$_manifest_ok" -eq 1 ]; then
+    echo "  ✓ Live manifest reachable — building against ${FETCH_BASE}"
+else
+    STATIC_DIR="${SCRIPT_DIR}/../static"
+    LOCAL_MANIFEST="${STATIC_DIR}/manifest.json"
+    if [ ! -f "${LOCAL_MANIFEST}" ]; then
+        echo "  ✗ Live manifest unreachable AND no local static/manifest.json to fall back to."
+        echo "    Start the server (python3 app.py) + tunnel, or restore static/manifest.json, then rebuild."
+        exit 1
+    fi
+    # Build a docroot whose layout matches the public site: /manifest.json + /static/...
+    # so the manifest's relative icon paths (/static/icons/...) resolve correctly.
+    LOCAL_DOCROOT="$(mktemp -d)"
+    ln -s "${LOCAL_MANIFEST}" "${LOCAL_DOCROOT}/manifest.json"
+    ln -s "${STATIC_DIR}" "${LOCAL_DOCROOT}/static"
+    LOCAL_PORT=8765
+    python3 -m http.server "${LOCAL_PORT}" --bind 127.0.0.1 --directory "${LOCAL_DOCROOT}" >/dev/null 2>&1 &
+    LOCAL_SRV_PID=$!
+    for _w in 1 2 3 4 5; do
+        if curl -fsS --max-time 3 "http://127.0.0.1:${LOCAL_PORT}/manifest.json" -o /dev/null 2>/dev/null; then break; fi
+        sleep 1
+    done
+    if ! curl -fsS --max-time 3 "http://127.0.0.1:${LOCAL_PORT}/manifest.json" -o /dev/null 2>/dev/null; then
+        echo "  ✗ Could not start local fallback manifest server on port ${LOCAL_PORT}."
+        exit 1
+    fi
+    FETCH_BASE="http://127.0.0.1:${LOCAL_PORT}"
+    echo "  ⚠ Live manifest unreachable — serving repo static/ from ${FETCH_BASE} for this build."
+    echo "    (Runtime app origin remains https://${DOMAIN}.)"
+fi
+
 echo "=== Step 3: Generate TWA project (no prompts — write twa-manifest.json directly) ==="
 rm -rf twa-project && mkdir twa-project && cd twa-project
 
@@ -125,9 +183,9 @@ cat > twa-manifest.json << TWAMF
   "backgroundColor": "#020617",
   "enableNotifications": true,
   "startUrl": "/",
-  "iconUrl": "https://${DOMAIN}/static/icons/icon-512.png",
-  "maskableIconUrl": "https://${DOMAIN}/static/icons/android/launchericon-512x512.png",
-  "monochromeIconUrl": "https://${DOMAIN}/static/icons/android/launchericon-512x512.png",
+  "iconUrl": "${FETCH_BASE}/static/icons/icon-512.png",
+  "maskableIconUrl": "${FETCH_BASE}/static/icons/android/launchericon-512x512.png",
+  "monochromeIconUrl": "${FETCH_BASE}/static/icons/android/launchericon-512x512.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
     "path": "${KEYSTORE_ABS}",
@@ -137,13 +195,13 @@ cat > twa-manifest.json << TWAMF
   "appVersionName": "${VERSION_NAME}",
   "appVersionCode": ${VERSION_CODE},
   "shortcuts": [
-    { "name": "Businesses", "shortName": "Biz",   "url": "https://${DOMAIN}/businesses", "chosenIconUrl": "https://${DOMAIN}/static/icons/icon-192.png" },
-    { "name": "Market",     "shortName": "Market", "url": "https://${DOMAIN}/market",     "chosenIconUrl": "https://${DOMAIN}/static/icons/icon-192.png" },
-    { "name": "Banks",      "shortName": "Banks",  "url": "https://${DOMAIN}/banks",      "chosenIconUrl": "https://${DOMAIN}/static/icons/icon-192.png" },
-    { "name": "P2P",        "shortName": "P2P",    "url": "https://${DOMAIN}/p2p",        "chosenIconUrl": "https://${DOMAIN}/static/icons/icon-192.png" }
+    { "name": "Businesses", "shortName": "Biz",   "url": "https://${DOMAIN}/businesses", "chosenIconUrl": "${FETCH_BASE}/static/icons/icon-192.png" },
+    { "name": "Market",     "shortName": "Market", "url": "https://${DOMAIN}/market",     "chosenIconUrl": "${FETCH_BASE}/static/icons/icon-192.png" },
+    { "name": "Banks",      "shortName": "Banks",  "url": "https://${DOMAIN}/banks",      "chosenIconUrl": "${FETCH_BASE}/static/icons/icon-192.png" },
+    { "name": "P2P",        "shortName": "P2P",    "url": "https://${DOMAIN}/p2p",        "chosenIconUrl": "${FETCH_BASE}/static/icons/icon-192.png" }
   ],
   "generatorApp": "bubblewrap-cli",
-  "webManifestUrl": "https://${DOMAIN}/manifest.json",
+  "webManifestUrl": "${FETCH_BASE}/manifest.json",
   "fallbackType": "customtabs",
   "features": { "playBilling": { "enabled": true } },
   "alphaDependencies": { "enabled": false },
