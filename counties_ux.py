@@ -1315,111 +1315,93 @@ async def county_mining_node(
 
     db.close()
 
-    return f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Mining Node · {county.name} · Wadsworth</title>
-        {_skin_links(player.id)}
-        {COUNTY_STYLES}
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h1>Mining Node</h1>
-                <div>
-                    <a href="/county/{county_id}" class="nav-link">Back to County</a>
-                    <a href="/exchange" class="nav-link">Crypto Exchange</a>
-                </div>
+    return f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mining Node · {county.name} · Wadsworth</title>
+    {_skin_links(player.id, "crypto")}
+    {COUNTY_STYLES}
+</head>
+<body>
+<div class="container" style="max-width:960px;">
+
+    <!-- TW-style back nav -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+        <a href="/county/{county_id}" style="color:#64748b;font-size:20px;text-decoration:none;">&#8592;</a>
+        <div>
+            <div style="font-size:18px;font-weight:700;color:#f1f5f9;">Mining Node</div>
+            <div style="font-size:12px;color:#64748b;">{county.crypto_name} · {county.name}</div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:8px;">
+            <a href="/token/{county.crypto_symbol}" class="btn" style="font-size:12px;padding:6px 14px;">Token Info</a>
+            <a href="/exchange" class="btn btn-primary" style="font-size:12px;padding:6px 14px;">Exchange</a>
+        </div>
+    </div>
+
+    {alert_html}
+
+    <!-- TW balance header -->
+    <div style="background:linear-gradient(135deg,#0f0a2e,#1a0a3e);border:1px solid #4c1d95;border-radius:24px;padding:24px;margin-bottom:20px;text-align:center;">
+        <div style="font-size:12px;color:#a78bfa;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Your {county.crypto_symbol} Balance</div>
+        <div style="font-size:36px;font-weight:800;color:#f1f5f9;letter-spacing:-1px;">{crypto_balance:,.6f} <span style="font-size:18px;color:#a78bfa;">{county.crypto_symbol}</span></div>
+        <div style="font-size:14px;color:#64748b;margin-top:4px;">{fmt_usd(crypto_balance * crypto_price, disp, precision=4)} &bull; Total mined: <strong style="color:#4ade80;">{total_mined:,.4f}</strong></div>
+    </div>
+
+    <!-- Stats row -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
+        <div style="background:#0d0f1e;border:1px solid #1e293b;border-radius:16px;padding:14px;text-align:center;">
+            <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Block Reward</div>
+            <div style="font-size:20px;font-weight:700;color:#a78bfa;">{block_reward:,.6f}</div>
+            <div style="font-size:11px;color:#475569;">halving #{halvings}</div>
+        </div>
+        <div style="background:#0d0f1e;border:1px solid #1e293b;border-radius:16px;padding:14px;text-align:center;">
+            <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Supply Minted</div>
+            <div class="supply-bar" style="margin:8px 0 4px;">
+                <div class="supply-bar-fill" style="width:{min(supply_pct, 100):.1f}%;">{supply_pct:.1f}%</div>
             </div>
+            <div style="font-size:11px;color:#475569;">{circ_supply:,.0f} / {max_supply:,.0f}</div>
+        </div>
+        <div style="background:#0d0f1e;border:1px solid #1e293b;border-radius:16px;padding:14px;text-align:center;">
+            <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Energy Pool</div>
+            <div style="font-size:20px;font-weight:700;color:#38bdf8;">{fmt_usd(county.mining_energy_pool, disp)}</div>
+            <div style="font-size:11px;color:#475569;">{remaining_supply:,.0f} remaining</div>
+        </div>
+    </div>
 
-            {alert_html}
+    <!-- Deposit card -->
+    <div class="card" style="margin-bottom:16px;">
+        <div style="font-size:15px;font-weight:700;color:#f1f5f9;margin-bottom:4px;">Deposit to Mine</div>
+        <div style="font-size:12px;color:#64748b;margin-bottom:16px;">Your city currency is burned as energy. You earn {county.crypto_symbol} proportional to your contribution.</div>
+        {deposit_form}
+    </div>
 
-            <div class="mining-node" style="margin-bottom: 16px;">
-                <h2 style="color: #a78bfa; margin-bottom: 16px;">{county.crypto_name} Mining Node</h2>
-                <p style="color: #94a3b8; margin-bottom: 20px;">
-                    Deposit your city's currency into the mining node. Deposits are consumed as mining energy
-                    and you receive <span class="badge badge-crypto">{county.crypto_symbol}</span> cryptocurrency
-                    in return. Mining payouts occur every hour, distributing rewards proportionally to depositors.
-                </p>
-
-                <div class="grid grid-3" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:20px;">
-                    <div>
-                        <h3 style="color: #a78bfa;">Your {county.crypto_symbol} Balance</h3>
-                        <div class="wallet-balance">{crypto_balance:,.6f}</div>
-                        <div class="wallet-value">{fmt_usd(crypto_balance * crypto_price, disp, precision=4)}</div>
-                    </div>
-                    <div>
-                        <h3 style="color: #a78bfa;">Total Mined</h3>
-                        <div class="wallet-balance">{total_mined:,.6f}</div>
-                        <div class="wallet-value">{fmt_usd(total_mined * crypto_price, disp, precision=4)}</div>
-                    </div>
-                    <div>
-                        <h3 style="color: #a78bfa;">Node Energy Pool</h3>
-                        <div class="wallet-balance">{fmt_usd(county.mining_energy_pool, disp)}</div>
-                        <div class="wallet-value">Total energy available</div>
-                    </div>
-                </div>
-
-                <div class="grid grid-3" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:20px;">
-                    <div style="background:#0b1220;border-radius:8px;padding:12px;text-align:center;">
-                        <div style="font-size:11px;color:#64748b;text-transform:uppercase;">Block Reward</div>
-                        <div style="font-size:18px;font-weight:700;color:#a78bfa;">{block_reward:,.6f}</div>
-                        <div style="font-size:11px;color:#64748b;">{county.crypto_symbol}/payout (halving {halvings})</div>
-                    </div>
-                    <div style="background:#0b1220;border-radius:8px;padding:12px;text-align:center;">
-                        <div style="font-size:11px;color:#64748b;text-transform:uppercase;">Supply Progress</div>
-                        <div class="supply-bar" style="margin:6px 0;">
-                            <div class="supply-bar-fill" style="width:{min(supply_pct, 100):.1f}%;">{supply_pct:.1f}%</div>
-                        </div>
-                        <div style="font-size:11px;color:#64748b;">{circ_supply:,.2f} / {max_supply:,.0f}</div>
-                    </div>
-                    <div style="background:#0b1220;border-radius:8px;padding:12px;text-align:center;">
-                        <div style="font-size:11px;color:#64748b;text-transform:uppercase;">Remaining to Mine</div>
-                        <div style="font-size:18px;font-weight:700;color:#4ade80;">{remaining_supply:,.2f}</div>
-                        <div style="font-size:11px;color:#64748b;"><a href="/token/{county.crypto_symbol}" class="nav-link" style="margin:0;">View Token Info</a></div>
-                    </div>
-                </div>
-
-                {deposit_form}
+    <!-- How it works -->
+    <div class="card" style="margin-bottom:16px;">
+        <div style="font-size:14px;font-weight:700;color:#a78bfa;margin-bottom:12px;">How Mining Works</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div style="font-size:13px;color:#94a3b8;line-height:1.6;">
+                <strong style="color:#f1f5f9;">Energy System</strong><br>
+                Deposit your city currency as mining energy. Energy powers the blockchain — without it, no transactions can occur. Rewards distribute proportionally each hour.
             </div>
-
-            <div class="card">
-                <h2>How Mining Works</h2>
-                <div class="grid grid-2" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-                    <div>
-                        <h3>Energy System</h3>
-                        <p style="color: #94a3b8; font-size: 13px;">
-                            City members deposit their respective city currency into the mining node.
-                            The node consumes those deposits as <strong>mining energy</strong>.
-                            This energy powers the entire blockchain - without energy, no transactions
-                            (buys, sells, swaps) can occur on the exchange.
-                        </p>
-                    </div>
-                    <div>
-                        <h3>Halving & Supply Cap</h3>
-                        <p style="color: #94a3b8; font-size: 13px;">
-                            Like Bitcoin, <span class="badge badge-crypto">{county.crypto_symbol}</span> has a
-                            <strong>max supply of {max_supply:,.0f}</strong> tokens. Mining rewards start at
-                            50 tokens/payout and halve every {HALVING_INTERVAL:,.0f} tokens minted.
-                            Current reward: <strong>{block_reward:,.6f}</strong>.
-                            Rewards decrease over time, making early mining more valuable.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <h2>Your Recent Deposits</h2>
-                {deposits_html}
+            <div style="font-size:13px;color:#94a3b8;line-height:1.6;">
+                <strong style="color:#f1f5f9;">Halving &amp; Supply Cap</strong><br>
+                Like Bitcoin, <strong>{county.crypto_symbol}</strong> caps at <strong>{max_supply:,.0f}</strong> tokens. Rewards start at 50/payout and halve every {HALVING_INTERVAL:,.0f} minted. Current: <strong style="color:#a78bfa;">{block_reward:,.6f}</strong>.
             </div>
         </div>
-    {_nav_loader()}
-    </body>
-    </html>
-    """
+    </div>
+
+    <!-- Recent deposits -->
+    <div class="card">
+        <div style="font-size:14px;font-weight:700;color:#f1f5f9;margin-bottom:12px;">Your Recent Deposits</div>
+        {deposits_html}
+    </div>
+
+</div>
+{_nav_loader()}
+</body>
+</html>"""
 
 
 # ==========================
@@ -1432,79 +1414,23 @@ async def crypto_exchange(
     error: Optional[str] = Query(None),
     symbol: Optional[str] = Query(None),
 ):
-    """Wadsworth Crypto Exchange - buy, sell, swap crypto."""
+    """Explore — Uniswap-style token table for all county L1 tokens and
+    municipal stablecoins. Portfolio lives on /crypto (Wallet tab); swapping
+    lives in the shared swap card (/crypto?tab=swap)."""
     player = get_current_player(session_token)
     if not player:
         return RedirectResponse(url="/login", status_code=303)
 
-    from reserve_banks import (
-        get_player_display_currency, fmt_usd,
-        get_player_currency_balances, get_player_legal_tender,
-    )
+    from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
 
-    # Uniswap-style swap card (shared with the Crypto Hub) replaces the old
-    # three separate Buy / Sell / Swap form panels.
-    from crypto_theme import build_swap_tokens, swap_card_html
-    _swap_tokens, _eff_fee_pct, _exec_bonus = build_swap_tokens(player.id)
-    swap_card = swap_card_html(_swap_tokens, _eff_fee_pct, _exec_bonus, redirect="/exchange")
-
-    # --- Multi-currency cash holdings ---
-    player_tender = get_player_legal_tender(player.id)
-    player_currencies = get_player_currency_balances(player.id)
-    primary_foreign = next(
-        (b for b in player_currencies if b["currency_code"] == player_tender),
-        None,
-    )
-    # Effective USD spending power for the buy form max= attribute.
-    # spend_player_funds() tries foreign balance first, then falls back to USD —
-    # so the max is whichever is larger (can't combine both in one payment).
-    if primary_foreign and player_tender != "USD":
-        max_buy_usd = max(primary_foreign["usd_value"], player.cash_balance)
-    else:
-        max_buy_usd = player.cash_balance
-
-    # Header cash label: show primary tender, include USD equivalent
-    if primary_foreign and player_tender != "USD":
-        sym = primary_foreign["currency_symbol"]
-        bal = primary_foreign["balance"]
-        usd_eq = primary_foreign["usd_value"]
-        cash_header = (
-            f'{sym}{bal:,.2f}\u00a0{player_tender}'
-            f' <span style="color:#475569;">(≈\u00a0{fmt_usd(usd_eq, disp)})</span>'
-        )
-        if player.cash_balance > 0.005:
-            cash_header += (
-                f' <span style="color:#475569;font-size:11px;">'
-                f'+ {fmt_usd(player.cash_balance, disp)} USD</span>'
-            )
-    else:
-        cash_header = fmt_usd(player.cash_balance, disp)
-
-    # Buy form: accept input in the player's actual legal tender, not USD.
-    # The API endpoint converts to USD before calling buy_crypto_with_cash().
-    if primary_foreign and player_tender != "USD":
-        buy_currency_code   = player_tender
-        buy_currency_symbol = primary_foreign["currency_symbol"]
-        buy_max             = primary_foreign["balance"]
-        # Approximate USD rate: usd_value / balance (matches _get_usd_rate)
-        buy_usd_per_unit = (
-            primary_foreign["usd_value"] / primary_foreign["balance"]
-            if primary_foreign["balance"] > 0 else 1.0
-        )
-    else:
-        buy_currency_code   = "USD"
-        buy_currency_symbol = "$"
-        buy_max             = player.cash_balance
-        buy_usd_per_unit    = 1.0
-
-    from counties import get_all_counties, get_player_wallets, County
-    from cities import get_db, get_all_city_stable_coins, get_player_stable_coin_balances
-
-    wallets = get_player_wallets(player.id)
+    from counties import get_all_counties
+    from cities import get_all_city_stable_coins, get_player_stable_coin_balances
     counties = get_all_counties()
     city_stable_coins = get_all_city_stable_coins()
     player_sc_balances = {b["city_id"]: b for b in get_player_stable_coin_balances(player.id)}
+
+    from crypto_theme import coin_icon
 
     alert_html = ""
     if msg:
@@ -1512,153 +1438,57 @@ async def crypto_exchange(
     if error:
         alert_html = f'<div class="alert alert-error">{error}</div>'
 
-    # Portfolio summary
-    total_portfolio_value = sum(w["value"] for w in wallets)
-    # Cash holdings card (shown above crypto wallets)
-    cash_rows = ""
-    if primary_foreign and player_tender != "USD":
-        sym = primary_foreign["currency_symbol"]
-        bal = primary_foreign["balance"]
-        usd_eq = primary_foreign["usd_value"]
-        cash_rows += f'''
-        <div class="wallet-card" style="border-color:#22c55e22;">
-            <div style="display:flex;justify-content:space-between;align-items:center;">
-                <div>
-                    <span class="badge" style="background:#14532d;color:#4ade80;">{player_tender}</span>
-                    <span class="wallet-balance" style="margin-left:12px;color:#4ade80;">{sym}{bal:,.4f}</span>
-                    <span class="wallet-value">(≈ {fmt_usd(usd_eq, disp)} · spendable on exchange)</span>
-                </div>
-                <div style="font-size:11px;color:#64748b;">Primary legal tender</div>
-            </div>
-        </div>'''
-    if player.cash_balance > 0.005:
-        cash_rows += f'''
-        <div class="wallet-card" style="border-color:#3b82f622;">
-            <div style="display:flex;justify-content:space-between;align-items:center;">
-                <div>
-                    <span class="badge" style="background:#1e3a5f;color:#60a5fa;">USD</span>
-                    <span class="wallet-balance" style="margin-left:12px;color:#60a5fa;">{fmt_usd(player.cash_balance, disp)}</span>
-                    <span class="wallet-value">(spendable on exchange)</span>
-                </div>
-                <div style="font-size:11px;color:#64748b;">USD cash balance</div>
-            </div>
-        </div>'''
-
-    wallets_html = ""
-    if wallets:
-        wallets_html = '<div style="margin-bottom: 20px;">'
-        wallets_html += cash_rows
-        for w in wallets:
-            wallets_html += f'''
-            <div class="wallet-card">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <span class="badge badge-crypto">{w["symbol"]}</span>
-                        <span class="wallet-balance" style="margin-left: 12px;">{w["balance"]:.6f}</span>
-                        <span class="wallet-value">({fmt_usd(w["value"], disp)} @ {fmt_usd(w["price"], disp)}/unit)</span>
-                    </div>
-                    <div style="font-size: 12px; color: #94a3b8;">
-                        Mined: {w["total_mined"]:.6f} | Bought: {w["total_bought"]:.6f} | Sold: {w["total_sold"]:.6f}
-                    </div>
-                </div>
-            </div>
-            '''
-        wallets_html += '</div>'
-    elif cash_rows:
-        wallets_html = f'<div style="margin-bottom:20px;">{cash_rows}</div>'
-    else:
-        wallets_html = '<p style="color: #94a3b8; margin-bottom: 20px;">You have no crypto yet. Mine some through a County Mining Node or buy on this exchange.</p>'
-
-    # Available cryptos dropdown
-    crypto_options = ""
-    for c in counties:
-        selected = 'selected' if symbol and symbol == c["crypto_symbol"] else ""
-        crypto_options += f'<option value="{c["crypto_symbol"]}" {selected}>{c["crypto_symbol"]} - {c["crypto_name"]} ({fmt_usd(c["crypto_price"], disp, precision=4)})</option>'
-
-    # Wallet options for selling
-    sell_options = ""
-    for w in wallets:
-        if w["balance"] > 0:
-            selected = 'selected' if symbol and symbol == w["symbol"] else ""
-            sell_options += f'<option value="{w["symbol"]}" {selected}>{w["symbol"]} (Balance: {w["balance"]:.6f})</option>'
-
-    # Market overview table with full data
-    market_html = '''
-    <table class="table">
-        <thead><tr>
-            <th></th><th>Token</th><th>Price</th><th>24h</th>
-            <th>Market Cap</th><th>Circ. Supply</th><th>Max Supply</th>
-            <th>Treasury</th><th>Energy</th>
-        </tr></thead>
-        <tbody>
-    '''
-    for c in counties:
+    # ── Uniswap Explore token table ──────────────────────────────────────
+    ranked = sorted(counties, key=lambda c: c.get("market_cap", 0.0), reverse=True)
+    token_rows = ""
+    for i, c in enumerate(ranked, 1):
         change = c.get("price_change_24h", 0.0)
-        if change > 0:
-            change_html = f'<span class="stat-value positive">+{change:.2f}%</span>'
-        elif change < 0:
-            change_html = f'<span class="stat-value negative">{change:.2f}%</span>'
-        else:
-            change_html = '<span style="color:#94a3b8;">0.00%</span>'
-        logo = c.get("logo_svg", "")
-        logo_html = f'<span style="display:inline-block;width:18px;height:18px;vertical-align:middle;">{logo}</span>' if logo else ""
-        market_html += f'''
-        <tr>
-            <td>{logo_html}</td>
-            <td><a href="/token/{c["crypto_symbol"]}" style="text-decoration:none;color:#e5e7eb;">
-                <span class="badge badge-crypto">{c["crypto_symbol"]}</span>
-                <span style="margin-left:4px;">{c["crypto_name"]}</span>
-            </a></td>
-            <td class="stat-value crypto">{fmt_usd(c["crypto_price"], disp, precision=4)}</td>
-            <td>{change_html}</td>
-            <td>{fmt_usd(c.get("market_cap", 0), disp)}</td>
-            <td>{c.get("circulating_supply", 0):,.2f}</td>
-            <td>{c.get("max_supply", 0):,.0f}</td>
-            <td>{fmt_usd(c.get("treasury_balance", 0), disp)}</td>
-            <td>{fmt_usd(c["mining_energy"], disp)}</td>
-        </tr>
-        '''
-    market_html += '</tbody></table>'
+        chg_cls = "positive" if change >= 0 else "negative"
+        chg_txt = f"{'▲' if change >= 0 else '▼'} {abs(change):.2f}%"
+        token_rows += f"""
+        <tr class="xp-row" data-name="{c['crypto_name'].lower()} {c['crypto_symbol'].lower()}"
+            onclick="location.href='/token/{c['crypto_symbol']}'">
+            <td class="xp-rank">{i}</td>
+            <td><div style="display:flex;align-items:center;gap:10px;">
+                {coin_icon(c['crypto_symbol'], 30)}
+                <div><div style="font-weight:700;">{c['crypto_name']}</div>
+                <div style="font-size:.68rem;color:#707694;">{c['crypto_symbol']} · {c['name']}</div></div>
+            </div></td>
+            <td style="font-weight:700;">{fmt_usd(c['crypto_price'], disp, precision=4)}</td>
+            <td class="{chg_cls}" style="font-weight:700;">{chg_txt}</td>
+            <td>{fmt_usd(c.get('market_cap', 0), disp)}</td>
+            <td>{c.get('circulating_supply', 0):,.0f}</td>
+            <td>{fmt_usd(c.get('treasury_balance', 0), disp)}</td>
+            <td>{fmt_usd(c['mining_energy'], disp)}</td>
+        </tr>"""
+
+    # ── Stablecoins table (same Explore style) ───────────────────────────
+    sc_rows = ""
+    for sc in city_stable_coins:
+        my_bal = player_sc_balances.get(sc["city_id"], {}).get("balance", 0.0)
+        ratio_pct = sc["backing_ratio"] * 100
+        ratio_color = "#22c55e" if ratio_pct >= 100 else ("#f59e0b" if ratio_pct >= 50 else "#ef4444")
+        sc_rows += f"""
+        <tr class="xp-row" data-name="{sc.get('display_name', sc['city_name']).lower()} {sc['symbol'].lower()}"
+            onclick="location.href='/city/{sc['city_id']}'">
+            <td></td>
+            <td><div style="display:flex;align-items:center;gap:10px;">
+                {coin_icon(sc['symbol'], 30)}
+                <div><div style="font-weight:700;">{sc.get('display_name', sc['city_name'])}</div>
+                <div style="font-size:.68rem;color:#707694;">{sc['symbol']} · city stablecoin</div></div>
+            </div></td>
+            <td style="font-weight:700;">{fmt_usd(1.0, disp)}</td>
+            <td style="color:{ratio_color};font-weight:700;">{ratio_pct:.0f}% backed</td>
+            <td>{fmt_usd(sc['supply'], disp)}</td>
+            <td>{sc['supply']:,.0f}</td>
+            <td colspan="2" style="color:#34d399;">You hold: {my_bal:,.4f} {sc['symbol']}</td>
+        </tr>"""
+    if not sc_rows:
+        sc_rows = ('<tr><td colspan="8" style="color:#707694;text-align:center;padding:22px;">'
+                   'No cities have issued a stablecoin yet — build an Office of the '
+                   'Comptroller to level 12 to unlock this.</td></tr>')
 
     ticker_html = get_crypto_ticker_html(disp)
-
-    # Build stable coin section HTML as a plain string to avoid nested-f-string issues
-    if city_stable_coins:
-        sc_rows = ""
-        for sc in city_stable_coins:
-            my_bal = player_sc_balances.get(sc["city_id"], {}).get("balance", 0.0)
-            ratio_pct = sc["backing_ratio"] * 100
-            ratio_color = "#22c55e" if ratio_pct >= 100 else ("#f59e0b" if ratio_pct >= 50 else "#ef4444")
-            sym = sc["symbol"]
-            supply_fmt = f'{sc["supply"]:,.2f}'
-            bal_fmt = f'{my_bal:,.4f}'
-            sc_rows += (
-                f'<div class="wallet-card" style="border-color:#7c3aed33;margin-bottom:8px;">'
-                f'<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">'
-                f'<div>'
-                f'<span class="badge" style="background:#3b0764;color:#c4b5fd;">{sym}</span>'
-                f'<span style="margin-left:10px;font-weight:600;color:#e2e8f0;">{sc.get("display_name", sc["city_name"])}</span>'
-                f'<span style="margin-left:8px;font-size:12px;color:#64748b;">'
-                f'Supply: {supply_fmt} &nbsp;&middot;&nbsp; '
-                f'Backing: <span style="color:{ratio_color};">{ratio_pct:.1f}%</span>'
-                f' &nbsp;&middot;&nbsp; Peg: 1 {sym} = $1.00 USD'
-                f'</span>'
-                f'</div>'
-                f'<div style="text-align:right;">'
-                f'<span style="color:#34d399;font-weight:600;">Your balance: {bal_fmt} {sym}</span><br>'
-                f'<a href="/city/{sc["city_id"]}" style="font-size:11px;color:#7c3aed;">Redeem on city page ↗</a>'
-                f'</div>'
-                f'</div>'
-                f'</div>'
-            )
-        sc_exchange_html = sc_rows
-    else:
-        sc_exchange_html = (
-            '<p style="color:#64748b;font-size:13px;">'
-            'No cities have issued a stable coin yet. '
-            'Build an Office of the Comptroller to level 12 to unlock this.'
-            '</p>'
-        )
 
     return f"""
     <!DOCTYPE html>
@@ -1666,57 +1496,82 @@ async def crypto_exchange(
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Wadsworth Crypto Exchange</title>
-        {_skin_links(player.id)}
+        <title>Explore Tokens — Wadsworth Crypto</title>
+        {_skin_links(player.id, "crypto")}
         {COUNTY_STYLES}
+        <style>
+        .xp-head {{ display:flex; align-items:center; justify-content:space-between;
+                    gap:14px; flex-wrap:wrap; margin:6px 0 14px; }}
+        .xp-title {{ font-size:1.5rem; font-weight:800; letter-spacing:-.01em; }}
+        .xp-search {{ flex:1; min-width:220px; max-width:380px; position:relative; }}
+        .xp-search input {{ width:100%; padding:11px 14px 11px 38px; border-radius:999px !important;
+                           font-size:.85rem; }}
+        .xp-search::before {{ content:'🔍'; position:absolute; left:13px; top:50%;
+                             transform:translateY(-50%); font-size:.8rem; opacity:.6; }}
+        .xp-tabs {{ display:flex; gap:6px; margin-bottom:12px; }}
+        .xp-tab {{ padding:8px 16px; border-radius:999px; font-size:.78rem; font-weight:700;
+                   color:#707694; cursor:pointer; background:none; border:none; font-family:inherit; }}
+        .xp-tab.on {{ background:linear-gradient(120deg,#f97316,#a855f7); color:#fff; }}
+        .xp-row {{ cursor:pointer; }}
+        .xp-rank {{ color:#707694; font-size:.75rem; width:34px; }}
+        .table th:nth-child(n+5), .table td:nth-child(n+5) {{ text-align:right; }}
+        @media (max-width:720px) {{
+            .table th:nth-child(n+6), .table td:nth-child(n+6) {{ display:none; }}
+        }}
+        </style>
     </head>
     <body>
         <div class="container" style="padding-bottom: 50px;">
-            <div class="header">
-                <h1>Wadsworth Crypto Exchange</h1>
-                <div>
-                    <span style="color: #94a3b8;">Cash: {cash_header}</span>
-                    <a href="/counties" class="nav-link">Counties</a>
-                    <a href="/" class="nav-link">Dashboard</a>
-                </div>
-            </div>
-
             {alert_html}
 
-            <div class="exchange-panel" style="margin-bottom: 16px;">
-                <h2 style="color: #38bdf8; margin-bottom: 4px;">Your Portfolio</h2>
-                <p style="color: #94a3b8; margin-bottom: 16px;">Total crypto value: <strong style="color: #a78bfa;">{fmt_usd(total_portfolio_value, disp)}</strong></p>
-                {wallets_html}
+            <div class="xp-head">
+                <div class="xp-title">Explore</div>
+                <div class="xp-search"><input type="text" id="xp-q" placeholder="Search tokens"
+                     oninput="xpFilter(this.value)"></div>
             </div>
 
-            <!-- Uniswap-style swap card (shared with /crypto hub).
-                 Routes Cash ↔ Native, Native ↔ Native, Native ↔ WSC, WSC → Cash
-                 automatically — replaces the old Buy / Sell / Swap panels. -->
-            {swap_card}
-            <p style="text-align:center;font-size:.7rem;color:#707694;margin:10px 0 16px;">
-                Gas is charged per chain on top of the exchange fee —
-                <a href="/gas-tracker">live gas tracker ⛽</a>
-            </p>
-
-            <div class="card">
-                <h2>Market Overview &nbsp;<a href="/gas-tracker" style="font-size:12px;color:#38bdf8;font-weight:400;">⛽ Gas Tracker ↗</a></h2>
-                <p style="color: #94a3b8; font-size: 13px; margin-bottom: 12px;">
-                    Click any token symbol to view full tokenomics. Prices are pegged to total member wealth / 1B.
-                    All tokens have a max supply of 21M with Bitcoin-like halving rewards.
-                </p>
-                {market_html if counties else '<p style="color: #64748b;">No cryptocurrencies exist yet.</p>'}
+            <div class="xp-tabs">
+                <button class="xp-tab on" id="xpt-tokens" onclick="xpTab('tokens')">Tokens</button>
+                <button class="xp-tab" id="xpt-stable" onclick="xpTab('stable')">Stablecoins</button>
+                <a class="xp-tab" href="/gas-tracker" style="text-decoration:none;">⛽ Gas</a>
+                <a class="xp-tab" href="/crypto?tab=swap" style="text-decoration:none;">🔄 Swap</a>
             </div>
 
-            <div class="card" style="border-color:#7c3aed44;">
-                <h2 style="color:#a78bfa;">🪙 Municipal Stable Coins</h2>
-                <p style="color:#94a3b8;font-size:13px;margin-bottom:12px;">
-                    Issued by cities with an Office of the Comptroller at level 12.
-                    Each coin is redeemable 1:1 for USD from the issuing city's cash reserves.
-                    Visit the city page to redeem your balance.
-                </p>
-                {sc_exchange_html}
+            <div class="card" id="xp-tokens" style="padding:6px 14px;">
+                <table class="table">
+                    <thead><tr>
+                        <th>#</th><th>Token</th><th>Price</th><th>24h</th>
+                        <th>Market Cap</th><th>Circ. Supply</th><th>Treasury</th><th>Energy</th>
+                    </tr></thead>
+                    <tbody>{token_rows if token_rows else '<tr><td colspan="8" style="color:#707694;text-align:center;padding:22px;">No tokens exist yet.</td></tr>'}</tbody>
+                </table>
+            </div>
+
+            <div class="card" id="xp-stable" style="padding:6px 14px;display:none;">
+                <table class="table">
+                    <thead><tr>
+                        <th></th><th>Stablecoin</th><th>Peg</th><th>Backing</th>
+                        <th>Market Cap</th><th>Supply</th><th colspan="2">Your Balance</th>
+                    </tr></thead>
+                    <tbody>{sc_rows}</tbody>
+                </table>
             </div>
         </div>
+
+        <script>
+        function xpTab(t) {{
+            document.getElementById('xp-tokens').style.display = t === 'tokens' ? 'block' : 'none';
+            document.getElementById('xp-stable').style.display = t === 'stable' ? 'block' : 'none';
+            document.getElementById('xpt-tokens').classList.toggle('on', t === 'tokens');
+            document.getElementById('xpt-stable').classList.toggle('on', t === 'stable');
+        }}
+        function xpFilter(q) {{
+            q = q.toLowerCase().trim();
+            document.querySelectorAll('.xp-row').forEach(function(r) {{
+                r.style.display = !q || (r.dataset.name || '').indexOf(q) >= 0 ? '' : 'none';
+            }});
+        }}
+        </script>
         {ticker_html}
     {_nav_loader()}
     </body>
@@ -1975,6 +1830,16 @@ async def token_info_page(
 
     ticker_html = get_crypto_ticker_html()
 
+    # Uniswap TDP: pre-filled swap card (buy this token with cash) docked on
+    # the right column, sticky on desktop.
+    from crypto_theme import build_swap_tokens, swap_card_html
+    _swap_tokens, _eff_fee_pct, _exec_bonus = build_swap_tokens(player.id)
+    swap_card = swap_card_html(
+        _swap_tokens, _eff_fee_pct, _exec_bonus,
+        redirect=f"/token/{crypto_symbol}",
+        default_in="CASH", default_out=crypto_symbol,
+    )
+
     return f"""
     <!DOCTYPE html>
     <html>
@@ -1982,20 +1847,33 @@ async def token_info_page(
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{info["crypto_name"]} ({crypto_symbol}) · Token Info</title>
-        {_skin_links(player.id)}
+        {_skin_links(player.id, "crypto")}
         {COUNTY_STYLES}
+        <style>
+        /* Uniswap TDP layout: content left, sticky swap card right */
+        .tdp-grid {{ display: grid; grid-template-columns: minmax(0,1fr) 420px; gap: 18px;
+                     align-items: start; }}
+        .tdp-side {{ position: sticky; top: 14px; }}
+        .tdp-side .uni-card {{ margin: 0 0 14px; max-width: none; }}
+        @media (max-width: 980px) {{
+            .tdp-grid {{ grid-template-columns: 1fr; }}
+            .tdp-side {{ position: static; }}
+        }}
+        </style>
     </head>
     <body>
         <div class="container" style="padding-bottom: 50px;">
             <div class="header">
-                <h1>Token Info</h1>
+                <h1>{info["crypto_name"]}</h1>
                 <div>
-                    <a href="/exchange?symbol={crypto_symbol}" class="nav-link">Trade</a>
-                    <a href="/exchange" class="nav-link">Exchange</a>
                     <a href="/county/{info['county_id']}" class="nav-link">{info['county_name']}</a>
-                    <a href="/" class="nav-link">Dashboard</a>
+                    <a href="/county/{info['county_id']}/mining" class="nav-link">Mine</a>
+                    <a href="/county/{info['county_id']}/governance" class="nav-link">Governance</a>
                 </div>
             </div>
+
+            <div class="tdp-grid">
+            <div class="tdp-main">
 
             <!-- Hero Section -->
             <div class="token-hero">
@@ -2021,22 +1899,6 @@ async def token_info_page(
                     <span>24h High: <strong style="color:#4ade80;">{fmt_usd(info["high_24h"], disp, precision=4)}</strong></span>
                     <span>24h Low: <strong style="color:#f87171;">{fmt_usd(info["low_24h"], disp, precision=4)}</strong></span>
                     <span>24h Volume: <strong style="color:#38bdf8;">{fmt_usd(info["volume_24h"], disp)}</strong></span>
-                </div>
-            </div>
-
-            <!-- Your Holdings -->
-            <div class="card">
-                <h2>Your Holdings</h2>
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <div>
-                        <div class="wallet-balance">{player_balance:,.6f} {crypto_symbol}</div>
-                        <div class="wallet-value">{fmt_usd(player_value, disp, precision=4)}</div>
-                    </div>
-                    <div style="display:flex;gap:8px;">
-                        <a href="/exchange?symbol={crypto_symbol}" class="btn btn-primary btn-sm">Buy</a>
-                        <a href="/exchange?symbol={crypto_symbol}" class="btn btn-crypto btn-sm">Sell</a>
-                        <a href="/county/{info['county_id']}/mining" class="btn btn-secondary btn-sm">Mine</a>
-                    </div>
                 </div>
             </div>
 
@@ -2189,6 +2051,29 @@ async def token_info_page(
                 </p>
                 {holders_html}
             </div>
+
+            </div><!-- /tdp-main -->
+
+            <!-- Right column: sticky swap card + your position (Uniswap TDP) -->
+            <div class="tdp-side">
+                {swap_card}
+                <div class="card">
+                    <h2>Your Position</h2>
+                    <div class="stat">
+                        <span class="stat-label">Balance</span>
+                        <span class="stat-value crypto">{player_balance:,.6f} {crypto_symbol}</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Value</span>
+                        <span class="stat-value">{fmt_usd(player_value, disp, precision=4)}</span>
+                    </div>
+                    <div style="margin-top:10px;display:flex;gap:8px;">
+                        <a href="/county/{info['county_id']}/mining" class="btn btn-secondary btn-sm">⛏️ Mine {crypto_symbol}</a>
+                        <a href="/memecoins?county={info['county_id']}" class="btn btn-secondary btn-sm">🚀 Memes</a>
+                    </div>
+                </div>
+            </div>
+            </div><!-- /tdp-grid -->
         </div>
         {ticker_html}
     {_nav_loader()}
@@ -2873,19 +2758,21 @@ async def county_governance(
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Governance · {county.name} · Wadsworth</title>
-        {_skin_links(player.id)}
+        {_skin_links(player.id, "crypto")}
         {COUNTY_STYLES}
     </head>
     <body>
-        <div class="container">
-            <div class="header">
-                <h1>Governance Voting</h1>
+        <div class="container" style="max-width:960px;">
+            <!-- DAO-style back nav -->
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+                <a href="/county/{county_id}" style="color:#64748b;font-size:20px;text-decoration:none;">&#8592;</a>
                 <div>
-                    <span style="color: #94a3b8;">{county.name}</span>
-                    <a href="/county/{county_id}" class="nav-link">County</a>
-                    <a href="/county/{county_id}/mining" class="nav-link">Mining</a>
-                    <a href="/exchange" class="nav-link">Exchange</a>
-                    <a href="/" class="nav-link">Dashboard</a>
+                    <div style="font-size:18px;font-weight:700;color:#f1f5f9;">Governance</div>
+                    <div style="font-size:12px;color:#64748b;">{county.name} · {county.crypto_symbol} DAO</div>
+                </div>
+                <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+                    <span style="font-size:12px;color:#a78bfa;">Balance: <strong>{crypto_balance:,.4f} {county.crypto_symbol}</strong></span>
+                    <a href="/county/{county_id}/mining" class="btn" style="font-size:12px;padding:6px 14px;">Mining</a>
                 </div>
             </div>
 

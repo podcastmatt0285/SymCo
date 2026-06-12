@@ -331,55 +331,50 @@ async def memecoins_hub(
         for s, label in sort_options
     )
 
-    if memes:
-        cards_html = '<div class="grid grid-3">'
-        for m in memes:
-            logo = m["logo_svg"]
-            logo_html = f'<span class="logo-cell">{logo}</span>' if logo else '<span class="logo-cell logo-placeholder">🪙</span>'
-            change = m["price_change_24h"]
-            if change > 0:
-                chg_html = f'<span class="positive">+{change:.2f}%</span>'
-            elif change < 0:
-                chg_html = f'<span class="negative">{change:.2f}%</span>'
-            else:
-                chg_html = '<span class="neutral">0.00%</span>'
-
-            mining_pct = 0
-            if m["mining_allocation"] > 0:
-                mining_pct = min(100, m["mining_minted"] / m["mining_allocation"] * 100)
-
-            cards_html += f'''
-            <a href="/memecoins/{m["symbol"]}" class="meme-card">
-                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-                    {logo_html}
-                    <div>
-                        <span class="badge badge-meme">{m["symbol"]}</span>
-                        <span style="margin-left:6px;font-weight:600;">{m["name"]}</span>
-                    </div>
-                    <div style="margin-left:auto;">{chg_html}</div>
-                </div>
-                <div style="font-size:20px;font-weight:700;color:#f59e0b;margin-bottom:4px;">
-                    {m["last_price"]:.6f} <span style="font-size:12px;color:#a78bfa;">{m["native_symbol"]}</span>
-                </div>
-                <div style="font-size:11px;color:#64748b;margin-bottom:8px;">
-                    on <span style="color:#a78bfa;">{m["county_name"]}</span> chain
-                </div>
-                <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">{(m["description"] or "")[:80]}{"..." if len(m["description"] or "") > 80 else ""}</div>
-                <div class="mining-bar-bg"><div class="mining-bar-fill" style="width:{mining_pct:.1f}%"></div></div>
-                <div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b;margin-top:4px;">
-                    <span>Mining: {mining_pct:.1f}%</span>
-                    <span>Holders: {m["holder_count"]}</span>
-                    <span>Vol: {m["total_volume_native"]:,.2f}</span>
-                </div>
-                <div style="font-size:11px;color:#475569;margin-top:6px;">by {m["creator_name"]}</div>
-            </a>
-            '''
-        cards_html += '</div>'
-    else:
-        cards_html = '<div class="card" style="text-align:center;padding:40px;color:#475569;">No meme coins have been launched yet. Be the first!</div>'
-
     total_volume = sum(m["total_volume_native"] for m in memes)
     total_trades = sum(m["total_trades"] for m in memes)
+
+    if memes:
+        rows_html = ""
+        for i, m in enumerate(memes, 1):
+            logo = m["logo_svg"]
+            logo_html = logo if logo else f'<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:16px;">🪙</div>'
+            change = m["price_change_24h"]
+            if change > 0:
+                chg_html = f'<span style="color:#22c55e;font-weight:600;">+{change:.2f}%</span>'
+            elif change < 0:
+                chg_html = f'<span style="color:#ef4444;font-weight:600;">{change:.2f}%</span>'
+            else:
+                chg_html = '<span style="color:#64748b;">0.00%</span>'
+            vol_k = m["total_volume_native"] / 1000
+            vol_str = f'{vol_k:.1f}K' if vol_k >= 1 else f'{m["total_volume_native"]:.2f}'
+            mc = m.get("market_cap", m["last_price"] * m.get("total_supply", 0))
+            mc_k = mc / 1000
+            mc_str = f'{mc_k:.1f}K' if mc_k >= 1 else f'{mc:.2f}'
+            rows_html += f"""<tr class="xp-row" data-name="{m['name'].lower()} {m['symbol'].lower()}" onclick="location.href='/memecoins/{m['symbol']}'">
+  <td class="xp-rank">{i}</td>
+  <td><div style="display:flex;align-items:center;gap:10px;">{logo_html}<div><div style="font-weight:600;color:#f1f5f9;">{m['name']}</div><div style="font-size:11px;color:#64748b;">{m['symbol']} · {m['county_name']}</div></div></div></td>
+  <td style="text-align:right;font-weight:600;color:#f59e0b;">{m['last_price']:.6f} <span style="font-size:10px;color:#a78bfa;">{m['native_symbol']}</span></td>
+  <td style="text-align:right;">{chg_html}</td>
+  <td style="text-align:right;color:#94a3b8;">{vol_str}</td>
+  <td style="text-align:right;color:#94a3b8;">{mc_str}</td>
+  <td style="text-align:right;color:#94a3b8;">{m['holder_count']}</td>
+</tr>"""
+        table_html = f"""<div class="card" style="padding:0;overflow:hidden;">
+<table class="table xp-table" style="margin:0;">
+<thead><tr>
+  <th class="xp-rank">#</th>
+  <th>Token</th>
+  <th style="text-align:right;">Price</th>
+  <th style="text-align:right;">24h %</th>
+  <th style="text-align:right;">Volume</th>
+  <th style="text-align:right;">Mkt Cap</th>
+  <th style="text-align:right;">Holders</th>
+</tr></thead>
+<tbody id="meme-rows">{rows_html}</tbody>
+</table></div>"""
+    else:
+        table_html = '<div class="card" style="text-align:center;padding:60px;color:#475569;">No meme coins launched yet. Be the first!</div>'
 
     return f"""<!DOCTYPE html>
 <html>
@@ -387,59 +382,74 @@ async def memecoins_hub(
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Meme Coins — Wadsworth</title>
-    {_skin_links(player.id, "memecoins")}
+    {_skin_links(player.id, "crypto")}
     {MEME_STYLES}
     <style>
-    .sort-tab {{
-        display: inline-block;
-        padding: 5px 12px;
-        background: #0f172a;
-        border: 1px solid #1e293b;
-        border-radius: 6px;
-        color: #64748b;
-        font-size: 12px;
-        text-decoration: none;
-        transition: border-color 0.15s, color 0.15s;
-    }}
-    .sort-tab:hover {{ color: #f59e0b; border-color: #f59e0b; text-decoration: none; }}
-    .sort-tab.active {{ color: #f59e0b; border-color: #f59e0b; background: rgba(245,158,11,0.08); }}
-    .logo-placeholder {{ font-size: 22px; }}
+    .xp-table {{ border-collapse:collapse;width:100%; }}
+    .xp-table thead tr {{ background:#0d0f1e;border-bottom:1px solid #1e293b; }}
+    .xp-table th {{ padding:10px 14px;font-size:11px;color:#64748b;font-weight:600;letter-spacing:.05em;text-transform:uppercase; }}
+    .xp-row {{ cursor:pointer;border-bottom:1px solid #0f172a;transition:background .12s; }}
+    .xp-row:hover {{ background:rgba(99,102,241,.08); }}
+    .xp-row td {{ padding:12px 14px;font-size:13px; }}
+    .xp-rank {{ color:#475569;font-size:12px;width:36px;text-align:center; }}
+    .meme-search {{ background:#0d0f1e;border:1px solid #1e293b;border-radius:12px;padding:10px 16px;color:#f1f5f9;font-size:14px;width:100%;box-sizing:border-box;outline:none; }}
+    .meme-search:focus {{ border-color:#7c3aed; }}
+    .sort-pill {{ display:inline-block;padding:6px 14px;border-radius:999px;background:#0f172a;border:1px solid #1e293b;color:#64748b;font-size:12px;text-decoration:none;transition:all .15s; }}
+    .sort-pill:hover,.sort-pill.active {{ background:rgba(124,58,237,.15);border-color:#7c3aed;color:#a78bfa;text-decoration:none; }}
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="header">
+<div class="container" style="max-width:1100px;">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
         <div>
-            <h1>🚀 Meme Coins</h1>
-            <div style="font-size:12px;color:#64748b;margin-top:4px;">
-                Community-launched tokens across all county blockchains
-            </div>
+            <h1 style="margin:0;font-size:22px;font-weight:700;color:#f1f5f9;">Meme Coins</h1>
+            <div style="font-size:12px;color:#64748b;margin-top:2px;">Community tokens across all county chains</div>
         </div>
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
             {launch_html}
-            <a href="/exchange" class="nav-link">Exchange</a>
-            <a href="/wallet" class="nav-link">Portfolio</a>
-            <a href="/" class="nav-link">Dashboard</a>
         </div>
     </div>
 
     {alert_html}
 
-    <div class="card" style="margin-bottom:14px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-            <div style="font-size:13px;color:#94a3b8;">
-                <strong style="color:#f59e0b;">{len(memes)}</strong> active coins &nbsp;·&nbsp;
-                <strong style="color:#a78bfa;">{total_volume:,.2f}</strong> total volume &nbsp;·&nbsp;
-                <strong style="color:#38bdf8;">{total_trades:,}</strong> total trades
-            </div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                {sort_tabs}
-            </div>
+    <!-- Stats strip -->
+    <div style="display:flex;gap:20px;margin-bottom:18px;flex-wrap:wrap;">
+        <div style="background:#0d0f1e;border:1px solid #1e293b;border-radius:16px;padding:12px 20px;min-width:120px;">
+            <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.05em;">Tokens</div>
+            <div style="font-size:22px;font-weight:700;color:#f59e0b;">{len(memes)}</div>
+        </div>
+        <div style="background:#0d0f1e;border:1px solid #1e293b;border-radius:16px;padding:12px 20px;min-width:120px;">
+            <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.05em;">Total Volume</div>
+            <div style="font-size:22px;font-weight:700;color:#a78bfa;">{total_volume:,.0f}</div>
+        </div>
+        <div style="background:#0d0f1e;border:1px solid #1e293b;border-radius:16px;padding:12px 20px;min-width:120px;">
+            <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.05em;">Total Trades</div>
+            <div style="font-size:22px;font-weight:700;color:#38bdf8;">{total_trades:,}</div>
         </div>
     </div>
 
-    {cards_html}
+    <!-- Search + filter bar -->
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
+        <div style="flex:1;min-width:200px;">
+            <input class="meme-search" id="meme-search" placeholder="Search tokens..." oninput="filterMemes()" />
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            {' '.join(f'<a href="/memecoins?sort={s}" class="sort-pill{" active" if s == sort else ""}">{label}</a>' for s,label in sort_options)}
+        </div>
+    </div>
+
+    {table_html}
+
 </div>
+<script>
+function filterMemes() {{
+    var q = document.getElementById('meme-search').value.toLowerCase();
+    document.querySelectorAll('#meme-rows tr').forEach(function(r) {{
+        r.style.display = !q || r.dataset.name.includes(q) ? '' : 'none';
+    }});
+}}
+</script>
 {_nav_loader()}
 </body>
 </html>"""
@@ -545,7 +555,7 @@ async def county_memecoins(
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>{county.name} Meme Coins</title>
-    {_skin_links(player.id, "memecoins")}
+    {_skin_links(player.id, "crypto")}
     {MEME_STYLES}
 </head>
 <body>
@@ -626,7 +636,7 @@ async def launch_meme_form(
 <head>
     <meta charset="utf-8">
     <title>Launch Meme Coin</title>
-    {_skin_links(player.id, "memecoins")}
+    {_skin_links(player.id, "crypto")}
     {MEME_STYLES}
 </head>
 <body>
@@ -1002,7 +1012,7 @@ async def meme_coin_page(
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>{detail["name"]} ({symbol})</title>
-    {_skin_links(player.id, "memecoins")}
+    {_skin_links(player.id, "crypto")}
     {MEME_STYLES}
 </head>
 <body>
@@ -1112,6 +1122,39 @@ async def meme_coin_page(
 
             <!-- Order Book -->
             <div>
+                <!-- Uniswap-style quick trade card (chart left, trade right) -->
+                <div class="card" style="padding:14px;border-radius:24px;">
+                    <div style="display:flex;gap:4px;background:#12152b;border-radius:999px;padding:4px;margin-bottom:12px;">
+                        <button id="qt-buy"  onclick="qtSide('buy')"  style="flex:1;border:none;border-radius:999px;padding:9px;font-weight:800;cursor:pointer;font-family:inherit;background:linear-gradient(120deg,#16a34a,#22c55e);color:#fff;">Buy</button>
+                        <button id="qt-sell" onclick="qtSide('sell')" style="flex:1;border:none;border-radius:999px;padding:9px;font-weight:800;cursor:pointer;font-family:inherit;background:none;color:#707694;">Sell</button>
+                    </div>
+                    <div style="display:flex;gap:6px;margin-bottom:10px;">
+                        <button id="qt-market" onclick="qtMode('market')" style="border:1px solid #1c2040;background:#a855f7;color:#fff;border-radius:999px;padding:5px 13px;font-size:.7rem;font-weight:700;cursor:pointer;font-family:inherit;">Market</button>
+                        <button id="qt-limit"  onclick="qtMode('limit')"  style="border:1px solid #1c2040;background:none;color:#707694;border-radius:999px;padding:5px 13px;font-size:.7rem;font-weight:700;cursor:pointer;font-family:inherit;">Limit</button>
+                    </div>
+                    <div style="background:#12152b;border-radius:16px;padding:11px 13px;margin-bottom:8px;">
+                        <div style="font-size:.66rem;color:#707694;margin-bottom:5px;">Quantity ({symbol})</div>
+                        <input id="qt-qty" type="number" min="1" step="1" placeholder="0" oninput="qtCalc()"
+                               style="width:100%;background:none;border:none;outline:none;color:#e6e8f5;font-size:1.25rem;font-weight:600;font-family:inherit;">
+                    </div>
+                    <div id="qt-price-box" style="display:none;background:#12152b;border-radius:16px;padding:11px 13px;margin-bottom:8px;">
+                        <div style="font-size:.66rem;color:#707694;margin-bottom:5px;">Limit price ({detail["native_symbol"]} per {symbol})</div>
+                        <input id="qt-price" type="number" min="0.000001" step="0.000001" placeholder="{price_placeholder}" oninput="qtCalc()"
+                               style="width:100%;background:none;border:none;outline:none;color:#e6e8f5;font-size:1.25rem;font-weight:600;font-family:inherit;">
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:.66rem;color:#707694;margin-bottom:10px;">
+                        <span id="qt-est">—</span>
+                        <span>Bal: <span id="qt-bal-buy">{native_balance:.4f} {detail["native_symbol"]}</span><span id="qt-bal-sell" style="display:none;">{meme_balance:,.4f} {symbol}</span></span>
+                    </div>
+                    <button id="qt-go" onclick="qtSubmit()"
+                            style="width:100%;border:none;border-radius:16px;padding:13px;font-size:.92rem;font-weight:800;cursor:pointer;font-family:inherit;background:linear-gradient(120deg,#16a34a,#22c55e);color:#fff;">
+                        Buy {symbol}
+                    </button>
+                    <div style="text-align:center;font-size:.62rem;color:#707694;margin-top:8px;">
+                        2% fee (1% creator · 0.5% treasury · 0.5% burn) + gas · 0% tax 🕶️
+                    </div>
+                </div>
+
                 <div class="card" style="padding:10px;">
                     <h2>Order Book</h2>
                     <div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b;padding:4px 8px;margin-bottom:4px;">
@@ -1418,6 +1461,84 @@ async def meme_coin_page(
 <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 
 <script>
+// ==========================
+// QUICK TRADE CARD (Uniswap-style, chart view right column)
+// ==========================
+var qtS = 'buy', qtM = 'market';
+var QT_LAST = {detail["last_price"] or 0};
+function qtSide(s) {{
+    qtS = s;
+    var b = document.getElementById('qt-buy'), sl = document.getElementById('qt-sell');
+    b.style.background  = s === 'buy'  ? 'linear-gradient(120deg,#16a34a,#22c55e)' : 'none';
+    b.style.color       = s === 'buy'  ? '#fff' : '#707694';
+    sl.style.background = s === 'sell' ? 'linear-gradient(120deg,#dc2626,#ef4444)' : 'none';
+    sl.style.color      = s === 'sell' ? '#fff' : '#707694';
+    var go = document.getElementById('qt-go');
+    go.style.background = s === 'buy' ? 'linear-gradient(120deg,#16a34a,#22c55e)' : 'linear-gradient(120deg,#dc2626,#ef4444)';
+    go.textContent = (s === 'buy' ? 'Buy ' : 'Sell ') + '{symbol}';
+    document.getElementById('qt-bal-buy').style.display  = s === 'buy'  ? 'inline' : 'none';
+    document.getElementById('qt-bal-sell').style.display = s === 'sell' ? 'inline' : 'none';
+    qtCalc();
+}}
+function qtMode(m) {{
+    qtM = m;
+    document.getElementById('qt-market').style.background = m === 'market' ? '#a855f7' : 'none';
+    document.getElementById('qt-market').style.color      = m === 'market' ? '#fff' : '#707694';
+    document.getElementById('qt-limit').style.background  = m === 'limit'  ? '#a855f7' : 'none';
+    document.getElementById('qt-limit').style.color       = m === 'limit'  ? '#fff' : '#707694';
+    document.getElementById('qt-price-box').style.display = m === 'limit' ? 'block' : 'none';
+    qtCalc();
+}}
+function qtCalc() {{
+    var q = parseFloat(document.getElementById('qt-qty').value) || 0;
+    var p = qtM === 'limit' ? (parseFloat(document.getElementById('qt-price').value) || 0) : QT_LAST;
+    var el = document.getElementById('qt-est');
+    if (q > 0 && p > 0) {{
+        el.textContent = (qtS === 'buy' ? '≈ cost ' : '≈ receive ') +
+            (q * p).toLocaleString(undefined, {{maximumFractionDigits: 6}}) + ' {detail["native_symbol"]}';
+    }} else el.textContent = '—';
+}}
+function qtToast(msg, ok) {{
+    var el = document.getElementById('qt-toast');
+    if (!el) {{
+        el = document.createElement('div'); el.id = 'qt-toast';
+        el.style.cssText = 'position:fixed;bottom:26px;left:50%;transform:translateX(-50%);padding:13px 24px;'
+          + 'border-radius:14px;font-size:.88rem;font-weight:700;z-index:9999;max-width:92vw;text-align:center;'
+          + 'box-shadow:0 6px 24px rgba(0,0,0,.5);transition:opacity .3s;';
+        document.body.appendChild(el);
+    }}
+    el.textContent = msg;
+    el.style.background = ok ? '#14532d' : '#7f1d1d';
+    el.style.color = ok ? '#bbf7d0' : '#fecaca';
+    el.style.opacity = '1';
+    clearTimeout(el._t);
+    el._t = setTimeout(function() {{ el.style.opacity = '0'; }}, 4200);
+}}
+function qtSubmit() {{
+    var q = parseFloat(document.getElementById('qt-qty').value) || 0;
+    if (q <= 0) {{ qtToast('Enter a quantity.', false); return; }}
+    var fd = new FormData();
+    fd.set('order_type', qtS);
+    fd.set('order_mode', qtM);
+    fd.set('quantity', q);
+    if (qtM === 'limit') {{
+        var p = parseFloat(document.getElementById('qt-price').value) || 0;
+        if (p <= 0) {{ qtToast('Enter a limit price.', false); return; }}
+        fd.set('price', p);
+    }}
+    fd.set('ajax', '1');
+    var go = document.getElementById('qt-go');
+    go.disabled = true; go.textContent = 'Placing…';
+    fetch('/api/memecoins/{symbol}/order', {{method: 'POST', body: fd}})
+        .then(function(r) {{ return r.json(); }})
+        .then(function(d) {{
+            qtToast(d.message || d.error || (d.ok ? 'Order placed!' : 'Order failed'), !!d.ok);
+            if (d.ok) setTimeout(function() {{ location.reload(); }}, 1400);
+            else {{ go.disabled = false; qtSide(qtS); }}
+        }})
+        .catch(function() {{ qtToast('Network error.', false); go.disabled = false; qtSide(qtS); }});
+}}
+
 // ==========================
 // TAB SWITCHING
 // ==========================
@@ -2421,7 +2542,7 @@ async def wallet_dashboard(
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Wadsworth Crypto Wallet</title>
-    {_skin_links(player.id, "memecoins")}
+    {_skin_links(player.id, "crypto")}
     {MEME_STYLES}
     {_WALLET_STYLES}
 

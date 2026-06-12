@@ -275,12 +275,17 @@ SWAP_CARD_STYLES = """
 
 
 def swap_card_html(swap_tokens: list, eff_fee_pct: float, exec_bonus: float = 0.0,
-                   redirect: str = "/crypto?tab=swap") -> str:
+                   redirect: str = "/crypto?tab=swap",
+                   default_in: str = None, default_out: str = None) -> str:
     """Return the full Uniswap-style swap card (styles + HTML + JS) for a page.
 
     swap_tokens: [{"sym","name","type"(cash|wsc|native),"price","balance"}, ...]
+    default_in/default_out: pre-select a pair (e.g. token detail pages pass
+    default_out=<that token> so the card is ready to buy it, Uniswap-style).
     """
     tokens_json = json.dumps(swap_tokens)
+    d_in  = json.dumps(default_in)
+    d_out = json.dumps(default_out)
     fee_note = (f'(exec bonus −{exec_bonus * 100:.0f}%)' if exec_bonus > 0 else "")
     return SWAP_CARD_STYLES + f"""
 <div class="uni-card">
@@ -313,7 +318,13 @@ def swap_card_html(swap_tokens: list, eff_fee_pct: float, exec_bonus: float = 0.
 var TOKENS = {tokens_json};
 var FEE = {eff_fee_pct / 100:.6f};
 var CB_REDIRECT = {json.dumps(redirect)};
-var tokIn = TOKENS[0], tokOut = TOKENS.length > 2 ? TOKENS[2] : TOKENS[1];
+function cbFind(sym) {{
+  for (var i = 0; i < TOKENS.length; i++) if (TOKENS[i].sym === sym) return TOKENS[i];
+  return null;
+}}
+var tokIn  = cbFind({d_in})  || TOKENS[0];
+var tokOut = cbFind({d_out}) || (TOKENS.length > 2 ? TOKENS[2] : TOKENS[1]);
+if (tokIn.sym === tokOut.sym) tokIn = TOKENS[0].sym === tokOut.sym ? TOKENS[1] : TOKENS[0];
 
 function cbToast(msg, ok) {{
   var el = document.getElementById('cb-toast');
