@@ -2268,13 +2268,16 @@ async def register(
                     spend_player_funds(prior.id, fine)
             except Exception as _fine_err:
                 print(f"[Auth] Multi-account fine error: {_fine_err}")
+            # Capture before commit/close — accessing prior.business_name on a
+            # detached instance raises DetachedInstanceError and 500s the signup.
+            prior_name = prior.business_name
             db.commit()
 
             db.close()
             import urllib.parse
             msg = (
                 f"Account banned: an account already exists from this connection. "
-                f"Your primary account ({prior.business_name}) has been fined "
+                f"Your primary account ({prior_name}) has been fined "
                 f"${MULTI_ACCOUNT_FINE:,.0f} and received a credit score penalty."
             )
             return RedirectResponse(
