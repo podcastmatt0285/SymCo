@@ -45,14 +45,19 @@ def get_current_player(session_token: Optional[str]):
 HUB_STYLES = """
 <style>
 :root {
-  --bg: #05060f; --panel: #0c0e1d; --panel2: #12152b; --line: #1c2040;
-  --txt: #e6e8f5; --mut: #707694; --grad: linear-gradient(120deg,#f97316,#a855f7);
-  --green: #22c55e; --red: #ef4444; --accent: #a855f7; --accent2: #f97316;
+  /* Bridged to the skin system — skin vars win, TW/Uniswap palette is the fallback.
+     NB: --accent is NOT redefined here; the player's skin (+ modules/crypto.css) owns it. */
+  --bg: var(--bg-page, #05060f); --panel: var(--bg-card, #0c0e1d);
+  --panel2: var(--bg-card-2, #12152b); --line: var(--border, #1c2040);
+  --txt: var(--text-primary, #e6e8f5); --mut: var(--text-muted, #707694);
+  --grad: var(--grad-bar, linear-gradient(120deg,#f97316,#a855f7));
+  --green: var(--color-success, #22c55e); --red: var(--color-danger, #ef4444);
+  --accent2: var(--accent-2, #f97316);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: var(--bg); color: var(--txt);
        font-family: 'Inter','Segoe UI',system-ui,sans-serif; min-height: 100vh; }
-a { color: #38bdf8; text-decoration: none; }
+a { color: var(--color-sky,#38bdf8); text-decoration: none; }
 .hub-wrap { max-width: 760px; margin: 0 auto; padding: 16px 14px 90px; }
 
 /* ── Header ───────────────────────────────────────────── */
@@ -66,7 +71,7 @@ a { color: #38bdf8; text-decoration: none; }
 /* ── Total balance (Trust Wallet style) ───────────────── */
 .tw-balance { text-align: center; padding: 18px 0 6px; }
 .tw-balance .lbl { font-size: .7rem; color: var(--mut); text-transform: uppercase; letter-spacing: .14em; }
-.tw-balance .val { font-size: 2.3rem; font-weight: 800; margin-top: 4px; letter-spacing: -.02em; }
+.tw-balance .val { font-size: clamp(1.3rem, 7vw, 2.3rem); font-weight: 800; margin-top: 4px; letter-spacing: -.02em; overflow-wrap: anywhere; }
 .tw-balance .sub { font-size: .75rem; color: var(--mut); margin-top: 4px; }
 .tax-badge { display: inline-flex; align-items: center; gap: 5px; margin-top: 10px;
   background: #052e16; border: 1px solid #14532d; color: #4ade80;

@@ -304,12 +304,12 @@ async def memecoins_hub(
                 launch_html = f'<a href="/memecoins/launch?county_id={player_county.id}" class="btn btn-meme">+ Launch Meme Coin</a>'
             else:
                 launch_html = (
-                    f'<span style="color:#94a3b8;font-size:13px;">'
+                    f'<span style="color:var(--text-secondary,#94a3b8);font-size:13px;">'
                     f'Need {MEME_CREATION_FEE_NATIVE:.0f} {player_county.crypto_symbol} to launch'
                     f'</span>'
                 )
         else:
-            launch_html = '<span style="color:#475569;font-size:12px;">Join a county to launch your own coin</span>'
+            launch_html = '<span style="color:var(--text-faint,#475569);font-size:12px;">Join a county to launch your own coin</span>'
     finally:
         county_db.close()
 
@@ -338,14 +338,14 @@ async def memecoins_hub(
         rows_html = ""
         for i, m in enumerate(memes, 1):
             logo = m["logo_svg"]
-            logo_html = logo if logo else f'<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:16px;">🪙</div>'
+            logo_html = logo if logo else f'<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--color-warning,#f59e0b),var(--accent,#a78bfa));display:flex;align-items:center;justify-content:center;font-size:16px;">🪙</div>'
             change = m["price_change_24h"]
             if change > 0:
-                chg_html = f'<span style="color:#22c55e;font-weight:600;">+{change:.2f}%</span>'
+                chg_html = f'<span style="color:var(--color-success,#22c55e);font-weight:600;">+{change:.2f}%</span>'
             elif change < 0:
-                chg_html = f'<span style="color:#ef4444;font-weight:600;">{change:.2f}%</span>'
+                chg_html = f'<span style="color:var(--color-danger,#ef4444);font-weight:600;">{change:.2f}%</span>'
             else:
-                chg_html = '<span style="color:#64748b;">0.00%</span>'
+                chg_html = '<span style="color:var(--text-muted,#64748b);">0.00%</span>'
             vol_k = m["total_volume_native"] / 1000
             vol_str = f'{vol_k:.1f}K' if vol_k >= 1 else f'{m["total_volume_native"]:.2f}'
             mc = m.get("market_cap", m["last_price"] * m.get("total_supply", 0))
@@ -353,12 +353,12 @@ async def memecoins_hub(
             mc_str = f'{mc_k:.1f}K' if mc_k >= 1 else f'{mc:.2f}'
             rows_html += f"""<tr class="xp-row" data-name="{m['name'].lower()} {m['symbol'].lower()}" onclick="location.href='/memecoins/{m['symbol']}'">
   <td class="xp-rank">{i}</td>
-  <td><div style="display:flex;align-items:center;gap:10px;">{logo_html}<div><div style="font-weight:600;color:#f1f5f9;">{m['name']}</div><div style="font-size:11px;color:#64748b;">{m['symbol']} · {m['county_name']}</div></div></div></td>
-  <td style="text-align:right;font-weight:600;color:#f59e0b;">{m['last_price']:.6f} <span style="font-size:10px;color:#a78bfa;">{m['native_symbol']}</span></td>
+  <td><div style="display:flex;align-items:center;gap:10px;">{logo_html}<div><div style="font-weight:600;color:var(--text-bright,#f1f5f9);">{m['name']}</div><div style="font-size:11px;color:var(--text-muted,#64748b);">{m['symbol']} · {m['county_name']}</div></div></div></td>
+  <td style="text-align:right;font-weight:600;color:var(--color-warning,#f59e0b);">{m['last_price']:.6f} <span style="font-size:10px;color:var(--accent,#a78bfa);">{m['native_symbol']}</span></td>
   <td style="text-align:right;">{chg_html}</td>
-  <td style="text-align:right;color:#94a3b8;">{vol_str}</td>
-  <td style="text-align:right;color:#94a3b8;">{mc_str}</td>
-  <td style="text-align:right;color:#94a3b8;">{m['holder_count']}</td>
+  <td style="text-align:right;color:var(--text-secondary,#94a3b8);">{vol_str}</td>
+  <td style="text-align:right;color:var(--text-secondary,#94a3b8);">{mc_str}</td>
+  <td style="text-align:right;color:var(--text-secondary,#94a3b8);">{m['holder_count']}</td>
 </tr>"""
         table_html = f"""<div class="card" style="padding:0;overflow:hidden;">
 <table class="table xp-table" style="margin:0;">
@@ -374,7 +374,7 @@ async def memecoins_hub(
 <tbody id="meme-rows">{rows_html}</tbody>
 </table></div>"""
     else:
-        table_html = '<div class="card" style="text-align:center;padding:60px;color:#475569;">No meme coins launched yet. Be the first!</div>'
+        table_html = '<div class="card" style="text-align:center;padding:60px;color:var(--text-faint,#475569);">No meme coins launched yet. Be the first!</div>'
 
     return f"""<!DOCTYPE html>
 <html>
@@ -403,8 +403,8 @@ async def memecoins_hub(
 
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
         <div>
-            <h1 style="margin:0;font-size:22px;font-weight:700;color:#f1f5f9;">Meme Coins</h1>
-            <div style="font-size:12px;color:#64748b;margin-top:2px;">Community tokens across all county chains</div>
+            <h1 style="margin:0;font-size:22px;font-weight:700;color:var(--text-bright,#f1f5f9);">Meme Coins</h1>
+            <div style="font-size:12px;color:var(--text-muted,#64748b);margin-top:2px;">Community tokens across all county chains</div>
         </div>
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
             {launch_html}
@@ -415,17 +415,17 @@ async def memecoins_hub(
 
     <!-- Stats strip -->
     <div style="display:flex;gap:20px;margin-bottom:18px;flex-wrap:wrap;">
-        <div style="background:#0d0f1e;border:1px solid #1e293b;border-radius:16px;padding:12px 20px;min-width:120px;">
-            <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.05em;">Tokens</div>
-            <div style="font-size:22px;font-weight:700;color:#f59e0b;">{len(memes)}</div>
+        <div style="background:var(--bg-card,#0d0f1e);border:1px solid var(--bg-card-2,#1e293b);border-radius:16px;padding:12px 20px;min-width:120px;">
+            <div style="font-size:11px;color:var(--text-muted,#64748b);text-transform:uppercase;letter-spacing:.05em;">Tokens</div>
+            <div style="font-size:22px;font-weight:700;color:var(--color-warning,#f59e0b);">{len(memes)}</div>
         </div>
-        <div style="background:#0d0f1e;border:1px solid #1e293b;border-radius:16px;padding:12px 20px;min-width:120px;">
-            <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.05em;">Total Volume</div>
-            <div style="font-size:22px;font-weight:700;color:#a78bfa;">{total_volume:,.0f}</div>
+        <div style="background:var(--bg-card,#0d0f1e);border:1px solid var(--bg-card-2,#1e293b);border-radius:16px;padding:12px 20px;min-width:120px;">
+            <div style="font-size:11px;color:var(--text-muted,#64748b);text-transform:uppercase;letter-spacing:.05em;">Total Volume</div>
+            <div style="font-size:22px;font-weight:700;color:var(--accent,#a78bfa);">{total_volume:,.0f}</div>
         </div>
-        <div style="background:#0d0f1e;border:1px solid #1e293b;border-radius:16px;padding:12px 20px;min-width:120px;">
-            <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.05em;">Total Trades</div>
-            <div style="font-size:22px;font-weight:700;color:#38bdf8;">{total_trades:,}</div>
+        <div style="background:var(--bg-card,#0d0f1e);border:1px solid var(--bg-card-2,#1e293b);border-radius:16px;padding:12px 20px;min-width:120px;">
+            <div style="font-size:11px;color:var(--text-muted,#64748b);text-transform:uppercase;letter-spacing:.05em;">Total Trades</div>
+            <div style="font-size:22px;font-weight:700;color:var(--color-sky,#38bdf8);">{total_trades:,}</div>
         </div>
     </div>
 
@@ -499,7 +499,7 @@ async def county_memecoins(
             launch_btn = f'<a href="/memecoins/launch?county_id={county_id}" class="btn btn-meme">+ Launch Meme Coin</a>'
         else:
             launch_btn = (
-                f'<span style="color:#94a3b8;font-size:13px;">'
+                f'<span style="color:var(--text-secondary,#94a3b8);font-size:13px;">'
                 f'Need {MEME_CREATION_FEE_NATIVE:.0f} {county.crypto_symbol} to launch '
                 f'(you have {native_balance:.4f})</span>'
             )
@@ -532,22 +532,22 @@ async def county_memecoins(
                     </div>
                     <div style="margin-left:auto;">{chg_html}</div>
                 </div>
-                <div style="font-size:20px;font-weight:700;color:#f59e0b;margin-bottom:8px;">
-                    {m["last_price"]:.6f} <span style="font-size:12px;color:#a78bfa;">{county.crypto_symbol}</span>
+                <div style="font-size:20px;font-weight:700;color:var(--color-warning,#f59e0b);margin-bottom:8px;">
+                    {m["last_price"]:.6f} <span style="font-size:12px;color:var(--accent,#a78bfa);">{county.crypto_symbol}</span>
                 </div>
-                <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">{(m["description"] or "")[:80]}{"..." if len(m["description"] or "") > 80 else ""}</div>
+                <div style="font-size:11px;color:var(--text-secondary,#94a3b8);margin-bottom:8px;">{(m["description"] or "")[:80]}{"..." if len(m["description"] or "") > 80 else ""}</div>
                 <div class="mining-bar-bg"><div class="mining-bar-fill" style="width:{mining_pct:.1f}%"></div></div>
-                <div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b;margin-top:4px;">
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted,#64748b);margin-top:4px;">
                     <span>Mining: {mining_pct:.1f}%</span>
                     <span>Holders: {m["holder_count"]}</span>
                     <span>Trades: {m["total_trades"]}</span>
                 </div>
-                <div style="font-size:11px;color:#475569;margin-top:6px;">by {m["creator_name"]}</div>
+                <div style="font-size:11px;color:var(--text-faint,#475569);margin-top:6px;">by {m["creator_name"]}</div>
             </a>
             '''
         cards_html += '</div>'
     else:
-        cards_html = '<div class="card" style="text-align:center;padding:40px;color:#475569;">No meme coins yet. Be the first to launch one!</div>'
+        cards_html = '<div class="card" style="text-align:center;padding:40px;color:var(--text-faint,#475569);">No meme coins yet. Be the first to launch one!</div>'
 
     return f"""<!DOCTYPE html>
 <html>
@@ -562,13 +562,13 @@ async def county_memecoins(
 <div class="container">
     <!-- TW-style back nav -->
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
-        <a href="/county/{county_id}" style="color:#64748b;font-size:20px;text-decoration:none;">&#8592;</a>
+        <a href="/county/{county_id}" style="color:var(--text-muted,#64748b);font-size:20px;text-decoration:none;">&#8592;</a>
         <div>
-            <div style="font-size:18px;font-weight:700;color:#f1f5f9;">{county.name} Meme Coins</div>
-            <div style="font-size:12px;color:#64748b;">{county.crypto_name} ({county.crypto_symbol}) · L2 tokens</div>
+            <div style="font-size:18px;font-weight:700;color:var(--text-bright,#f1f5f9);">{county.name} Meme Coins</div>
+            <div style="font-size:12px;color:var(--text-muted,#64748b);">{county.crypto_name} ({county.crypto_symbol}) · L2 tokens</div>
         </div>
         <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
-            <span style="font-size:12px;color:#a78bfa;">Balance: <strong>{native_balance:.4f} {county.crypto_symbol}</strong></span>
+            <span style="font-size:12px;color:var(--accent,#a78bfa);">Balance: <strong>{native_balance:.4f} {county.crypto_symbol}</strong></span>
             {launch_btn}
         </div>
     </div>
@@ -632,36 +632,36 @@ async def launch_meme_form(
 <div class="container" style="max-width:700px;">
     <!-- TW-style back nav -->
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
-        <a href="/county/{county_id}/memecoins" style="color:#64748b;font-size:20px;text-decoration:none;">&#8592;</a>
+        <a href="/county/{county_id}/memecoins" style="color:var(--text-muted,#64748b);font-size:20px;text-decoration:none;">&#8592;</a>
         <div>
-            <div style="font-size:18px;font-weight:700;color:#f1f5f9;">Launch Meme Coin</div>
-            <div style="font-size:12px;color:#64748b;">{county.name} · {county.crypto_symbol} chain</div>
+            <div style="font-size:18px;font-weight:700;color:var(--text-bright,#f1f5f9);">Launch Meme Coin</div>
+            <div style="font-size:12px;color:var(--text-muted,#64748b);">{county.name} · {county.crypto_symbol} chain</div>
         </div>
     </div>
 
     {err_html}
 
     <div class="card">
-        <div style="font-size:14px;font-weight:600;color:#f1f5f9;margin-bottom:4px;">Create a Layer-2 Token on {county.name}</div>
-        <p style="font-size:13px;color:#94a3b8;margin-bottom:16px;">
+        <div style="font-size:14px;font-weight:600;color:var(--text-bright,#f1f5f9);margin-bottom:4px;">Create a Layer-2 Token on {county.name}</div>
+        <p style="font-size:13px;color:var(--text-secondary,#94a3b8);margin-bottom:16px;">
             Your meme coin lives on the <span class="native-color">{county.crypto_name} ({county.crypto_symbol})</span> blockchain.
             All trading pairs are denominated in <span class="native-color">{county.crypto_symbol}</span>.
             Creation burns <strong class="meme-color">{MEME_CREATION_FEE_NATIVE:.0f} {county.crypto_symbol}</strong> forever.
         </p>
 
-        <div class="card" style="background:#0f172a;margin-bottom:16px;">
+        <div class="card" style="background:var(--bg-card,#0f172a);margin-bottom:16px;">
             <div class="grid grid-3">
                 <div style="text-align:center;">
-                    <div style="font-size:22px;font-weight:700;color:#f59e0b;">{int(MEME_FOUNDER_ALLOCATION_PCT*100)}%</div>
-                    <div style="font-size:11px;color:#94a3b8;">You receive immediately</div>
+                    <div style="font-size:22px;font-weight:700;color:var(--color-warning,#f59e0b);">{int(MEME_FOUNDER_ALLOCATION_PCT*100)}%</div>
+                    <div style="font-size:11px;color:var(--text-secondary,#94a3b8);">You receive immediately</div>
                 </div>
                 <div style="text-align:center;">
-                    <div style="font-size:22px;font-weight:700;color:#a78bfa;">{int(MEME_MINING_ALLOCATION_PCT*100)}%</div>
-                    <div style="font-size:11px;color:#94a3b8;">To mining pool (stakers earn)</div>
+                    <div style="font-size:22px;font-weight:700;color:var(--accent,#a78bfa);">{int(MEME_MINING_ALLOCATION_PCT*100)}%</div>
+                    <div style="font-size:11px;color:var(--text-secondary,#94a3b8);">To mining pool (stakers earn)</div>
                 </div>
                 <div style="text-align:center;">
-                    <div style="font-size:22px;font-weight:700;color:#f87171;">{MEME_CREATION_FEE_NATIVE:.0f}</div>
-                    <div style="font-size:11px;color:#94a3b8;">{county.crypto_symbol} burned (creation fee)</div>
+                    <div style="font-size:22px;font-weight:700;color:var(--color-danger-light,#f87171);">{MEME_CREATION_FEE_NATIVE:.0f}</div>
+                    <div style="font-size:11px;color:var(--text-secondary,#94a3b8);">{county.crypto_symbol} burned (creation fee)</div>
                 </div>
             </div>
         </div>
@@ -697,7 +697,7 @@ async def launch_meme_form(
                     <option value="100000000000">100,000,000,000 (100 Billion)</option>
                     <option value="1000000000000">1,000,000,000,000 (1 Trillion)</option>
                 </select>
-                <div style="font-size:11px;color:#64748b;margin-top:4px;">
+                <div style="font-size:11px;color:var(--text-muted,#64748b);margin-top:4px;">
                     You receive 10% immediately. 90% goes to the mining pool.
                 </div>
             </div>
@@ -710,25 +710,25 @@ async def launch_meme_form(
                        placeholder="Min {MEME_CREATION_FEE_NATIVE:.0f}"
                        max="{native_balance:.4f}"
                        onchange="updateBacking()" oninput="updateBacking()" required>
-                <div style="font-size:11px;color:#64748b;margin-top:4px;">
+                <div style="font-size:11px;color:var(--text-muted,#64748b);margin-top:4px;">
                     Minimum {MEME_CREATION_FEE_NATIVE:.0f} {county.crypto_symbol}.
                     Burning more sets a higher opening backing price (floor value per coin).
                 </div>
-                <div style="margin-top:8px;background:#0a0f1a;padding:8px 12px;border-radius:6px;font-size:12px;">
+                <div style="margin-top:8px;background:var(--bg-card,#0a0f1a);padding:8px 12px;border-radius:6px;font-size:12px;">
                     Opening backing price: <strong class="native-color" id="backing_price">—</strong>
                     {county.crypto_symbol} per coin (founder allocation basis)
                 </div>
             </div>
 
-            <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:12px;margin-bottom:16px;font-size:13px;">
-                <div style="color:#94a3b8;margin-bottom:6px;">Your {county.crypto_symbol} balance:
+            <div style="background:var(--bg-card,#0f172a);border:1px solid var(--bg-card-2,#1e293b);border-radius:6px;padding:12px;margin-bottom:16px;font-size:13px;">
+                <div style="color:var(--text-secondary,#94a3b8);margin-bottom:6px;">Your {county.crypto_symbol} balance:
                     <strong class="{("native-color" if native_balance >= MEME_CREATION_FEE_NATIVE else "negative")}">{native_balance:.4f}</strong>
                 </div>
-                <div style="color:#64748b;margin-bottom:4px;">
-                    Current gas fee: <strong style="color:#f59e0b;">{gas_preview:.6f} {county.crypto_symbol}</strong>
+                <div style="color:var(--text-muted,#64748b);margin-bottom:4px;">
+                    Current gas fee: <strong style="color:var(--color-warning,#f59e0b);">{gas_preview:.6f} {county.crypto_symbol}</strong>
                     (charged on top of creation burn &bull; rises with network activity)
                 </div>
-                {"<div style='color:#4ade80;'>✓ Sufficient balance to launch</div>" if native_balance >= MEME_CREATION_FEE_NATIVE else f'<div style="color:#f87171;">✗ Need {MEME_CREATION_FEE_NATIVE:.0f} {county.crypto_symbol} to launch. Mine or buy more.</div>'}
+                {"<div style='color:#4ade80;'>✓ Sufficient balance to launch</div>" if native_balance >= MEME_CREATION_FEE_NATIVE else f'<div style="color:var(--color-danger-light,#f87171);">✗ Need {MEME_CREATION_FEE_NATIVE:.0f} {county.crypto_symbol} to launch. Mine or buy more.</div>'}
             </div>
 
             <button type="submit" class="btn btn-meme"
@@ -738,8 +738,8 @@ async def launch_meme_form(
         </form>
     </div>
 
-    <div class="card" style="font-size:12px;color:#64748b;">
-        <strong style="color:#94a3b8;">How it works:</strong><br>
+    <div class="card" style="font-size:12px;color:var(--text-muted,#64748b);">
+        <strong style="color:var(--text-secondary,#94a3b8);">How it works:</strong><br>
         1. Your coin launches on the {county.name} blockchain, trading against {county.crypto_symbol}.<br>
         2. You immediately receive <strong>{int(MEME_FOUNDER_ALLOCATION_PCT*100)}%</strong> of total supply as founder allocation.<br>
         3. The remaining <strong>{int(MEME_MINING_ALLOCATION_PCT*100)}%</strong> is distributed to miners who stake {county.crypto_symbol}.<br>
@@ -823,9 +823,9 @@ async def meme_coin_page(
     # Price change styling
     change = detail["price_change_24h"]
     if change > 0:
-        chg_html = f'<span class="price-change-badge positive" style="background:#14532d;">+{change:.2f}%</span>'
+        chg_html = f'<span class="price-change-badge positive" style="background:var(--color-success-dark,#14532d);">+{change:.2f}%</span>'
     elif change < 0:
-        chg_html = f'<span class="price-change-badge negative" style="background:#7f1d1d;">{change:.2f}%</span>'
+        chg_html = f'<span class="price-change-badge negative" style="background:var(--color-danger-dark,#7f1d1d);">{change:.2f}%</span>'
     else:
         chg_html = '<span class="price-change-badge neutral" style="background:#1f2937;">0.00%</span>'
 
@@ -845,10 +845,10 @@ async def meme_coin_page(
         depth_pct = min(100, a["quantity"] / max_ask_qty * 100)
         asks_html += f'''
         <div class="order-row ask-row depth-cell">
-            <div class="depth-bar" style="width:{depth_pct:.0f}%;background:#dc2626;"></div>
+            <div class="depth-bar" style="width:{depth_pct:.0f}%;background:var(--color-danger,#dc2626);"></div>
             <span class="negative">{a["price"]:.6f}</span>
-            <span style="color:#94a3b8;">{a["quantity"]:,.2f}</span>
-            <span style="color:#64748b;">{a["price"]*a["quantity"]:.4f}</span>
+            <span style="color:var(--text-secondary,#94a3b8);">{a["quantity"]:,.2f}</span>
+            <span style="color:var(--text-muted,#64748b);">{a["price"]*a["quantity"]:.4f}</span>
         </div>'''
 
     bids_html = ""
@@ -856,10 +856,10 @@ async def meme_coin_page(
         depth_pct = min(100, b["quantity"] / max_bid_qty * 100)
         bids_html += f'''
         <div class="order-row bid-row depth-cell">
-            <div class="depth-bar" style="width:{depth_pct:.0f}%;background:#16a34a;"></div>
+            <div class="depth-bar" style="width:{depth_pct:.0f}%;background:var(--color-success,#16a34a);"></div>
             <span class="positive">{b["price"]:.6f}</span>
-            <span style="color:#94a3b8;">{b["quantity"]:,.2f}</span>
-            <span style="color:#64748b;">{b["price"]*b["quantity"]:.4f}</span>
+            <span style="color:var(--text-secondary,#94a3b8);">{b["quantity"]:,.2f}</span>
+            <span style="color:var(--text-muted,#64748b);">{b["price"]*b["quantity"]:.4f}</span>
         </div>'''
 
     best_ask = asks[0]["price"] if asks else None
@@ -882,7 +882,7 @@ async def meme_coin_page(
             <td class="positive">{t["price"]:.6f}</td>
             <td>{t["quantity"]:,.2f}</td>
             <td>{t["native_volume"]:.4f}</td>
-            <td style="color:#64748b;font-size:11px;">{t["executed_at"][:16].replace("T"," ")}</td>
+            <td style="color:var(--text-muted,#64748b);font-size:11px;">{t["executed_at"][:16].replace("T"," ")}</td>
         </tr>'''
 
     # My deposits HTML
@@ -892,22 +892,22 @@ async def meme_coin_page(
         for dep in my_deposits:
             pool_share = (dep["quantity"] / detail["mining_pool_native"] * 100) if detail["mining_pool_native"] > 0 else 0
             deposits_html += f'''
-            <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:12px;margin-bottom:8px;">
+            <div style="background:var(--bg-card,#0f172a);border:1px solid var(--bg-card-2,#1e293b);border-radius:6px;padding:12px;margin-bottom:8px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
                     <div>
                         <span class="native-color">{dep["quantity"]:.6f} {dep["native_symbol"]}</span>
-                        <span style="color:#64748b;font-size:11px;"> staked · {pool_share:.2f}% of pool</span>
-                        <div style="font-size:11px;color:#4ade80;margin-top:2px;">Earned: {dep["total_earned"]:,.4f} {symbol}</div>
+                        <span style="color:var(--text-muted,#64748b);font-size:11px;"> staked · {pool_share:.2f}% of pool</span>
+                        <div style="font-size:11px;color:var(--color-success-light,#4ade80);margin-top:2px;">Earned: {dep["total_earned"]:,.4f} {symbol}</div>
                     </div>
                     <form action="/api/memecoins/unstake" method="post" style="margin:0;text-align:right;">
                         <input type="hidden" name="deposit_id" value="{dep["id"]}">
-                        <div style="font-size:10px;color:#64748b;margin-bottom:4px;">Gas deducted on exit: {gas_fee_stake:.6f} {dep["native_symbol"]}</div>
+                        <div style="font-size:10px;color:var(--text-muted,#64748b);margin-bottom:4px;">Gas deducted on exit: {gas_fee_stake:.6f} {dep["native_symbol"]}</div>
                         <button type="submit" class="btn btn-cancel btn-sm">Unstake</button>
                     </form>
                 </div>
             </div>'''
     else:
-        deposits_html = '<p style="color:#475569;font-size:13px;">No active stakes.</p>'
+        deposits_html = '<p style="color:var(--text-faint,#475569);font-size:13px;">No active stakes.</p>'
 
     # My open orders HTML
     orders_html = ""
@@ -917,7 +917,7 @@ async def meme_coin_page(
             status_cls = f"badge-{o['status']}"
             filled_pct = (o["quantity_filled"] / o["quantity"] * 100) if o["quantity"] > 0 else 0
             orders_html += f'''
-            <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:10px;margin-bottom:6px;">
+            <div style="background:var(--bg-card,#0f172a);border:1px solid var(--bg-card-2,#1e293b);border-radius:6px;padding:10px;margin-bottom:6px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
                     <div>
                         <span class="badge {badge_cls}">{o["order_type"].upper()}</span>
@@ -925,7 +925,7 @@ async def meme_coin_page(
                         <span style="margin-left:8px;font-size:13px;">
                             {o["quantity"]:,.4f} @ {f'{o["price"]:.6f}' if o["price"] else "MARKET"}
                         </span>
-                        <span style="color:#64748b;font-size:11px;"> ({filled_pct:.0f}% filled)</span>
+                        <span style="color:var(--text-muted,#64748b);font-size:11px;"> ({filled_pct:.0f}% filled)</span>
                     </div>
                     <form action="/api/memecoins/cancel-order" method="post" style="margin:0;">
                         <input type="hidden" name="order_id" value="{o["id"]}">
@@ -935,7 +935,7 @@ async def meme_coin_page(
                 </div>
             </div>'''
     else:
-        orders_html = '<p style="color:#475569;font-size:13px;">No open orders.</p>'
+        orders_html = '<p style="color:var(--text-faint,#475569);font-size:13px;">No open orders.</p>'
 
     # Order history HTML (all statuses — catches filled/cancelled market orders too)
     history_html = ""
@@ -947,17 +947,17 @@ async def meme_coin_page(
             price_str = f'{o["price"]:.6f}' if o["price"] else "MARKET"
             ts = o["created_at"][:16].replace("T", " ")
             history_html += f'''
-            <div style="background:#0a0f1a;border:1px solid #1e293b;border-radius:6px;padding:8px 12px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;">
+            <div style="background:var(--bg-card,#0a0f1a);border:1px solid var(--bg-card-2,#1e293b);border-radius:6px;padding:8px 12px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;">
                 <div style="font-size:12px;">
                     <span class="badge {badge_cls}" style="font-size:10px;">{o["order_type"].upper()}</span>
                     <span class="badge {status_cls}" style="margin-left:3px;font-size:10px;">{o["order_mode"].upper()} · {o["status"].upper()}</span>
                     <span style="margin-left:8px;color:#cbd5e1;">{o["quantity"]:,.4f} @ {price_str}</span>
-                    <span style="color:#4ade80;margin-left:6px;">({filled_pct:.0f}% filled)</span>
+                    <span style="color:var(--color-success-light,#4ade80);margin-left:6px;">({filled_pct:.0f}% filled)</span>
                 </div>
-                <span style="color:#475569;font-size:11px;">{ts}</span>
+                <span style="color:var(--text-faint,#475569);font-size:11px;">{ts}</span>
             </div>'''
     else:
-        history_html = '<p style="color:#475569;font-size:13px;">No recent orders.</p>'
+        history_html = '<p style="color:var(--text-faint,#475569);font-size:13px;">No recent orders.</p>'
 
     # Pie chart colors
     PIE_COLORS = [
@@ -973,7 +973,7 @@ async def meme_coin_page(
         <div class="pie-legend-item">
             <div class="pie-dot" style="background:{color};"></div>
             <span style="color:#e5e7eb;">{h["name"]}</span>
-            <span style="color:#64748b;margin-left:auto;">{pct:.1f}%</span>
+            <span style="color:var(--text-muted,#64748b);margin-left:auto;">{pct:.1f}%</span>
         </div>'''
 
     holder_data_js = "[" + ",".join(
@@ -1010,11 +1010,11 @@ async def meme_coin_page(
 
     <!-- TW-style back nav -->
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
-        <a href="/county/{detail["county_id"]}/memecoins" style="color:#64748b;font-size:20px;text-decoration:none;">&#8592;</a>
+        <a href="/county/{detail["county_id"]}/memecoins" style="color:var(--text-muted,#64748b);font-size:20px;text-decoration:none;">&#8592;</a>
         <span style="display:inline-block;width:36px;height:36px;">{detail["logo_svg"]}</span>
         <div>
-            <div style="font-size:18px;font-weight:700;color:#f1f5f9;">{detail["name"]} <span class="badge badge-meme" style="font-size:12px;">{symbol}</span></div>
-            <div style="font-size:12px;color:#64748b;">on <a href="/county/{detail["county_id"]}/memecoins" style="color:#a78bfa;text-decoration:none;">{detail["native_symbol"]}</a> chain · by {detail["creator_name"]}</div>
+            <div style="font-size:18px;font-weight:700;color:var(--text-bright,#f1f5f9);">{detail["name"]} <span class="badge badge-meme" style="font-size:12px;">{symbol}</span></div>
+            <div style="font-size:12px;color:var(--text-muted,#64748b);">on <a href="/county/{detail["county_id"]}/memecoins" style="color:var(--accent,#a78bfa);text-decoration:none;">{detail["native_symbol"]}</a> chain · by {detail["creator_name"]}</div>
         </div>
         <div style="margin-left:auto;display:flex;gap:8px;">
             <a href="/wallet" class="btn" style="font-size:12px;padding:6px 14px;">&#128274; Wallet</a>
@@ -1028,9 +1028,9 @@ async def meme_coin_page(
     <div class="card" style="margin-bottom:14px;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
             <div>
-                <div class="price-big">{detail["last_price"]:.6f} <span style="font-size:14px;color:#a78bfa;">{detail["native_symbol"]}</span></div>
+                <div class="price-big">{detail["last_price"]:.6f} <span style="font-size:14px;color:var(--accent,#a78bfa);">{detail["native_symbol"]}</span></div>
                 {chg_html}
-                <div style="font-size:12px;color:#64748b;margin-top:6px;">
+                <div style="font-size:12px;color:var(--text-muted,#64748b);margin-top:6px;">
                     24h H: <span class="positive">{detail["high_24h"]:.6f}</span>
                     &nbsp; L: <span class="negative">{detail["low_24h"]:.6f}</span>
                     &nbsp; Vol: <span class="native-color">{detail["volume_24h"]:.4f} {detail["native_symbol"]}</span>
@@ -1038,19 +1038,19 @@ async def meme_coin_page(
             </div>
             <div class="grid grid-4" style="font-size:12px;gap:16px;">
                 <div style="text-align:right;">
-                    <div style="color:#64748b;">Market Cap</div>
-                    <div style="color:#f59e0b;font-weight:600;">{detail["market_cap_native"]:,.2f} {detail["native_symbol"]}</div>
+                    <div style="color:var(--text-muted,#64748b);">Market Cap</div>
+                    <div style="color:var(--color-warning,#f59e0b);font-weight:600;">{detail["market_cap_native"]:,.2f} {detail["native_symbol"]}</div>
                 </div>
                 <div style="text-align:right;">
-                    <div style="color:#64748b;">Minted Supply</div>
+                    <div style="color:var(--text-muted,#64748b);">Minted Supply</div>
                     <div>{detail["minted_supply"]:,.0f} / {detail["total_supply"]:,.0f}</div>
                 </div>
                 <div style="text-align:right;">
-                    <div style="color:#64748b;">All-Time High</div>
+                    <div style="color:var(--text-muted,#64748b);">All-Time High</div>
                     <div class="positive">{detail["all_time_high"]:.6f}</div>
                 </div>
                 <div style="text-align:right;">
-                    <div style="color:#64748b;">Holders</div>
+                    <div style="color:var(--text-muted,#64748b);">Holders</div>
                     <div>{detail["holder_count"]}</div>
                 </div>
             </div>
@@ -1062,7 +1062,7 @@ async def meme_coin_page(
         <div style="display:flex;gap:24px;flex-wrap:wrap;font-size:13px;">
             <span>Your <span class="badge badge-meme">{symbol}</span>: <strong class="meme-color">{meme_balance:,.4f}</strong></span>
             <span>Your <span class="badge badge-native">{detail["native_symbol"]}</span>: <strong class="native-color">{native_balance:.4f}</strong></span>
-            <span style="color:#64748b;">Total staked: <span class="native-color">{total_staked:.4f}</span></span>
+            <span style="color:var(--text-muted,#64748b);">Total staked: <span class="native-color">{total_staked:.4f}</span></span>
         </div>
     </div>
 
@@ -1082,7 +1082,7 @@ async def meme_coin_page(
                 <div class="card" style="padding:10px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                         <h2 style="margin:0;">{symbol}/{detail["native_symbol"]} — 1H Candles</h2>
-                        <div style="font-size:11px;color:#64748b;" id="ohlcv-display">Hover a candle to see OHLCV</div>
+                        <div style="font-size:11px;color:var(--text-muted,#64748b);" id="ohlcv-display">Hover a candle to see OHLCV</div>
                     </div>
                     <div id="chart-container"></div>
                     <!-- Volume histogram rendered in the same chart via TradingView pane -->
@@ -1098,7 +1098,7 @@ async def meme_coin_page(
                             <th>Volume</th>
                             <th>Time</th>
                         </tr></thead>
-                        <tbody>{trades_html if trades_html else '<tr><td colspan="4" style="color:#475569;text-align:center;">No trades yet</td></tr>'}</tbody>
+                        <tbody>{trades_html if trades_html else '<tr><td colspan="4" style="color:var(--text-faint,#475569);text-align:center;">No trades yet</td></tr>'}</tbody>
                     </table>
                 </div>
             </div>
@@ -1107,50 +1107,50 @@ async def meme_coin_page(
             <div>
                 <!-- Uniswap-style quick trade card (chart left, trade right) -->
                 <div class="card" style="padding:14px;border-radius:24px;">
-                    <div style="display:flex;gap:4px;background:#12152b;border-radius:999px;padding:4px;margin-bottom:12px;">
-                        <button id="qt-buy"  onclick="qtSide('buy')"  style="flex:1;border:none;border-radius:999px;padding:9px;font-weight:800;cursor:pointer;font-family:inherit;background:linear-gradient(120deg,#16a34a,#22c55e);color:#fff;">Buy</button>
-                        <button id="qt-sell" onclick="qtSide('sell')" style="flex:1;border:none;border-radius:999px;padding:9px;font-weight:800;cursor:pointer;font-family:inherit;background:none;color:#707694;">Sell</button>
+                    <div style="display:flex;gap:4px;background:var(--cpanel2,#12152b);border-radius:999px;padding:4px;margin-bottom:12px;">
+                        <button id="qt-buy"  onclick="qtSide('buy')"  style="flex:1;border:none;border-radius:999px;padding:9px;font-weight:800;cursor:pointer;font-family:inherit;background:linear-gradient(120deg,var(--color-success,#16a34a),var(--color-success,#22c55e));color:#fff;">Buy</button>
+                        <button id="qt-sell" onclick="qtSide('sell')" style="flex:1;border:none;border-radius:999px;padding:9px;font-weight:800;cursor:pointer;font-family:inherit;background:none;color:var(--cmut,#707694);">Sell</button>
                     </div>
                     <div style="display:flex;gap:6px;margin-bottom:10px;">
-                        <button id="qt-market" onclick="qtMode('market')" style="border:1px solid #1c2040;background:#a855f7;color:#fff;border-radius:999px;padding:5px 13px;font-size:.7rem;font-weight:700;cursor:pointer;font-family:inherit;">Market</button>
-                        <button id="qt-limit"  onclick="qtMode('limit')"  style="border:1px solid #1c2040;background:none;color:#707694;border-radius:999px;padding:5px 13px;font-size:.7rem;font-weight:700;cursor:pointer;font-family:inherit;">Limit</button>
+                        <button id="qt-market" onclick="qtMode('market')" style="border:1px solid var(--cline,#1c2040);background:var(--accent,#a855f7);color:#fff;border-radius:999px;padding:5px 13px;font-size:.7rem;font-weight:700;cursor:pointer;font-family:inherit;">Market</button>
+                        <button id="qt-limit"  onclick="qtMode('limit')"  style="border:1px solid var(--cline,#1c2040);background:none;color:var(--cmut,#707694);border-radius:999px;padding:5px 13px;font-size:.7rem;font-weight:700;cursor:pointer;font-family:inherit;">Limit</button>
                     </div>
-                    <div style="background:#12152b;border-radius:16px;padding:11px 13px;margin-bottom:8px;">
-                        <div style="font-size:.66rem;color:#707694;margin-bottom:5px;">Quantity ({symbol})</div>
+                    <div style="background:var(--cpanel2,#12152b);border-radius:16px;padding:11px 13px;margin-bottom:8px;">
+                        <div style="font-size:.66rem;color:var(--cmut,#707694);margin-bottom:5px;">Quantity ({symbol})</div>
                         <input id="qt-qty" type="number" min="1" step="1" placeholder="0" oninput="qtCalc()"
-                               style="width:100%;background:none;border:none;outline:none;color:#e6e8f5;font-size:1.25rem;font-weight:600;font-family:inherit;">
+                               style="width:100%;background:none;border:none;outline:none;color:var(--ctxt,#e6e8f5);font-size:1.25rem;font-weight:600;font-family:inherit;">
                     </div>
-                    <div id="qt-price-box" style="display:none;background:#12152b;border-radius:16px;padding:11px 13px;margin-bottom:8px;">
-                        <div style="font-size:.66rem;color:#707694;margin-bottom:5px;">Limit price ({detail["native_symbol"]} per {symbol})</div>
+                    <div id="qt-price-box" style="display:none;background:var(--cpanel2,#12152b);border-radius:16px;padding:11px 13px;margin-bottom:8px;">
+                        <div style="font-size:.66rem;color:var(--cmut,#707694);margin-bottom:5px;">Limit price ({detail["native_symbol"]} per {symbol})</div>
                         <input id="qt-price" type="number" min="0.000001" step="0.000001" placeholder="{price_placeholder}" oninput="qtCalc()"
-                               style="width:100%;background:none;border:none;outline:none;color:#e6e8f5;font-size:1.25rem;font-weight:600;font-family:inherit;">
+                               style="width:100%;background:none;border:none;outline:none;color:var(--ctxt,#e6e8f5);font-size:1.25rem;font-weight:600;font-family:inherit;">
                     </div>
-                    <div style="display:flex;justify-content:space-between;font-size:.66rem;color:#707694;margin-bottom:10px;">
+                    <div style="display:flex;justify-content:space-between;font-size:.66rem;color:var(--cmut,#707694);margin-bottom:10px;">
                         <span id="qt-est">—</span>
                         <span>Bal: <span id="qt-bal-buy">{native_balance:.4f} {detail["native_symbol"]}</span><span id="qt-bal-sell" style="display:none;">{meme_balance:,.4f} {symbol}</span></span>
                     </div>
                     <button id="qt-go" onclick="qtSubmit()"
-                            style="width:100%;border:none;border-radius:16px;padding:13px;font-size:.92rem;font-weight:800;cursor:pointer;font-family:inherit;background:linear-gradient(120deg,#16a34a,#22c55e);color:#fff;">
+                            style="width:100%;border:none;border-radius:16px;padding:13px;font-size:.92rem;font-weight:800;cursor:pointer;font-family:inherit;background:linear-gradient(120deg,var(--color-success,#16a34a),var(--color-success,#22c55e));color:#fff;">
                         Buy {symbol}
                     </button>
-                    <div style="text-align:center;font-size:.62rem;color:#707694;margin-top:8px;">
+                    <div style="text-align:center;font-size:.62rem;color:var(--cmut,#707694);margin-top:8px;">
                         2% fee (1% creator · 0.5% treasury · 0.5% burn) + gas · 0% tax 🕶️
                     </div>
                 </div>
 
                 <div class="card" style="padding:10px;">
                     <h2>Order Book</h2>
-                    <div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b;padding:4px 8px;margin-bottom:4px;">
+                    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted,#64748b);padding:4px 8px;margin-bottom:4px;">
                         <span>Price ({detail["native_symbol"]})</span>
                         <span>Size ({symbol})</span>
                         <span>Total</span>
                     </div>
                     <div class="order-book-side">
-                        {asks_html if asks_html else '<div style="color:#475569;text-align:center;padding:12px;font-size:12px;">No sell orders</div>'}
+                        {asks_html if asks_html else '<div style="color:var(--text-faint,#475569);text-align:center;padding:12px;font-size:12px;">No sell orders</div>'}
                     </div>
                     {spread}
                     <div class="order-book-side">
-                        {bids_html if bids_html else '<div style="color:#475569;text-align:center;padding:12px;font-size:12px;">No buy orders</div>'}
+                        {bids_html if bids_html else '<div style="color:var(--text-faint,#475569);text-align:center;padding:12px;font-size:12px;">No buy orders</div>'}
                     </div>
                 </div>
 
@@ -1159,7 +1159,7 @@ async def meme_coin_page(
                     {orders_html}
                 </div>
                 <div class="card" style="padding:10px;">
-                    <h2 style="color:#38bdf8;">Order History</h2>
+                    <h2 style="color:var(--color-sky,#38bdf8);">Order History</h2>
                     {history_html}
                 </div>
             </div>
@@ -1173,14 +1173,14 @@ async def meme_coin_page(
         {"" if bids or asks else f'''
         <div style="background:#1c1400;border:1px solid #b45309;border-radius:8px;
                     padding:14px 18px;margin-bottom:14px;font-size:13px;">
-            <div style="font-size:15px;font-weight:700;color:#fbbf24;margin-bottom:6px;">
+            <div style="font-size:15px;font-weight:700;color:var(--color-warning-light,#fbbf24);margin-bottom:6px;">
                 &#9888; Empty order book &mdash; no liquidity yet
             </div>
             <p style="color:#d97706;margin-bottom:8px;">
                 Market orders need existing counterparty orders to fill against.
                 Since no one has listed {symbol} yet, all market orders will immediately cancel.
             </p>
-            <p style="color:#fbbf24;font-weight:600;">
+            <p style="color:var(--color-warning-light,#fbbf24);font-weight:600;">
                 &#128221; To create the first listing, use a <strong>Limit order</strong>:<br>
                 &nbsp;&nbsp;&bull; Sellers: pick a price &rarr; your coins are posted to the book for buyers to fill.<br>
                 &nbsp;&nbsp;&bull; Buyers: set a bid price &rarr; your offer waits for a seller to accept.
@@ -1189,8 +1189,8 @@ async def meme_coin_page(
         '''}
 
         {"" if asks else f'''
-        <div style="background:#0c1a0c;border:1px solid #16a34a;border-radius:6px;
-                    padding:10px 14px;margin-bottom:10px;font-size:12px;color:#4ade80;">
+        <div style="background:#0c1a0c;border:1px solid var(--color-success,#16a34a);border-radius:6px;
+                    padding:10px 14px;margin-bottom:10px;font-size:12px;color:var(--color-success-light,#4ade80);">
             &#128640; No sell orders yet &mdash; be the first to list {symbol}!
             Switch <strong>Order Mode &rarr; Limit</strong> in the Sell form, set your price, and post a listing.
         </div>
@@ -1207,8 +1207,8 @@ async def meme_coin_page(
         <div class="grid grid-2">
             <!-- BUY -->
             <div class="card">
-                <h2 style="color:#4ade80;">Buy {symbol}</h2>
-                <p style="font-size:12px;color:#94a3b8;margin-bottom:12px;">
+                <h2 style="color:var(--color-success-light,#4ade80);">Buy {symbol}</h2>
+                <p style="font-size:12px;color:var(--text-secondary,#94a3b8);margin-bottom:12px;">
                     Pay in <span class="native-color">{detail["native_symbol"]}</span>.
                     2% fee (1% to creator, 0.5% treasury, 0.5% burned).
                 </p>
@@ -1220,7 +1220,7 @@ async def meme_coin_page(
                             <option value="limit">Limit — post a bid at your price (creates order book entry)</option>
                             <option value="market">Market — fill instantly against existing sell orders</option>
                         </select>
-                        <div id="buy-mode-hint" style="font-size:11px;color:#64748b;margin-top:4px;">
+                        <div id="buy-mode-hint" style="font-size:11px;color:var(--text-muted,#64748b);margin-top:4px;">
                             Limit orders stay on the book until filled or cancelled.
                         </div>
                     </div>
@@ -1236,8 +1236,8 @@ async def meme_coin_page(
                                placeholder="Amount of {symbol} to buy"
                                id="buy-qty" oninput="calcBuyCost()">
                     </div>
-                    <div id="buy-cost-display" style="font-size:12px;color:#94a3b8;margin-bottom:12px;"></div>
-                    <div style="font-size:12px;color:#64748b;margin-bottom:10px;">
+                    <div id="buy-cost-display" style="font-size:12px;color:var(--text-secondary,#94a3b8);margin-bottom:12px;"></div>
+                    <div style="font-size:12px;color:var(--text-muted,#64748b);margin-bottom:10px;">
                         Available: <span class="native-color">{native_balance:.4f} {detail["native_symbol"]}</span>
                     </div>
                     <button type="submit" class="btn btn-buy">Buy {symbol}</button>
@@ -1246,8 +1246,8 @@ async def meme_coin_page(
 
             <!-- SELL -->
             <div class="card">
-                <h2 style="color:#f87171;">Sell {symbol}</h2>
-                <p style="font-size:12px;color:#94a3b8;margin-bottom:12px;">
+                <h2 style="color:var(--color-danger-light,#f87171);">Sell {symbol}</h2>
+                <p style="font-size:12px;color:var(--text-secondary,#94a3b8);margin-bottom:12px;">
                     Receive <span class="native-color">{detail["native_symbol"]}</span>.
                     2% fee (1% to creator, 0.5% treasury, 0.5% burned).
                 </p>
@@ -1259,7 +1259,7 @@ async def meme_coin_page(
                             <option value="limit">Limit — list at your price (creates order book entry)</option>
                             <option value="market">Market — sell instantly against existing buy orders</option>
                         </select>
-                        <div id="sell-mode-hint" style="font-size:11px;color:#64748b;margin-top:4px;">
+                        <div id="sell-mode-hint" style="font-size:11px;color:var(--text-muted,#64748b);margin-top:4px;">
                             Limit orders stay on the book until filled or cancelled.
                         </div>
                     </div>
@@ -1275,8 +1275,8 @@ async def meme_coin_page(
                                placeholder="Amount of {symbol} to sell"
                                id="sell-qty" oninput="calcSellRevenue()">
                     </div>
-                    <div id="sell-revenue-display" style="font-size:12px;color:#94a3b8;margin-bottom:12px;"></div>
-                    <div style="font-size:12px;color:#64748b;margin-bottom:10px;">
+                    <div id="sell-revenue-display" style="font-size:12px;color:var(--text-secondary,#94a3b8);margin-bottom:12px;"></div>
+                    <div style="font-size:12px;color:var(--text-muted,#64748b);margin-bottom:10px;">
                         Available: <span class="meme-color">{meme_balance:,.4f} {symbol}</span>
                     </div>
                     <button type="submit" class="btn btn-sell">Sell {symbol}</button>
@@ -1286,27 +1286,27 @@ async def meme_coin_page(
 
         <!-- BURN TO MINT -->
         <div class="card" style="border-color:#78350f;">
-            <h2 style="color:#fbbf24;">&#128293; Burn to Mint</h2>
-            <p style="font-size:12px;color:#94a3b8;margin-bottom:12px;">
+            <h2 style="color:var(--color-warning-light,#fbbf24);">&#128293; Burn to Mint</h2>
+            <p style="font-size:12px;color:var(--text-secondary,#94a3b8);margin-bottom:12px;">
                 Burn <span class="native-color">{detail["native_symbol"]}</span> to mint new
                 <span class="meme-color">{symbol}</span> at the bonding curve price.
                 Every token burned backs the coin's value — price rises as more is burned.
             </p>
             <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:14px;">
-                <div style="background:#0f172a;border:1px solid #78350f;border-radius:6px;padding:10px 16px;text-align:center;">
-                    <div style="font-size:11px;color:#94a3b8;margin-bottom:3px;">Current Backing Price</div>
-                    <div style="font-size:18px;font-weight:700;color:#fbbf24;">{backing_price:.6f}</div>
-                    <div style="font-size:11px;color:#a78bfa;">{detail["native_symbol"]} per {symbol}</div>
+                <div style="background:var(--bg-card,#0f172a);border:1px solid #78350f;border-radius:6px;padding:10px 16px;text-align:center;">
+                    <div style="font-size:11px;color:var(--text-secondary,#94a3b8);margin-bottom:3px;">Current Backing Price</div>
+                    <div style="font-size:18px;font-weight:700;color:var(--color-warning-light,#fbbf24);">{backing_price:.6f}</div>
+                    <div style="font-size:11px;color:var(--accent,#a78bfa);">{detail["native_symbol"]} per {symbol}</div>
                 </div>
-                <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:10px 16px;text-align:center;">
-                    <div style="font-size:11px;color:#94a3b8;margin-bottom:3px;">Total Native Burned</div>
-                    <div style="font-size:18px;font-weight:700;color:#f87171;">{total_burned_native:.4f}</div>
-                    <div style="font-size:11px;color:#a78bfa;">{detail["native_symbol"]}</div>
+                <div style="background:var(--bg-card,#0f172a);border:1px solid var(--bg-card-2,#1e293b);border-radius:6px;padding:10px 16px;text-align:center;">
+                    <div style="font-size:11px;color:var(--text-secondary,#94a3b8);margin-bottom:3px;">Total Native Burned</div>
+                    <div style="font-size:18px;font-weight:700;color:var(--color-danger-light,#f87171);">{total_burned_native:.4f}</div>
+                    <div style="font-size:11px;color:var(--accent,#a78bfa);">{detail["native_symbol"]}</div>
                 </div>
-                <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:10px 16px;text-align:center;">
-                    <div style="font-size:11px;color:#94a3b8;margin-bottom:3px;">Remaining Mintable</div>
-                    <div style="font-size:18px;font-weight:700;color:#4ade80;">{remaining_mintable:,.0f}</div>
-                    <div style="font-size:11px;color:#94a3b8;">{symbol}</div>
+                <div style="background:var(--bg-card,#0f172a);border:1px solid var(--bg-card-2,#1e293b);border-radius:6px;padding:10px 16px;text-align:center;">
+                    <div style="font-size:11px;color:var(--text-secondary,#94a3b8);margin-bottom:3px;">Remaining Mintable</div>
+                    <div style="font-size:18px;font-weight:700;color:var(--color-success-light,#4ade80);">{remaining_mintable:,.0f}</div>
+                    <div style="font-size:11px;color:var(--text-secondary,#94a3b8);">{symbol}</div>
                 </div>
             </div>
             <form action="/memecoins/{detail["id"]}/burn-mint" method="post"
@@ -1317,9 +1317,9 @@ async def meme_coin_page(
                            max="{native_balance}" placeholder="e.g., 1.0"
                            id="burn-amount" oninput="calcBurnMint()">
                 </div>
-                <div style="font-size:12px;color:#94a3b8;padding-bottom:10px;">
-                    &rarr; mint &asymp; <strong id="burn-mint-preview" style="color:#fbbf24;">—</strong>
-                    <span style="color:#f59e0b;"> {symbol}</span>
+                <div style="font-size:12px;color:var(--text-secondary,#94a3b8);padding-bottom:10px;">
+                    &rarr; mint &asymp; <strong id="burn-mint-preview" style="color:var(--color-warning-light,#fbbf24);">—</strong>
+                    <span style="color:var(--color-warning,#f59e0b);"> {symbol}</span>
                 </div>
                 <div style="padding-bottom:8px;">
                     <button type="submit" class="btn btn-meme" style="background:#92400e;">
@@ -1327,7 +1327,7 @@ async def meme_coin_page(
                     </button>
                 </div>
             </form>
-            <div style="font-size:11px;color:#64748b;margin-top:8px;">
+            <div style="font-size:11px;color:var(--text-muted,#64748b);margin-top:8px;">
                 Available: <span class="native-color">{native_balance:.4f} {detail["native_symbol"]}</span>
                 &nbsp;|&nbsp; Formula: coins = burned / backing_price
                 &nbsp;|&nbsp; Backing price = total_burned / minted_supply
@@ -1339,7 +1339,7 @@ async def meme_coin_page(
             {orders_html}
         </div>
         <div class="card">
-            <h2 style="color:#38bdf8;">Order History <span style="font-size:12px;color:#475569;font-weight:400;">— last 30 orders incl. filled &amp; cancelled</span></h2>
+            <h2 style="color:var(--color-sky,#38bdf8);">Order History <span style="font-size:12px;color:var(--text-faint,#475569);font-weight:400;">— last 30 orders incl. filled &amp; cancelled</span></h2>
             {history_html}
         </div>
     </div>
@@ -1364,14 +1364,14 @@ async def meme_coin_page(
                 <div class="mining-bar-bg" style="margin:10px 0;">
                     <div class="mining-bar-fill" style="width:{mining_pct:.1f}%;"></div>
                 </div>
-                <div style="font-size:11px;color:#64748b;">
+                <div style="font-size:11px;color:var(--text-muted,#64748b);">
                     {detail["mining_minted"]:,.2f} / {detail["mining_allocation"]:,.2f} {symbol} mined
                 </div>
 
                 {"" if not detail["mining_enabled"] else f'''
-                <hr style="border-color:#1e293b;margin:14px 0;">
+                <hr style="border-color:var(--bg-card-2,#1e293b);margin:14px 0;">
                 <h3>Stake {detail["native_symbol"]} to Mine</h3>
-                <p style="font-size:12px;color:#94a3b8;margin-bottom:10px;">
+                <p style="font-size:12px;color:var(--text-secondary,#94a3b8);margin-bottom:10px;">
                     Lock {detail["native_symbol"]} into this mining pool.
                     Earn {symbol} every hour proportional to your share.
                     Unstake any time to get your {detail["native_symbol"]} back.
@@ -1382,11 +1382,11 @@ async def meme_coin_page(
                         <input type="number" name="native_amount" min="0.000001" step="0.000001"
                                max="{native_balance}" placeholder="e.g., 1.0">
                     </div>
-                    <div style="font-size:12px;color:#64748b;margin-bottom:6px;">
+                    <div style="font-size:12px;color:var(--text-muted,#64748b);margin-bottom:6px;">
                         Available: <span class="native-color">{native_balance:.4f} {detail["native_symbol"]}</span>
                     </div>
-                    <div style="font-size:12px;color:#64748b;background:#0a0f1a;border:1px solid #1e293b;border-radius:6px;padding:6px 10px;margin-bottom:10px;">
-                        Gas fee (charged on top): <strong style="color:#f59e0b;">{gas_fee_stake:.6f} {detail["native_symbol"]}</strong>
+                    <div style="font-size:12px;color:var(--text-muted,#64748b);background:var(--bg-card,#0a0f1a);border:1px solid var(--bg-card-2,#1e293b);border-radius:6px;padding:6px 10px;margin-bottom:10px;">
+                        Gas fee (charged on top): <strong style="color:var(--color-warning,#f59e0b);">{gas_fee_stake:.6f} {detail["native_symbol"]}</strong>
                         &nbsp;&middot;&nbsp; Network: <span id="stake-gas-label"></span>
                     </div>
                     <button type="submit" class="btn btn-meme">⛏ Stake & Mine</button>
@@ -1397,7 +1397,7 @@ async def meme_coin_page(
             <div class="card">
                 <h2>My Active Stakes</h2>
                 {deposits_html}
-                {'<div style="font-size:12px;color:#64748b;margin-top:10px;">Your current pool share: <strong class="native-color">' + f'{(total_staked / detail["mining_pool_native"] * 100):.2f}%</strong>' if detail["mining_pool_native"] > 0 and total_staked > 0 else ''}
+                {'<div style="font-size:12px;color:var(--text-muted,#64748b);margin-top:10px;">Your current pool share: <strong class="native-color">' + f'{(total_staked / detail["mining_pool_native"] * 100):.2f}%</strong>' if detail["mining_pool_native"] > 0 and total_staked > 0 else ''}
             </div>
         </div>
     </div>
@@ -1420,7 +1420,7 @@ async def meme_coin_page(
                 <div class="stat"><span class="stat-label">Total Trades</span><span class="stat-value">{detail["total_trades"]}</span></div>
                 <div class="stat"><span class="stat-label">Total Volume</span><span class="stat-value native-color">{detail["total_volume_native"]:,.4f} {detail["native_symbol"]}</span></div>
                 <div class="stat"><span class="stat-label">Launched</span><span class="stat-value">{str(detail["created_at"])[:10]}</span></div>
-                {"" if not detail["description"] else f'<div style="margin-top:10px;font-size:13px;color:#94a3b8;">{detail["description"]}</div>'}
+                {"" if not detail["description"] else f'<div style="margin-top:10px;font-size:13px;color:var(--text-secondary,#94a3b8);">{detail["description"]}</div>'}
             </div>
 
             <!-- Pie Chart -->
@@ -1431,7 +1431,7 @@ async def meme_coin_page(
                         <svg id="pie-chart" viewBox="0 0 200 200" width="180" height="180"></svg>
                     </div>
                     <div style="flex:1;">
-                        {pie_legend_html if pie_legend_html else '<p style="color:#475569;font-size:12px;">No holders yet</p>'}
+                        {pie_legend_html if pie_legend_html else '<p style="color:var(--text-faint,#475569);font-size:12px;">No holders yet</p>'}
                     </div>
                 </div>
             </div>
@@ -1586,7 +1586,7 @@ async function initChart() {{
         const res = await fetch('/api/memecoins/{symbol}/candles');
         const candles = await res.json();
         if (candles.length === 0) {{
-            container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:380px;color:#475569;font-size:14px;">No trade history yet. Be the first to trade!</div>';
+            container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:380px;color:var(--text-faint,#475569);font-size:14px;">No trade history yet. Be the first to trade!</div>';
             return;
         }}
         candleSeries.setData(candles);
@@ -1597,7 +1597,7 @@ async function initChart() {{
         }})));
         chart.timeScale().fitContent();
     }} catch(e) {{
-        container.innerHTML = '<div style="color:#f87171;padding:20px;">Failed to load chart data.</div>';
+        container.innerHTML = '<div style="color:var(--color-danger-light,#f87171);padding:20px;">Failed to load chart data.</div>';
     }}
 
     // Show OHLCV on crosshair move
@@ -1607,9 +1607,9 @@ async function initChart() {{
         if (!data) return;
         document.getElementById('ohlcv-display').innerHTML =
             `O:<span style="color:#e5e7eb">${{data.open.toFixed(6)}}</span> ` +
-            `H:<span style="color:#4ade80">${{data.high.toFixed(6)}}</span> ` +
-            `L:<span style="color:#f87171">${{data.low.toFixed(6)}}</span> ` +
-            `C:<span style="color:#f59e0b">${{data.close.toFixed(6)}}</span>`;
+            `H:<span style="color:var(--color-success-light,#4ade80)">${{data.high.toFixed(6)}}</span> ` +
+            `L:<span style="color:var(--color-danger-light,#f87171)">${{data.low.toFixed(6)}}</span> ` +
+            `C:<span style="color:var(--color-warning,#f59e0b)">${{data.close.toFixed(6)}}</span>`;
     }});
 
     // Responsive resize
@@ -1709,11 +1709,11 @@ const NATIVE_SYM = "{detail["native_symbol"]}";
 function gasStatusLabel(g) {{
     const base = 0.001;
     const r = g / base;
-    if (r <= 1.05) return '<span style="color:#4ade80;font-size:10px;">⬤ LOW</span>';
+    if (r <= 1.05) return '<span style="color:var(--color-success-light,#4ade80);font-size:10px;">⬤ LOW</span>';
     if (r <= 3)    return '<span style="color:#a3e635;font-size:10px;">⬤ NORMAL</span>';
-    if (r <= 10)   return '<span style="color:#fbbf24;font-size:10px;">⬤ MODERATE</span>';
-    if (r <= 50)   return '<span style="color:#f97316;font-size:10px;">⬤ HIGH</span>';
-    return '<span style="color:#f87171;font-size:10px;">⬤ SURGE</span>';
+    if (r <= 10)   return '<span style="color:var(--color-warning-light,#fbbf24);font-size:10px;">⬤ MODERATE</span>';
+    if (r <= 50)   return '<span style="color:var(--accent-2,#f97316);font-size:10px;">⬤ HIGH</span>';
+    return '<span style="color:var(--color-danger-light,#f87171);font-size:10px;">⬤ SURGE</span>';
 }}
 
 function calcBuyCost() {{
@@ -1723,9 +1723,9 @@ function calcBuyCost() {{
     const fee = cost * {MEME_TRADE_FEE_TOTAL};
     const total = cost + fee + CHAIN_GAS_TRADE;
     document.getElementById('buy-cost-display').innerHTML = cost > 0
-        ? `Cost: <span style="color:#a78bfa">${{cost.toFixed(6)}} ${{NATIVE_SYM}}</span>
-           + Fee: <span style="color:#f59e0b">${{fee.toFixed(6)}}</span>
-           + Gas: <span style="color:#f59e0b">${{CHAIN_GAS_TRADE.toFixed(6)}}</span> ${{gasStatusLabel(CHAIN_GAS_TRADE)}}
+        ? `Cost: <span style="color:var(--accent,#a78bfa)">${{cost.toFixed(6)}} ${{NATIVE_SYM}}</span>
+           + Fee: <span style="color:var(--color-warning,#f59e0b)">${{fee.toFixed(6)}}</span>
+           + Gas: <span style="color:var(--color-warning,#f59e0b)">${{CHAIN_GAS_TRADE.toFixed(6)}}</span> ${{gasStatusLabel(CHAIN_GAS_TRADE)}}
            = <strong style="color:#e5e7eb">Total: ${{total.toFixed(6)}} ${{NATIVE_SYM}}</strong>`
         : '';
 }}
@@ -1737,10 +1737,10 @@ function calcSellRevenue() {{
     const fee = gross * {MEME_TRADE_FEE_TOTAL};
     const net = gross - fee - CHAIN_GAS_TRADE;
     document.getElementById('sell-revenue-display').innerHTML = gross > 0
-        ? `Gross: <span style="color:#a78bfa">${{gross.toFixed(6)}} ${{NATIVE_SYM}}</span>
-           - Fee: <span style="color:#f59e0b">${{fee.toFixed(6)}}</span>
-           - Gas: <span style="color:#f59e0b">${{CHAIN_GAS_TRADE.toFixed(6)}}</span> ${{gasStatusLabel(CHAIN_GAS_TRADE)}}
-           = <strong style="color:#4ade80">Net: ${{net.toFixed(6)}} ${{NATIVE_SYM}}</strong>`
+        ? `Gross: <span style="color:var(--accent,#a78bfa)">${{gross.toFixed(6)}} ${{NATIVE_SYM}}</span>
+           - Fee: <span style="color:var(--color-warning,#f59e0b)">${{fee.toFixed(6)}}</span>
+           - Gas: <span style="color:var(--color-warning,#f59e0b)">${{CHAIN_GAS_TRADE.toFixed(6)}}</span> ${{gasStatusLabel(CHAIN_GAS_TRADE)}}
+           = <strong style="color:var(--color-success-light,#4ade80)">Net: ${{net.toFixed(6)}} ${{NATIVE_SYM}}</strong>`
         : '';
 }}
 
@@ -2210,10 +2210,10 @@ async def wallet_dashboard(
         <tr>
             <td><span class="badge badge-native">{n["symbol"]}</span></td>
             <td class="native-color" style="text-align:right;">{n["balance"]:,.6f}</td>
-            <td style="text-align:right;color:#64748b;">{n["total_mined"]:,.4f} mined</td>
+            <td style="text-align:right;color:var(--text-muted,#64748b);">{n["total_mined"]:,.4f} mined</td>
         </tr>'''
     if not native_rows:
-        native_rows = '<tr><td colspan="3" style="color:#475569;text-align:center;padding:16px;">No native token holdings. Mine or buy county tokens first.</td></tr>'
+        native_rows = '<tr><td colspan="3" style="color:var(--text-faint,#475569);text-align:center;padding:16px;">No native token holdings. Mine or buy county tokens first.</td></tr>'
 
     # ---- Meme holdings + price alerts ----
     price_alerts = []
@@ -2236,14 +2236,14 @@ async def wallet_dashboard(
         meme_rows += f'''
         <tr>
             <td>{logo_html}<a href="/memecoins/{m["symbol"]}" class="nav-link" style="font-weight:600;">{m["symbol"]}</a>
-                <span style="color:#475569;font-size:11px;margin-left:4px;">{m["name"]}</span></td>
+                <span style="color:var(--text-faint,#475569);font-size:11px;margin-left:4px;">{m["name"]}</span></td>
             <td class="meme-color" style="text-align:right;">{m["balance"]:,.4f}</td>
-            <td style="text-align:right;">{m["last_price"]:.6f} <span style="color:#475569;font-size:11px;">{m["native_symbol"]}</span></td>
+            <td style="text-align:right;">{m["last_price"]:.6f} <span style="color:var(--text-faint,#475569);font-size:11px;">{m["native_symbol"]}</span></td>
             <td class="{chg_cls}" style="text-align:right;">{chg_sign}{chg:.2f}%</td>
             <td class="native-color" style="text-align:right;">{m["value_native"]:.4f} {m["native_symbol"]}</td>
         </tr>'''
     if not meme_rows:
-        meme_rows = '<tr><td colspan="5" style="color:#475569;text-align:center;padding:16px;">No meme coin holdings yet.</td></tr>'
+        meme_rows = '<tr><td colspan="5" style="color:var(--text-faint,#475569);text-align:center;padding:16px;">No meme coin holdings yet.</td></tr>'
     alerts_html = "".join(price_alerts)
 
     # ---- Mining stakes (order-book staking via meme mine) ----
@@ -2252,10 +2252,10 @@ async def wallet_dashboard(
         stake_rows += f'''
         <tr>
             <td><a href="/memecoins/{s["meme_symbol"]}" class="nav-link">{s["meme_symbol"]}</a>
-                <span style="color:#475569;font-size:11px;"> {s["meme_name"]}</span></td>
+                <span style="color:var(--text-faint,#475569);font-size:11px;"> {s["meme_name"]}</span></td>
             <td class="native-color" style="text-align:right;">{s["staked_native"]:,.6f} {s["native_symbol"]}</td>
             <td class="positive" style="text-align:right;">{s["total_earned"]:,.4f} {s["meme_symbol"]}</td>
-            <td style="text-align:right;color:#64748b;">{s["deposited_at"][:10]}</td>
+            <td style="text-align:right;color:var(--text-muted,#64748b);">{s["deposited_at"][:10]}</td>
             <td style="text-align:right;">
                 <form action="/api/memecoins/unstake" method="post" style="display:inline;">
                     <input type="hidden" name="deposit_id" value="{s["id"]}">
@@ -2264,7 +2264,7 @@ async def wallet_dashboard(
             </td>
         </tr>'''
     if not stake_rows:
-        stake_rows = '<tr><td colspan="5" style="color:#475569;text-align:center;padding:16px;">No active mining stakes.</td></tr>'
+        stake_rows = '<tr><td colspan="5" style="color:var(--text-faint,#475569);text-align:center;padding:16px;">No active mining stakes.</td></tr>'
 
     # ---- Yield farming deposits (coin-agnostic) ----
     yield_rows = ""
@@ -2285,15 +2285,15 @@ async def wallet_dashboard(
         yield_rows += f'''
         <tr>
             <td><a href="/memecoins/{yd["meme_symbol"]}" class="nav-link">{yd["meme_symbol"]}</a>
-                <span style="color:#475569;font-size:11px;"> {yd["meme_name"]}</span></td>
+                <span style="color:var(--text-faint,#475569);font-size:11px;"> {yd["meme_name"]}</span></td>
             <td class="meme-color" style="text-align:right;">{yd["quantity"]:,.4f}</td>
             <td style="text-align:right;">{yd["last_price"]:.6f}</td>
             <td class="positive" style="text-align:right;">{earned_val:.4f} {selected_coin}</td>
-            <td style="text-align:right;color:#64748b;">{yd["deposited_at"][:10]}</td>
+            <td style="text-align:right;color:var(--text-muted,#64748b);">{yd["deposited_at"][:10]}</td>
             <td style="text-align:right;">{unstake_form}</td>
         </tr>'''
     if not yield_rows:
-        yield_rows = f'<tr><td colspan="6" style="color:#475569;text-align:center;padding:16px;">No yield positions. Stake meme coins below to earn {selected_coin}.</td></tr>'
+        yield_rows = f'<tr><td colspan="6" style="color:var(--text-faint,#475569);text-align:center;padding:16px;">No yield positions. Stake meme coins below to earn {selected_coin}.</td></tr>'
 
     yield_stake_opts = "".join(
         f'<option value="{m["symbol"]}">{m["symbol"]} — {m["balance"]:,.4f} held</option>'
@@ -2322,7 +2322,7 @@ async def wallet_dashboard(
             </td>
         </tr>'''
     if not order_rows:
-        order_rows = '<tr><td colspan="6" style="color:#475569;text-align:center;padding:16px;">No open orders.</td></tr>'
+        order_rows = '<tr><td colspan="6" style="color:var(--text-faint,#475569);text-align:center;padding:16px;">No open orders.</td></tr>'
 
     # ---- Swap history ----
     swap_hist_rows = ""
@@ -2333,11 +2333,11 @@ async def wallet_dashboard(
             <td>{cc} <strong>{sh["from_symbol"]}</strong> &#8594; <strong>{sh["to_symbol"]}</strong></td>
             <td class="negative" style="text-align:right;">{sh["amount_in"]:,.4f}</td>
             <td class="positive" style="text-align:right;">{sh["amount_out"]:,.4f}</td>
-            <td style="text-align:right;color:#f59e0b;">{sh["wsc_minted"]:.4f} WSC</td>
-            <td style="text-align:right;color:#64748b;">{sh["executed_at"]}</td>
+            <td style="text-align:right;color:var(--color-warning,#f59e0b);">{sh["wsc_minted"]:.4f} WSC</td>
+            <td style="text-align:right;color:var(--text-muted,#64748b);">{sh["executed_at"]}</td>
         </tr>'''
     if not swap_hist_rows:
-        swap_hist_rows = '<tr><td colspan="5" style="color:#475569;text-align:center;padding:12px;">No swap history yet.</td></tr>'
+        swap_hist_rows = '<tr><td colspan="5" style="color:var(--text-faint,#475569);text-align:center;padding:12px;">No swap history yet.</td></tr>'
 
     # ---- Faucet (uses coin-agnostic coin_faucet_st) ----
     faucet_can   = coin_faucet_st["can_claim"]
@@ -2366,17 +2366,17 @@ async def wallet_dashboard(
     portfolio_summary = "".join(
         f'<span style="margin-right:18px;">Meme Value: <strong class="native-color">{v:.4f} {ns}</strong></span>'
         for ns, v in total_meme_val.items()
-    ) or '<span style="color:#475569;">No meme holdings valued yet.</span>'
+    ) or '<span style="color:var(--text-faint,#475569);">No meme holdings valued yet.</span>'
 
     # ---- Live ticker chips ----
     ticker_chips = "".join(
         f'<a href="/memecoins/{m["symbol"]}" class="ticker-chip ticker-{"up" if m["change_24h"]>=0 else "down"}">'
         f'<strong>{m["symbol"]}</strong> '
-        f'<span style="color:#f59e0b;">{m["last_price"]:.6f}</span> '
+        f'<span style="color:var(--color-warning,#f59e0b);">{m["last_price"]:.6f}</span> '
         f'<span style="font-size:10px;color:{"#4ade80" if m["change_24h"]>=0 else "#f87171"};">'
         f'{"+" if m["change_24h"]>=0 else ""}{m["change_24h"]:.1f}%</span></a>'
         for m in meme_holdings
-    ) or '<span style="color:#475569;font-size:12px;">— hold meme coins to see live prices —</span>'
+    ) or '<span style="color:var(--text-faint,#475569);font-size:12px;">— hold meme coins to see live prices —</span>'
 
     fee_pct = int((SWAP_FEE_SELL + SWAP_FEE_BUY) * 100)
 
@@ -2384,30 +2384,30 @@ async def wallet_dashboard(
     if selected_coin != "WSC" and coin_amm_pool:
         _ap = coin_amm_pool
         city_amm_html = f"""
-        <div style="background:#0f172a;border:1px solid #4c1d9555;border-radius:8px;padding:14px;">
-            <div style="font-size:12px;color:#94a3b8;margin-bottom:10px;">
-                Pool reserves: <strong style="color:#a78bfa;">{_ap["wsc_reserve"]:.4f} WSC</strong>
-                / <strong style="color:#a78bfa;">{_ap["ccc_reserve"]:.4f} {selected_coin}</strong>
+        <div style="background:var(--bg-card,#0f172a);border:1px solid #4c1d9555;border-radius:8px;padding:14px;">
+            <div style="font-size:12px;color:var(--text-secondary,#94a3b8);margin-bottom:10px;">
+                Pool reserves: <strong style="color:var(--accent,#a78bfa);">{_ap["wsc_reserve"]:.4f} WSC</strong>
+                / <strong style="color:var(--accent,#a78bfa);">{_ap["ccc_reserve"]:.4f} {selected_coin}</strong>
                 &nbsp;&bull;&nbsp; {_ap["total_swaps"]:,} swaps
             </div>
             <div style="display:flex;gap:20px;flex-wrap:wrap;">
                 <div>
-                    <div style="font-size:11px;color:#64748b;margin-bottom:5px;">WSC &rarr; {selected_coin} &nbsp;(buy {selected_coin})</div>
+                    <div style="font-size:11px;color:var(--text-muted,#64748b);margin-bottom:5px;">WSC &rarr; {selected_coin} &nbsp;(buy {selected_coin})</div>
                     <form action="/api/city-wallet/swap/wsc-to-ccc" method="post" style="display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;">
                         <input type="hidden" name="city_id" value="{city_id_for_coin}">
                         <div class="form-group" style="margin:0;">
-                            <label style="font-size:11px;color:#94a3b8;">WSC amount (have {wsc_info["balance"]:.4f})</label>
+                            <label style="font-size:11px;color:var(--text-secondary,#94a3b8);">WSC amount (have {wsc_info["balance"]:.4f})</label>
                             <input type="number" name="wsc_amount" step="any" min="0.0001" max="{wsc_info["balance"]:.4f}" placeholder="WSC amount" style="width:150px;font-size:12px;">
                         </div>
                         <button type="submit" class="btn" style="background:#4c1d95;color:#e9d5ff;font-size:12px;padding:6px 12px;">&#9654; Get {selected_coin}</button>
                     </form>
                 </div>
                 <div>
-                    <div style="font-size:11px;color:#64748b;margin-bottom:5px;">{selected_coin} &rarr; WSC &nbsp;(sell {selected_coin})</div>
+                    <div style="font-size:11px;color:var(--text-muted,#64748b);margin-bottom:5px;">{selected_coin} &rarr; WSC &nbsp;(sell {selected_coin})</div>
                     <form action="/api/city-wallet/swap/ccc-to-wsc" method="post" style="display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;">
                         <input type="hidden" name="city_id" value="{city_id_for_coin}">
                         <div class="form-group" style="margin:0;">
-                            <label style="font-size:11px;color:#94a3b8;">{selected_coin} amount (have {coin_balance:.4f})</label>
+                            <label style="font-size:11px;color:var(--text-secondary,#94a3b8);">{selected_coin} amount (have {coin_balance:.4f})</label>
                             <input type="number" name="ccc_amount" step="any" min="0.0001" max="{coin_balance:.4f}" placeholder="{selected_coin} amount" style="width:150px;font-size:12px;">
                         </div>
                         <button type="submit" class="btn" style="background:#1e1b4b;color:#a5b4fc;font-size:12px;padding:6px 12px;">&#9654; Get WSC</button>
@@ -2420,7 +2420,7 @@ async def wallet_dashboard(
 
     # ---- AMM pool HTML ----
     if not native_holdings:
-        amm_pools_html = '<p style="color:#64748b;font-size:12px;">Mine or buy county native tokens first to access the WSC AMM pool.</p>'
+        amm_pools_html = '<p style="color:var(--text-muted,#64748b);font-size:12px;">Mine or buy county native tokens first to access the WSC AMM pool.</p>'
     else:
         amm_sections = []
         for n in native_holdings:
@@ -2430,25 +2430,25 @@ async def wallet_dashboard(
             if pool:
                 reserves_html = f"""
                 <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;margin-bottom:12px;
-                            background:#0a0f1a;padding:10px 14px;border-radius:6px;border:1px solid #1e293b;">
-                    <span>Reserve: <strong style="color:#f59e0b;">{pool['native_reserve']:,.4f} {sym}</strong></span>
+                            background:var(--bg-card,#0a0f1a);padding:10px 14px;border-radius:6px;border:1px solid var(--bg-card-2,#1e293b);">
+                    <span>Reserve: <strong style="color:var(--color-warning,#f59e0b);">{pool['native_reserve']:,.4f} {sym}</strong></span>
                     <span>Reserve: <strong style="color:#a5b4fc;">{pool['wsc_reserve']:,.4f} WSC</strong></span>
-                    <span>Rate: <strong style="color:#4ade80;">{pool['wsc_per_native']:.6f} WSC / {sym}</strong></span>
-                    <span style="color:#64748b;">Swaps: {pool['total_swaps']}</span>
+                    <span>Rate: <strong style="color:var(--color-success-light,#4ade80);">{pool['wsc_per_native']:.6f} WSC / {sym}</strong></span>
+                    <span style="color:var(--text-muted,#64748b);">Swaps: {pool['total_swaps']}</span>
                 </div>"""
             else:
-                reserves_html = f'<div style="font-size:12px;color:#94a3b8;margin-bottom:12px;background:#0a0f1a;padding:8px 12px;border-radius:6px;">Pool auto-seeds on first swap at the {sym} market price (1 {sym} &asymp; its USD value in WSC).</div>'
+                reserves_html = f'<div style="font-size:12px;color:var(--text-secondary,#94a3b8);margin-bottom:12px;background:var(--bg-card,#0a0f1a);padding:8px 12px;border-radius:6px;">Pool auto-seeds on first swap at the {sym} market price (1 {sym} &asymp; its USD value in WSC).</div>'
             amm_sections.append(f"""
             <div style="background:#0f0a1e;border:1px solid #4c1d9555;border-radius:8px;padding:14px;margin-bottom:8px;">
-                <div style="font-weight:bold;color:#c084fc;margin-bottom:8px;">{sym} / WSC Pool</div>
+                <div style="font-weight:bold;color:var(--accent,#c084fc);margin-bottom:8px;">{sym} / WSC Pool</div>
                 {reserves_html}
                 <div style="display:flex;gap:12px;flex-wrap:wrap;">
                     <div style="flex:1;min-width:190px;">
-                        <div style="font-size:11px;color:#64748b;text-transform:uppercase;margin-bottom:5px;">{sym} &rarr; WSC &nbsp;(mint WSC)</div>
+                        <div style="font-size:11px;color:var(--text-muted,#64748b);text-transform:uppercase;margin-bottom:5px;">{sym} &rarr; WSC &nbsp;(mint WSC)</div>
                         <form action="/api/wallet/amm/native-to-wsc" method="post" style="display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;">
                             <input type="hidden" name="native_symbol" value="{sym}">
                             <div class="form-group" style="margin:0;">
-                                <label style="font-size:11px;color:#94a3b8;">Amount (have {bal:,.4f} {sym})</label>
+                                <label style="font-size:11px;color:var(--text-secondary,#94a3b8);">Amount (have {bal:,.4f} {sym})</label>
                                 <input type="number" name="native_amount" step="any" min="0.000001"
                                        max="{bal}" placeholder="amount" required style="width:140px;font-size:12px;">
                             </div>
@@ -2458,11 +2458,11 @@ async def wallet_dashboard(
                         </form>
                     </div>
                     <div style="flex:1;min-width:190px;">
-                        <div style="font-size:11px;color:#64748b;text-transform:uppercase;margin-bottom:5px;">WSC &rarr; {sym} &nbsp;(sell WSC)</div>
+                        <div style="font-size:11px;color:var(--text-muted,#64748b);text-transform:uppercase;margin-bottom:5px;">WSC &rarr; {sym} &nbsp;(sell WSC)</div>
                         <form action="/api/wallet/amm/wsc-to-native" method="post" style="display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;">
                             <input type="hidden" name="native_symbol" value="{sym}">
                             <div class="form-group" style="margin:0;">
-                                <label style="font-size:11px;color:#94a3b8;">WSC (have {wsc_info['balance']:,.4f})</label>
+                                <label style="font-size:11px;color:var(--text-secondary,#94a3b8);">WSC (have {wsc_info['balance']:,.4f})</label>
                                 <input type="number" name="wsc_amount" step="any" min="0.0001"
                                        max="{wsc_info['balance']}" placeholder="WSC amount" required style="width:140px;font-size:12px;">
                             </div>
@@ -2486,7 +2486,7 @@ async def wallet_dashboard(
         for c in all_city_coins
     )
 
-    _card_border   = "" if _is_wsc else 'style="border-color:#7c3aed;"'
+    _card_border   = "" if _is_wsc else 'style="border-color:var(--accent-dim,#7c3aed);"'
     _card_label    = "WADSWORTH STABLE COIN (WSC)" if _is_wsc else f"{selected_coin} — {coin_info['city_name'].upper()} COMPTROLLER COIN"
     _peg_note      = "$1" if _is_wsc else f"1 {coin_info['peg_label']} (${coin_info['usd_per_coin']:.6f})"
     _redeem_hidden = "" if _is_wsc else f'<input type="hidden" name="city_id" value="{city_id_for_coin}">'
@@ -2507,7 +2507,7 @@ async def wallet_dashboard(
         f"Free {selected_coin} dispensed from the city faucet pool every {coin_faucet_hours} hour(s). City members only."
     )
     _last_claim    = (
-        f'&nbsp;&bull;&nbsp; Last claim: <strong style="color:#4ade80;">{coin_faucet_st["last_amount"]:.4f} {selected_coin}</strong>'
+        f'&nbsp;&bull;&nbsp; Last claim: <strong style="color:var(--color-success-light,#4ade80);">{coin_faucet_st["last_amount"]:.4f} {selected_coin}</strong>'
         if coin_faucet_st.get("last_amount", 0.0) > 0 else ""
     )
 
@@ -2535,10 +2535,10 @@ async def wallet_dashboard(
 
     <!-- TW-style back nav -->
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
-        <a href="/crypto" style="color:#64748b;font-size:20px;text-decoration:none;">&#8592;</a>
+        <a href="/crypto" style="color:var(--text-muted,#64748b);font-size:20px;text-decoration:none;">&#8592;</a>
         <div>
-            <div style="font-size:18px;font-weight:700;color:#f1f5f9;">My Wallet</div>
-            <div style="font-size:12px;color:#64748b;">Decentralized · Private · Your keys, your coins</div>
+            <div style="font-size:18px;font-weight:700;color:var(--text-bright,#f1f5f9);">My Wallet</div>
+            <div style="font-size:12px;color:var(--text-muted,#64748b);">Decentralized · Private · Your keys, your coins</div>
         </div>
         <div style="margin-left:auto;display:flex;gap:8px;">
             <a href="/memecoins" class="btn" style="font-size:12px;padding:6px 14px;">Meme Coins</a>
@@ -2550,7 +2550,7 @@ async def wallet_dashboard(
 
     <!-- LIVE TICKER (auto-refreshes every 15 s) -->
     <div class="wallet-ticker" id="live-ticker">
-        <span style="color:#475569;font-size:11px;align-self:center;flex-shrink:0;padding-right:6px;">&#9632; LIVE</span>
+        <span style="color:var(--text-faint,#475569);font-size:11px;align-self:center;flex-shrink:0;padding-right:6px;">&#9632; LIVE</span>
         {ticker_chips}
     </div>
 
@@ -2559,13 +2559,13 @@ async def wallet_dashboard(
 
     <!-- STABLE COIN SELECTOR -->
     <form method="get" action="/wallet" style="margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <label style="color:#94a3b8;font-size:12px;letter-spacing:1px;">STABLE COIN:</label>
+        <label style="color:var(--text-secondary,#94a3b8);font-size:12px;letter-spacing:1px;">STABLE COIN:</label>
         <select name="coin" onchange="this.form.submit()"
-                style="background:#0f172a;border:1px solid #4f46e5;color:#e2e8f0;border-radius:6px;padding:6px 10px;font-size:13px;">
+                style="background:var(--bg-card,#0f172a);border:1px solid #4f46e5;color:var(--text-primary,#e2e8f0);border-radius:6px;padding:6px 10px;font-size:13px;">
             <option value="WSC" {_sel_wsc}>WSC — Wadsworth Stable Coin ($1.00)</option>
             {_cc_opts}
         </select>
-        <span style="color:#64748b;font-size:12px;">Switch to see its balance, pools, faucet, AMM &amp; yield.</span>
+        <span style="color:var(--text-muted,#64748b);font-size:12px;">Switch to see its balance, pools, faucet, AMM &amp; yield.</span>
     </form>
 
     <!-- STABLE COIN BALANCE CARD -->
@@ -2574,17 +2574,17 @@ async def wallet_dashboard(
             <div>
                 <div style="font-size:12px;color:#a5b4fc;margin-bottom:4px;letter-spacing:1px;">{_card_label}</div>
                 <div class="wsc-balance">{coin_balance:.4f} <span style="font-size:16px;color:#6366f1;">{selected_coin}</span></div>
-                <div style="font-size:12px;color:#64748b;margin-top:4px;">
+                <div style="font-size:12px;color:var(--text-muted,#64748b);margin-top:4px;">
                     = {fmt_usd(coin_balance * coin_info["usd_per_coin"], disp)} redeemable
                     &nbsp;&#8226;&nbsp; 1 {selected_coin} = {_peg_note}
                 </div>
             </div>
             <div style="text-align:right;">
                 <div style="font-size:11px;color:#6366f1;margin-bottom:8px;">Total earned</div>
-                <div style="font-size:12px;margin-bottom:3px;">Yield: <strong style="color:#4ade80;">{coin_earned_label["yield"]}</strong></div>
-                <div style="font-size:12px;margin-bottom:3px;">Faucet: <strong style="color:#38bdf8;">{coin_earned_label["faucet"]}</strong></div>
-                <div style="font-size:12px;margin-bottom:3px;">Airdrop: <strong style="color:#f59e0b;">{coin_earned_label["airdrop"]}</strong></div>
-                <div style="font-size:12px;color:#475569;">Redeemed: {coin_redeemed:.4f}</div>
+                <div style="font-size:12px;margin-bottom:3px;">Yield: <strong style="color:var(--color-success-light,#4ade80);">{coin_earned_label["yield"]}</strong></div>
+                <div style="font-size:12px;margin-bottom:3px;">Faucet: <strong style="color:var(--color-sky,#38bdf8);">{coin_earned_label["faucet"]}</strong></div>
+                <div style="font-size:12px;margin-bottom:3px;">Airdrop: <strong style="color:var(--color-warning,#f59e0b);">{coin_earned_label["airdrop"]}</strong></div>
+                <div style="font-size:12px;color:var(--text-faint,#475569);">Redeemed: {coin_redeemed:.4f}</div>
             </div>
         </div>
 
@@ -2609,25 +2609,25 @@ async def wallet_dashboard(
     <!-- TREASURY POOLS -->
     <div class="card">
         <h2 style="color:#6366f1;">&#128176; {selected_coin} Treasury &amp; Reward Pools</h2>
-        <p style="color:#64748b;font-size:12px;margin-bottom:12px;">{_treasury_desc}</p>
+        <p style="color:var(--text-muted,#64748b);font-size:12px;margin-bottom:12px;">{_treasury_desc}</p>
         <div class="grid grid-3">
             <div class="reward-pool">
-                <span style="color:#64748b;font-size:11px;">&#9881; Yield Farming Pool</span>
+                <span style="color:var(--text-muted,#64748b);font-size:11px;">&#9881; Yield Farming Pool</span>
                 <span class="pool-val">{coin_treasury["yield_pool"]:.4f} {selected_coin}</span>
-                <span style="color:#475569;font-size:10px;">Distributed hourly to yield stakers</span>
+                <span style="color:var(--text-faint,#475569);font-size:10px;">Distributed hourly to yield stakers</span>
             </div>
             <div class="reward-pool">
-                <span style="color:#64748b;font-size:11px;">&#128241; Faucet Pool</span>
-                <span class="pool-val" style="color:#38bdf8;">{coin_treasury["faucet_pool"]:.4f} {selected_coin}</span>
-                <span style="color:#475569;font-size:10px;">Claim every {coin_faucet_hours}h &bull; {coin_faucet_min:.2f}&ndash;{coin_faucet_max:.2f} {selected_coin}</span>
+                <span style="color:var(--text-muted,#64748b);font-size:11px;">&#128241; Faucet Pool</span>
+                <span class="pool-val" style="color:var(--color-sky,#38bdf8);">{coin_treasury["faucet_pool"]:.4f} {selected_coin}</span>
+                <span style="color:var(--text-faint,#475569);font-size:10px;">Claim every {coin_faucet_hours}h &bull; {coin_faucet_min:.2f}&ndash;{coin_faucet_max:.2f} {selected_coin}</span>
             </div>
             <div class="reward-pool">
-                <span style="color:#64748b;font-size:11px;">&#127881; Airdrop Pool</span>
-                <span class="pool-val" style="color:#f59e0b;">{coin_treasury["airdrop_pool"]:.4f} {selected_coin}</span>
-                <span style="color:#475569;font-size:10px;">{_airdrop_note}</span>
+                <span style="color:var(--text-muted,#64748b);font-size:11px;">&#127881; Airdrop Pool</span>
+                <span class="pool-val" style="color:var(--color-warning,#f59e0b);">{coin_treasury["airdrop_pool"]:.4f} {selected_coin}</span>
+                <span style="color:var(--text-faint,#475569);font-size:10px;">{_airdrop_note}</span>
             </div>
         </div>
-        <div style="margin-top:10px;font-size:11px;color:#475569;text-align:right;">
+        <div style="margin-top:10px;font-size:11px;color:var(--text-faint,#475569);text-align:right;">
             Total ever minted: <strong style="color:#6366f1;">{coin_treasury["total_minted"]:.4f} {selected_coin}</strong>
             {_burn_note}
         </div>
@@ -2635,24 +2635,24 @@ async def wallet_dashboard(
 
     <!-- CRYPTO FAUCET -->
     <div class="card" style="border-color:#0369a133;">
-        <h2 style="color:#38bdf8;">&#128241; {selected_coin} Faucet</h2>
-        <p style="color:#64748b;font-size:12px;margin-bottom:12px;">{_faucet_desc}</p>
+        <h2 style="color:var(--color-sky,#38bdf8);">&#128241; {selected_coin} Faucet</h2>
+        <p style="color:var(--text-muted,#64748b);font-size:12px;margin-bottom:12px;">{_faucet_desc}</p>
         <form action="{coin_faucet_url}" method="post" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
             {_faucet_hidden}
             {faucet_btn}
-            <span style="color:#64748b;font-size:12px;">
-                Pool: <strong style="color:#38bdf8;">{coin_treasury["faucet_pool"]:.4f} {selected_coin}</strong>
+            <span style="color:var(--text-muted,#64748b);font-size:12px;">
+                Pool: <strong style="color:var(--color-sky,#38bdf8);">{coin_treasury["faucet_pool"]:.4f} {selected_coin}</strong>
                 {_last_claim}
             </span>
         </form>
     </div>
 
     <!-- PORTFOLIO SUMMARY -->
-    <div style="background:#0b1220;border:1px solid #1e293b;border-radius:8px;padding:12px 18px;
+    <div style="background:var(--bg-card,#0b1220);border:1px solid var(--bg-card-2,#1e293b);border-radius:8px;padding:12px 18px;
                 margin-bottom:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:13px;">
-        <span style="color:#94a3b8;">Portfolio:</span>
+        <span style="color:var(--text-secondary,#94a3b8);">Portfolio:</span>
         {portfolio_summary}
-        <span style="margin-left:auto;color:#94a3b8;">
+        <span style="margin-left:auto;color:var(--text-secondary,#94a3b8);">
             Mining staked: <strong class="native-color">{total_staked:.4f}</strong>
             &nbsp;|&nbsp; Yield staked value: <strong class="meme-color">{yield_staked_value:.4f}</strong>
             &nbsp;|&nbsp; Yield earned: <strong class="positive">{total_yield_earned:.4f} {selected_coin}</strong>
@@ -2661,7 +2661,7 @@ async def wallet_dashboard(
 
     <!-- NATIVE TOKEN HOLDINGS -->
     <div class="card">
-        <h2>&#128279; Native Token Holdings <span style="font-size:12px;color:#64748b;font-weight:400;">(Layer-1 Chains)</span></h2>
+        <h2>&#128279; Native Token Holdings <span style="font-size:12px;color:var(--text-muted,#64748b);font-weight:400;">(Layer-1 Chains)</span></h2>
         <table class="table">
             <thead><tr>
                 <th>Token</th>
@@ -2674,7 +2674,7 @@ async def wallet_dashboard(
 
     <!-- MEME COIN HOLDINGS -->
     <div class="card">
-        <h2>&#128640; Meme Coin Holdings <span style="font-size:12px;color:#64748b;font-weight:400;">(Layer-2)</span></h2>
+        <h2>&#128640; Meme Coin Holdings <span style="font-size:12px;color:var(--text-muted,#64748b);font-weight:400;">(Layer-2)</span></h2>
         <table class="table">
             <thead><tr>
                 <th>Coin</th>
@@ -2689,13 +2689,13 @@ async def wallet_dashboard(
 
     <!-- INSTANT SWAP -->
     <div class="card" style="border-color:#4f46e533;">
-        <h2 style="color:#a5b4fc;">&#9889; Instant Swap <span style="font-size:12px;font-weight:400;color:#64748b;">— Cross-chain supported at true value</span></h2>
-        <p style="color:#64748b;font-size:12px;margin-bottom:14px;">
-            Direct wallet-to-wallet swap at <strong style="color:#f59e0b;">24-hour VWAP</strong> &times; native token USD rate.
+        <h2 style="color:#a5b4fc;">&#9889; Instant Swap <span style="font-size:12px;font-weight:400;color:var(--text-muted,#64748b);">— Cross-chain supported at true value</span></h2>
+        <p style="color:var(--text-muted,#64748b);font-size:12px;margin-bottom:14px;">
+            Direct wallet-to-wallet swap at <strong style="color:var(--color-warning,#f59e0b);">24-hour VWAP</strong> &times; native token USD rate.
             Uses volume-weighted average price (not last trade) to prevent price manipulation.
-            Works across all county blockchains. Fee: <strong style="color:#f59e0b;">{fee_pct}%</strong>
+            Works across all county blockchains. Fee: <strong style="color:var(--color-warning,#f59e0b);">{fee_pct}%</strong>
             ({int(SWAP_FEE_SELL*100)}% sell + {int(SWAP_FEE_BUY*100)}% buy) &rarr; permanently burned.
-            <span style="color:#38bdf8;">{"WSC is earned via the native-token AMM pool, not from swap fees." if _is_wsc else f"Swap fees always mint WSC (global). Earn {selected_coin} via the faucet, yield farming, or AMM above."}</span>
+            <span style="color:var(--color-sky,#38bdf8);">{"WSC is earned via the native-token AMM pool, not from swap fees." if _is_wsc else f"Swap fees always mint WSC (global). Earn {selected_coin} via the faucet, yield farming, or AMM above."}</span>
         </p>
         <div class="swap-box">
             <form action="/api/wallet/swap" method="post">
@@ -2720,14 +2720,14 @@ async def wallet_dashboard(
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary"
-                        style="background:linear-gradient(135deg,#7c3aed,#4f46e5);width:100%;margin-top:4px;">
+                        style="background:linear-gradient(135deg,var(--accent-dim,#7c3aed),#4f46e5);width:100%;margin-top:4px;">
                     &#9889; Execute Swap (cross-chain OK)
                 </button>
             </form>
         </div>
 
         <!-- Swap history -->
-        <h3 style="margin-top:16px;font-size:13px;color:#64748b;">Recent Swaps</h3>
+        <h3 style="margin-top:16px;font-size:13px;color:var(--text-muted,#64748b);">Recent Swaps</h3>
         <table class="table" style="margin-top:6px;">
             <thead><tr>
                 <th>Pair</th><th style="text-align:right;">Sold</th>
@@ -2741,15 +2741,15 @@ async def wallet_dashboard(
 
     <!-- AMM POOL (native↔WSC for WSC, WSC↔CCC for city coins) -->
     <div class="card" style="border-color:#7c3aed55;">
-        <h2 style="color:#c084fc;">&#128984; {selected_coin} AMM Pool <span style="font-size:12px;font-weight:400;color:#64748b;">— {_amm_title}</span></h2>
-        <p style="color:#64748b;font-size:12px;margin-bottom:14px;">{_amm_desc}</p>
+        <h2 style="color:var(--accent,#c084fc);">&#128984; {selected_coin} AMM Pool <span style="font-size:12px;font-weight:400;color:var(--text-muted,#64748b);">— {_amm_title}</span></h2>
+        <p style="color:var(--text-muted,#64748b);font-size:12px;margin-bottom:14px;">{_amm_desc}</p>
         {_amm_content}
     </div>
 
     <!-- YIELD FARMING -->
     <div class="card" style="border-color:#15803d33;">
-        <h2 style="color:#4ade80;">&#9881; Yield Farming <span style="font-size:12px;font-weight:400;color:#64748b;">— stake meme coins, earn {selected_coin} hourly</span></h2>
-        <p style="color:#64748b;font-size:12px;margin-bottom:12px;">
+        <h2 style="color:var(--color-success-light,#4ade80);">&#9881; Yield Farming <span style="font-size:12px;font-weight:400;color:var(--text-muted,#64748b);">— stake meme coins, earn {selected_coin} hourly</span></h2>
+        <p style="color:var(--text-muted,#64748b);font-size:12px;margin-bottom:12px;">
             Deposit any meme coin. Rewards are proportional to your staked value vs. total pool.
             Payouts come from the Yield Pool every hour. Unstake anytime to retrieve your coins.
         </p>
@@ -2779,7 +2779,7 @@ async def wallet_dashboard(
 
     <!-- MINING STAKES (order-book mining) -->
     <div class="card">
-        <h2>&#9935; Mining Stakes <span style="font-size:12px;font-weight:400;color:#64748b;">(native tokens locked for meme coin mining)</span></h2>
+        <h2>&#9935; Mining Stakes <span style="font-size:12px;font-weight:400;color:var(--text-muted,#64748b);">(native tokens locked for meme coin mining)</span></h2>
         <table class="table">
             <thead><tr>
                 <th>Coin</th><th style="text-align:right;">Staked (Native)</th>
@@ -2793,7 +2793,7 @@ async def wallet_dashboard(
 
     <!-- OPEN ORDERS -->
     <div class="card">
-        <h2>&#128196; Open Orders <span style="font-size:12px;font-weight:400;color:#64748b;">(all coins)</span></h2>
+        <h2>&#128196; Open Orders <span style="font-size:12px;font-weight:400;color:var(--text-muted,#64748b);">(all coins)</span></h2>
         <table class="table">
             <thead><tr>
                 <th>Coin</th><th>Side</th><th>Price</th>
@@ -2815,17 +2815,17 @@ async def wallet_dashboard(
             const d = await r.json();
             const t = document.getElementById('live-ticker');
             if(!t) return;
-            let h = '<span style="color:#475569;font-size:11px;align-self:center;flex-shrink:0;padding-right:6px;">&#9632; LIVE</span>';
+            let h = '<span style="color:var(--text-faint,#475569);font-size:11px;align-self:center;flex-shrink:0;padding-right:6px;">&#9632; LIVE</span>';
             (d.meme_holdings||[]).forEach(m=>{{
                 const chg=m.change_24h||0, up=chg>=0;
                 h+=`<a href="/memecoins/${{m.symbol}}" class="ticker-chip ticker-${{up?'up':'down'}}">`
                   +`<strong>${{m.symbol}}</strong> `
-                  +`<span style="color:#f59e0b;">${{(m.last_price||0).toFixed(6)}}</span> `
-                  +`<span style="font-size:10px;color:${{up?'#4ade80':'#f87171'}};">`
+                  +`<span style="color:var(--color-warning,#f59e0b);">${{(m.last_price||0).toFixed(6)}}</span> `
+                  +`<span style="font-size:10px;color:${{up?'var(--color-success-light,#4ade80)':'var(--color-danger-light,#f87171)'}};">`
                   +`${{up?'+':''}}${{chg.toFixed(1)}}%</span></a>`;
             }});
             if(!(d.meme_holdings&&d.meme_holdings.length))
-                h+='<span style="color:#475569;font-size:12px;">— hold meme coins to see live prices —</span>';
+                h+='<span style="color:var(--text-faint,#475569);font-size:12px;">— hold meme coins to see live prices —</span>';
             t.innerHTML=h;
         }}catch(e){{}}
     }}

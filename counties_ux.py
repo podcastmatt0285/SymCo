@@ -514,6 +514,7 @@ COUNTY_STYLES = """
 # consistent crypto subnav. County civic pages (dashboard, list, form, join)
 # keep the legacy COUNTY_STYLES untouched.
 from crypto_theme import CRYPTO_THEME as _CRYPTO_THEME
+from crypto_theme import fmt_compact as _fmt_compact
 CRYPTO_STYLES = COUNTY_STYLES + _CRYPTO_THEME
 
 
@@ -634,7 +635,7 @@ async def counties_dashboard(
         your_county_html = f'''
         <div class="card">
             <h2>Your County: {player_county.name}</h2>
-            <p style="color: #94a3b8;">You are a member of <strong>{player_county.name}</strong> through your city.</p>
+            <p style="color: var(--text-secondary,#94a3b8);">You are a member of <strong>{player_county.name}</strong> through your city.</p>
             <div style="margin-top: 12px; display: flex; gap: 12px;">
                 <a href="/county/{player_county.id}" class="btn btn-primary">View County</a>
                 <a href="/county/{player_county.id}/mining" class="btn btn-crypto">Mining Node</a>
@@ -678,7 +679,7 @@ async def counties_dashboard(
             your_county_html = f'''
             <div class="card">
                 <h2>Join or Form a County</h2>
-                <p style="color: #94a3b8; margin-bottom: 16px;">
+                <p style="color: var(--text-secondary,#94a3b8); margin-bottom: 16px;">
                     As Mayor of <strong>{player_city.name}</strong>, you can petition the government to
                     form a new county or join an existing one. There is a 1-day government review period.
                 </p>
@@ -692,7 +693,7 @@ async def counties_dashboard(
             your_county_html = '''
             <div class="card">
                 <h2>Join or Form a County</h2>
-                <p style="color: #94a3b8;">
+                <p style="color: var(--text-secondary,#94a3b8);">
                     Only city mayors can petition to form or join a county.
                     Ask your mayor to submit a petition.
                 </p>
@@ -702,7 +703,7 @@ async def counties_dashboard(
         your_county_html = '''
         <div class="card">
             <h2>Join or Form a County</h2>
-            <p style="color: #94a3b8;">
+            <p style="color: var(--text-secondary,#94a3b8);">
                 You must be a member of a city before you can participate in a county.
                 <a href="/cities" class="nav-link">View Cities</a>
             </p>
@@ -738,7 +739,7 @@ async def counties_dashboard(
             elif change < 0:
                 change_html = f'<span class="stat-value negative">{change:.2f}%</span>'
             else:
-                change_html = '<span style="color:#94a3b8;">0.00%</span>'
+                change_html = '<span style="color:var(--text-secondary,#94a3b8);">0.00%</span>'
             logo = c.get("logo_svg", "")
             logo_html = f'<span style="display:inline-block;width:20px;height:20px;vertical-align:middle;">{logo}</span>' if logo else ""
             counties_table_html += f'''
@@ -757,7 +758,7 @@ async def counties_dashboard(
         db.close()
         counties_table_html += '</tbody></table>'
     else:
-        counties_table_html = '<p style="color: #94a3b8;">No counties exist yet. Be the first to form one!</p>'
+        counties_table_html = '<p style="color: var(--text-secondary,#94a3b8);">No counties exist yet. Be the first to form one!</p>'
 
     ticker_html = get_crypto_ticker_html(disp)
 
@@ -776,7 +777,7 @@ async def counties_dashboard(
             <div class="header">
                 <h1>Counties</h1>
                 <div>
-                    <span style="color: #94a3b8;">{player.business_name}</span>
+                    <span style="color: var(--text-secondary,#94a3b8);">{player.business_name}</span>
                     <a href="/city/my" class="nav-link">My City</a>
                     <a href="/exchange" class="nav-link">Crypto Exchange</a>
                     <a href="/" class="nav-link">Dashboard</a>
@@ -850,8 +851,8 @@ async def view_county(
         total_members += member_count
 
         cities_html += f'''
-        <div style="background: #0b1220; border: 1px solid #1e293b; border-radius: 8px; padding: 16px;">
-            <h3 style="color: #38bdf8; margin-bottom: 8px;">{city.name}</h3>
+        <div style="background: var(--bg-card,#0b1220); border: 1px solid var(--bg-card-2,#1e293b); border-radius: 8px; padding: 16px;">
+            <h3 style="color: var(--color-sky,#38bdf8); margin-bottom: 8px;">{city.name}</h3>
             <div class="stat">
                 <span class="stat-label">Mayor</span>
                 <span class="stat-value">{mayor_name}</span>
@@ -923,7 +924,7 @@ async def view_county(
                 </div>
                 '''
         else:
-            polls_html = '<p style="color: #64748b;">No active polls.</p>'
+            polls_html = '<p style="color: var(--text-muted,#64748b);">No active polls.</p>'
 
     # County Parliament info
     parliament_html = ""
@@ -934,15 +935,15 @@ async def view_county(
             <div class="grid grid-2" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
                 <div>
                     <h3>Lower House</h3>
-                    <p style="color: #94a3b8; font-size: 13px;">
+                    <p style="color: var(--text-secondary,#94a3b8); font-size: 13px;">
                         All city members from every city in the county form the lower house.
                         Each member gets 1 vote on county matters.
                     </p>
                 </div>
                 <div>
                     <h3>Upper House</h3>
-                    <p style="color: #94a3b8; font-size: 13px;">
-                        City mayors form the upper house and always receive <strong style="color: #fbbf24;">3 votes</strong>
+                    <p style="color: var(--text-secondary,#94a3b8); font-size: 13px;">
+                        City mayors form the upper house and always receive <strong style="color: var(--color-warning-light,#fbbf24);">3 votes</strong>
                         on all county decisions. Abstaining members' votes follow their mayor's vote.
                     </p>
                 </div>
@@ -1095,7 +1096,7 @@ async def petition_new_county_page(session_token: Optional[str] = Cookie(None)):
 
             <div class="card">
                 <h2>Petition to Form a New County</h2>
-                <p style="color: #94a3b8; margin-bottom: 16px;">
+                <p style="color: var(--text-secondary,#94a3b8); margin-bottom: 16px;">
                     As Mayor of <strong>{player_city.name}</strong>, you can petition the government to form a new county.
                     After a 1-day review period, your city will be the founding member.
                     You must choose a name for the county and its cryptocurrency.
@@ -1176,7 +1177,7 @@ async def petition_join_county_page(session_token: Optional[str] = Cookie(None))
 
             <div class="card">
                 <h2>Petition to Join a County</h2>
-                <p style="color: #94a3b8; margin-bottom: 16px;">
+                <p style="color: var(--text-secondary,#94a3b8); margin-bottom: 16px;">
                     As Mayor of <strong>{player_city.name}</strong>, you can petition to join an existing county.
                     After a 1-day government review, the county's members will vote on your admission.
                     The admission poll is open for 1 day. Mayors get 3 votes and abstaining members
@@ -1294,7 +1295,7 @@ async def county_mining_node(
             '''
         deposits_html += '</tbody></table>'
     else:
-        deposits_html = '<p style="color: #64748b;">No deposits yet. Deposit your city currency to start mining!</p>'
+        deposits_html = '<p style="color: var(--text-muted,#64748b);">No deposits yet. Deposit your city currency to start mining!</p>'
 
     alert_html = f'<div class="alert alert-info">{msg}</div>' if msg else ""
 
@@ -1312,7 +1313,7 @@ async def county_mining_node(
         </form>
         '''
     else:
-        deposit_form = '<p style="color: #f87171;">Your city has no currency set. Currency must be set before you can mine.</p>'
+        deposit_form = '<p style="color: var(--color-danger-light,#f87171);">Your city has no currency set. Currency must be set before you can mine.</p>'
 
     db.close()
 
@@ -1330,10 +1331,10 @@ async def county_mining_node(
 
     <!-- TW-style back nav -->
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
-        <a href="/county/{county_id}" style="color:#64748b;font-size:20px;text-decoration:none;">&#8592;</a>
+        <a href="/county/{county_id}" style="color:var(--text-muted,#64748b);font-size:20px;text-decoration:none;">&#8592;</a>
         <div>
-            <div style="font-size:18px;font-weight:700;color:#f1f5f9;">Mining Node</div>
-            <div style="font-size:12px;color:#64748b;">{county.crypto_name} · {county.name}</div>
+            <div style="font-size:18px;font-weight:700;color:var(--text-bright,#f1f5f9);">Mining Node</div>
+            <div style="font-size:12px;color:var(--text-muted,#64748b);">{county.crypto_name} · {county.name}</div>
         </div>
         <div style="margin-left:auto;display:flex;gap:8px;">
             <a href="/token/{county.crypto_symbol}" class="btn" style="font-size:12px;padding:6px 14px;">Token Info</a>
@@ -1345,57 +1346,57 @@ async def county_mining_node(
 
     <!-- TW balance header -->
     <div style="background:linear-gradient(135deg,#0f0a2e,#1a0a3e);border:1px solid #4c1d95;border-radius:24px;padding:24px;margin-bottom:20px;text-align:center;">
-        <div style="font-size:12px;color:#a78bfa;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Your {county.crypto_symbol} Balance</div>
-        <div style="font-size:36px;font-weight:800;color:#f1f5f9;letter-spacing:-1px;">{crypto_balance:,.6f} <span style="font-size:18px;color:#a78bfa;">{county.crypto_symbol}</span></div>
-        <div style="font-size:14px;color:#64748b;margin-top:4px;">{fmt_usd(crypto_balance * crypto_price, disp, precision=4)} &bull; Total mined: <strong style="color:#4ade80;">{total_mined:,.4f}</strong></div>
+        <div style="font-size:12px;color:var(--accent,#a78bfa);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Your {county.crypto_symbol} Balance</div>
+        <div class="balance-huge" title="{crypto_balance:,.6f} {county.crypto_symbol}" style="font-weight:800;color:var(--text-bright,#f1f5f9);letter-spacing:-1px;">{_fmt_compact(crypto_balance, 4)} <span style="font-size:18px;color:var(--accent,#a78bfa);">{county.crypto_symbol}</span></div>
+        <div style="font-size:14px;color:var(--text-muted,#64748b);margin-top:4px;">{fmt_usd(crypto_balance * crypto_price, disp, precision=4)} &bull; Total mined: <strong style="color:var(--color-success-light,#4ade80);">{total_mined:,.4f}</strong></div>
     </div>
 
     <!-- Stats row -->
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
-        <div style="background:#0d0f1e;border:1px solid #1e293b;border-radius:16px;padding:14px;text-align:center;">
-            <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Block Reward</div>
-            <div style="font-size:20px;font-weight:700;color:#a78bfa;">{block_reward:,.6f}</div>
-            <div style="font-size:11px;color:#475569;">halving #{halvings}</div>
+        <div style="background:var(--bg-card,#0d0f1e);border:1px solid var(--bg-card-2,#1e293b);border-radius:16px;padding:14px;text-align:center;">
+            <div style="font-size:11px;color:var(--text-muted,#64748b);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Block Reward</div>
+            <div style="font-size:20px;font-weight:700;color:var(--accent,#a78bfa);">{block_reward:,.6f}</div>
+            <div style="font-size:11px;color:var(--text-faint,#475569);">halving #{halvings}</div>
         </div>
-        <div style="background:#0d0f1e;border:1px solid #1e293b;border-radius:16px;padding:14px;text-align:center;">
-            <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Supply Minted</div>
+        <div style="background:var(--bg-card,#0d0f1e);border:1px solid var(--bg-card-2,#1e293b);border-radius:16px;padding:14px;text-align:center;">
+            <div style="font-size:11px;color:var(--text-muted,#64748b);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Supply Minted</div>
             <div class="supply-bar" style="margin:8px 0 4px;">
                 <div class="supply-bar-fill" style="width:{min(supply_pct, 100):.1f}%;">{supply_pct:.1f}%</div>
             </div>
-            <div style="font-size:11px;color:#475569;">{circ_supply:,.0f} / {max_supply:,.0f}</div>
+            <div style="font-size:11px;color:var(--text-faint,#475569);">{circ_supply:,.0f} / {max_supply:,.0f}</div>
         </div>
-        <div style="background:#0d0f1e;border:1px solid #1e293b;border-radius:16px;padding:14px;text-align:center;">
-            <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Energy Pool</div>
-            <div style="font-size:20px;font-weight:700;color:#38bdf8;">{fmt_usd(county.mining_energy_pool, disp)}</div>
-            <div style="font-size:11px;color:#475569;">{remaining_supply:,.0f} remaining</div>
+        <div style="background:var(--bg-card,#0d0f1e);border:1px solid var(--bg-card-2,#1e293b);border-radius:16px;padding:14px;text-align:center;">
+            <div style="font-size:11px;color:var(--text-muted,#64748b);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Energy Pool</div>
+            <div style="font-size:20px;font-weight:700;color:var(--color-sky,#38bdf8);">{fmt_usd(county.mining_energy_pool, disp)}</div>
+            <div style="font-size:11px;color:var(--text-faint,#475569);">{remaining_supply:,.0f} remaining</div>
         </div>
     </div>
 
     <!-- Deposit card -->
     <div class="card" style="margin-bottom:16px;">
-        <div style="font-size:15px;font-weight:700;color:#f1f5f9;margin-bottom:4px;">Deposit to Mine</div>
-        <div style="font-size:12px;color:#64748b;margin-bottom:16px;">Your city currency is burned as energy. You earn {county.crypto_symbol} proportional to your contribution.</div>
+        <div style="font-size:15px;font-weight:700;color:var(--text-bright,#f1f5f9);margin-bottom:4px;">Deposit to Mine</div>
+        <div style="font-size:12px;color:var(--text-muted,#64748b);margin-bottom:16px;">Your city currency is burned as energy. You earn {county.crypto_symbol} proportional to your contribution.</div>
         {deposit_form}
     </div>
 
     <!-- How it works -->
     <div class="card" style="margin-bottom:16px;">
-        <div style="font-size:14px;font-weight:700;color:#a78bfa;margin-bottom:12px;">How Mining Works</div>
+        <div style="font-size:14px;font-weight:700;color:var(--accent,#a78bfa);margin-bottom:12px;">How Mining Works</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-            <div style="font-size:13px;color:#94a3b8;line-height:1.6;">
-                <strong style="color:#f1f5f9;">Energy System</strong><br>
+            <div style="font-size:13px;color:var(--text-secondary,#94a3b8);line-height:1.6;">
+                <strong style="color:var(--text-bright,#f1f5f9);">Energy System</strong><br>
                 Deposit your city currency as mining energy. Energy powers the blockchain — without it, no transactions can occur. Rewards distribute proportionally each hour.
             </div>
-            <div style="font-size:13px;color:#94a3b8;line-height:1.6;">
-                <strong style="color:#f1f5f9;">Halving &amp; Supply Cap</strong><br>
-                Like Bitcoin, <strong>{county.crypto_symbol}</strong> caps at <strong>{max_supply:,.0f}</strong> tokens. Rewards start at 50/payout and halve every {HALVING_INTERVAL:,.0f} minted. Current: <strong style="color:#a78bfa;">{block_reward:,.6f}</strong>.
+            <div style="font-size:13px;color:var(--text-secondary,#94a3b8);line-height:1.6;">
+                <strong style="color:var(--text-bright,#f1f5f9);">Halving &amp; Supply Cap</strong><br>
+                Like Bitcoin, <strong>{county.crypto_symbol}</strong> caps at <strong>{max_supply:,.0f}</strong> tokens. Rewards start at 50/payout and halve every {HALVING_INTERVAL:,.0f} minted. Current: <strong style="color:var(--accent,#a78bfa);">{block_reward:,.6f}</strong>.
             </div>
         </div>
     </div>
 
     <!-- Recent deposits -->
     <div class="card">
-        <div style="font-size:14px;font-weight:700;color:#f1f5f9;margin-bottom:12px;">Your Recent Deposits</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text-bright,#f1f5f9);margin-bottom:12px;">Your Recent Deposits</div>
         {deposits_html}
     </div>
 
@@ -1453,7 +1454,7 @@ async def crypto_exchange(
             <td><div style="display:flex;align-items:center;gap:10px;">
                 {coin_icon(c['crypto_symbol'], 30)}
                 <div><div style="font-weight:700;">{c['crypto_name']}</div>
-                <div style="font-size:.68rem;color:#707694;">{c['crypto_symbol']} · {c['name']}</div></div>
+                <div style="font-size:.68rem;color:var(--cmut,#707694);">{c['crypto_symbol']} · {c['name']}</div></div>
             </div></td>
             <td style="font-weight:700;">{fmt_usd(c['crypto_price'], disp, precision=4)}</td>
             <td class="{chg_cls}" style="font-weight:700;">{chg_txt}</td>
@@ -1476,7 +1477,7 @@ async def crypto_exchange(
             <td><div style="display:flex;align-items:center;gap:10px;">
                 {coin_icon(sc['symbol'], 30)}
                 <div><div style="font-weight:700;">{sc.get('display_name', sc['city_name'])}</div>
-                <div style="font-size:.68rem;color:#707694;">{sc['symbol']} · city stablecoin</div></div>
+                <div style="font-size:.68rem;color:var(--cmut,#707694);">{sc['symbol']} · city stablecoin</div></div>
             </div></td>
             <td style="font-weight:700;">{fmt_usd(1.0, disp)}</td>
             <td style="color:{ratio_color};font-weight:700;">{ratio_pct:.0f}% backed</td>
@@ -1485,7 +1486,7 @@ async def crypto_exchange(
             <td colspan="2" style="color:#34d399;">You hold: {my_bal:,.4f} {sc['symbol']}</td>
         </tr>"""
     if not sc_rows:
-        sc_rows = ('<tr><td colspan="8" style="color:#707694;text-align:center;padding:22px;">'
+        sc_rows = ('<tr><td colspan="8" style="color:var(--cmut,#707694);text-align:center;padding:22px;">'
                    'No cities have issued a stablecoin yet — build an Office of the '
                    'Comptroller to level 12 to unlock this.</td></tr>')
 
@@ -1544,7 +1545,7 @@ async def crypto_exchange(
                         <th>#</th><th>Token</th><th>Price</th><th>24h</th>
                         <th>Market Cap</th><th>Circ. Supply</th><th>Treasury</th><th>Energy</th>
                     </tr></thead>
-                    <tbody>{token_rows if token_rows else '<tr><td colspan="8" style="color:#707694;text-align:center;padding:22px;">No tokens exist yet.</td></tr>'}</tbody>
+                    <tbody>{token_rows if token_rows else '<tr><td colspan="8" style="color:var(--cmut,#707694);text-align:center;padding:22px;">No tokens exist yet.</td></tr>'}</tbody>
                 </table>
             </div>
 
@@ -1621,14 +1622,14 @@ async def gas_tracker_page(
             decay_str = "At base price"
 
         rows += f'''<tr class="gt-row">
-            <td><a href="/token/{c["crypto_symbol"]}" style="color:#38bdf8;font-weight:700;text-decoration:none;">{c["crypto_symbol"]}</a>
-                <div style="color:#64748b;font-size:11px;">{c["crypto_name"]} &middot; {c["name"]}</div></td>
-            <td style="text-align:right;"><span style="font-family:monospace;font-weight:700;color:#f59e0b;">{price:.6f}</span>
-                <div style="color:#64748b;font-size:10px;">{c["crypto_symbol"]}/tx</div></td>
+            <td><a href="/token/{c["crypto_symbol"]}" style="color:var(--color-sky,#38bdf8);font-weight:700;text-decoration:none;">{c["crypto_symbol"]}</a>
+                <div style="color:var(--text-muted,#64748b);font-size:11px;">{c["crypto_name"]} &middot; {c["name"]}</div></td>
+            <td style="text-align:right;"><span style="font-family:monospace;font-weight:700;color:var(--color-warning,#f59e0b);">{price:.6f}</span>
+                <div style="color:var(--text-muted,#64748b);font-size:10px;">{c["crypto_symbol"]}/tx</div></td>
             <td style="text-align:center;"><span style="background:{bg};color:{color};border:1px solid {color};border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700;">{label}</span></td>
-            <td style="text-align:right;color:#94a3b8;">{txns:,}</td>
-            <td style="text-align:right;color:#94a3b8;">{"+" + f"{pct_above:.0f}%" if pct_above > 0.5 else "base"}</td>
-            <td style="color:#64748b;font-size:12px;">{decay_str}</td>
+            <td style="text-align:right;color:var(--text-secondary,#94a3b8);">{txns:,}</td>
+            <td style="text-align:right;color:var(--text-secondary,#94a3b8);">{"+" + f"{pct_above:.0f}%" if pct_above > 0.5 else "base"}</td>
+            <td style="color:var(--text-muted,#64748b);font-size:12px;">{decay_str}</td>
             <td style="text-align:center;font-size:12px;color:{color};">{advice}</td>
         </tr>'''
 
@@ -1656,23 +1657,23 @@ async def gas_tracker_page(
 
     <!-- Uniswap-style page header -->
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
-        <a href="/exchange" style="color:#64748b;font-size:20px;text-decoration:none;">&#8592;</a>
+        <a href="/exchange" style="color:var(--text-muted,#64748b);font-size:20px;text-decoration:none;">&#8592;</a>
         <div>
-            <div style="font-size:18px;font-weight:700;color:#f1f5f9;">⛽ Gas Tracker</div>
-            <div style="font-size:12px;color:#64748b;">Real-time network fees · auto-refreshes every 30s</div>
+            <div style="font-size:18px;font-weight:700;color:var(--text-bright,#f1f5f9);">⛽ Gas Tracker</div>
+            <div style="font-size:12px;color:var(--text-muted,#64748b);">Real-time network fees · auto-refreshes every 30s</div>
         </div>
         <div style="margin-left:auto;">
-            {'<a href="/profile" style="font-size:13px;color:#94a3b8;text-decoration:none;">' + player.business_name + '</a>' if player else '<a href="/login" class="btn btn-primary" style="font-size:12px;padding:6px 14px;">Login</a>'}
+            {'<a href="/profile" style="font-size:13px;color:var(--text-secondary,#94a3b8);text-decoration:none;">' + player.business_name + '</a>' if player else '<a href="/login" class="btn btn-primary" style="font-size:12px;padding:6px 14px;">Login</a>'}
         </div>
     </div>
 
     <!-- Legend pills -->
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
-        <span style="font-size:12px;color:#64748b;display:flex;align-items:center;gap:5px;"><span class="legend-dot" style="background:#4ade80;"></span><span style="color:#4ade80;">LOW</span> floor</span>
-        <span style="font-size:12px;color:#64748b;display:flex;align-items:center;gap:5px;"><span class="legend-dot" style="background:#a3e635;"></span><span style="color:#a3e635;">NORMAL</span> up to 3×</span>
-        <span style="font-size:12px;color:#64748b;display:flex;align-items:center;gap:5px;"><span class="legend-dot" style="background:#fbbf24;"></span><span style="color:#fbbf24;">MODERATE</span> 3–10×</span>
-        <span style="font-size:12px;color:#64748b;display:flex;align-items:center;gap:5px;"><span class="legend-dot" style="background:#f97316;"></span><span style="color:#f97316;">HIGH</span> 10–50×</span>
-        <span style="font-size:12px;color:#64748b;display:flex;align-items:center;gap:5px;"><span class="legend-dot" style="background:#f87171;"></span><span style="color:#f87171;">SURGE</span> 50×+</span>
+        <span style="font-size:12px;color:var(--text-muted,#64748b);display:flex;align-items:center;gap:5px;"><span class="legend-dot" style="background:var(--color-success-light,#4ade80);"></span><span style="color:var(--color-success-light,#4ade80);">LOW</span> floor</span>
+        <span style="font-size:12px;color:var(--text-muted,#64748b);display:flex;align-items:center;gap:5px;"><span class="legend-dot" style="background:#a3e635;"></span><span style="color:#a3e635;">NORMAL</span> up to 3×</span>
+        <span style="font-size:12px;color:var(--text-muted,#64748b);display:flex;align-items:center;gap:5px;"><span class="legend-dot" style="background:var(--color-warning-light,#fbbf24);"></span><span style="color:var(--color-warning-light,#fbbf24);">MODERATE</span> 3–10×</span>
+        <span style="font-size:12px;color:var(--text-muted,#64748b);display:flex;align-items:center;gap:5px;"><span class="legend-dot" style="background:var(--accent-2,#f97316);"></span><span style="color:var(--accent-2,#f97316);">HIGH</span> 10–50×</span>
+        <span style="font-size:12px;color:var(--text-muted,#64748b);display:flex;align-items:center;gap:5px;"><span class="legend-dot" style="background:var(--color-danger-light,#f87171);"></span><span style="color:var(--color-danger-light,#f87171);">SURGE</span> 50×+</span>
     </div>
 
     <!-- Gas table -->
@@ -1688,12 +1689,12 @@ async def gas_tracker_page(
                 <th style="text-align:center;">Advice</th>
             </tr></thead>
             <tbody>
-            {rows if rows else '<tr><td colspan="7" style="padding:24px;color:#475569;text-align:center;">No blockchains exist yet.</td></tr>'}
+            {rows if rows else '<tr><td colspan="7" style="padding:24px;color:var(--text-faint,#475569);text-align:center;">No blockchains exist yet.</td></tr>'}
             </tbody>
         </table>
     </div>
 
-    <div style="font-size:11px;color:#475569;margin-top:12px;text-align:center;">
+    <div style="font-size:11px;color:var(--text-faint,#475569);margin-top:12px;text-align:center;">
         Floor: {BASE_GAS_PRICE:.4f} &bull; Surge: +{GAS_SURGE_MULTIPLIER * 100:.0f}%/tx &bull; Decay: -{(1 - GAS_PRICE_DECAY_RATE) * 100:.0f}%/h &bull; Gas is charged on buy · sell · swap · meme trade · stake
     </div>
 
@@ -1759,7 +1760,7 @@ async def token_info_page(
             height_pct = max(5, ((p - min_p) / price_range) * 100)
             chart_html += f'<div class="mini-chart-bar" style="height:{height_pct}%;"></div>'
         chart_html += '</div>'
-        chart_html += f'<div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b;"><span>24h ago</span><span>Now</span></div>'
+        chart_html += f'<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted,#64748b);"><span>24h ago</span><span>Now</span></div>'
 
     # Supply progress bar
     supply_pct = info["supply_pct_minted"]
@@ -1767,7 +1768,7 @@ async def token_info_page(
     <div class="supply-bar">
         <div class="supply-bar-fill" style="width:{min(supply_pct, 100):.1f}%;">{supply_pct:.2f}%</div>
     </div>
-    <div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b;">
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted,#64748b);">
         <span>Minted: {info["total_minted"]:,.2f}</span>
         <span>Burned: {info["total_burned"]:,.2f}</span>
         <span>Max: {info["max_supply"]:,.0f}</span>
@@ -1785,13 +1786,13 @@ async def token_info_page(
                     <span style="color: #e5e7eb;">{h["name"]}</span>
                 </div>
                 <div style="text-align:right;">
-                    <div style="color: #a78bfa; font-weight: 600;">{h["balance"]:,.6f} {crypto_symbol}</div>
-                    <div style="font-size: 11px; color: #64748b;">{h["pct_of_supply"]:.2f}% of supply</div>
+                    <div style="color: var(--accent,#a78bfa); font-weight: 600;">{h["balance"]:,.6f} {crypto_symbol}</div>
+                    <div style="font-size: 11px; color: var(--text-muted,#64748b);">{h["pct_of_supply"]:.2f}% of supply</div>
                 </div>
             </div>
             '''
     else:
-        holders_html = '<p style="color: #64748b;">No holders yet.</p>'
+        holders_html = '<p style="color: var(--text-muted,#64748b);">No holders yet.</p>'
 
     # Halving info
     next_halving = info["next_halving_at"]
@@ -1854,10 +1855,10 @@ async def token_info_page(
                 <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
                     <span class="token-logo" style="width:48px;height:48px;border-radius:12px;">{info["logo_svg"].replace('width="32" height="32"', 'width="48" height="48"') if info["logo_svg"] else ""}</span>
                     <div>
-                        <div style="font-size:14px;color:#94a3b8;">{info["crypto_name"]}</div>
+                        <div style="font-size:14px;color:var(--text-secondary,#94a3b8);">{info["crypto_name"]}</div>
                         <div style="display:flex;align-items:center;">
                             <span class="badge badge-crypto" style="font-size:16px;padding:6px 14px;">{crypto_symbol}</span>
-                            <span style="margin-left:12px;color:#64748b;font-size:13px;">on {info["county_name"]} Blockchain</span>
+                            <span style="margin-left:12px;color:var(--text-muted,#64748b);font-size:13px;">on {info["county_name"]} Blockchain</span>
                         </div>
                     </div>
                 </div>
@@ -1869,10 +1870,10 @@ async def token_info_page(
 
                 {chart_html}
 
-                <div style="display:flex;gap:24px;font-size:13px;color:#94a3b8;margin-top:12px;">
-                    <span>24h High: <strong style="color:#4ade80;">{fmt_usd(info["high_24h"], disp, precision=4)}</strong></span>
-                    <span>24h Low: <strong style="color:#f87171;">{fmt_usd(info["low_24h"], disp, precision=4)}</strong></span>
-                    <span>24h Volume: <strong style="color:#38bdf8;">{fmt_usd(info["volume_24h"], disp)}</strong></span>
+                <div style="display:flex;gap:24px;font-size:13px;color:var(--text-secondary,#94a3b8);margin-top:12px;">
+                    <span>24h High: <strong style="color:var(--color-success-light,#4ade80);">{fmt_usd(info["high_24h"], disp, precision=4)}</strong></span>
+                    <span>24h Low: <strong style="color:var(--color-danger-light,#f87171);">{fmt_usd(info["low_24h"], disp, precision=4)}</strong></span>
+                    <span>24h Volume: <strong style="color:var(--color-sky,#38bdf8);">{fmt_usd(info["volume_24h"], disp)}</strong></span>
                 </div>
             </div>
 
@@ -1981,7 +1982,7 @@ async def token_info_page(
                             <span class="stat-label">Treasury Balance</span>
                             <span class="stat-value positive">{fmt_usd(info["treasury_balance"], disp, precision=4)}</span>
                         </div>
-                        <p style="color:#64748b;font-size:11px;margin-top:4px;">
+                        <p style="color:var(--text-muted,#64748b);font-size:11px;margin-top:4px;">
                             Cash held by the county from token purchases.
                             Pays out when tokens are sold.
                         </p>
@@ -1991,7 +1992,7 @@ async def token_info_page(
                             <span class="stat-label">Blockchain Energy</span>
                             <span class="stat-value {'positive' if info['mining_energy'] > 0 else 'negative'}">{fmt_usd(info["mining_energy"], disp)}</span>
                         </div>
-                        <p style="color:#64748b;font-size:11px;margin-top:4px;">
+                        <p style="color:var(--text-muted,#64748b);font-size:11px;margin-top:4px;">
                             {'&#9679; Blockchain ACTIVE - transactions enabled' if info['mining_energy'] > 0 else '&#9679; Blockchain OFFLINE - no energy, no transactions'}
                         </p>
                     </div>
@@ -2000,7 +2001,7 @@ async def token_info_page(
                             <span class="stat-label">Gas Price</span>
                             <span class="stat-value crypto">{info.get("gas_price", 0.001):.6f} {info["crypto_symbol"]}</span>
                         </div>
-                        <p style="color:#64748b;font-size:11px;margin-top:4px;">
+                        <p style="color:var(--text-muted,#64748b);font-size:11px;margin-top:4px;">
                             Per-tx fee paid to miners &bull; {info.get("recent_tx_count", 0):,} txns this hour &bull; decays hourly toward {info.get("base_gas_price", 0.001):.4f}
                         </p>
                     </div>
@@ -2009,7 +2010,7 @@ async def token_info_page(
                             <span class="stat-label">Created</span>
                             <span class="stat-value">{info["created_at"].strftime("%Y-%m-%d") if info["created_at"] else "N/A"}</span>
                         </div>
-                        <p style="color:#64748b;font-size:11px;margin-top:4px;">
+                        <p style="color:var(--text-muted,#64748b);font-size:11px;margin-top:4px;">
                             Native county token. Used for governance voting (burn to vote)
                             and as the base token on this county's blockchain.
                         </p>
@@ -2020,7 +2021,7 @@ async def token_info_page(
             <!-- Top Holders -->
             <div class="card">
                 <h2>Top Holders (Whales)</h2>
-                <p style="color:#94a3b8;font-size:13px;margin-bottom:12px;">
+                <p style="color:var(--text-secondary,#94a3b8);font-size:13px;margin-bottom:12px;">
                     {info["holder_count"]} unique wallet{"s" if info["holder_count"] != 1 else ""} holding {crypto_symbol}
                 </p>
                 {holders_html}
@@ -2341,10 +2342,10 @@ async def county_governance(
         cycle_html = f'''
         <div class="governance-panel">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <h2 style="color: #f59e0b;">Governance Cycle #{cycle["cycle_number"]}</h2>
+                <h2 style="color: var(--color-warning,#f59e0b);">Governance Cycle #{cycle["cycle_number"]}</h2>
                 {phase_badge}
             </div>
-            <p style="color: #94a3b8; margin-bottom: 16px;">{phase_desc}</p>
+            <p style="color: var(--text-secondary,#94a3b8); margin-bottom: 16px;">{phase_desc}</p>
 
             <div class="cycle-info">
                 <div class="cycle-stat">
@@ -2373,10 +2374,10 @@ async def county_governance(
             submit_form_html = f'''
             <div class="card">
                 <h2>Submit a Proposal</h2>
-                <p style="color: #94a3b8; margin-bottom: 16px;">
+                <p style="color: var(--text-secondary,#94a3b8); margin-bottom: 16px;">
                     As a holder of <span class="badge badge-crypto">{county.crypto_symbol}</span>,
                     you can submit governance proposals for the county to vote on.
-                    <strong style="color:#4ade80;">Submitting a proposal is free.</strong>
+                    <strong style="color:var(--color-success-light,#4ade80);">Submitting a proposal is free.</strong>
                     Voting (in the next phase) burns tokens permanently.
                 </p>
                 <form action="/api/county/governance/propose" method="post">
@@ -2395,17 +2396,17 @@ async def county_governance(
                             <option value="quadratic">Quadratic — √tokens = vote weight (limits whale power)</option>
                             <option value="delegated">Delegated — votes include your delegators&apos; token balances</option>
                         </select>
-                        <small style="color:#64748b;">Quadratic voting prevents large holders from dominating outcomes.</small>
+                        <small style="color:var(--text-muted,#64748b);">Quadratic voting prevents large holders from dominating outcomes.</small>
                     </div>
                     <div class="form-group" id="proposal-value-group" style="display:none;">
                         <label id="proposal-value-label">Proposal Value</label>
                         <input type="number" name="proposal_value" id="proposal-value-input" step="any" placeholder="e.g. 0.03">
-                        <small id="proposal-value-hint" style="color:#64748b;"></small>
+                        <small id="proposal-value-hint" style="color:var(--text-muted,#64748b);"></small>
                     </div>
                     <div class="form-group" id="proposal-target-group" style="display:none;">
                         <label id="proposal-target-label">Proposal Target</label>
                         <input type="text" name="proposal_target" id="proposal-target-input" placeholder="">
-                        <small id="proposal-target-hint" style="color:#64748b;"></small>
+                        <small id="proposal-target-hint" style="color:var(--text-muted,#64748b);"></small>
                     </div>
                     <div class="form-group">
                         <label>Title</label>
@@ -2414,7 +2415,7 @@ async def county_governance(
                     <div class="form-group">
                         <label>Description</label>
                         <textarea name="description" required placeholder="Detailed description of the proposal and its impact" maxlength="500"
-                            style="width:100%;padding:10px 12px;background:#0b1220;border:1px solid #1e293b;border-radius:6px;color:#e5e7eb;font-size:14px;min-height:80px;resize:vertical;"></textarea>
+                            style="width:100%;padding:10px 12px;background:var(--bg-card,#0b1220);border:1px solid var(--bg-card-2,#1e293b);border-radius:6px;color:#e5e7eb;font-size:14px;min-height:80px;resize:vertical;"></textarea>
                     </div>
                     <button type="submit" class="btn btn-governance">Submit Proposal</button>
                 </form>
@@ -2510,14 +2511,14 @@ async def county_governance(
                             {"NO " + f'{p["no_percent"]:.1f}%' if p["no_percent"] > 15 else ""}
                         </div>
                     </div>
-                    <div style="display:flex; justify-content:space-between; font-size:12px; color:#94a3b8;">
+                    <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-secondary,#94a3b8);">
                         <span>YES: {p["yes_token_votes"]:.6f} {county.crypto_symbol}</span>
                         <span>Total: {p["total_votes"]:.6f} burned</span>
                         <span>NO: {p["no_token_votes"]:.6f} {county.crypto_symbol}</span>
                     </div>
                     '''
                 elif p["status"] in (GovernanceProposalStatus.ACTIVE, GovernanceProposalStatus.PENDING):
-                    vote_bar_html = '<p style="color: #64748b; font-size: 13px;">No votes cast yet.</p>'
+                    vote_bar_html = '<p style="color: var(--text-muted,#64748b); font-size: 13px;">No votes cast yet.</p>'
 
                 # Check if player has already voted on this proposal
                 my_votes = get_player_governance_votes(player.id, p["id"]) if is_member else []
@@ -2528,9 +2529,9 @@ async def county_governance(
                 if my_votes:
                     parts = []
                     if my_yes_burned > 0:
-                        parts.append(f'<span style="color:#4ade80;">YES: {my_yes_burned:.6f} {county.crypto_symbol} burned</span>')
+                        parts.append(f'<span style="color:var(--color-success-light,#4ade80);">YES: {my_yes_burned:.6f} {county.crypto_symbol} burned</span>')
                     if my_no_burned > 0:
-                        parts.append(f'<span style="color:#f87171;">NO: {my_no_burned:.6f} {county.crypto_symbol} burned</span>')
+                        parts.append(f'<span style="color:var(--color-danger-light,#f87171);">NO: {my_no_burned:.6f} {county.crypto_symbol} burned</span>')
                     already_voted_html = f'<p style="font-size:12px;margin-top:6px;">Your votes: {" · ".join(parts)} — you can add more weight.</p>'
 
                 # Voting form (only during voting phase, for members with tokens)
@@ -2546,7 +2547,7 @@ async def county_governance(
                     else:
                         weight_formula = "tokens burned (1:1 weight)"
                     vote_form_html = f'''
-                    <div style="margin-top:12px;padding-top:12px;border-top:1px solid #1e293b;">
+                    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--bg-card-2,#1e293b);">
                         <form action="/api/county/governance/vote" method="post">
                             <input type="hidden" name="proposal_id" value="{p["id"]}">
                             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
@@ -2554,13 +2555,13 @@ async def county_governance(
                                        min="0.000001" step="0.000001" max="{crypto_balance}"
                                        placeholder="Tokens to burn" required
                                        data-mech="{mech_v}" data-delegated="{total_delegated_power}"
-                                       style="width:180px;padding:8px;background:#0b1220;border:1px solid #1e293b;border-radius:6px;color:#e5e7eb;font-size:13px;">
-                                <span id="weight-preview-{p["id"]}" style="color:#94a3b8;font-size:12px;min-width:140px;"></span>
+                                       style="width:180px;padding:8px;background:var(--bg-card,#0b1220);border:1px solid var(--bg-card-2,#1e293b);border-radius:6px;color:#e5e7eb;font-size:13px;">
+                                <span id="weight-preview-{p["id"]}" style="color:var(--text-secondary,#94a3b8);font-size:12px;min-width:140px;"></span>
                                 <button type="submit" name="vote" value="yes" class="btn btn-vote-yes btn-sm">Vote YES</button>
                                 <button type="submit" name="vote" value="no" class="btn btn-vote-no btn-sm">Vote NO</button>
                             </div>
-                            <p style="font-size:11px;color:#64748b;margin-top:6px;">
-                                Tokens are <strong style="color:#fbbf24;">permanently burned</strong> — vote weight = {weight_formula}.
+                            <p style="font-size:11px;color:var(--text-muted,#64748b);margin-top:6px;">
+                                Tokens are <strong style="color:var(--color-warning-light,#fbbf24);">permanently burned</strong> — vote weight = {weight_formula}.
                                 Balance: {crypto_balance:.6f} {county.crypto_symbol}
                             </p>
                         </form>
@@ -2581,14 +2582,14 @@ async def county_governance(
                     ptype_v = p["proposal_type"]
                     val = p["proposal_value"]
                     if ptype_v == "fee_adjustment":
-                        value_html = f'<div style="color:#fbbf24;font-size:12px;margin-top:4px;">→ Set exchange fee to {val * 100:.2f}%</div>'
+                        value_html = f'<div style="color:var(--color-warning-light,#fbbf24);font-size:12px;margin-top:4px;">→ Set exchange fee to {val * 100:.2f}%</div>'
                     elif ptype_v == "mining_parameter":
-                        value_html = f'<div style="color:#fbbf24;font-size:12px;margin-top:4px;">→ Set mining multiplier to {val:.2f}x</div>'
+                        value_html = f'<div style="color:var(--color-warning-light,#fbbf24);font-size:12px;margin-top:4px;">→ Set mining multiplier to {val:.2f}x</div>'
                     elif ptype_v == "treasury_spend":
                         tgt_str = f" to Player {p.get('proposal_target','?')}" if p.get("proposal_target") else ""
-                        value_html = f'<div style="color:#fbbf24;font-size:12px;margin-top:4px;">→ Spend {fmt_usd(val, disp)} from treasury{tgt_str}</div>'
+                        value_html = f'<div style="color:var(--color-warning-light,#fbbf24);font-size:12px;margin-top:4px;">→ Spend {fmt_usd(val, disp)} from treasury{tgt_str}</div>'
                     elif ptype_v == "protocol_upgrade" and val:
-                        value_html = f'<div style="color:#fbbf24;font-size:12px;margin-top:4px;">→ Set max supply to {val:,.0f} tokens</div>'
+                        value_html = f'<div style="color:var(--color-warning-light,#fbbf24);font-size:12px;margin-top:4px;">→ Set max supply to {val:,.0f} tokens</div>'
 
                 proposals_html += f'''
                 <div class="proposal-card">
@@ -2600,8 +2601,8 @@ async def county_governance(
                         </div>
                         {status_badge}
                     </div>
-                    <p style="color: #94a3b8; font-size: 14px; margin-bottom: 8px;">{p["description"]}</p>
-                    <p style="color: #64748b; font-size: 12px;">Proposed by: {p["proposer_name"]}</p>
+                    <p style="color: var(--text-secondary,#94a3b8); font-size: 14px; margin-bottom: 8px;">{p["description"]}</p>
+                    <p style="color: var(--text-muted,#64748b); font-size: 12px;">Proposed by: {p["proposer_name"]}</p>
                     {vote_bar_html}
                     {vote_form_html}
                 </div>
@@ -2611,14 +2612,14 @@ async def county_governance(
             proposals_html = '''
             <div class="card">
                 <h2>Proposals</h2>
-                <p style="color: #64748b;">No proposals submitted for this cycle yet.</p>
+                <p style="color: var(--text-muted,#64748b);">No proposals submitted for this cycle yet.</p>
             </div>
             '''
     else:
         cycle_html = '''
         <div class="governance-panel">
-            <h2 style="color: #f59e0b;">No Active Governance Cycle</h2>
-            <p style="color: #94a3b8;">
+            <h2 style="color: var(--color-warning,#f59e0b);">No Active Governance Cycle</h2>
+            <p style="color: var(--text-secondary,#94a3b8);">
                 A new governance cycle will begin automatically. Cycles run every 5 days:
                 3 days for proposals, 2 days for voting.
             </p>
@@ -2639,7 +2640,7 @@ async def county_governance(
         delegating_to_html = ""
         if delegating_to:
             delegating_to_html = f'''
-            <div style="background:#0b1220;border:1px solid #1e293b;border-radius:8px;padding:12px;margin-bottom:12px;">
+            <div style="background:var(--bg-card,#0b1220);border:1px solid var(--bg-card-2,#1e293b);border-radius:8px;padding:12px;margin-bottom:12px;">
                 <strong>Delegating to:</strong> {delegating_to["name"]}
                 <form action="/api/county/governance/revoke-delegation" method="post" style="display:inline;margin-left:12px;">
                     <input type="hidden" name="county_id" value="{county_id}">
@@ -2649,13 +2650,13 @@ async def county_governance(
             '''
         else:
             delegating_to_html = f'''
-            <div style="color:#64748b;font-size:13px;margin-bottom:12px;">
+            <div style="color:var(--text-muted,#64748b);font-size:13px;margin-bottom:12px;">
                 You are not currently delegating your vote to anyone.
             </div>
             <form action="/api/county/governance/delegate" method="post" style="display:flex;gap:8px;margin-bottom:12px;">
                 <input type="hidden" name="county_id" value="{county_id}">
                 <input type="number" name="delegate_id" placeholder="Player ID to delegate to" min="1" step="1"
-                    style="flex:1;padding:8px 12px;background:#0b1220;border:1px solid #1e293b;border-radius:6px;color:#e5e7eb;font-size:14px;">
+                    style="flex:1;padding:8px 12px;background:var(--bg-card,#0b1220);border:1px solid var(--bg-card-2,#1e293b);border-radius:6px;color:#e5e7eb;font-size:14px;">
                 <button type="submit" class="btn btn-secondary">Delegate Vote</button>
             </form>
             '''
@@ -2672,17 +2673,17 @@ async def county_governance(
                 <thead><tr><th>Player</th><th>Token Power</th></tr></thead>
                 <tbody>{rows}</tbody>
             </table>
-            <div style="color:#94a3b8;font-size:13px;margin-top:8px;">
+            <div style="color:var(--text-secondary,#94a3b8);font-size:13px;margin-top:8px;">
                 Total delegated power: <strong class="stat-value crypto">{total_power:.6f} {county.crypto_symbol}</strong>
             </div>
             '''
         else:
-            delegators_html = '<p style="color:#64748b;font-size:13px;margin-top:16px;">Nobody has delegated their vote to you.</p>'
+            delegators_html = '<p style="color:var(--text-muted,#64748b);font-size:13px;margin-top:16px;">Nobody has delegated their vote to you.</p>'
 
         delegation_html = f'''
         <div class="card">
             <h2>🗳 Vote Delegation</h2>
-            <p style="color:#94a3b8;font-size:13px;margin-bottom:16px;">
+            <p style="color:var(--text-secondary,#94a3b8);font-size:13px;margin-bottom:16px;">
                 Delegate your governance vote weight to another county member.
                 On proposals using <strong>Delegated</strong> voting, your delegate&apos;s effective
                 weight includes your token balance.
@@ -2708,8 +2709,8 @@ async def county_governance(
             <tr>
                 <td>Cycle #{h["cycle_number"]}</td>
                 <td>{h["total_proposals"]}</td>
-                <td style="color: #4ade80;">{h["passed"]}</td>
-                <td style="color: #f87171;">{h["failed"]}</td>
+                <td style="color: var(--color-success-light,#4ade80);">{h["passed"]}</td>
+                <td style="color: var(--color-danger-light,#f87171);">{h["failed"]}</td>
                 <td>{h["created_at"].strftime("%Y-%m-%d") if h["created_at"] else "N/A"}</td>
             </tr>
             '''
@@ -2739,13 +2740,13 @@ async def county_governance(
         <div class="container" style="max-width:960px;">
             <!-- DAO-style back nav -->
             <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
-                <a href="/county/{county_id}" style="color:#64748b;font-size:20px;text-decoration:none;">&#8592;</a>
+                <a href="/county/{county_id}" style="color:var(--text-muted,#64748b);font-size:20px;text-decoration:none;">&#8592;</a>
                 <div>
-                    <div style="font-size:18px;font-weight:700;color:#f1f5f9;">Governance</div>
-                    <div style="font-size:12px;color:#64748b;">{county.name} · {county.crypto_symbol} DAO</div>
+                    <div style="font-size:18px;font-weight:700;color:var(--text-bright,#f1f5f9);">Governance</div>
+                    <div style="font-size:12px;color:var(--text-muted,#64748b);">{county.name} · {county.crypto_symbol} DAO</div>
                 </div>
                 <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
-                    <span style="font-size:12px;color:#a78bfa;">Balance: <strong>{crypto_balance:,.4f} {county.crypto_symbol}</strong></span>
+                    <span style="font-size:12px;color:var(--accent,#a78bfa);">Balance: <strong>{crypto_balance:,.4f} {county.crypto_symbol}</strong></span>
                     <a href="/county/{county_id}/mining" class="btn" style="font-size:12px;padding:6px 14px;">Mining</a>
                 </div>
             </div>
@@ -2755,22 +2756,22 @@ async def county_governance(
 
             <div class="card" style="margin-bottom: 16px;">
                 <h2>How Governance Works</h2>
-                <p style="color: #94a3b8; font-size: 14px; margin-bottom: 12px;">
+                <p style="color: var(--text-secondary,#94a3b8); font-size: 14px; margin-bottom: 12px;">
                     Every 5 days, an intercounty governance vote takes place for the
                     <span class="badge badge-crypto">{county.crypto_symbol}</span> blockchain.
                     County members who hold {county.crypto_symbol} can participate.
                 </p>
                 <div class="grid grid-3" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px;">
                     <div>
-                        <h3 style="color: #f59e0b;">1. Proposal Phase (3 days)</h3>
-                        <p style="color: #94a3b8; font-size: 13px;">
+                        <h3 style="color: var(--color-warning,#f59e0b);">1. Proposal Phase (3 days)</h3>
+                        <p style="color: var(--text-secondary,#94a3b8); font-size: 13px;">
                             County members who hold {county.crypto_symbol} submit proposals for
                             protocol upgrades, fee adjustments, mining parameters, county policies, and more.
                         </p>
                     </div>
                     <div>
-                        <h3 style="color: #f59e0b;">2. Voting Phase (2 days)</h3>
-                        <p style="color: #94a3b8; font-size: 13px;">
+                        <h3 style="color: var(--color-warning,#f59e0b);">2. Voting Phase (2 days)</h3>
+                        <p style="color: var(--text-secondary,#94a3b8); font-size: 13px;">
                             Burn {county.crypto_symbol} to vote YES or NO. Three mechanisms available:
                             <strong>Token-Weighted</strong> (1 token = 1 vote),
                             <strong>Quadratic</strong> (√tokens = weight, limits whale power),
@@ -2779,8 +2780,8 @@ async def county_governance(
                         </p>
                     </div>
                     <div>
-                        <h3 style="color: #f59e0b;">3. Execution</h3>
-                        <p style="color: #94a3b8; font-size: 13px;">
+                        <h3 style="color: var(--color-warning,#f59e0b);">3. Execution</h3>
+                        <p style="color: var(--text-secondary,#94a3b8); font-size: 13px;">
                             Passed proposals are <strong>automatically executed</strong> on-chain:
                             fee adjustments change the exchange rate, mining parameter changes adjust rewards,
                             treasury spends transfer funds, and protocol upgrades modify token supply.

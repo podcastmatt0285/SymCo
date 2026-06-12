@@ -22,18 +22,28 @@ import json
 CRYPTO_THEME = """
 <style>
 /* ═══ Wadsworth Crypto Theme — Trust Wallet × Uniswap ═══ */
-/* TW palette: deep-space bg #05060f, panels #0c0e1d / #12152b, violet #a855f7, orange #f97316 */
+/* TW palette: deep-space bg var(--cbg,#05060f), panels var(--cpanel,#0c0e1d) / var(--cpanel2,#12152b), violet var(--accent,#a855f7), orange var(--accent-2,#f97316) */
 /* Uniswap palette: same deep dark, pink accent #fc72ff, but we use TW gradient as brand */
+/* Bridge to the skin system: every crypto-local var derives from the player's
+   skin variables (loaded earlier in <head>), falling back to the Trust Wallet ×
+   Uniswap palette when a skin doesn't define them. Skins stay fully in charge. */
 :root {
-  --cbg: #05060f; --cpanel: #0c0e1d; --cpanel2: #12152b; --cline: #1c2040;
-  --ctxt: #e6e8f5; --cmut: #707694;
-  --cgrad: linear-gradient(120deg,#f97316,#a855f7);
-  --cgreen: #22c55e; --cred: #ef4444; --caccent: #a855f7; --caccent2: #f97316;
-  --shadow-panel: 0 2px 24px rgba(0,0,0,.45);
-  --shadow-card: 0 1px 8px rgba(0,0,0,.35);
-  --radius-card: 24px;
-  --radius-btn: 999px;
-  --radius-input: 16px;
+  --cbg: var(--bg-page, #05060f);
+  --cpanel: var(--bg-card, #0c0e1d);
+  --cpanel2: var(--bg-card-2, #12152b);
+  --cline: var(--border, #1c2040);
+  --ctxt: var(--text-primary, #e6e8f5);
+  --cmut: var(--text-muted, #707694);
+  --cgrad: var(--grad-bar, linear-gradient(120deg,#f97316,#a855f7));
+  --cgreen: var(--color-success, #22c55e);
+  --cred: var(--color-danger, #ef4444);
+  --caccent: var(--accent, #a855f7);
+  --caccent2: var(--accent-2, #f97316);
+  --shadow-panel: var(--shadow-md, 0 2px 24px rgba(0,0,0,.45));
+  --shadow-card: var(--shadow-sm, 0 1px 8px rgba(0,0,0,.35));
+  --radius-card: var(--radius-2xl, 24px);
+  --radius-btn: var(--radius-pill, 999px);
+  --radius-input: var(--radius-lg, 16px);
 }
 
 /* ── Reset & base ── */
@@ -45,7 +55,7 @@ body {
   -webkit-font-smoothing: antialiased !important;
 }
 .container { max-width: 1100px !important; margin: 0 auto !important; padding: 0 16px !important; }
-a { color: #38bdf8; text-decoration: none; }
+a { color: var(--color-sky,#38bdf8); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
 /* ── Header (legacy pages) ── */
@@ -127,7 +137,7 @@ a:hover { text-decoration: underline; }
 }
 .btn-sm { padding: 6px 14px !important; font-size: .75rem !important; }
 .btn-danger, .btn-sell {
-  background: #3f1120 !important; color: #fda4af !important;
+  background: #3f1120 !important; color: var(--color-danger-light,#fda4af) !important;
   border: 1px solid #881337 !important;
 }
 
@@ -183,15 +193,15 @@ input::placeholder, textarea::placeholder { color: #3a4060 !important; }
   font-size: .72rem !important; padding: 2px 10px !important;
   line-height: 1.6 !important;
 }
-.badge-success { background: #052e16 !important; color: #4ade80 !important; border: 1px solid #14532d !important; }
-.badge-warning { background: #2e2008 !important; color: #fbbf24 !important; border: 1px solid #78350f !important; }
+.badge-success { background: var(--color-success-bg,#052e16) !important; color: var(--color-success-light,#4ade80) !important; border: 1px solid var(--color-success-dark,#14532d) !important; }
+.badge-warning { background: #2e2008 !important; color: var(--color-warning-light,#fbbf24) !important; border: 1px solid #78350f !important; }
 .badge-info    { background: #0b2447 !important; color: #60a5fa !important; border: 1px solid #1e40af !important; }
 .badge-crypto, .badge-meme  { background: #1e1038 !important; color: #c4b5fd !important; border: 1px solid #3b1d6e !important; }
 .badge-native  { background: #1c2c08 !important; color: #86efac !important; border: 1px solid #166534 !important; }
-.badge-buy     { background: #052e16 !important; color: #4ade80 !important; border: 1px solid #14532d !important; }
-.badge-sell    { background: #2d0a12 !important; color: #fda4af !important; border: 1px solid #7f1d1d !important; }
+.badge-buy     { background: var(--color-success-bg,#052e16) !important; color: var(--color-success-light,#4ade80) !important; border: 1px solid var(--color-success-dark,#14532d) !important; }
+.badge-sell    { background: var(--color-danger-bg,#2d0a12) !important; color: var(--color-danger-light,#fda4af) !important; border: 1px solid var(--color-danger-dark,#7f1d1d) !important; }
 .badge-open    { background: #0b2447 !important; color: #93c5fd !important; border: 1px solid #1e40af !important; }
-.badge-filled  { background: #052e16 !important; color: #6ee7b7 !important; border: 1px solid #065f46 !important; }
+.badge-filled  { background: var(--color-success-bg,#052e16) !important; color: #6ee7b7 !important; border: 1px solid #065f46 !important; }
 .badge-cancelled{ background: #1e1e2e !important; color: #6b7280 !important; border: 1px solid #374151 !important; }
 
 /* ── Alerts ── */
@@ -200,8 +210,8 @@ input::placeholder, textarea::placeholder { color: #3a4060 !important; }
   padding: 12px 18px !important; margin-bottom: 14px !important;
   border-width: 1px !important; border-style: solid !important;
 }
-.alert-success { background: #052e16 !important; border-color: #14532d !important; color: #bbf7d0 !important; }
-.alert-error   { background: #2d0a12 !important; border-color: #7f1d1d !important; color: #fecaca !important; }
+.alert-success { background: var(--color-success-bg,#052e16) !important; border-color: var(--color-success-dark,#14532d) !important; color: #bbf7d0 !important; }
+.alert-error   { background: var(--color-danger-bg,#2d0a12) !important; border-color: var(--color-danger-dark,#7f1d1d) !important; color: var(--color-danger-light,#fecaca) !important; }
 .alert-info    { background: #0b2447 !important; border-color: #1e40af !important; color: #bfdbfe !important; }
 .alert-warning { background: #1c1400 !important; border-color: #78350f !important; color: #fde68a !important; }
 
@@ -217,8 +227,8 @@ input::placeholder, textarea::placeholder { color: #3a4060 !important; }
 }
 .vote-bar-yes { background: var(--cgreen) !important; height: 100% !important; }
 .vote-bar-no  { background: var(--cred) !important; height: 100% !important; }
-.vote-yes { background: #052e16 !important; color: #4ade80 !important; border: 1px solid #14532d !important; border-radius: 999px !important; }
-.vote-no  { background: #2d0a12 !important; color: #fda4af !important; border: 1px solid #7f1d1d !important; border-radius: 999px !important; }
+.vote-yes { background: var(--color-success-bg,#052e16) !important; color: var(--color-success-light,#4ade80) !important; border: 1px solid var(--color-success-dark,#14532d) !important; border-radius: 999px !important; }
+.vote-no  { background: var(--color-danger-bg,#2d0a12) !important; color: var(--color-danger-light,#fda4af) !important; border: 1px solid var(--color-danger-dark,#7f1d1d) !important; border-radius: 999px !important; }
 
 /* ── Token hero / big prices ── */
 .token-hero {
@@ -234,8 +244,8 @@ input::placeholder, textarea::placeholder { color: #3a4060 !important; }
   font-size: .78rem !important; padding: 3px 10px !important;
   font-weight: 700 !important; border-radius: 999px !important;
 }
-.token-change-up   { background: #052e16 !important; color: #4ade80 !important; }
-.token-change-down { background: #2d0a12 !important; color: #fda4af !important; }
+.token-change-up   { background: var(--color-success-bg,#052e16) !important; color: var(--color-success-light,#4ade80) !important; }
+.token-change-down { background: var(--color-danger-bg,#2d0a12) !important; color: var(--color-danger-light,#fda4af) !important; }
 .token-change-flat { background: var(--cpanel2) !important; color: var(--cmut) !important; }
 
 /* ── Order book (meme TDP) ── */
@@ -297,8 +307,19 @@ input::placeholder, textarea::placeholder { color: #3a4060 !important; }
 }
 
 /* ── Wallet balance display (big number) ── */
-.wallet-balance { font-size: 1.6rem !important; font-weight: 800 !important; letter-spacing: -.02em; }
-.wallet-value   { font-size: .82rem !important; color: var(--cmut) !important; margin-top: 2px; }
+.wallet-balance { font-size: clamp(1rem, 4.5vw, 1.6rem) !important; font-weight: 800 !important; letter-spacing: -.02em; overflow-wrap: anywhere; }
+.wallet-value   { font-size: .82rem !important; color: var(--cmut) !important; margin-top: 2px; overflow-wrap: anywhere; }
+
+/* ── Huge-balance hardening: 16-digit ANA fortunes must never stretch the page ── */
+.card, .uni-card, .grid > *, .header > * { min-width: 0 !important; }
+td, th { overflow-wrap: anywhere; }
+.table, table { max-width: 100% !important; }
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.balance-huge { font-size: clamp(1.1rem, 6vw, 2.4rem) !important; overflow-wrap: anywhere; }
+@media (max-width: 640px) {
+  .card, .poll-card, .meme-card, .wsc-card, .exchange-panel, .mining-node { padding: 14px !important; }
+  .table { display: block; overflow-x: auto; white-space: nowrap; }
+}
 
 /* ── Privacy banner ── */
 .privacy-banner {
@@ -373,6 +394,15 @@ _ICON_PALETTES = [
 ]
 
 
+def fmt_compact(n: float, decimals: int = 2) -> str:
+    """Abbreviate huge balances (1.5Q, 23.4T, 980.1B…) so 16-digit fortunes
+    don't stretch mobile layouts. Full precision belongs in a title attr."""
+    for div, suf in ((1e15, "Q"), (1e12, "T"), (1e9, "B"), (1e6, "M")):
+        if abs(n) >= div:
+            return f"{n / div:,.{decimals}f}{suf}"
+    return f"{n:,.{decimals}f}"
+
+
 def coin_icon(symbol: str, size: int = 40) -> str:
     """Deterministic gradient circle icon for a token symbol."""
     c1, c2 = _ICON_PALETTES[sum(ord(ch) for ch in symbol) % len(_ICON_PALETTES)]
@@ -409,7 +439,7 @@ SWAP_CARD_STYLES = """
   justify-content: center; font-size: .5rem; font-weight: 800; color: #fff; }
 .uni-sub { display: flex; justify-content: space-between; font-size: .68rem;
   color: var(--cmut,#707694); margin-top: 8px; }
-.uni-sub .mx { cursor: pointer; color: #a855f7; font-weight: 700; }
+.uni-sub .mx { cursor: pointer; color: var(--accent,#a855f7); font-weight: 700; }
 .uni-flip { display: flex; justify-content: center; margin: -9px 0; position: relative; z-index: 2; }
 .uni-flip button { width: 38px; height: 38px; border-radius: 12px; background: var(--cpanel2,#12152b);
   border: 4px solid var(--cpanel,#0c0e1d); color: var(--ctxt,#e6e8f5); font-size: 1rem;
@@ -420,7 +450,7 @@ SWAP_CARD_STYLES = """
 .uni-info .irow { display: flex; justify-content: space-between; }
 .uni-info .iv { color: var(--ctxt,#e6e8f5); }
 .uni-btn { width: 100%; margin-top: 12px; padding: 15px; border: none !important;
-  border-radius: 18px !important; background: linear-gradient(120deg,#f97316,#a855f7) !important;
+  border-radius: 18px !important; background: linear-gradient(120deg,var(--accent-2,#f97316),var(--accent,#a855f7)) !important;
   color: #fff !important; font-size: 1rem; font-weight: 800; cursor: pointer;
   font-family: inherit; transition: opacity .15s; }
 .uni-btn:disabled { opacity: .45; cursor: not-allowed; }
@@ -475,7 +505,7 @@ def swap_card_html(swap_tokens: list, eff_fee_pct: float, exec_bonus: float = 0.
   <div class="uni-info">
     <div class="irow"><span>Rate</span><span class="iv" id="i-rate">—</span></div>
     <div class="irow"><span>Exchange fee {fee_note}</span><span class="iv">{eff_fee_pct:.2f}% + gas</span></div>
-    <div class="irow"><span>Government tax</span><span class="iv" style="color:#4ade80;">0.00% — untracked 🕶️</span></div>
+    <div class="irow"><span>Government tax</span><span class="iv" style="color:var(--color-success-light,#4ade80);">0.00% — untracked 🕶️</span></div>
   </div>
   <button class="uni-btn" id="swap-btn" onclick="cbSwap()" disabled>Enter an amount</button>
 </div>
@@ -495,16 +525,16 @@ if (tokIn.sym === tokOut.sym) tokIn = TOKENS[0].sym === tokOut.sym ? TOKENS[1] :
 function cbToast(msg, ok) {{
   var el = document.getElementById('cb-toast');
   el.textContent = msg;
-  el.style.background = ok ? '#14532d' : '#7f1d1d';
-  el.style.color = ok ? '#bbf7d0' : '#fecaca';
-  el.style.border = '1px solid ' + (ok ? '#22c55e' : '#ef4444');
+  el.style.background = ok ? 'var(--color-success-dark,#14532d)' : 'var(--color-danger-dark,#7f1d1d)';
+  el.style.color = ok ? '#bbf7d0' : 'var(--color-danger-light,#fecaca)';
+  el.style.border = '1px solid ' + (ok ? 'var(--color-success,#22c55e)' : 'var(--color-danger,#ef4444)');
   el.style.opacity = '1';
   clearTimeout(el._t);
   el._t = setTimeout(function() {{ el.style.opacity = '0'; }}, 4200);
 }}
 function tokIcon(sym) {{
-  var pals = [['#f97316','#fb923c'],['#a855f7','#c084fc'],['#38bdf8','#7dd3fc'],['#22c55e','#4ade80'],
-              ['#ef4444','#f87171'],['#eab308','#fde047'],['#ec4899','#f9a8d4'],['#14b8a6','#5eead4']];
+  var pals = [['var(--accent-2,#f97316)','var(--color-orange,#fb923c)'],['var(--accent,#a855f7)','var(--accent,#c084fc)'],['var(--color-sky,#38bdf8)','var(--color-sky,#7dd3fc)'],['var(--color-success,#22c55e)','var(--color-success-light,#4ade80)'],
+              ['var(--color-danger,#ef4444)','var(--color-danger-light,#f87171)'],['#eab308','var(--color-gold,#fde047)'],['var(--color-pink,#ec4899)','var(--color-pink,#f9a8d4)'],['#14b8a6','#5eead4']];
   var s = 0; for (var i = 0; i < sym.length; i++) s += sym.charCodeAt(i);
   var p = pals[s % pals.length];
   return '<span class="ti" style="background:linear-gradient(135deg,' + p[0] + ',' + p[1] + ');">' + sym.slice(0,4) + '</span>';
