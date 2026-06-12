@@ -527,7 +527,7 @@ def process_business_tick(db):
                         RetailPrice.item_type == item
                     ).first()
 
-                    mkt_p = market.get_market_price(item) or 10.0
+                    mkt_p = _retail_reference_price(item)
                     current_p = price_entry.price if price_entry else mkt_p
 
                     try:
@@ -1009,13 +1009,22 @@ def set_retail_price(player_id: int, item_type: str, price: float) -> bool:
 # =========================
 
 def get_district_business_types():
-    """Load district business types from district_businesses.json"""
+    """Load district business types from district_businesses.json.
+
+    Each business's retail "products" are augmented with its own production
+    outputs (using per-item demand parameters from district_items.json) so
+    every district item has a consumer demand sink — see _augment_district_retail.
+    """
     try:
         with open('district_businesses.json', 'r') as f:
-            return json.load(f)
+            types = json.load(f)
     except FileNotFoundError:
         print("[Business] Warning: district_businesses.json not found")
         return {}
+    return {
+        k: (_augment_district_retail(k, v) if isinstance(v, dict) else v)
+        for k, v in types.items()
+    }
 
 
 def get_mint_business_types():
@@ -1026,6 +1035,78 @@ def get_mint_business_types():
     except FileNotFoundError:
         print("[Business] Warning: mint_businesses.json not found")
         return {}
+
+
+# ==========================
+# DISTRICT RETAIL DEMAND
+# ==========================
+# Every district item carries elasticity/base_sale_chance in district_items.json,
+# so district businesses can retail anything they produce — not just the items
+# hand-listed in their "products" block. The order book remains the B2B channel;
+# this gives district production a guaranteed consumer demand sink.
+
+_district_retail_cache: dict = {}
+
+def _augment_district_retail(business_type: str, config: dict) -> dict:
+    """Return config with auto-generated retail products for each production
+    output that has demand parameters in district_items.json. Cached per type."""
+    cached = _district_retail_cache.get(business_type)
+    if cached is not None:
+        return cached
+    try:
+        from district_market import DISTRICT_ITEMS
+        auto = {}
+        for line in config.get("production_lines", []) or []:
+            out = line.get("output_item")
+            d = DISTRICT_ITEMS.get(out)
+            if not out or not isinstance(d, dict):
+                continue
+            if "elasticity" not in d or "base_sale_chance" not in d:
+                continue
+            auto[out] = {"elasticity": d["elasticity"],
+                         "base_sale_chance": d["base_sale_chance"]}
+        if auto:
+            merged = dict(config)
+            merged["products"] = {**auto, **(config.get("products") or {})}
+            config = merged
+    except Exception as e:
+        print(f"[Business] district retail augment failed for {business_type}: {e}")
+    _district_retail_cache[business_type] = config
+    return config
+
+
+def _retail_reference_price(item: str) -> float:
+    """Reference market price for retail demand: live market → district market →
+    item base_price (item_types/district_items) → $10 last-resort default."""
+    try:
+        import market
+        p = market.get_market_price(item)
+        if p and p > 0:
+            return p
+    except Exception:
+        pass
+    try:
+        import district_market as _dm
+        if item in _dm.DISTRICT_ITEMS:
+            try:
+                p = _dm.get_market_price(item)
+            except Exception:
+                p = None
+            if p and p > 0:
+                return p
+            bp = _dm.DISTRICT_ITEMS[item].get("base_price")
+            if bp and bp > 0:
+                return float(bp)
+    except Exception:
+        pass
+    try:
+        import inventory as _inv_mod
+        bp = (_inv_mod.ITEM_RECIPES.get(item) or {}).get("base_price")
+        if bp and bp > 0:
+            return float(bp)
+    except Exception:
+        pass
+    return 10.0
 
 # ==========================
 # FIXED create_district_business FUNCTION
