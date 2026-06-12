@@ -658,6 +658,7 @@ async def sitemap_xml():
         "/executives",
         "/cities",
         "/counties",
+        "/crypto",
         "/memecoins",
         "/exchange",
         "/estate",
@@ -853,6 +854,13 @@ try:
     from memecoins_ux import router as memecoins_router
     app.include_router(memecoins_router)
     print("Meme Coins routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
+    from crypto_hub_ux import router as crypto_hub_router
+    app.include_router(crypto_hub_router)
+    print("Crypto Hub routes registered")
 except ModuleNotFoundError:
     pass
 

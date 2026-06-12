@@ -2811,12 +2811,16 @@ async def api_yield_unstake(
 # API: FAUCET CLAIM
 # ==========================
 @router.post("/api/wallet/faucet")
-async def api_wallet_faucet(session_token: Optional[str] = Cookie(None)):
+async def api_wallet_faucet(ajax: Optional[str] = Form(None), session_token: Optional[str] = Cookie(None)):
     player = get_current_player(session_token)
     if not player:
+        if ajax:
+            return JSONResponse({"ok": False, "error": "Not authenticated"}, status_code=401)
         return RedirectResponse(url="/login", status_code=303)
     from wallet import claim_faucet
     ok, msg, _ = claim_faucet(player.id, claim_type="manual")
+    if ajax:
+        return JSONResponse({"ok": ok, "message": msg} if ok else {"ok": False, "error": msg})
     enc = msg.replace(" ", "+")
     if ok:
         return RedirectResponse(url=f"/wallet?msg={enc}", status_code=303)
@@ -2829,13 +2833,18 @@ async def api_wallet_faucet(session_token: Optional[str] = Cookie(None)):
 @router.post("/api/wallet/redeem")
 async def api_wallet_redeem(
     amount: float = Form(...),
+    ajax: Optional[str] = Form(None),
     session_token: Optional[str] = Cookie(None),
 ):
     player = get_current_player(session_token)
     if not player:
+        if ajax:
+            return JSONResponse({"ok": False, "error": "Not authenticated"}, status_code=401)
         return RedirectResponse(url="/login", status_code=303)
     from wallet import redeem_wsc_for_cash
     ok, msg = redeem_wsc_for_cash(player.id, amount)
+    if ajax:
+        return JSONResponse({"ok": ok, "message": msg} if ok else {"ok": False, "error": msg})
     enc = msg.replace(" ", "+")
     if ok:
         return RedirectResponse(url=f"/wallet?msg={enc}", status_code=303)
@@ -2851,13 +2860,18 @@ async def api_wallet_redeem(
 async def api_amm_native_to_wsc(
     native_symbol: str   = Form(...),
     native_amount: float = Form(...),
+    ajax: Optional[str]  = Form(None),
     session_token: Optional[str] = Cookie(None),
 ):
     player = get_current_player(session_token)
     if not player:
+        if ajax:
+            return JSONResponse({"ok": False, "error": "Not authenticated"}, status_code=401)
         return RedirectResponse(url="/login", status_code=303)
     from wallet import swap_native_for_wsc
     ok, msg, _ = swap_native_for_wsc(player.id, native_symbol.upper().strip(), native_amount)
+    if ajax:
+        return JSONResponse({"ok": ok, "message": msg} if ok else {"ok": False, "error": msg})
     enc = msg.replace(" ", "+")
     if ok:
         return RedirectResponse(url=f"/wallet?msg={enc}", status_code=303)
@@ -2871,13 +2885,18 @@ async def api_amm_native_to_wsc(
 async def api_amm_wsc_to_native(
     native_symbol: str   = Form(...),
     wsc_amount:    float = Form(...),
+    ajax: Optional[str]  = Form(None),
     session_token: Optional[str] = Cookie(None),
 ):
     player = get_current_player(session_token)
     if not player:
+        if ajax:
+            return JSONResponse({"ok": False, "error": "Not authenticated"}, status_code=401)
         return RedirectResponse(url="/login", status_code=303)
     from wallet import swap_wsc_for_native
     ok, msg, _ = swap_wsc_for_native(player.id, native_symbol.upper().strip(), wsc_amount)
+    if ajax:
+        return JSONResponse({"ok": ok, "message": msg} if ok else {"ok": False, "error": msg})
     enc = msg.replace(" ", "+")
     if ok:
         return RedirectResponse(url=f"/wallet?msg={enc}", status_code=303)

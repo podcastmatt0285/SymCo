@@ -1,0 +1,16 @@
+/*
+ * Wadsworth Module Override: Crypto Hub
+ * Loaded ONLY on the /crypto hub, after the player's skin.
+ * Trust Wallet × Uniswap palette: orange→purple gradient accent over a
+ * deep-space background. Skins can still re-theme via these variables.
+ *
+ * Skin authors: you do NOT need to account for this file.
+ */
+
+:root {
+  --accent:      #a855f7;               /* uniswap-style violet                 */
+  --accent-dim:  #7c3aed;
+  --accent-bg:   rgba(168,85,247,0.08);
+  --border-focus:#a855f7;
+  --shadow-glow: 0 8px 25px rgba(168,85,247,0.18);
+}

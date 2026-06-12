@@ -80,7 +80,7 @@ def skin_links(player_id: int = None, module: str = None) -> str:
     Args:
         player_id: Logged-in player's ID. None → 'default' skin (login page etc).
         module:    Optional module override name — 'admin', 'executive',
-                   'memecoins', or 'mod'.
+                   'memecoins', 'crypto', or 'mod'.
     """
     skin = "default"
     if player_id:

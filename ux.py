@@ -2713,6 +2713,13 @@ def home(request: Request, session_token: Optional[str] = Cookie(None)):
                 <span class="dc-btn">Open Banking</span>
             </a>
 
+            <a href="/crypto" class="dc" style="--c:#a855f7;--g:linear-gradient(90deg,#f97316,#a855f7);--glow:rgba(168,85,247,0.18);--btn:#a855f7;">
+                <span class="dc-ico">🦊</span>
+                <div class="dc-t">Crypto Hub</div>
+                <div class="dc-d">Your entire crypto life on one page — total portfolio value, every L1 native token, meme coin, and WSC stablecoin balance, a one-card swap that routes Cash ↔ L1 ↔ WSC automatically, mining and yield farming, and your full crypto activity feed. Untracked by the government: 0% tax, always.</div>
+                <span class="dc-btn">Open Crypto Hub</span>
+            </a>
+
             <a href="/exchange" class="dc" style="--c:#f97316;--g:linear-gradient(90deg,#f97316,#fb923c);--glow:rgba(249,115,22,0.15);--btn:#f97316;">
                 <span class="dc-ico">⛓️</span>
                 <div class="dc-t">Wadsworth Crypto Exchange</div>
@@ -16190,8 +16197,8 @@ async def place_order(item_type: str = Form(...), order_type: str = Form(...), q
             item_label = item_type.replace("_", " ").title()
             err = f"Order rejected: you have {held:,.4g} {item_label} but tried to sell {quantity:,.4g}."
         else:
-            from reserve_banks import get_player_cash_balance
-            bal = get_player_cash_balance(player.id)
+            from reserve_banks import get_usd_balance
+            bal = get_usd_balance(player.id)
             err = f"Order rejected: insufficient funds (balance {bal:,.2f}, cost ≈ {quantity * price_usd:,.2f})."
         if ajax:
             return JSONResponse({"ok": False, "error": err})

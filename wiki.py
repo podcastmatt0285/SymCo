@@ -788,6 +788,33 @@ def _seed_cities_counties_entries():
 def _seed_crypto_entries():
     _ENTRIES = [
         (
+            "Crypto Hub — Your Wallet, Swap & Earn Dashboard",
+            "cities",
+            "The Crypto Hub (/crypto) is the front door to everything crypto in Wadsworth — "
+            "one page, four tabs, styled like a modern mobile wallet.\n\n"
+            "WALLET TAB\n"
+            "Your total crypto portfolio value at the top, marked to live prices, followed by "
+            "every asset you hold: Layer-1 county native tokens, the WSC stablecoin, and "
+            "Layer-2 meme coins. Tap any asset to open its full token page.\n\n"
+            "SWAP TAB\n"
+            "A single swap card that routes automatically based on the pair you pick:\n"
+            "• Cash ↔ any county native token (county exchange)\n"
+            "• Native ↔ Native (atomic cross-county swap)\n"
+            "• Native ↔ WSC (constant-product AMM pool)\n"
+            "• WSC → Cash (1:1 redemption)\n"
+            "It shows your live rate, the exchange fee (reduced by your executive's crypto "
+            "bonus if you have one), and the eternal 0% government tax. Meme coins trade on "
+            "their own order books from the meme market.\n\n"
+            "EARN TAB\n"
+            "Your county mining node, active meme-mining stakes, WSC yield-farming deposits, "
+            "and the WSC faucet — all in one place.\n\n"
+            "ACTIVITY TAB\n"
+            "Your personal crypto ledger: every buy, sell, swap, launch, mining reward, and "
+            "redemption, newest first. The full economy-wide ledger remains in WikiWads.\n\n"
+            "The classic pages (/exchange, /wallet, /memecoins, mining, governance, gas "
+            "tracker) still exist for deep dives — the hub links to all of them.",
+        ),
+        (
             "County Crypto — Buying, Selling & Swapping",
             "cities",
             "Every county runs its own blockchain with a finite-supply native token. "

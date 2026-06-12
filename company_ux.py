@@ -426,6 +426,7 @@ SITEMAP_ENTRIES = [
     ("/banks/brokerage-firm",        "Brokerage Firm",         "The Wadsworth brokerage firm — fees, rules, and membership"),
     ("/reserve-banks/bonds",         "Sovereign Bonds",        "Buy and manage sovereign bonds issued by reserve banks"),
     ("/reserve-banks/forex",         "Forex",                  "Live foreign exchange rates and inter-bank currency settlement"),
+    ("/crypto",                      "Crypto Hub",             "Unified wallet, swap, earn & activity dashboard for all crypto — native tokens, meme coins, and WSC"),
     ("/wallet",                      "Wallet",                 "Your WSC stable coin balance, yield farming positions, and faucet claims"),
     ("/exchange",                    "Crypto Exchange",        "Buy and sell county-native blockchain tokens and meme coins"),
     ("/memecoins",                   "Meme Coins",             "All active county meme tokens — price charts, holders, and bonding curve data"),
