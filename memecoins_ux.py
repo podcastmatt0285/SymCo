@@ -587,13 +587,17 @@ async def county_memecoins(
 # ==========================
 @router.get("/memecoins/launch", response_class=HTMLResponse)
 async def launch_meme_form(
-    county_id: int = Query(...),
+    county_id: Optional[int] = Query(None),
     session_token: Optional[str] = Cookie(None),
     error: Optional[str] = Query(None),
 ):
     player = get_current_player(session_token)
     if not player:
         return RedirectResponse(url="/login", status_code=303)
+
+    if county_id is None:
+        return RedirectResponse(
+            url="/memecoins?error=Open+the+launch+form+from+your+county", status_code=303)
 
     from memecoins import MEME_CREATION_FEE_NATIVE, MEME_FOUNDER_ALLOCATION_PCT, MEME_MINING_ALLOCATION_PCT
     from counties import get_county_by_id, is_player_in_county, CryptoWallet, get_db as county_get_db, BASE_GAS_PRICE, GAS_UNITS_MEME_LAUNCH
