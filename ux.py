@@ -2715,30 +2715,9 @@ def home(request: Request, session_token: Optional[str] = Cookie(None)):
 
             <a href="/crypto" class="dc" style="--c:#a855f7;--g:linear-gradient(90deg,#f97316,#a855f7);--glow:rgba(168,85,247,0.18);--btn:#a855f7;">
                 <span class="dc-ico">🦊</span>
-                <div class="dc-t">Crypto Hub</div>
-                <div class="dc-d">Your entire crypto life on one page — total portfolio value, every L1 native token, meme coin, and WSC stablecoin balance, a one-card swap that routes Cash ↔ L1 ↔ WSC automatically, mining and yield farming, and your full crypto activity feed. Untracked by the government: 0% tax, always.</div>
-                <span class="dc-btn">Open Crypto Hub</span>
-            </a>
-
-            <a href="/exchange" class="dc" style="--c:#f97316;--g:linear-gradient(90deg,#f97316,#fb923c);--glow:rgba(249,115,22,0.15);--btn:#f97316;">
-                <span class="dc-ico">⛓️</span>
-                <div class="dc-t">Wadsworth Crypto Exchange</div>
-                <div class="dc-d">Buy, sell, and swap county native tokens at oracle-driven prices. Deposit energy to power blockchain nodes and earn block rewards through Bitcoin-like halvings. Each county sets its own exchange fee via governance — deflationary hard-cap assets with real on-chain mechanics.</div>
-                <span class="dc-btn">Open Exchange</span>
-            </a>
-
-            <a href="/memecoins" class="dc" style="--c:#a855f7;--g:linear-gradient(90deg,#a855f7,#d946ef);--glow:rgba(168,85,247,0.15);--btn:#a855f7;">
-                <span class="dc-ico">🚀</span>
-                <div class="dc-t">Meme Coins</div>
-                <div class="dc-d">Community-launched speculative tokens built on county blockchains. Trade via live order books, mint coins by burning native tokens on the bonding curve, or stake to mine. Any player can buy and trade — county members can also launch their own coin and earn creator fees on every trade.</div>
-                <span class="dc-btn">Meme Market</span>
-            </a>
-
-            <a href="/wallet" class="dc" style="--c:#fb923c;--g:linear-gradient(90deg,#fb923c,#fdba74);--glow:rgba(251,146,60,0.12);--btn:#fb923c;">
-                <span class="dc-ico">💳</span>
-                <div class="dc-t">Wallet</div>
-                <div class="dc-d">Your personal finances at a glance — current cash balance, full transaction history, multi-currency holdings, and incoming payments. See exactly where your money comes from and where it goes, down to individual ticks.</div>
-                <span class="dc-btn">Open Wallet</span>
+                <div class="dc-t">Crypto</div>
+                <div class="dc-d">The entire crypto system in one place — portfolio, Uniswap-style swaps, token markets, meme coins, the WSC stablecoin wallet, mining, yield farming, governance, and the gas tracker. Trade L1 county tokens and community meme coins on live order books. Untracked by the government: 0% tax, always.</div>
+                <span class="dc-btn">Enter Crypto</span>
             </a>
 
             <a href="/executives" class="dc" style="--c:#c084fc;--g:linear-gradient(90deg,#c084fc,#e879f9);--glow:rgba(192,132,252,0.12);--btn:#c084fc;">
