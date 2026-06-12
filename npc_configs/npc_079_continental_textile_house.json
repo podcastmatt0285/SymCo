@@ -13,27 +13,37 @@
     "land_plots": [
       {
         "terrain_type": "prairie",
-        "proximity_features": ["road"],
+        "proximity_features": [
+          "road"
+        ],
         "size": 1
       },
       {
         "terrain_type": "prairie",
-        "proximity_features": ["riverside"],
+        "proximity_features": [
+          "riverside"
+        ],
         "size": 1
       },
       {
         "terrain_type": "savanna",
-        "proximity_features": ["road"],
+        "proximity_features": [
+          "road"
+        ],
         "size": 1
       },
       {
         "terrain_type": "savanna",
-        "proximity_features": ["road"],
+        "proximity_features": [
+          "road"
+        ],
         "size": 1
       },
       {
         "terrain_type": "forest",
-        "proximity_features": ["road"],
+        "proximity_features": [
+          "road"
+        ],
         "size": 1
       }
     ],
@@ -43,17 +53,25 @@
     {
       "business_type": "cotton_fields",
       "district_id": null,
-      "active_lines": ["cotton"]
+      "active_lines": [
+        "cotton"
+      ]
     },
     {
       "business_type": "cotton_fields",
       "district_id": null,
-      "active_lines": ["cotton"]
+      "active_lines": [
+        "cotton"
+      ]
     },
     {
       "business_type": "textile_and_tannery",
       "district_id": null,
-      "active_lines": ["leather", "polyester", "silk"]
+      "active_lines": [
+        "leather",
+        "polyester",
+        "silk"
+      ]
     }
   ],
   "buy_items": {
@@ -115,5 +133,10 @@
       "max_order_quantity": 1000,
       "market": "regular"
     }
+  },
+  "ipo": {
+    "ticker": "CTXH",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
   }
 }

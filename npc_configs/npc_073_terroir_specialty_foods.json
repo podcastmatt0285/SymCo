@@ -13,27 +13,37 @@
     "land_plots": [
       {
         "terrain_type": "urban",
-        "proximity_features": ["urban"],
+        "proximity_features": [
+          "urban"
+        ],
         "size": 1
       },
       {
         "terrain_type": "urban",
-        "proximity_features": ["urban"],
+        "proximity_features": [
+          "urban"
+        ],
         "size": 1
       },
       {
         "terrain_type": "hills",
-        "proximity_features": ["urban"],
+        "proximity_features": [
+          "urban"
+        ],
         "size": 1
       },
       {
         "terrain_type": "prairie",
-        "proximity_features": ["road"],
+        "proximity_features": [
+          "road"
+        ],
         "size": 1
       },
       {
         "terrain_type": "coastal",
-        "proximity_features": ["coastal"],
+        "proximity_features": [
+          "coastal"
+        ],
         "size": 1
       }
     ],
@@ -43,27 +53,47 @@
     {
       "business_type": "gourmet_kitchen",
       "district_id": null,
-      "active_lines": ["satay", "seafood_tower", "duck_confit", "lobster_bisque"]
+      "active_lines": [
+        "satay",
+        "seafood_tower",
+        "duck_confit",
+        "lobster_bisque"
+      ]
     },
     {
       "business_type": "pastry_kitchen",
       "district_id": null,
-      "active_lines": ["peanut_butter_cookie", "croissant", "muffin"]
+      "active_lines": [
+        "peanut_butter_cookie",
+        "croissant",
+        "muffin"
+      ]
     },
     {
       "business_type": "soup_kitchen",
       "district_id": null,
-      "active_lines": ["lamb_stew", "stew"]
+      "active_lines": [
+        "lamb_stew",
+        "stew"
+      ]
     },
     {
       "business_type": "industrial_bakery",
       "district_id": null,
-      "active_lines": ["spaghetti", "pasta", "bread"]
+      "active_lines": [
+        "spaghetti",
+        "pasta",
+        "bread"
+      ]
     },
     {
       "business_type": "cannery",
       "district_id": null,
-      "active_lines": ["canned_lamb", "canned_salmon", "canned_tuna"]
+      "active_lines": [
+        "canned_lamb",
+        "canned_salmon",
+        "canned_tuna"
+      ]
     }
   ],
   "buy_items": {
@@ -182,5 +212,10 @@
       "max_order_quantity": 500,
       "market": "regular"
     }
+  },
+  "ipo": {
+    "ticker": "TRSF",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
   }
 }

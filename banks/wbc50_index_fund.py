@@ -33,9 +33,7 @@ from typing import Optional
 BANK_ID          = "wbc50_index_fund"
 BANK_NAME        = "WBC-50 Index Fund"
 BANK_DESCRIPTION = ("Full-replication index fund tracking the Wadsworth Blue-Chip 50. "
-                    "Holds 18–21 % of each constituent — real equity in public "
-                    "companies plus cash-settled synthetic stakes in NPC private "
-                    "enterprises — so the fund mirrors the full index basket.")
+                    "Holds 18–21 % of each constituent proportional to market cap.")
 BANK_PLAYER_ID   = -7   # Unique negative player-ID for this fund
 
 # ==========================
@@ -84,30 +82,19 @@ Base = declarative_base()
 class IndexFundHolding(Base):
     """Tracks the fund's current position in each WBC-50 constituent.
 
-    Two position types share this table:
-      • Equity (is_npc=False): a real shareholding in a public company. Valued
-        at shares_held × current_price; bought/sold on the brokerage.
-      • NPC synthetic (is_npc=True): a cash-settled stake in an NPC private
-        enterprise (which has no tradeable shares). The fund "owns"
-        stake_fraction of the NPC's enterprise value; valued at
-        stake_fraction × current_npc_enterprise_value. This lets the ETF basket
-        mirror the index, which also includes NPC enterprises.
+    Every constituent is a public company, so each holding is a real equity
+    position valued at shares_held × current_price; bought and sold on the
+    brokerage.
     """
     __tablename__ = "wbc50_fund_holdings"
 
     id              = Column(Integer, primary_key=True, index=True)
-    company_id      = Column(Integer, index=True, nullable=False)   # CompanyShares.id (0 for NPC rows)
+    company_id      = Column(Integer, index=True, nullable=False)   # CompanyShares.id
     ticker          = Column(String,  nullable=False)
     shares_held     = Column(Integer, default=0)
     avg_cost_basis  = Column(Float,   default=0.0)
     last_rebalance  = Column(DateTime, default=datetime.utcnow)
     in_index        = Column(Boolean, default=True)   # False → sold, pending removal
-
-    # NPC synthetic-stake fields (unused / default for equity holdings)
-    is_npc          = Column(Boolean, default=False, index=True)
-    npc_player_id   = Column(Integer, index=True, nullable=True)    # Player.id of the NPC
-    stake_fraction  = Column(Float,   default=0.0)                  # fraction of NPC enterprise owned
-    npc_cost_basis  = Column(Float,   default=0.0)                  # USD paid to acquire the stake
 
 
 def get_db():
@@ -116,15 +103,6 @@ def get_db():
 
 def initialize_tables():
     Base.metadata.create_all(bind=engine)
-    # Migration: add NPC synthetic-stake columns to pre-existing installs.
-    from database import run_ddl_migration
-    run_ddl_migration(engine, [
-        "ALTER TABLE wbc50_fund_holdings ADD COLUMN IF NOT EXISTS is_npc BOOLEAN DEFAULT FALSE",
-        "ALTER TABLE wbc50_fund_holdings ADD COLUMN IF NOT EXISTS npc_player_id INTEGER",
-        "ALTER TABLE wbc50_fund_holdings ADD COLUMN IF NOT EXISTS stake_fraction DOUBLE PRECISION DEFAULT 0.0",
-        "ALTER TABLE wbc50_fund_holdings ADD COLUMN IF NOT EXISTS npc_cost_basis DOUBLE PRECISION DEFAULT 0.0",
-        "CREATE INDEX IF NOT EXISTS ix_wbc50_holdings_npc ON wbc50_fund_holdings (npc_player_id)",
-    ])
 
 
 # ==========================
@@ -132,33 +110,26 @@ def initialize_tables():
 # ==========================
 
 def get_wbc50_constituents() -> list:
-    """Return the public-company constituents of the WBC-50 — i.e. the equities
-    among the *unified* top-50 basket (which also includes NPC enterprises).
+    """Return the top-50 non-delisted CompanyShares rows by market cap.
 
-    Using the shared basket from banks.indices guarantees the fund holds exactly
-    the public names the index counts: if NPC enterprises occupy N of the 50
-    slots, only the 50−N public companies in the basket are returned, so the
-    ETF never over-holds equities the index has dropped.
+    Every Wadsworth business — players and NPCs alike — is a public company, so
+    the fund buys real equity in every WBC-50 constituent. Selection mirrors the
+    index (banks.indices.get_wbc50_basket) so the basket and the index always
+    agree.
     """
     try:
         from banks.brokerage_firm import CompanyShares, get_db as firm_db
-        from banks.indices import get_wbc50_basket
-        basket = get_wbc50_basket()
-        company_ids = [e["company_id"] for e in basket["equities"]]
-        if not company_ids:
-            return []
         db = firm_db()
         try:
             rows = (db.query(CompanyShares)
-                    .filter(CompanyShares.id.in_(company_ids),
-                            CompanyShares.is_delisted == False,
+                    .filter(CompanyShares.is_delisted == False,
                             CompanyShares.shares_outstanding > 0,
                             CompanyShares.current_price > 0)
                     .all())
         finally:
             db.close()
         rows.sort(key=lambda c: c.shares_outstanding * c.current_price, reverse=True)
-        return rows
+        return rows[:50]
     except Exception as e:
         print(f"[{BANK_NAME}] get_wbc50_constituents error: {e}")
         return []
@@ -169,32 +140,22 @@ def get_wbc50_constituents() -> list:
 # ==========================
 
 def calculate_portfolio_value() -> float:
-    """Mark-to-market value of all fund positions:
-      • Equity positions:  shares_held × current_price
-      • NPC synthetic:     stake_fraction × current NPC enterprise value
-    """
+    """Sum of (shares_held × current_price) for all fund equity positions."""
     try:
         from banks.brokerage_firm import CompanyShares, get_db as firm_db
 
         holdings_db = get_db()
         try:
-            equity_holdings = holdings_db.query(IndexFundHolding).filter(
-                IndexFundHolding.is_npc == False,
-                IndexFundHolding.shares_held > 0,
-            ).all()
-            npc_holdings = holdings_db.query(IndexFundHolding).filter(
-                IndexFundHolding.is_npc == True,
-                IndexFundHolding.stake_fraction > 0,
+            holdings = holdings_db.query(IndexFundHolding).filter(
+                IndexFundHolding.shares_held > 0
             ).all()
         finally:
             holdings_db.close()
 
         total = 0.0
-
-        # Equity positions
         db = firm_db()
         try:
-            for h in equity_holdings:
+            for h in holdings:
                 company = db.query(CompanyShares).filter(
                     CompanyShares.id == h.company_id
                 ).first()
@@ -202,15 +163,6 @@ def calculate_portfolio_value() -> float:
                     total += h.shares_held * company.current_price
         finally:
             db.close()
-
-        # NPC synthetic positions — valued off live enterprise value
-        if npc_holdings:
-            from banks.indices import get_npc_enterprise_values
-            npc_vals = get_npc_enterprise_values()
-            for h in npc_holdings:
-                val, _name = npc_vals.get(h.npc_player_id, (0.0, ""))
-                total += h.stake_fraction * val
-
         return total
     except Exception as e:
         print(f"[{BANK_NAME}] portfolio valuation error: {e}")
@@ -326,120 +278,6 @@ def _fund_sell_shares(holding: "IndexFundHolding", company, shares_to_sell: int,
     return proceeds
 
 
-def _get_or_create_npc_holding(holdings_db, npc_player_id: int, name: str) -> "IndexFundHolding":
-    h = holdings_db.query(IndexFundHolding).filter(
-        IndexFundHolding.is_npc == True,
-        IndexFundHolding.npc_player_id == npc_player_id,
-    ).first()
-    if not h:
-        h = IndexFundHolding(
-            company_id=0, ticker=(name or f"NPC#{npc_player_id}")[:24],
-            shares_held=0, avg_cost_basis=0.0, in_index=True,
-            is_npc=True, npc_player_id=npc_player_id,
-            stake_fraction=0.0, npc_cost_basis=0.0,
-        )
-        holdings_db.add(h)
-        holdings_db.flush()
-    return h
-
-
-def _fund_buy_npc_stake(holding: "IndexFundHolding", npc_value: float,
-                        target_fraction: float, fund_entity) -> float:
-    """Acquire additional synthetic stake in an NPC enterprise (cash-settled).
-
-    Mirrors the equity buy: pay cash equal to (fraction bought × current
-    enterprise value); if cash is short, buy only the affordable fraction.
-    Returns USD spent.
-    """
-    if npc_value <= 0:
-        return 0.0
-    frac_to_buy = target_fraction - holding.stake_fraction
-    if frac_to_buy <= 0:
-        return 0.0
-    cost = frac_to_buy * npc_value
-    if fund_entity.cash_reserves < cost:
-        affordable_frac = fund_entity.cash_reserves / npc_value
-        if affordable_frac <= 0:
-            return 0.0
-        frac_to_buy = affordable_frac
-        cost = frac_to_buy * npc_value
-    holding.stake_fraction += frac_to_buy
-    holding.npc_cost_basis += cost
-    holding.in_index        = True
-    holding.last_rebalance  = datetime.utcnow()
-    fund_entity.cash_reserves -= cost
-    return cost
-
-
-def _fund_sell_npc_stake(holding: "IndexFundHolding", npc_value: float,
-                         fraction_to_sell: float, fund_entity) -> float:
-    """Unwind part (or all) of a synthetic NPC stake, crediting cash proceeds."""
-    fraction_to_sell = min(fraction_to_sell, holding.stake_fraction)
-    if fraction_to_sell <= 0:
-        return 0.0
-    proceeds = fraction_to_sell * npc_value
-    # Reduce cost basis proportionally
-    if holding.stake_fraction > 0:
-        holding.npc_cost_basis *= max(0.0, 1.0 - fraction_to_sell / holding.stake_fraction)
-    holding.stake_fraction = max(0.0, holding.stake_fraction - fraction_to_sell)
-    holding.last_rebalance = datetime.utcnow()
-    fund_entity.cash_reserves += proceeds
-    return proceeds
-
-
-def _rebalance_npc_stakes(holdings_db, bank_db, fund_entity) -> tuple[float, float, list, list]:
-    """Rebalance the NPC synthetic-stake sleeve to mirror the index basket.
-
-    Returns (total_bought, total_sold, entered_names, exited_names).
-    """
-    from banks.indices import get_wbc50_basket, get_npc_enterprise_values
-
-    basket   = get_wbc50_basket()
-    npc_vals = get_npc_enterprise_values()
-    target_npc = {n["npc_id"]: n for n in basket["npcs"]}
-
-    total_bought = 0.0
-    total_sold   = 0.0
-    entered, exited = [], []
-
-    # 1. Exit NPC stakes no longer in the index basket.
-    held = holdings_db.query(IndexFundHolding).filter(
-        IndexFundHolding.is_npc == True,
-        IndexFundHolding.stake_fraction > 0,
-    ).all()
-    held_ids = {h.npc_player_id for h in held}
-    for h in held:
-        if h.npc_player_id in target_npc:
-            continue
-        val, _name = npc_vals.get(h.npc_player_id, (0.0, ""))
-        proceeds = _fund_sell_npc_stake(h, val, h.stake_fraction, fund_entity)
-        total_sold += proceeds
-        h.in_index = False
-        exited.append(h.ticker)
-
-    holdings_db.commit()
-    bank_db.commit()
-
-    # 2. Build/adjust stakes for current NPC constituents toward TARGET_HOLDING.
-    for n in basket["npcs"]:
-        pid  = n["npc_id"]
-        val, name = npc_vals.get(pid, (n["value"], n["name"]))
-        if val <= 0:
-            continue
-        h = _get_or_create_npc_holding(holdings_db, pid, name)
-        if pid not in held_ids:
-            entered.append(h.ticker)
-        if h.stake_fraction > TARGET_HOLDING_MAX:
-            sell_frac = h.stake_fraction - TARGET_HOLDING
-            total_sold += _fund_sell_npc_stake(h, val, sell_frac, fund_entity)
-        elif h.stake_fraction < TARGET_HOLDING_MIN:
-            total_bought += _fund_buy_npc_stake(h, val, TARGET_HOLDING, fund_entity)
-
-    holdings_db.commit()
-    bank_db.commit()
-    return total_bought, total_sold, entered, exited
-
-
 def rebalance_portfolio():
     """
     Core rebalancing pass:
@@ -539,22 +377,6 @@ def rebalance_portfolio():
 
             holdings_db.commit()
             bank_db.commit()
-
-            # ── Step 4: rebalance NPC synthetic-stake sleeve ──────────────
-            # The index includes NPC private enterprises; the fund mirrors them
-            # as cash-settled stakes so its NAV tracks the full index basket.
-            try:
-                npc_bought, npc_sold, npc_in, npc_out = _rebalance_npc_stakes(
-                    holdings_db, bank_db, fund_entity
-                )
-                total_bought += npc_bought
-                total_sold   += npc_sold
-                if npc_in or npc_out:
-                    print(f"[{BANK_NAME}] 🏢 NPC sleeve — entered {len(npc_in)}, "
-                          f"exited {len(npc_out)} (bought ${npc_bought:,.2f}, "
-                          f"sold ${npc_sold:,.2f})")
-            except Exception as _npce:
-                print(f"[{BANK_NAME}] NPC sleeve rebalance error: {_npce}")
 
             if buys_needed or sells_done:
                 print(f"[{BANK_NAME}] ⚖️  Rebalance complete — "

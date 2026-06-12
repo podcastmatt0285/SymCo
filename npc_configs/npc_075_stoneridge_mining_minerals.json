@@ -13,22 +13,30 @@
     "land_plots": [
       {
         "terrain_type": "mountain",
-        "proximity_features": ["road"],
+        "proximity_features": [
+          "road"
+        ],
         "size": 1
       },
       {
         "terrain_type": "mountain",
-        "proximity_features": ["road"],
+        "proximity_features": [
+          "road"
+        ],
         "size": 1
       },
       {
         "terrain_type": "hills",
-        "proximity_features": ["road"],
+        "proximity_features": [
+          "road"
+        ],
         "size": 1
       },
       {
         "terrain_type": "prairie",
-        "proximity_features": ["road"],
+        "proximity_features": [
+          "road"
+        ],
         "size": 1
       }
     ],
@@ -38,12 +46,25 @@
     {
       "business_type": "mineral_processing_plant",
       "district_id": null,
-      "active_lines": ["rough_diamond", "rough_ruby", "rough_sapphire", "rough_emerald", "rough_aquamarine", "rough_garnet", "rough_tourmaline", "rough_topaz", "polishing_compound"]
+      "active_lines": [
+        "rough_diamond",
+        "rough_ruby",
+        "rough_sapphire",
+        "rough_emerald",
+        "rough_aquamarine",
+        "rough_garnet",
+        "rough_tourmaline",
+        "rough_topaz",
+        "polishing_compound"
+      ]
     },
     {
       "business_type": "oil_refinery",
       "district_id": null,
-      "active_lines": ["polymer_compound", "diesel"]
+      "active_lines": [
+        "polymer_compound",
+        "diesel"
+      ]
     }
   ],
   "buy_items": {
@@ -129,5 +150,10 @@
       "max_order_quantity": 500,
       "market": "regular"
     }
+  },
+  "ipo": {
+    "ticker": "STMM",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
   }
 }

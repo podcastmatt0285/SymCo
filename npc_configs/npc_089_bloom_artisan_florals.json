@@ -1,7 +1,7 @@
 {
   "player_id": -2089,
   "business_name": "Bloom Artisan Florals",
-  "description": "Artisan floral studio hand-crafting bouquets for street flower carts and florists. Buys cut flowers from the market and assembles them into retail-ready bouquets. No hoarding — everything goes straight to market.",
+  "description": "Artisan floral studio hand-crafting bouquets for street flower carts and florists. Buys cut flowers from the market and assembles them into retail-ready bouquets. No hoarding \u2014 everything goes straight to market.",
   "cash_caps": {
     "hard_high": 6000000,
     "soft_high": 2500000,
@@ -11,16 +11,52 @@
   "seed": {
     "starting_cash": 1200000,
     "land_plots": [
-      { "terrain_type": "urban", "proximity_features": ["road"], "size": 1 },
-      { "terrain_type": "urban", "proximity_features": ["road"], "size": 1 },
-      { "terrain_type": "urban", "proximity_features": ["road"], "size": 1 }
+      {
+        "terrain_type": "urban",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "urban",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "urban",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      }
     ],
     "districts": []
   },
   "businesses": [
-    { "business_type": "floral_studio", "district_id": null, "active_lines": ["bouquet"] },
-    { "business_type": "floral_studio", "district_id": null, "active_lines": ["bouquet"] },
-    { "business_type": "floral_studio", "district_id": null, "active_lines": ["bouquet"] }
+    {
+      "business_type": "floral_studio",
+      "district_id": null,
+      "active_lines": [
+        "bouquet"
+      ]
+    },
+    {
+      "business_type": "floral_studio",
+      "district_id": null,
+      "active_lines": [
+        "bouquet"
+      ]
+    },
+    {
+      "business_type": "floral_studio",
+      "district_id": null,
+      "active_lines": [
+        "bouquet"
+      ]
+    }
   ],
   "buy_items": {
     "rose": {
@@ -72,5 +108,10 @@
       "max_order_quantity": 500,
       "market": "regular"
     }
+  },
+  "ipo": {
+    "ticker": "BLAF",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
   }
 }

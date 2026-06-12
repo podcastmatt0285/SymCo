@@ -13,17 +13,23 @@
     "land_plots": [
       {
         "terrain_type": "forest",
-        "proximity_features": ["road"],
+        "proximity_features": [
+          "road"
+        ],
         "size": 1
       },
       {
         "terrain_type": "forest",
-        "proximity_features": ["road"],
+        "proximity_features": [
+          "road"
+        ],
         "size": 1
       },
       {
         "terrain_type": "mountain",
-        "proximity_features": ["road"],
+        "proximity_features": [
+          "road"
+        ],
         "size": 1
       }
     ],
@@ -33,12 +39,19 @@
     {
       "business_type": "lumber_mill",
       "district_id": null,
-      "active_lines": ["lumber", "timber", "sawdust"]
+      "active_lines": [
+        "lumber",
+        "timber",
+        "sawdust"
+      ]
     },
     {
       "business_type": "lumber_mill",
       "district_id": null,
-      "active_lines": ["lumber", "timber"]
+      "active_lines": [
+        "lumber",
+        "timber"
+      ]
     }
   ],
   "buy_items": {
@@ -71,5 +84,10 @@
       "max_order_quantity": 2000,
       "market": "regular"
     }
+  },
+  "ipo": {
+    "ticker": "RDBM",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
   }
 }

@@ -16,19 +16,78 @@
       "corn_seeds": 500
     },
     "land_plots": [
-      {"terrain_type": "prairie", "proximity_features": ["riverside"], "size": 1},
-      {"terrain_type": "prairie", "proximity_features": ["road"], "size": 1},
-      {"terrain_type": "prairie", "proximity_features": ["road"], "size": 1},
-      {"terrain_type": "prairie", "proximity_features": ["road"], "size": 1},
-      {"terrain_type": "savanna", "proximity_features": ["road"], "size": 1},
-      {"terrain_type": "savanna", "proximity_features": ["road"], "size": 1}
+      {
+        "terrain_type": "prairie",
+        "proximity_features": [
+          "riverside"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "savanna",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "savanna",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      }
     ],
     "districts": []
   },
   "businesses": [
-    {"business_type": "grain_farm", "district_id": null, "active_lines": ["wheat", "barley", "corn"]},
-    {"business_type": "grain_farm", "district_id": null, "active_lines": ["wheat", "corn", "barley"]},
-    {"business_type": "grain_farm", "district_id": null, "active_lines": ["wheat", "barley"]}
+    {
+      "business_type": "grain_farm",
+      "district_id": null,
+      "active_lines": [
+        "wheat",
+        "barley",
+        "corn"
+      ]
+    },
+    {
+      "business_type": "grain_farm",
+      "district_id": null,
+      "active_lines": [
+        "wheat",
+        "corn",
+        "barley"
+      ]
+    },
+    {
+      "business_type": "grain_farm",
+      "district_id": null,
+      "active_lines": [
+        "wheat",
+        "barley"
+      ]
+    }
   ],
   "buy_items": {
     "wheat_seeds": {
@@ -96,5 +155,10 @@
       "max_order_quantity": 5000,
       "market": "regular"
     }
+  },
+  "ipo": {
+    "ticker": "HGFD",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
   }
 }

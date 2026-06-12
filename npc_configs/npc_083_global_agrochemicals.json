@@ -2,7 +2,12 @@
   "player_id": -2083,
   "business_name": "Global Agrochemicals",
   "description": "Industrial chemical and agricultural input producer. Sources phosphate, potash, and sulfur from the market to synthesize the full NPK fertilizer chain. Secondary supplier of sulfuric acid, caustic soda, and ammonia.",
-  "cash_caps": {"hard_high": 30000000, "soft_high": 12000000, "soft_low": 3000000, "hard_low": 1000000},
+  "cash_caps": {
+    "hard_high": 30000000,
+    "soft_high": 12000000,
+    "soft_low": 3000000,
+    "hard_low": 1000000
+  },
   "seed": {
     "starting_cash": 8000000,
     "starting_inventory": {
@@ -12,18 +17,35 @@
       "fertilizer_npk": 8000
     },
     "land_plots": [],
-    "districts": [{"district_type": "industrial", "size": 3, "plots_merged": 3}]
+    "districts": [
+      {
+        "district_type": "industrial",
+        "size": 3,
+        "plots_merged": 3
+      }
+    ]
   },
   "businesses": [
     {
       "business_type": "chemical_plant",
       "district_seed_index": 0,
-      "active_lines": ["sulfuric_acid", "ammonia", "phosphoric_acid", "fertilizer_npk"]
+      "active_lines": [
+        "sulfuric_acid",
+        "ammonia",
+        "phosphoric_acid",
+        "fertilizer_npk"
+      ]
     },
     {
       "business_type": "chemical_plant",
       "district_seed_index": 0,
-      "active_lines": ["sulfuric_acid", "ammonia", "phosphoric_acid", "fertilizer_npk", "caustic_soda"]
+      "active_lines": [
+        "sulfuric_acid",
+        "ammonia",
+        "phosphoric_acid",
+        "fertilizer_npk",
+        "caustic_soda"
+      ]
     }
   ],
   "buy_items": {
@@ -97,5 +119,10 @@
       "max_order_quantity": 1000,
       "market": "regular"
     }
+  },
+  "ipo": {
+    "ticker": "GAGR",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
   }
 }

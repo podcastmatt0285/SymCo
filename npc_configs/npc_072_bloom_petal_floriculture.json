@@ -13,22 +13,30 @@
     "land_plots": [
       {
         "terrain_type": "prairie",
-        "proximity_features": ["riverside"],
+        "proximity_features": [
+          "riverside"
+        ],
         "size": 1
       },
       {
         "terrain_type": "prairie",
-        "proximity_features": ["road"],
+        "proximity_features": [
+          "road"
+        ],
         "size": 1
       },
       {
         "terrain_type": "prairie",
-        "proximity_features": ["road"],
+        "proximity_features": [
+          "road"
+        ],
         "size": 1
       },
       {
         "terrain_type": "savanna",
-        "proximity_features": ["riverside"],
+        "proximity_features": [
+          "riverside"
+        ],
         "size": 1
       }
     ],
@@ -38,12 +46,27 @@
     {
       "business_type": "flower_farm",
       "district_id": null,
-      "active_lines": ["rose", "lily", "tulip", "carnation", "sunflower", "chrysanthemum", "lavender"]
+      "active_lines": [
+        "rose",
+        "lily",
+        "tulip",
+        "carnation",
+        "sunflower",
+        "chrysanthemum",
+        "lavender"
+      ]
     },
     {
       "business_type": "flower_farm",
       "district_id": null,
-      "active_lines": ["rose", "tulip", "lily", "carnation", "lavender", "sunflower"]
+      "active_lines": [
+        "rose",
+        "tulip",
+        "lily",
+        "carnation",
+        "lavender",
+        "sunflower"
+      ]
     }
   ],
   "buy_items": {
@@ -120,5 +143,10 @@
       "max_order_quantity": 2000,
       "market": "regular"
     }
+  },
+  "ipo": {
+    "ticker": "BPFL",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
   }
 }
