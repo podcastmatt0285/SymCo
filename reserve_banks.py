@@ -2455,14 +2455,19 @@ def get_spendable_usd(player_id: int) -> float:
 def credit_usd(player_id: int, amount: float):
     """Credit income to a player, converting to their legal tender first.
 
-    For real players (ID > 0) this routes through process_income_conversion so
-    ANA/JPY/etc. players receive their own currency instead of USD.
-    NPCs and system accounts (ID ≤ 0) always receive raw USD.
-    Falls back to raw USD if conversion fails.
+    Routes through process_income_conversion for ANY account whose legal
+    tender is not USD — including NPCs (negative IDs), so a currency-mandate
+    event (e.g. "NPC Currency Mandate: TRY") keeps NPC income in the mandated
+    tender instead of leaking raw USD back onto their balance.
+    Falls back to raw USD only if the tender lookup/conversion fails.
     """
     if amount <= 0:
         return
-    if player_id > 0:
+    try:
+        tender = get_player_legal_tender(player_id)
+    except Exception:
+        tender = "USD"
+    if tender != "USD":
         try:
             process_income_conversion(player_id, amount)
             return

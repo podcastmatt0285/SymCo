@@ -57,6 +57,7 @@ def require_auth(session_token):
     return player
 
 def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) -> str:
+    from ux import _nav_loader_html as _nav_loader
     """Reuse shell from ux.py for consistent styling."""
     # Import shell from ux for consistency
     try:
@@ -68,6 +69,8 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
         <!DOCTYPE html>
         <html>
         <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
             <title>{title} · Wadsworth Districts</title>
             <style>
                 body {{ background: #020617; color: #e5e7eb; font-family: monospace; padding: 20px; }}
@@ -78,6 +81,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             <div class="container">
                 {body}
             </div>
+    {_nav_loader()}
         </body>
         </html>
         """

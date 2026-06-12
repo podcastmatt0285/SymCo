@@ -831,8 +831,15 @@ def _seed_npc(cfg: dict):
                 # Cash rescue: if the NPC's balance has fallen below hard_low
                 # (e.g. due to a prior routing bug), top it up to soft_low so
                 # the NPC can immediately resume buying inputs.
-                from reserve_banks import get_usd_balance, credit_usd
-                current_cash = get_usd_balance(player_id)
+                # Measured as the USD value of ALL currency balances — a
+                # currency-mandated NPC (e.g. tender = TRY) holds little or no
+                # USD by design and must not be "rescued" with fresh money it
+                # doesn't need. credit_usd() itself converts the top-up into
+                # the NPC's legal tender.
+                from reserve_banks import get_player_currency_balances, credit_usd
+                current_cash = sum(
+                    b["usd_value"] for b in get_player_currency_balances(player_id)
+                )
                 caps = cfg.get("cash_caps", {})
                 hard_low_cap = caps.get("hard_low", 0)
                 soft_low_cap = caps.get("soft_low", 0)

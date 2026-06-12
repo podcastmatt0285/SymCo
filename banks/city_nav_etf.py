@@ -219,7 +219,25 @@ def execute_ipo():
     print(f"[{BANK_NAME}] IPO complete: {IPO_SHARES:,} shares listed at ${ipo_share_price:.8f}")
 
 
+def _sync_tick_trackers():
+    """Align tick trackers with the restored global tick on boot.
+    Without this, trackers start at 0 while current_tick resumes from
+    disk (e.g. 50,000), so every interval check fires immediately on
+    restart — re-running rebalances/dividends/fees/buybacks and
+    corrupting share counts and balances."""
+    global last_price_update_tick, last_land_buy_tick, last_land_sell_tick
+    try:
+        import app as _app
+        _tick = int(getattr(_app, 'current_tick', 0) or 0)
+    except Exception:
+        _tick = 0
+    last_price_update_tick = _tick
+    last_land_buy_tick = _tick
+    last_land_sell_tick = _tick
+
+
 def initialize():
+    _sync_tick_trackers()
     """Initialize the City NAV ETF."""
     global ipo_share_price
     import banks

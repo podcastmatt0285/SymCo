@@ -78,6 +78,7 @@ router = APIRouter()
 # ==========================
 
 def admin_shell(title: str, body: str, player_name: str = "", active_nav: str = "/admin", player_id: int = None) -> str:
+    from ux import _nav_loader_html as _nav_loader
     """Admin dashboard shell - mobile-first dark theme with red accent."""
     nav_items = [
         ("/admin", "Home"),
@@ -406,6 +407,7 @@ def admin_shell(title: str, body: str, player_name: str = "", active_nav: str = 
         <div class="container">
             {body}
         </div>
+    {_nav_loader()}
     </body>
     </html>
     """

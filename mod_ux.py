@@ -31,6 +31,7 @@ router = APIRouter()
 # ==========================
 
 def mod_shell(title: str, body: str, player_name: str = "", active_nav: str = "/mod", player_id: int = None) -> str:
+    from ux import _nav_loader_html as _nav_loader
     nav_items = [
         ("/mod", "Overview"),
         ("/mod/players", "Players"),
@@ -127,6 +128,7 @@ async function deleteChatMsg(msgId, btn) {{
   else alert('Error: ' + (res.error || 'unknown'));
 }}
 </script>
+    {_nav_loader()}
 </body>
 </html>"""
 

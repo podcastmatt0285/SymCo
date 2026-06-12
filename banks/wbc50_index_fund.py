@@ -547,7 +547,25 @@ def execute_ipo():
 # INITIALIZATION
 # ==========================
 
+def _sync_tick_trackers():
+    """Align tick trackers with the restored global tick on boot.
+    Without this, trackers start at 0 while current_tick resumes from
+    disk (e.g. 50,000), so every interval check fires immediately on
+    restart — re-running rebalances/dividends/fees/buybacks and
+    corrupting share counts and balances."""
+    global last_rebalance_tick, last_valuation_tick, last_expense_tick
+    try:
+        import app as _app
+        _tick = int(getattr(_app, 'current_tick', 0) or 0)
+    except Exception:
+        _tick = 0
+    last_rebalance_tick = _tick
+    last_valuation_tick = _tick
+    last_expense_tick = _tick
+
+
 def initialize():
+    _sync_tick_trackers()
     """Register the fund, seed capital from the Brokerage Firm, and execute the IPO."""
     global ipo_share_price, total_firm_funding
     import banks

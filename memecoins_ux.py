@@ -624,6 +624,7 @@ async def launch_meme_form(
 <html>
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Launch Meme Coin</title>
     {_skin_links(player.id, "crypto")}
     {MEME_STYLES}

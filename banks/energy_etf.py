@@ -281,7 +281,30 @@ def execute_ipo():
 # INITIALIZATION
 # ==========================
 
+def _sync_tick_trackers():
+    """Align tick trackers with the restored global tick on boot.
+    Without this, trackers start at 0 while current_tick resumes from
+    disk (e.g. 50,000), so every interval check fires immediately on
+    restart — re-running rebalances/dividends/fees/buybacks and
+    corrupting share counts and balances."""
+    global last_dividend_tick, last_split_check_tick, last_buyback_check_tick, last_fee_collection_tick, last_market_making_tick, last_levy_tick, last_lien_processing_tick, last_qe_buy_tick
+    try:
+        import app as _app
+        _tick = int(getattr(_app, 'current_tick', 0) or 0)
+    except Exception:
+        _tick = 0
+    last_dividend_tick = _tick
+    last_split_check_tick = _tick
+    last_buyback_check_tick = _tick
+    last_fee_collection_tick = _tick
+    last_market_making_tick = _tick
+    last_levy_tick = _tick
+    last_lien_processing_tick = _tick
+    last_qe_buy_tick = _tick
+
+
 def initialize():
+    _sync_tick_trackers()
     """Initialize the Energy ETF Bank."""
     import banks
     

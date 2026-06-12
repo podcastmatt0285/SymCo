@@ -784,11 +784,12 @@ def process_business_tick(db):
         for _pid, _amt in _pending_credits.items():
             try:
                 convert_to_legal_tender(_pid, _amt)
-            except Exception:
+            except Exception as e:
+                print(f"[Business] tender conversion failed for player {_pid} (${_amt:,.2f}): {e} — falling back to credit_usd")
                 try:
                     credit_usd(_pid, _amt)
-                except Exception:
-                    pass
+                except Exception as e2:
+                    print(f"[Business] credit fallback ALSO failed for player {_pid} (${_amt:,.2f}): {e2}")
 
     # Commit brokerage revenue/escrow updates and close the shared session.
     if _brok_db is not None:

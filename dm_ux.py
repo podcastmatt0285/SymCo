@@ -81,6 +81,7 @@ def get_player_name(player_id: int) -> str:
 # ==========================
 
 def dm_shell(title: str, body: str, balance: float = 0.0, player_id: int = None) -> str:
+    from ux import _nav_loader_html as _nav_loader
     from ux import get_player_lien_info
     from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player_id) if player_id else {"code": "USD", "symbol": "$", "usd_per_unit": 1.0, "flag": "🇺🇸"}
@@ -593,6 +594,7 @@ def dm_shell(title: str, body: str, balance: float = 0.0, player_id: int = None)
             </div>
         </div>
         {body}
+    {_nav_loader()}
     </body>
     </html>
     """

@@ -31,10 +31,14 @@ def _require_auth(session_token):
 def _shell(title: str, body: str, balance: float = 0.0, player_id: int = None) -> str:
     try:
         from ux import shell as ux_shell
-        from skin_utils import skin_links
         return ux_shell(title, body, balance, player_id)
     except Exception:
-        return f"<!DOCTYPE html><html><head><title>{title}</title></head><body>{body}</body></html>"
+        try:
+            from ux import _nav_loader_html as _nav_loader
+            loader = _nav_loader()
+        except Exception:
+            loader = ""
+        return f"<!DOCTYPE html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'><title>{title}</title></head><body>{body}{loader}</body></html>"
 
 
 # ── Coin currency display helpers ────────────────────────────────────────────

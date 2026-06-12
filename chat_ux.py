@@ -91,6 +91,7 @@ def get_player_profile(player_id: int) -> Optional[dict]:
 # ==========================
 
 def chat_shell(title: str, body: str, balance: float = 0.0, player_id: int = None) -> str:
+    from ux import _nav_loader_html as _nav_loader
     """Full-page chat shell - wider layout, no ticker."""
     from ux import get_player_lien_info
     from reserve_banks import get_player_display_currency, fmt_usd
@@ -654,6 +655,7 @@ def chat_shell(title: str, body: str, balance: float = 0.0, player_id: int = Non
             </div>
         </div>
         {body}
+    {_nav_loader()}
     </body>
     </html>
     """

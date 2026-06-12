@@ -544,7 +544,8 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                     try:
                         from reserve_banks import convert_to_legal_tender
                         convert_to_legal_tender(seller_player.id, total_cost)
-                    except Exception:
+                    except Exception as _e:
+                        print(f"[Market] tender conversion failed: {_e} — falling back to credit_usd")
                         from reserve_banks import credit_usd
                         credit_usd(seller_player.id, total_cost)
                 print(f"[Market] ETF BUYBACK: {_etf_bank_id} bought {quantity:.4f} {buy_order.item_type} from Player {sell_order.player_id} @ ${price:.6f} (${total_cost:.2f} from reserves)")
@@ -573,7 +574,8 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                 try:
                     from reserve_banks import convert_to_legal_tender
                     convert_to_legal_tender(seller_player.id, total_cost)
-                except Exception:
+                except Exception as _e:
+                    print(f"[Market] tender conversion failed: {_e} — falling back to credit_usd")
                     from reserve_banks import credit_usd
                     credit_usd(seller_player.id, total_cost)
                 print(f"[Market] CITY BANK BUY: Bank {bank_buyer_city_id} bought {quantity:.2f} {buy_order.item_type} from Player {sell_order.player_id} @ ${price:.2f}")
@@ -678,7 +680,8 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                 seller_net = total_cost - _tax_deducted
                 try:
                     convert_to_legal_tender(seller.id, seller_net)
-                except Exception:
+                except Exception as _e:
+                    print(f"[Market] tender conversion failed: {_e} — falling back to credit_usd")
                     from reserve_banks import credit_usd
                     credit_usd(seller.id, seller_net)
 

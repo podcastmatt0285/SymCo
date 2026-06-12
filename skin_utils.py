@@ -18,7 +18,7 @@ import os as _os
 import re as _re
 import time as _time
 
-_SKIN_V = 7  # ← increment on each deploy to bust browser CSS/JS cache
+_SKIN_V = 8  # ← increment on each deploy to bust browser CSS/JS cache
 
 # Only allow safe filesystem-compatible skin names — prevents XSS and path traversal
 _SAFE_SKIN_RE = _re.compile(r'^[a-z][a-z0-9_-]*\Z')  # \Z not $ to reject trailing newlines

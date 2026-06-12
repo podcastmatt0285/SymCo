@@ -1207,6 +1207,7 @@ def _sparkline_svg(snaps: list[IndexSnapshot], color: str = "#38bdf8") -> str:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _shell(title, body, balance=0.0, player_id=None):
+    from ux import _nav_loader_html as _nav_loader
     try:
         from ux import shell as ux_shell
         return ux_shell(title, body, balance, player_id)
@@ -1231,6 +1232,7 @@ body {{ max-width:1200px; margin:0 auto; padding:20px 20px 80px; }}
 </head>
 <body>
 {body}
+    {_nav_loader()}
 </body>
 </html>"""
 
