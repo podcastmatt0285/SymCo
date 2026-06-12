@@ -1619,33 +1619,19 @@ async def gas_tracker_page(
         else:
             decay_str = "At base price"
 
-        rows += f'''
-        <tr style="border-bottom:1px solid #1e293b;">
-            <td style="padding:12px 10px;">
-                <a href="/token/{c["crypto_symbol"]}" style="color:#38bdf8;font-weight:700;text-decoration:none;">{c["crypto_symbol"]}</a>
-                <div style="color:#64748b;font-size:11px;">{c["crypto_name"]} &middot; {c["name"]}</div>
-            </td>
-            <td style="padding:12px 10px;text-align:right;">
-                <span style="font-family:monospace;font-weight:700;color:#f59e0b;">{price:.6f}</span>
-                <div style="color:#64748b;font-size:10px;">{c["crypto_symbol"]}/tx</div>
-            </td>
-            <td style="padding:12px 10px;text-align:center;">
-                <span style="background:{bg};color:{color};border:1px solid {color};border-radius:12px;padding:2px 10px;font-size:12px;font-weight:700;">{label}</span>
-            </td>
-            <td style="padding:12px 10px;text-align:right;color:#94a3b8;font-size:13px;">
-                {txns:,}
-                <div style="color:#475569;font-size:10px;">this hour</div>
-            </td>
-            <td style="padding:12px 10px;text-align:right;color:#94a3b8;font-size:13px;">
-                {"+" + f"{pct_above:.0f}%" if pct_above > 0.5 else "base"}
-                <div style="color:#475569;font-size:10px;">above floor</div>
-            </td>
-            <td style="padding:12px 10px;color:#64748b;font-size:12px;">{decay_str}</td>
-            <td style="padding:12px 10px;font-size:12px;color:{color};">{advice}</td>
+        rows += f'''<tr class="gt-row">
+            <td><a href="/token/{c["crypto_symbol"]}" style="color:#38bdf8;font-weight:700;text-decoration:none;">{c["crypto_symbol"]}</a>
+                <div style="color:#64748b;font-size:11px;">{c["crypto_name"]} &middot; {c["name"]}</div></td>
+            <td style="text-align:right;"><span style="font-family:monospace;font-weight:700;color:#f59e0b;">{price:.6f}</span>
+                <div style="color:#64748b;font-size:10px;">{c["crypto_symbol"]}/tx</div></td>
+            <td style="text-align:center;"><span style="background:{bg};color:{color};border:1px solid {color};border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700;">{label}</span></td>
+            <td style="text-align:right;color:#94a3b8;">{txns:,}</td>
+            <td style="text-align:right;color:#94a3b8;">{"+" + f"{pct_above:.0f}%" if pct_above > 0.5 else "base"}</td>
+            <td style="color:#64748b;font-size:12px;">{decay_str}</td>
+            <td style="text-align:center;font-size:12px;color:{color};">{advice}</td>
         </tr>'''
 
-    nav_link = '<a href="/exchange" style="color:#38bdf8;text-decoration:none;">Exchange</a>'
-    auth_link = f'<a href="/profile" style="color:#94a3b8;text-decoration:none;">{player.business_name}</a>' if player else '<a href="/login" style="color:#38bdf8;">Login</a>'
+    skin_html = _skin_links(player.id, "crypto") if player else ""
 
     return f"""<!DOCTYPE html>
 <html>
@@ -1653,74 +1639,61 @@ async def gas_tracker_page(
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="refresh" content="30">
-<title>Gas Tracker — Wadsworth Economic Tycoon Simulator</title>
+<title>Gas Tracker — Wadsworth</title>
+{skin_html}
+{COUNTY_STYLES}
 <style>
-* {{ box-sizing: border-box; margin: 0; padding: 0; }}
-body {{ background: #020817; color: #e5e7eb; font-family: 'Courier New', monospace; min-height: 100vh; }}
-.header {{ background: #0f172a; border-bottom: 1px solid #1e293b; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; }}
-.container {{ max-width: 1100px; margin: 0 auto; padding: 24px 16px; }}
-table {{ width: 100%; border-collapse: collapse; }}
-thead th {{ padding: 10px; text-align: left; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: .06em; border-bottom: 1px solid #1e293b; }}
-thead th:not(:first-child) {{ text-align: right; }}
-thead th:nth-child(3), thead th:nth-child(7) {{ text-align: center; }}
-tr:hover {{ background: #0f172a; }}
-.legend {{ display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }}
-.legend-item {{ font-size: 12px; display: flex; align-items: center; gap: 6px; }}
-.dot {{ width: 10px; height: 10px; border-radius: 50%; }}
-.info-box {{ background: #0f172a; border: 1px solid #1e293b; border-radius: 8px; padding: 16px; margin-bottom: 24px; font-size: 13px; color: #94a3b8; line-height: 1.7; }}
-.info-box strong {{ color: #e5e7eb; }}
-.refresh-note {{ font-size: 11px; color: #475569; margin-top: 12px; }}
+.gt-row {{ cursor:default;border-bottom:1px solid #0f172a;transition:background .12s; }}
+.gt-row:hover {{ background:rgba(99,102,241,.07); }}
+.gt-row td {{ padding:12px 14px;font-size:13px; }}
+.gt-table th {{ padding:10px 14px;font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #1e293b; }}
+.legend-dot {{ width:10px;height:10px;border-radius:50%;display:inline-block; }}
 </style>
 </head>
 <body>
-<div class="header">
-    <div style="display:flex;align-items:center;gap:20px;">
-        <span style="color:#38bdf8;font-weight:700;font-size:18px;">⛽ Gas Tracker</span>
-        <span style="color:#1e293b;">|</span>
-        {nav_link}
-    </div>
-    <div style="font-size:13px;">{auth_link}</div>
-</div>
-<div class="container">
+<div class="container" style="max-width:1100px;">
 
-    <div class="info-box">
-        <strong>How gas fees work on Wadsworth blockchains</strong><br>
-        Each county blockchain has its own gas price in native tokens. Gas is charged on every transaction (buy, sell, swap, meme trade, stake, etc.) and flows directly into the <strong>mining energy pool</strong> — so active chains also reward their miners.<br>
-        &bull; Price <strong>rises +5%</strong> with every transaction &bull; Decays <strong>-10%</strong> every hour back toward the floor ({BASE_GAS_PRICE:.4f})<br>
-        &bull; Gas units: Exchange = 1.0 &bull; Meme trade = 1.0 &bull; Meme launch = 5.0 &bull; Stake = 0.5 &bull; Mining deposit = 0.5<br>
-        &bull; Page auto-refreshes every 30 seconds
+    <!-- Uniswap-style page header -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+        <a href="/exchange" style="color:#64748b;font-size:20px;text-decoration:none;">&#8592;</a>
+        <div>
+            <div style="font-size:18px;font-weight:700;color:#f1f5f9;">⛽ Gas Tracker</div>
+            <div style="font-size:12px;color:#64748b;">Real-time network fees · auto-refreshes every 30s</div>
+        </div>
+        <div style="margin-left:auto;">
+            {'<a href="/profile" style="font-size:13px;color:#94a3b8;text-decoration:none;">' + player.business_name + '</a>' if player else '<a href="/login" class="btn btn-primary" style="font-size:12px;padding:6px 14px;">Login</a>'}
+        </div>
     </div>
 
-    <div class="legend">
-        <div class="legend-item"><div class="dot" style="background:#4ade80;"></div><span style="color:#4ade80;">LOW</span> — at floor price</div>
-        <div class="legend-item"><div class="dot" style="background:#a3e635;"></div><span style="color:#a3e635;">NORMAL</span> — up to 3× floor</div>
-        <div class="legend-item"><div class="dot" style="background:#fbbf24;"></div><span style="color:#fbbf24;">MODERATE</span> — 3–10× floor</div>
-        <div class="legend-item"><div class="dot" style="background:#f97316;"></div><span style="color:#f97316;">HIGH</span> — 10–50× floor</div>
-        <div class="legend-item"><div class="dot" style="background:#f87171;"></div><span style="color:#f87171;">SURGE</span> — 50×+ floor</div>
+    <!-- Legend pills -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+        <span style="font-size:12px;color:#64748b;display:flex;align-items:center;gap:5px;"><span class="legend-dot" style="background:#4ade80;"></span><span style="color:#4ade80;">LOW</span> floor</span>
+        <span style="font-size:12px;color:#64748b;display:flex;align-items:center;gap:5px;"><span class="legend-dot" style="background:#a3e635;"></span><span style="color:#a3e635;">NORMAL</span> up to 3×</span>
+        <span style="font-size:12px;color:#64748b;display:flex;align-items:center;gap:5px;"><span class="legend-dot" style="background:#fbbf24;"></span><span style="color:#fbbf24;">MODERATE</span> 3–10×</span>
+        <span style="font-size:12px;color:#64748b;display:flex;align-items:center;gap:5px;"><span class="legend-dot" style="background:#f97316;"></span><span style="color:#f97316;">HIGH</span> 10–50×</span>
+        <span style="font-size:12px;color:#64748b;display:flex;align-items:center;gap:5px;"><span class="legend-dot" style="background:#f87171;"></span><span style="color:#f87171;">SURGE</span> 50×+</span>
     </div>
 
-    <table>
-        <thead>
-            <tr>
+    <!-- Gas table -->
+    <div class="card" style="padding:0;overflow:hidden;">
+        <table class="table gt-table" style="margin:0;">
+            <thead><tr>
                 <th>Blockchain</th>
                 <th style="text-align:right;">Gas Price</th>
                 <th style="text-align:center;">Status</th>
-                <th style="text-align:right;">Txns (1h)</th>
+                <th style="text-align:right;">Txns/h</th>
                 <th style="text-align:right;">Above Floor</th>
-                <th>Decay Estimate</th>
-                <th style="text-align:center;">Recommendation</th>
-            </tr>
-        </thead>
-        <tbody>
-            {rows if rows else '<tr><td colspan="7" style="padding:20px;color:#475569;text-align:center;">No blockchains exist yet.</td></tr>'}
-        </tbody>
-    </table>
+                <th>Decay Est.</th>
+                <th style="text-align:center;">Advice</th>
+            </tr></thead>
+            <tbody>
+            {rows if rows else '<tr><td colspan="7" style="padding:24px;color:#475569;text-align:center;">No blockchains exist yet.</td></tr>'}
+            </tbody>
+        </table>
+    </div>
 
-    <div class="refresh-note">
-        Base gas floor: {BASE_GAS_PRICE:.4f} native tokens &middot;
-        Surge rate: +{GAS_SURGE_MULTIPLIER * 100:.0f}% per transaction &middot;
-        Hourly decay: -{(1 - GAS_PRICE_DECAY_RATE) * 100:.0f}% &middot;
-        Auto-refreshes every 30s
+    <div style="font-size:11px;color:#475569;margin-top:12px;text-align:center;">
+        Floor: {BASE_GAS_PRICE:.4f} &bull; Surge: +{GAS_SURGE_MULTIPLIER * 100:.0f}%/tx &bull; Decay: -{(1 - GAS_PRICE_DECAY_RATE) * 100:.0f}%/h &bull; Gas is charged on buy · sell · swap · meme trade · stake
     </div>
 
 </div>

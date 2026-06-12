@@ -560,35 +560,20 @@ async def county_memecoins(
 </head>
 <body>
 <div class="container">
-    <div class="header">
+    <!-- TW-style back nav -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+        <a href="/county/{county_id}" style="color:#64748b;font-size:20px;text-decoration:none;">&#8592;</a>
         <div>
-            <h1>🚀 {county.name} Meme Coins</h1>
-            <div style="font-size:12px;color:#64748b;margin-top:4px;">
-                Layer-2 tokens on the <span class="native-color">{county.crypto_name} ({county.crypto_symbol})</span> blockchain
-            </div>
+            <div style="font-size:18px;font-weight:700;color:#f1f5f9;">{county.name} Meme Coins</div>
+            <div style="font-size:12px;color:#64748b;">{county.crypto_name} ({county.crypto_symbol}) · L2 tokens</div>
         </div>
-        <div style="display:flex;align-items:center;gap:12px;">
+        <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+            <span style="font-size:12px;color:#a78bfa;">Balance: <strong>{native_balance:.4f} {county.crypto_symbol}</strong></span>
             {launch_btn}
-            <a href="/county/{county_id}" class="nav-link">County</a>
-            <a href="/exchange" class="nav-link">Exchange</a>
-            <a href="/" class="nav-link">Dashboard</a>
         </div>
     </div>
 
     {alert_html}
-
-    <div class="card" style="margin-bottom:14px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-            <div>
-                <span style="color:#94a3b8;font-size:13px;">{len(memes)} meme coin{"s" if len(memes) != 1 else ""} live on this chain</span>
-            </div>
-            <div style="font-size:13px;">
-                Your <span class="native-color">{county.crypto_symbol}</span>:
-                <strong class="native-color">{native_balance:.4f}</strong>
-                &nbsp;|&nbsp; Creation fee: <strong class="meme-color">{MEME_CREATION_FEE_NATIVE:.0f} {county.crypto_symbol}</strong> (burned)
-            </div>
-        </div>
-    </div>
 
     {cards_html}
 </div>
@@ -641,18 +626,19 @@ async def launch_meme_form(
 </head>
 <body>
 <div class="container" style="max-width:700px;">
-    <div class="header">
-        <h1>🚀 Launch Meme Coin</h1>
+    <!-- TW-style back nav -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+        <a href="/county/{county_id}/memecoins" style="color:#64748b;font-size:20px;text-decoration:none;">&#8592;</a>
         <div>
-            <a href="/county/{county_id}/memecoins" class="nav-link">← Back</a>
-            <a href="/" class="nav-link">Dashboard</a>
+            <div style="font-size:18px;font-weight:700;color:#f1f5f9;">Launch Meme Coin</div>
+            <div style="font-size:12px;color:#64748b;">{county.name} · {county.crypto_symbol} chain</div>
         </div>
     </div>
 
     {err_html}
 
     <div class="card">
-        <h2>Create a Layer-2 Token on {county.name}</h2>
+        <div style="font-size:14px;font-weight:600;color:#f1f5f9;margin-bottom:4px;">Create a Layer-2 Token on {county.name}</div>
         <p style="font-size:13px;color:#94a3b8;margin-bottom:16px;">
             Your meme coin lives on the <span class="native-color">{county.crypto_name} ({county.crypto_symbol})</span> blockchain.
             All trading pairs are denominated in <span class="native-color">{county.crypto_symbol}</span>.
@@ -1018,24 +1004,17 @@ async def meme_coin_page(
 <body>
 <div class="container">
 
-    <!-- HEADER -->
-    <div class="header">
-        <div style="display:flex;align-items:center;gap:12px;">
-            <span style="display:inline-block;width:36px;height:36px;">{detail["logo_svg"]}</span>
-            <div>
-                <h1 style="font-size:20px;">{detail["name"]}</h1>
-                <div style="font-size:12px;color:#64748b;">
-                    <span class="badge badge-meme">{symbol}</span>
-                    <span style="margin-left:6px;">on <a href="/county/{detail["county_id"]}/memecoins" style="color:#a78bfa;text-decoration:none;">{detail["native_symbol"]}</a> chain</span>
-                    <span style="margin-left:6px;">by {detail["creator_name"]}</span>
-                </div>
-            </div>
-        </div>
+    <!-- TW-style back nav -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+        <a href="/county/{detail["county_id"]}/memecoins" style="color:#64748b;font-size:20px;text-decoration:none;">&#8592;</a>
+        <span style="display:inline-block;width:36px;height:36px;">{detail["logo_svg"]}</span>
         <div>
-            <a href="/county/{detail["county_id"]}/memecoins" class="nav-link">&#8592; All Meme Coins</a>
-            <a href="/wallet" class="nav-link" style="background:#1e1b4b;border:1px solid #4f46e5;border-radius:6px;padding:4px 10px;color:#a5b4fc;font-weight:600;">&#128274; Wadsworth Wallet</a>
-            <a href="/exchange" class="nav-link">Exchange</a>
-            <a href="/" class="nav-link">Dashboard</a>
+            <div style="font-size:18px;font-weight:700;color:#f1f5f9;">{detail["name"]} <span class="badge badge-meme" style="font-size:12px;">{symbol}</span></div>
+            <div style="font-size:12px;color:#64748b;">on <a href="/county/{detail["county_id"]}/memecoins" style="color:#a78bfa;text-decoration:none;">{detail["native_symbol"]}</a> chain · by {detail["creator_name"]}</div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:8px;">
+            <a href="/wallet" class="btn" style="font-size:12px;padding:6px 14px;">&#128274; Wallet</a>
+            <a href="/memecoins" class="btn btn-primary" style="font-size:12px;padding:6px 14px;">All Memes</a>
         </div>
     </div>
 
@@ -2550,25 +2529,20 @@ async def wallet_dashboard(
 <body>
 <div class="container">
 
-    <!-- HEADER -->
-    <div class="header">
-        <h1>&#128274; WADSWORTH CRYPTO WALLET</h1>
+    <!-- TW-style back nav -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+        <a href="/crypto" style="color:#64748b;font-size:20px;text-decoration:none;">&#8592;</a>
         <div>
-            <a href="/" class="nav-link">&#8592; Home</a>
+            <div style="font-size:18px;font-weight:700;color:#f1f5f9;">My Wallet</div>
+            <div style="font-size:12px;color:#64748b;">Decentralized · Private · Your keys, your coins</div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:8px;">
+            <a href="/memecoins" class="btn" style="font-size:12px;padding:6px 14px;">Meme Coins</a>
+            <a href="/exchange" class="btn btn-primary" style="font-size:12px;padding:6px 14px;">Exchange</a>
         </div>
     </div>
 
     {alert_html}
-
-    <!-- PRIVACY BANNER -->
-    <div class="privacy-banner">
-        <span style="font-size:22px;">&#128274;</span>
-        <span>
-            <strong style="color:#c7d2fe;">Decentralized &amp; Private</strong> —
-            Your assets exist on county blockchains: peer-to-peer, censorship-resistant.
-            Never seen by banks or governments. No middlemen. No custodians. Your keys, your coins.
-        </span>
-    </div>
 
     <!-- LIVE TICKER (auto-refreshes every 15 s) -->
     <div class="wallet-ticker" id="live-ticker">
