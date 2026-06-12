@@ -309,7 +309,7 @@ def crypto_hub(session_token: Optional[str] = Cookie(None), tab: str = Query("wa
         </a>'''
 
     # ── Uniswap swap card (shared with /exchange via crypto_theme) ──────
-    from crypto_theme import build_swap_tokens, swap_card_html
+    from crypto_theme import build_swap_tokens, swap_card_html, CRYPTO_SUBNAV
     _swap_tokens, _, _ = build_swap_tokens(player.id)
     swap_card = swap_card_html(_swap_tokens, eff_fee_pct, exec_bonus,
                                redirect="/crypto?tab=swap")
@@ -409,6 +409,7 @@ def crypto_hub(session_token: Optional[str] = Cookie(None), tab: str = Query("wa
 <title>Crypto — Wadsworth</title>
 {_skin_links(player.id, "crypto")}
 {HUB_STYLES}
+{CRYPTO_SUBNAV}
 </head>
 <body>
 <div class="hub-wrap">

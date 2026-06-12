@@ -333,6 +333,13 @@ td, th { overflow-wrap: anywhere; }
 /* ── Wallet balance card (wsc-card) with colored border variant ── */
 .wsc-card { box-shadow: 0 0 0 1px var(--cline), var(--shadow-panel) !important; }
 
+</style>
+"""
+
+# Standalone pill subnav (styles + auto-inject script) — included by
+# CRYPTO_THEME and directly by the /crypto hub (which skips the legacy re-skin).
+CRYPTO_SUBNAV = """
+<style>
 /* ═══ Crypto subnav — Uniswap-style pill tab bar (auto-injected) ═══ */
 #crypto-subnav {
   display: flex; gap: 4px; align-items: center;
@@ -386,6 +393,9 @@ td, th { overflow-wrap: anywhere; }
 })();
 </script>
 """
+
+CRYPTO_THEME = CRYPTO_THEME + CRYPTO_SUBNAV
+
 
 _ICON_PALETTES = [
     ("#f97316", "#fb923c"), ("#a855f7", "#c084fc"), ("#38bdf8", "#7dd3fc"),
