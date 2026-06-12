@@ -22,151 +22,317 @@ import json
 CRYPTO_THEME = """
 <style>
 /* ═══ Wadsworth Crypto Theme — Trust Wallet × Uniswap ═══ */
+/* TW palette: deep-space bg #05060f, panels #0c0e1d / #12152b, violet #a855f7, orange #f97316 */
+/* Uniswap palette: same deep dark, pink accent #fc72ff, but we use TW gradient as brand */
 :root {
   --cbg: #05060f; --cpanel: #0c0e1d; --cpanel2: #12152b; --cline: #1c2040;
   --ctxt: #e6e8f5; --cmut: #707694;
   --cgrad: linear-gradient(120deg,#f97316,#a855f7);
   --cgreen: #22c55e; --cred: #ef4444; --caccent: #a855f7; --caccent2: #f97316;
+  --shadow-panel: 0 2px 24px rgba(0,0,0,.45);
+  --shadow-card: 0 1px 8px rgba(0,0,0,.35);
+  --radius-card: 24px;
+  --radius-btn: 999px;
+  --radius-input: 16px;
 }
+
+/* ── Reset & base ── */
+*, *::before, *::after { box-sizing: border-box !important; }
 body {
   background: var(--cbg) !important; color: var(--ctxt) !important;
-  font-family: 'Inter','Segoe UI',system-ui,sans-serif !important;
+  font-family: 'Inter','SF Pro Display','Segoe UI',system-ui,sans-serif !important;
+  font-size: 14px !important; line-height: 1.5 !important;
+  -webkit-font-smoothing: antialiased !important;
 }
-.container { max-width: 1100px !important; }
-a { color: #38bdf8; }
+.container { max-width: 1100px !important; margin: 0 auto !important; padding: 0 16px !important; }
+a { color: #38bdf8; text-decoration: none; }
+a:hover { text-decoration: underline; }
 
-/* Header + nav */
-.header { border-bottom: 1px solid var(--cline) !important; }
-.header h1 { font-size: 1.15rem !important; font-weight: 800 !important; letter-spacing: .01em; }
-.nav-link { color: var(--cmut) !important; font-size: .78rem; font-weight: 600; }
+/* ── Header (legacy pages) ── */
+.header {
+  background: var(--cpanel) !important;
+  border-bottom: 1px solid var(--cline) !important;
+  padding: 14px 20px !important;
+  display: flex !important; align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 20px !important;
+}
+.header h1 { font-size: 1.1rem !important; font-weight: 800 !important; letter-spacing: .01em; margin: 0 !important; }
+.nav-link { color: var(--cmut) !important; font-size: .75rem !important; font-weight: 600 !important; }
 .nav-link:hover { color: var(--ctxt) !important; text-decoration: none !important; }
 
-/* Cards → rounded wallet panels */
+/* ── Cards → TW rounded wallet panels with shadow ── */
 .card, .poll-card, .proposal-card, .meme-card, .wsc-card, .exchange-panel,
 .governance-panel, .mining-node, .wallet-card, .swap-box {
   background: var(--cpanel) !important;
   border: 1px solid var(--cline) !important;
-  border-radius: 20px !important;
+  border-radius: var(--radius-card) !important;
+  box-shadow: var(--shadow-card) !important;
+  padding: 18px 20px !important;
+  margin-bottom: 12px !important;
 }
-.card h2, .card h3 { color: var(--ctxt) !important; font-weight: 800; }
-.card h2 { font-size: .95rem !important; }
-.card h3 { font-size: .82rem !important; }
-.mining-node { background: linear-gradient(160deg,#160b2e 0%,var(--cpanel) 55%) !important;
-  border-color: #2d1d57 !important; }
+.card:hover { border-color: #252850 !important; }
+.card h2, .card h3 { color: var(--ctxt) !important; font-weight: 800 !important; }
+.card h2 { font-size: .95rem !important; margin: 0 0 12px !important; }
+.card h3 { font-size: .82rem !important; margin: 0 0 8px !important; }
+.mining-node {
+  background: linear-gradient(160deg,#160b2e 0%,var(--cpanel) 55%) !important;
+  border-color: #2d1d57 !important;
+}
 
-/* Stats rows */
+/* ── Meme cards (token grid cards) — TW asset row style ── */
+.meme-card {
+  display: flex !important; flex-direction: column !important;
+  text-decoration: none !important; color: var(--ctxt) !important;
+  transition: border-color .15s, transform .12s, box-shadow .12s !important;
+  cursor: pointer !important;
+}
+.meme-card:hover {
+  border-color: var(--caccent) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 32px rgba(168,85,247,.15) !important;
+  text-decoration: none !important; color: var(--ctxt) !important;
+}
+
+/* ── Stats rows ── */
 .stat { border-bottom: 1px solid var(--cline) !important; padding: 9px 0 !important; }
-.stat-label, .info-stat-label, .cycle-stat-label { color: var(--cmut) !important; font-size: .74rem !important; }
-.stat-value, .info-stat-value, .cycle-stat-value { font-weight: 700 !important; font-size: .85rem; }
-.stat-value.positive, .positive { color: var(--cgreen) !important; }
-.stat-value.negative, .negative { color: var(--cred) !important; }
+.stat-label, .info-stat-label, .cycle-stat-label { color: var(--cmut) !important; font-size: .72rem !important; text-transform: uppercase; letter-spacing: .06em; }
+.stat-value, .info-stat-value, .cycle-stat-value { font-weight: 700 !important; font-size: .85rem !important; }
+.positive, .stat-value.positive { color: var(--cgreen) !important; }
+.negative, .stat-value.negative { color: var(--cred) !important; }
+.neutral { color: var(--cmut) !important; }
 .stat-value.crypto { color: #c4b5fd !important; }
 
-/* Buttons → pills; primary gets the gradient */
+/* ── Buttons → pills with exact TW sizing ── */
 .btn, .vote-btn, .btn-governance, .pill-btn {
-  border-radius: 999px !important; font-weight: 700 !important;
-  font-family: inherit !important; transition: opacity .15s, transform .1s !important;
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  padding: 10px 20px !important; border-radius: var(--radius-btn) !important;
+  font-weight: 700 !important; font-size: .85rem !important;
+  font-family: inherit !important;
+  transition: opacity .15s, transform .1s, box-shadow .15s !important;
+  cursor: pointer !important; border: none !important;
+  white-space: nowrap !important;
 }
-.btn:hover { transform: translateY(-1px); }
+.btn:hover:not(:disabled) { opacity: .88 !important; transform: translateY(-1px) !important; box-shadow: 0 4px 16px rgba(0,0,0,.4) !important; }
+.btn:active:not(:disabled) { transform: translateY(0) !important; }
+.btn:disabled { opacity: .4 !important; cursor: not-allowed !important; }
+
 .btn-primary, .btn-crypto, .btn-meme, .btn-buy, .btn-governance {
-  background: var(--cgrad) !important; color: #fff !important; border: none !important;
+  background: var(--cgrad) !important; color: #fff !important;
+  box-shadow: 0 2px 12px rgba(168,85,247,.25) !important;
 }
 .btn-secondary, .btn-cancel {
   background: var(--cpanel2) !important; color: var(--ctxt) !important;
   border: 1px solid var(--cline) !important;
 }
-.btn-danger, .btn-sell { background: #3f1120 !important; color: #fda4af !important;
-  border: 1px solid #881337 !important; }
-
-/* Forms → dark rounded inputs, violet focus */
-.form-group label { color: var(--cmut) !important; font-size: .72rem !important;
-  text-transform: uppercase; letter-spacing: .08em; font-weight: 700; }
-.form-group input, .form-group select, .burn-input-group input,
-input[type="number"], input[type="text"], select, textarea {
-  background: var(--cpanel2) !important; border: 1px solid var(--cline) !important;
-  border-radius: 14px !important; color: var(--ctxt) !important;
-  font-family: inherit !important;
+.btn-sm { padding: 6px 14px !important; font-size: .75rem !important; }
+.btn-danger, .btn-sell {
+  background: #3f1120 !important; color: #fda4af !important;
+  border: 1px solid #881337 !important;
 }
-.form-group input:focus, .form-group select:focus, input:focus, select:focus, textarea:focus {
+
+/* ── Forms → dark rounded inputs, violet focus ring ── */
+.form-group { margin-bottom: 14px !important; }
+.form-group label {
+  display: block !important; color: var(--cmut) !important;
+  font-size: .7rem !important; text-transform: uppercase;
+  letter-spacing: .08em; font-weight: 700; margin-bottom: 6px !important;
+}
+.form-group input, .form-group select, .form-group textarea,
+.burn-input-group input,
+input[type="number"], input[type="text"], input[type="email"],
+input[type="password"], select, textarea {
+  background: var(--cpanel2) !important;
+  border: 1px solid var(--cline) !important;
+  border-radius: var(--radius-input) !important;
+  color: var(--ctxt) !important;
+  font-family: inherit !important; font-size: .88rem !important;
+  padding: 11px 14px !important;
+  width: 100% !important;
+  transition: border-color .15s, box-shadow .15s !important;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus,
+input:focus, select:focus, textarea:focus {
   border-color: var(--caccent) !important; outline: none !important;
-  box-shadow: 0 0 0 3px rgba(168,85,247,.12) !important;
+  box-shadow: 0 0 0 3px rgba(168,85,247,.15) !important;
 }
+input::placeholder, textarea::placeholder { color: #3a4060 !important; }
 
-/* Tables → borderless hover rows */
-.table th { color: var(--cmut) !important; font-size: .68rem !important;
-  text-transform: uppercase; letter-spacing: .1em; border-bottom: 1px solid var(--cline) !important; }
-.table td { border-bottom: 1px solid #11142a !important; font-size: .82rem; }
-.table tr:hover { background: var(--cpanel2) !important; }
+/* ── Tables → Uniswap borderless hover rows ── */
+.table { border-collapse: collapse !important; width: 100% !important; }
+.table th {
+  color: var(--cmut) !important; font-size: .68rem !important;
+  text-transform: uppercase; letter-spacing: .1em;
+  border-bottom: 1px solid var(--cline) !important;
+  padding: 10px 14px !important; font-weight: 600 !important;
+}
+.table td {
+  border-bottom: 1px solid #0e1025 !important;
+  font-size: .82rem !important; padding: 11px 14px !important;
+  vertical-align: middle !important;
+}
+.table tr:hover td { background: var(--cpanel2) !important; }
+.table tr:last-child td { border-bottom: none !important; }
 
-/* Badges → pills */
+/* ── Badges → pill chips ── */
 .badge, .badge-meme, .badge-native, .badge-crypto, .badge-governance,
+.badge-buy, .badge-sell, .badge-open, .badge-filled, .badge-cancelled,
 .phase-indicator, .token-change-badge, .price-change-badge, .ticker-chip {
+  display: inline-flex !important; align-items: center !important;
   border-radius: 999px !important; font-weight: 700 !important;
+  font-size: .72rem !important; padding: 2px 10px !important;
+  line-height: 1.6 !important;
 }
-.badge-success { background: #052e16 !important; color: #4ade80 !important; }
-.badge-warning { background: #2e2008 !important; color: #fbbf24 !important; }
-.badge-info    { background: #0b2447 !important; color: #60a5fa !important; }
-.badge-crypto, .badge-meme { background: #1e1038 !important; color: #c4b5fd !important; }
+.badge-success { background: #052e16 !important; color: #4ade80 !important; border: 1px solid #14532d !important; }
+.badge-warning { background: #2e2008 !important; color: #fbbf24 !important; border: 1px solid #78350f !important; }
+.badge-info    { background: #0b2447 !important; color: #60a5fa !important; border: 1px solid #1e40af !important; }
+.badge-crypto, .badge-meme  { background: #1e1038 !important; color: #c4b5fd !important; border: 1px solid #3b1d6e !important; }
+.badge-native  { background: #1c2c08 !important; color: #86efac !important; border: 1px solid #166534 !important; }
+.badge-buy     { background: #052e16 !important; color: #4ade80 !important; border: 1px solid #14532d !important; }
+.badge-sell    { background: #2d0a12 !important; color: #fda4af !important; border: 1px solid #7f1d1d !important; }
+.badge-open    { background: #0b2447 !important; color: #93c5fd !important; border: 1px solid #1e40af !important; }
+.badge-filled  { background: #052e16 !important; color: #6ee7b7 !important; border: 1px solid #065f46 !important; }
+.badge-cancelled{ background: #1e1e2e !important; color: #6b7280 !important; border: 1px solid #374151 !important; }
 
-/* Alerts */
-.alert { border-radius: 14px !important; font-weight: 600; }
+/* ── Alerts ── */
+.alert {
+  border-radius: 16px !important; font-weight: 600 !important;
+  padding: 12px 18px !important; margin-bottom: 14px !important;
+  border-width: 1px !important; border-style: solid !important;
+}
 .alert-success { background: #052e16 !important; border-color: #14532d !important; color: #bbf7d0 !important; }
 .alert-error   { background: #2d0a12 !important; border-color: #7f1d1d !important; color: #fecaca !important; }
 .alert-info    { background: #0b2447 !important; border-color: #1e40af !important; color: #bfdbfe !important; }
+.alert-warning { background: #1c1400 !important; border-color: #78350f !important; color: #fde68a !important; }
 
-/* Vote bars / supply bars / mining bars */
-.supply-bar, .vote-bar, .mining-bar-bg { background: var(--cpanel2) !important;
-  border-radius: 999px !important; overflow: hidden; }
-.supply-bar-fill, .mining-bar-fill { background: var(--cgrad) !important;
-  border-radius: 999px !important; }
-.vote-bar-yes { background: var(--cgreen) !important; }
-.vote-bar-no  { background: var(--cred) !important; }
-.vote-yes { background: #052e16 !important; color: #4ade80 !important; border: 1px solid #14532d !important; }
-.vote-no  { background: #2d0a12 !important; color: #fda4af !important; border: 1px solid #7f1d1d !important; }
+/* ── Progress bars (supply / vote / mining) ── */
+.supply-bar, .vote-bar, .mining-bar-bg {
+  background: var(--cpanel2) !important; border-radius: 999px !important;
+  overflow: hidden !important; height: 6px !important;
+}
+.supply-bar-fill, .mining-bar-fill {
+  background: var(--cgrad) !important; border-radius: 999px !important;
+  height: 100% !important; min-width: 2px !important;
+  transition: width .4s ease !important;
+}
+.vote-bar-yes { background: var(--cgreen) !important; height: 100% !important; }
+.vote-bar-no  { background: var(--cred) !important; height: 100% !important; }
+.vote-yes { background: #052e16 !important; color: #4ade80 !important; border: 1px solid #14532d !important; border-radius: 999px !important; }
+.vote-no  { background: #2d0a12 !important; color: #fda4af !important; border: 1px solid #7f1d1d !important; border-radius: 999px !important; }
 
-/* Token hero / big prices (token + meme detail pages) */
-.token-hero { background: var(--cpanel) !important; border: 1px solid var(--cline) !important;
-  border-radius: 24px !important; }
+/* ── Token hero / big prices ── */
+.token-hero {
+  background: var(--cpanel) !important; border: 1px solid var(--cline) !important;
+  border-radius: 24px !important; box-shadow: var(--shadow-panel) !important;
+}
 .token-logo { border-radius: 50% !important; }
-.token-price-big, .price-big { font-weight: 800 !important; letter-spacing: -.02em; }
+.token-price-big, .price-big {
+  font-size: 2rem !important; font-weight: 800 !important;
+  letter-spacing: -.03em !important; line-height: 1.1 !important;
+}
+.price-change-badge, .token-change-badge {
+  font-size: .78rem !important; padding: 3px 10px !important;
+  font-weight: 700 !important; border-radius: 999px !important;
+}
+.token-change-up   { background: #052e16 !important; color: #4ade80 !important; }
+.token-change-down { background: #2d0a12 !important; color: #fda4af !important; }
+.token-change-flat { background: var(--cpanel2) !important; color: var(--cmut) !important; }
 
-/* Order book (meme detail) */
-.order-book-side { background: var(--cpanel) !important; border: 1px solid var(--cline) !important;
-  border-radius: 16px !important; }
+/* ── Order book (meme TDP) ── */
+.order-book-side {
+  background: var(--cpanel) !important; border: 1px solid var(--cline) !important;
+  border-radius: 16px !important; overflow: hidden !important;
+}
 .bid-row { color: var(--cgreen) !important; }
 .ask-row { color: var(--cred) !important; }
-.depth-bar { opacity: .14 !important; border-radius: 4px; }
-.spread-line { color: var(--cmut) !important; }
+.depth-bar { opacity: .12 !important; border-radius: 3px !important; }
+.spread-line { color: var(--cmut) !important; font-size: .75rem !important; }
 
-/* Tabs (meme detail) → segmented pills */
-.tab-bar { background: var(--cpanel) !important; border: 1px solid var(--cline) !important;
-  border-radius: 999px !important; padding: 4px !important; gap: 4px !important; }
-.tab-btn { border-radius: 999px !important; font-weight: 700 !important;
-  color: var(--cmut) !important; border: none !important; background: none !important; }
+/* ── Segmented tab bar (meme detail / hub) ── */
+.tab-bar {
+  display: flex !important;
+  background: var(--cpanel) !important; border: 1px solid var(--cline) !important;
+  border-radius: 999px !important; padding: 4px !important; gap: 4px !important;
+  margin-bottom: 16px !important;
+}
+.tab-btn {
+  flex: 1 !important; border-radius: 999px !important; font-weight: 700 !important;
+  color: var(--cmut) !important; border: none !important; background: none !important;
+  padding: 8px 14px !important; font-size: .78rem !important; cursor: pointer !important;
+  font-family: inherit !important; transition: background .15s, color .15s !important;
+  white-space: nowrap !important;
+}
 .tab-btn.active { background: var(--cgrad) !important; color: #fff !important; }
+.tab-btn:hover:not(.active) { background: var(--cpanel2) !important; color: var(--ctxt) !important; }
 
-/* Tickers */
-.crypto-ticker, .wallet-ticker { background: var(--cpanel) !important;
-  border: 1px solid var(--cline) !important; border-radius: 999px !important; }
-.ticker-up { color: var(--cgreen) !important; } .ticker-down { color: var(--cred) !important; }
+/* ── Live ticker bar ── */
+.crypto-ticker, .wallet-ticker {
+  background: var(--cpanel) !important; border: 1px solid var(--cline) !important;
+  border-radius: 999px !important; display: flex !important;
+  align-items: center !important; gap: 10px !important;
+  padding: 6px 14px !important; overflow-x: auto !important;
+  margin-bottom: 12px !important; flex-wrap: nowrap !important;
+}
+.ticker-chip {
+  display: inline-flex !important; align-items: center !important; gap: 4px !important;
+  font-size: .72rem !important; padding: 3px 10px !important;
+  border-radius: 999px !important; font-weight: 600 !important;
+  text-decoration: none !important; white-space: nowrap !important;
+  border: 1px solid var(--cline) !important;
+}
+.ticker-up   { color: var(--cgreen) !important; }
+.ticker-down { color: var(--cred) !important; }
 
-/* Holder rows (token page) */
-.holder-row { border-bottom: 1px solid #11142a !important; }
-.holder-row:hover { background: var(--cpanel2) !important; }
+/* ── Holder rows (token page) ── */
+.holder-row { border-bottom: 1px solid #0e1025 !important; padding: 9px 0 !important; }
+.holder-row:hover { background: var(--cpanel2) !important; padding-left: 4px !important; transition: padding .1s; }
 
-/* ═══ Crypto subnav (auto-injected) ═══ */
+/* ── Grid helpers ── */
+.grid { display: grid !important; }
+.grid-2 { grid-template-columns: repeat(2,1fr) !important; gap: 14px !important; }
+.grid-3 { grid-template-columns: repeat(3,1fr) !important; gap: 14px !important; }
+.grid-4 { grid-template-columns: repeat(4,1fr) !important; gap: 14px !important; }
+@media (max-width: 640px) {
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr !important; }
+}
+
+/* ── Wallet balance display (big number) ── */
+.wallet-balance { font-size: 1.6rem !important; font-weight: 800 !important; letter-spacing: -.02em; }
+.wallet-value   { font-size: .82rem !important; color: var(--cmut) !important; margin-top: 2px; }
+
+/* ── Privacy banner ── */
+.privacy-banner {
+  background: linear-gradient(120deg,#0b0b2e,#140a2e) !important;
+  border: 1px solid #2d1d57 !important; border-radius: 16px !important;
+  padding: 12px 18px !important; margin-bottom: 12px !important;
+  display: flex !important; align-items: center !important; gap: 12px !important;
+  font-size: .82rem !important;
+}
+
+/* ── Wallet balance card (wsc-card) with colored border variant ── */
+.wsc-card { box-shadow: 0 0 0 1px var(--cline), var(--shadow-panel) !important; }
+
+/* ═══ Crypto subnav — Uniswap-style pill tab bar (auto-injected) ═══ */
 #crypto-subnav {
-  display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
-  max-width: 1100px; margin: 0 auto 18px; padding: 6px;
-  background: var(--cpanel); border: 1px solid var(--cline); border-radius: 999px;
+  display: flex; gap: 4px; align-items: center;
+  max-width: 1100px; margin: 0 auto 18px; padding: 5px;
+  background: var(--cpanel); border: 1px solid var(--cline);
+  border-radius: 999px; overflow-x: auto; flex-wrap: nowrap;
+  scrollbar-width: none; -ms-overflow-style: none;
+  position: sticky; top: 0; z-index: 40;
+  box-shadow: 0 2px 20px rgba(0,0,0,.6);
 }
+#crypto-subnav::-webkit-scrollbar { display: none; }
 #crypto-subnav a {
-  padding: 7px 14px; border-radius: 999px; font-size: .72rem; font-weight: 700;
+  padding: 7px 16px; border-radius: 999px; font-size: .72rem; font-weight: 700;
   color: var(--cmut); text-decoration: none; white-space: nowrap;
+  transition: background .15s, color .15s; flex-shrink: 0;
 }
-#crypto-subnav a:hover { color: var(--ctxt); background: var(--cpanel2); }
-#crypto-subnav a.on { background: var(--cgrad); color: #fff; }
-@media (max-width: 640px) { #crypto-subnav { overflow-x: auto; flex-wrap: nowrap; } }
+#crypto-subnav a:hover { color: var(--ctxt); background: var(--cpanel2); text-decoration: none; }
+#crypto-subnav a.on {
+  background: var(--cgrad); color: #fff;
+  box-shadow: 0 2px 10px rgba(168,85,247,.3);
+}
 </style>
 <script>
 (function () {
