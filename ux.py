@@ -7326,16 +7326,64 @@ def _market_page_impl(session_token: Optional[str] = None, item: str = "apple_se
                     <div style="font-size:0.8rem;color:#64748b;margin-bottom:10px;">
                         You hold: <strong style="color:{'#22c55e' if player_item_qty > 0 else '#64748b'};">{player_item_qty:,.4g} {item_name}</strong>
                     </div>
-                    <form action="/api/market/order" method="post" class="mkt-order-form" style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px;">
+                    <form id="mkt-order-form" action="/api/market/order" method="post" class="mkt-order-form" style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px;">
                         <input type="hidden" name="item_type" value="{item}">
+                        <input type="hidden" name="ajax" value="1">
                         <select name="order_type">
                             <option value="sell">SELL</option>
                             <option value="buy">BUY</option>
                         </select>
                         <input type="number" name="quantity" placeholder="Quantity" required>
                         <input type="number" name="price" step="0.0001" placeholder="Price ({disp['code']})" required>
-                        <button type="submit" class="btn-blue">Submit</button>
+                        <button type="submit" id="mkt-order-btn" class="btn-blue">Submit</button>
                     </form>
+                    <script>
+                    (function(){{
+                        var form = document.getElementById('mkt-order-form');
+                        if (!form) return;
+                        form.addEventListener('submit', function(e){{
+                            e.preventDefault();
+                            var btn = document.getElementById('mkt-order-btn');
+                            btn.disabled = true;
+                            btn.textContent = 'Placing...';
+                            var fd = new FormData(form);
+                            fetch('/api/market/order', {{method:'POST', body:fd}})
+                                .then(function(r){{ return r.json(); }})
+                                .then(function(d){{
+                                    btn.disabled = false;
+                                    btn.textContent = 'Submit';
+                                    if (d.ok) {{
+                                        form.querySelector('[name=quantity]').value = '';
+                                        form.querySelector('[name=price]').value = '';
+                                        _showMktToast(d.message || 'Order placed!', 'success');
+                                    }} else {{
+                                        _showMktToast(d.error || 'Order rejected.', 'error');
+                                    }}
+                                }})
+                                .catch(function(){{
+                                    btn.disabled = false;
+                                    btn.textContent = 'Submit';
+                                    _showMktToast('Network error — please try again.', 'error');
+                                }});
+                        }});
+                        function _showMktToast(msg, type){{
+                            var el = document.getElementById('mkt-toast');
+                            if (!el) {{
+                                el = document.createElement('div');
+                                el.id = 'mkt-toast';
+                                el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:12px 22px;border-radius:8px;font-size:0.95rem;font-weight:600;z-index:9999;max-width:90vw;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,0.4);transition:opacity .3s';
+                                document.body.appendChild(el);
+                            }}
+                            el.style.background = type === 'success' ? '#166534' : '#7f1d1d';
+                            el.style.color = type === 'success' ? '#bbf7d0' : '#fca5a5';
+                            el.style.border = '1px solid ' + (type === 'success' ? '#22c55e' : '#ef4444');
+                            el.textContent = msg;
+                            el.style.opacity = '1';
+                            clearTimeout(el._t);
+                            el._t = setTimeout(function(){{ el.style.opacity='0'; }}, 4000);
+                        }}
+                    }})();
+                    </script>
                 </div>
                 
                 <!-- Order Book Grid -->
@@ -16115,7 +16163,7 @@ async def list_to_market(request: Request, item_type: str = Form(...), quantity:
     return RedirectResponse(url="/inventory?list_ok=1", status_code=303)
 
 @router.post("/api/market/order")
-async def place_order(item_type: str = Form(...), order_type: str = Form(...), quantity: float = Form(...), price: float = Form(...), session_token: Optional[str] = Cookie(None)):
+async def place_order(item_type: str = Form(...), order_type: str = Form(...), quantity: float = Form(...), price: float = Form(...), ajax: Optional[str] = Form(None), session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
     # ETF/fund shares trade on the ETF Trading Floor, not the commodity market.
@@ -16145,9 +16193,15 @@ async def place_order(item_type: str = Form(...), order_type: str = Form(...), q
             from reserve_banks import get_player_cash_balance
             bal = get_player_cash_balance(player.id)
             err = f"Order rejected: insufficient funds (balance {bal:,.2f}, cost ≈ {quantity * price_usd:,.2f})."
+        if ajax:
+            return JSONResponse({"ok": False, "error": err})
         return RedirectResponse(url=f"/market?item={item_type}&order_err={urllib.parse.quote(err)}", status_code=303)
     from market_ws import push_market_snapshot_now
     asyncio.create_task(push_market_snapshot_now())
+    if ajax:
+        item_label = item_type.replace("_", " ").title()
+        msg = f"{order_type.upper()} order placed: {quantity:,.4g} {item_label} @ {price:,.4g} {disp['code']}"
+        return JSONResponse({"ok": True, "message": msg})
     return RedirectResponse(url=f"/market?item={item_type}", status_code=303)
 
 @router.post("/api/market/cancel-order")
