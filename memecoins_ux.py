@@ -74,9 +74,9 @@ body {
 .card h3 { font-size: 14px; color: #94a3b8; margin-bottom: 8px; }
 
 .grid { display: grid; gap: 14px; }
-.grid-2 { grid-template-columns: repeat(2, 1fr); }
-.grid-3 { grid-template-columns: repeat(3, 1fr); }
-.grid-4 { grid-template-columns: repeat(4, 1fr); }
+.grid-2 { grid-template-columns: repeat(auto-fit, minmax(min(280px,100%),1fr)); }
+.grid-3 { grid-template-columns: repeat(auto-fit, minmax(min(220px,100%),1fr)); }
+.grid-4 { grid-template-columns: repeat(auto-fit, minmax(min(180px,100%),1fr)); }
 @media(max-width: 900px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
 
 .stat { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #1e293b; font-size: 13px; }

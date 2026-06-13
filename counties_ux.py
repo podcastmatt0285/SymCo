@@ -78,12 +78,18 @@ COUNTY_STYLES = """
     }
 
     .grid { display: grid; gap: 16px; }
-    .grid-2 { grid-template-columns: repeat(2, 1fr); }
-    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    /* Intrinsic responsive columns: a column only forms when at least ~280px
+       of real width exists for it, so narrow screens get one readable column
+       regardless of media-query support (WebView desktop-viewport quirks). */
+    .grid-2 { grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); }
+    .grid-3 { grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); }
     @media (max-width: 768px) {
         /* !important so the collapse also beats any inline grid styles */
         .grid-2, .grid-3 { grid-template-columns: 1fr !important; }
     }
+    /* Stat rows: wrap label/value as whole units — never shred into letters */
+    .stat { flex-wrap: wrap; }
+    .stat .stat-value { text-align: right; margin-left: auto; }
 
     .stat {
         display: flex;

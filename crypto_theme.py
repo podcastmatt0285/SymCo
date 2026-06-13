@@ -299,9 +299,12 @@ input::placeholder, textarea::placeholder { color: #3a4060 !important; }
 
 /* ── Grid helpers ── */
 .grid { display: grid !important; }
-.grid-2 { grid-template-columns: repeat(2,1fr) !important; gap: 14px !important; }
-.grid-3 { grid-template-columns: repeat(3,1fr) !important; gap: 14px !important; }
-.grid-4 { grid-template-columns: repeat(4,1fr) !important; gap: 14px !important; }
+/* Intrinsic columns: only form when ~real width exists for each, so narrow
+   screens get one readable column even if media queries don't apply
+   (WebView desktop-viewport quirks). */
+.grid-2 { grid-template-columns: repeat(auto-fit, minmax(min(280px,100%),1fr)) !important; gap: 14px !important; }
+.grid-3 { grid-template-columns: repeat(auto-fit, minmax(min(220px,100%),1fr)) !important; gap: 14px !important; }
+.grid-4 { grid-template-columns: repeat(auto-fit, minmax(min(180px,100%),1fr)) !important; gap: 14px !important; }
 @media (max-width: 640px) {
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr !important; }
 }
