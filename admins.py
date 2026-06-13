@@ -2871,9 +2871,19 @@ def run_db_maintenance(admin_id: int) -> dict:
             _sql(f"DELETE FROM district_market_orders WHERE status IN ({DONE_ORDERS})")
         ).rowcount
 
-        # brokerage order book also has 'rejected' as terminal
+        # brokerage order book: 'rejected' is also terminal here. BUT order_fills
+        # has real FK constraints (buy_order_id/sell_order_id → order_book.id) and
+        # is the permanent trade tape. So we must NOT delete any order that a fill
+        # still points at — doing so would either violate the FK (aborting the whole
+        # pass on Postgres) or orphan/destroy legitimate trade history. Only prune
+        # terminal orders that produced no fill (cancelled/expired/rejected noise,
+        # plus any stray filled-with-no-fills row).
         counts["order_book"] = db.execute(
-            _sql(f"DELETE FROM order_book WHERE status IN ({DONE_ORDERS},'rejected')")
+            _sql(
+                f"DELETE FROM order_book WHERE status IN ({DONE_ORDERS},'rejected') "
+                "AND NOT EXISTS (SELECT 1 FROM order_fills f "
+                "WHERE f.buy_order_id = order_book.id OR f.sell_order_id = order_book.id)"
+            )
         ).rowcount
 
         counts["crypto_exchange_orders"] = db.execute(
@@ -2884,14 +2894,8 @@ def run_db_maintenance(admin_id: int) -> dict:
             _sql("DELETE FROM land_buy_orders WHERE is_active = FALSE")
         ).rowcount
 
-        # ── 2. Orphaned order_fills (parent order deleted in step 1) ──────────
-        counts["order_fills"] = db.execute(
-            _sql(
-                "DELETE FROM order_fills "
-                "WHERE buy_order_id NOT IN (SELECT id FROM order_book) "
-                "   OR sell_order_id NOT IN (SELECT id FROM order_book)"
-            )
-        ).rowcount
+        # NOTE: order_fills (brokerage trade tape) is deliberately NOT pruned — it
+        # is load-bearing history read by the per-company trade feed.
 
         # ── 3. Completed swap offers → legs → acceptances ─────────────────────
         DONE_SWAPS = "'executed','failed','rejected','cancelled'"
@@ -2995,25 +2999,32 @@ def run_db_maintenance(admin_id: int) -> dict:
     finally:
         db.close()
 
-    # ── VACUUM ANALYZE (must run outside any transaction) ─────────────────────
+    # ── Reclaim space (must run outside any transaction) ──────────────────────
+    # Deleting rows alone doesn't return disk to the OS or refresh planner stats;
+    # the VACUUM is where the actual performance win comes from. Syntax differs by
+    # backend: Postgres takes per-table "VACUUM (ANALYZE) <table>"; SQLite only
+    # supports a bare database-wide "VACUUM" plus a separate "ANALYZE".
     vacuum_ok = True
     vacuum_err = ""
-    try:
-        from sqlalchemy import create_engine as _ce
-        from database import DATABASE_URL as _DBURL
-        _vac_engine = _ce(_DBURL, isolation_level="AUTOCOMMIT")
-        with _vac_engine.connect() as _vc:
-            tables_touched = [t for t, v in counts.items() if v > 0]
-            if tables_touched:
-                for tbl in tables_touched:
-                    try:
-                        _vc.execute(_sql(f"VACUUM ANALYZE {tbl}"))
-                    except Exception:
-                        pass  # table might not exist on this instance; non-fatal
-        _vac_engine.dispose()
-    except Exception as _ve:
-        vacuum_ok = False
-        vacuum_err = str(_ve)
+    tables_touched = [t for t, v in counts.items() if v > 0]
+    if tables_touched:
+        try:
+            from database import engine as _engine
+            dialect = _engine.dialect.name
+            with _engine.connect() as _vc:
+                _vc = _vc.execution_options(isolation_level="AUTOCOMMIT")
+                if dialect == "sqlite":
+                    _vc.execute(_sql("VACUUM"))
+                    _vc.execute(_sql("ANALYZE"))
+                else:
+                    for tbl in tables_touched:
+                        try:
+                            _vc.execute(_sql(f"VACUUM (ANALYZE) {tbl}"))
+                        except Exception:
+                            pass  # table absent on this instance — non-fatal
+        except Exception as _ve:
+            vacuum_ok = False
+            vacuum_err = str(_ve)
 
     return {
         "ok": True,
