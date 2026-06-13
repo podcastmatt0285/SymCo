@@ -74,11 +74,18 @@ CITY_STYLES = """
     }
     
     .grid { display: grid; gap: 16px; }
-    .grid-2 { grid-template-columns: repeat(2, 1fr); }
-    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    /* Intrinsic responsive: only form columns when there's real width for them.
+       Prevents ~110px cells that shred numbers/words into vertical letters on
+       narrow phones (Pixel 6a = 412px) under overflow-wrap: anywhere. */
+    .grid-2 { grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); }
+    .grid-3 { grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); }
     @media (max-width: 768px) {
-        .grid-2, .grid-3 { grid-template-columns: 1fr; }
+        /* !important so the collapse also beats any inline grid-template-columns */
+        .grid-2, .grid-3 { grid-template-columns: 1fr !important; }
     }
+    /* Stat rows: wrap label/value as whole units — never shred into letters */
+    .stat { flex-wrap: wrap; }
+    .stat .stat-value { text-align: right; margin-left: auto; }
     
     .stat {
         display: flex;
@@ -731,7 +738,7 @@ async def view_applicant_profile(city_id: int, applicant_id: int, session_token:
             
             <div class="card">
                 <h2>{applicant.business_name}</h2>
-                <div class="grid grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px;">
+                <div class="grid grid-2" style="gap: 16px; margin-top: 16px;">
                     <div>
                         <div class="stat">
                             <span class="stat-label">Player ID</span>
@@ -1098,7 +1105,7 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
         <div class="card">
             <h2>🏦 Your City Banking</h2>
             
-            <div class="grid grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="grid grid-2" style="gap: 16px;">
                 <div>
                     <h3>Reserve Requirement</h3>
                     <div class="stat">
