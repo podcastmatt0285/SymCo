@@ -312,6 +312,7 @@ def _collect_wbc50_caps() -> list[dict]:
         db.close()
     return [{"label": r.ticker_symbol, "name": r.company_name,
              "value": r.shares_outstanding * r.current_price,
+             "shares": r.shares_outstanding,
              "company_id": r.id}
             for r in rows if r.shares_outstanding and r.current_price]
 
@@ -358,10 +359,17 @@ def calc_WBC50() -> tuple[float, dict]:
             return 0.0, {}
 
         # --- Composition-change detection ---
-        # Fingerprint = frozenset of (label, shares_outstanding) for public
-        # companies, or (label,) for NPC entries. Any change → adjust divisor.
+        # Fingerprint = frozenset of (label, shares_outstanding). A divisor
+        # adjustment must fire ONLY on mechanical composition changes — a
+        # company entering/leaving the top-50 (the label set changes) or a
+        # secondary offering/buyback (its shares_outstanding changes). It must
+        # NOT fire on pure price moves, otherwise the divisor re-pegs the level
+        # to the previous snapshot and the index never moves (the S&P works the
+        # same way). Using market cap here was the bug: every price tick changed
+        # the fingerprint and froze the index. shares_outstanding is the true
+        # composition signal.
         current_fp = frozenset(
-            (c["label"], round(c["value"], -2))   # round to nearest $100 to dampen price noise
+            (c["label"], c["shares"])
             for c in top50
         )
 
