@@ -322,13 +322,21 @@ def match_order(db, order: MarketOrder) -> bool:
         
         # Determine Buy/Sell roles for execute_trade
         if order.order_type == OrderType.BUY:
-            execute_trade(db, order, match, trade_qty, trade_price)
+            settled = execute_trade(db, order, match, trade_qty, trade_price)
         else:
-            execute_trade(db, match, order, trade_qty, trade_price)
-            
+            settled = execute_trade(db, match, order, trade_qty, trade_price)
+
+        # If settlement failed it rolled back the session (e.g. a bank-buyback
+        # whose cash reserves couldn't cover the fill, blocked petrodollar trade,
+        # stale inventory). Previously the loop counted it as filled anyway,
+        # leaving the order silently stuck. Stop here instead — the order stays
+        # genuinely active and the failed counterparty isn't double-counted.
+        if not settled:
+            break
+
         remaining_qty -= trade_qty
         matched_any = True
-        
+
     return matched_any
 
 # ==========================
@@ -339,6 +347,10 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
     """
     Transfers inventory and cash between players.
     Special handling for bank IPO sales - routes money to bank reserves instead of player accounts.
+
+    Returns True if the trade fully settled, False if it was rolled back
+    (insufficient bank cash, stale inventory, blocked by petrodollar, etc.).
+    Callers MUST check this — a False means no goods or cash moved.
     """
     # 1. Update order quantities
     buy_order.quantity_filled += quantity
@@ -441,7 +453,7 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                 _push_market(_seller_pid, "Sell Order Cancelled",
                              f"Your sell order for {_item_type_stale.replace('_',' ')} was cancelled — "
                              f"item was no longer in your inventory at the time of match.")
-            return
+            return False
 
     # 5. Handle cash transfer
     if is_bank_ipo:
@@ -454,7 +466,7 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
             if not buyer:
                 print(f"[Market] CRITICAL ERROR: Buyer {buy_order.player_id} not found!")
                 db.rollback()
-                return
+                return False
             
             # Deduct from buyer's account (respects legal tender preference)
             from reserve_banks import spend_player_funds
@@ -462,7 +474,7 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
             if not ok:
                 print(f"[Market] CRITICAL ERROR: Buyer {buy_order.player_id} insufficient funds: {_err}")
                 db.rollback()
-                return
+                return False
             # Federal sales tax: 2.02% on IPO purchase
             _ipo_fed_tax = round(total_cost * 0.0202, 6)
             if _ipo_fed_tax > 0 and buy_order.player_id != 0:
@@ -511,7 +523,7 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
             import traceback
             traceback.print_exc()
             db.rollback()
-            return
+            return False
 
     elif is_bank_buyer:
         if bank_buyer_city_id is None:
@@ -530,7 +542,7 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                 if not _etf_bank_id:
                     print(f"[Market] ETF bank buy error: unknown buyer id {buy_order.player_id}")
                     db.rollback()
-                    return
+                    return False
                 ok = _banks_mod.add_bank_expense(
                     _etf_bank_id, total_cost,
                     f"Buyback: {quantity:.4f} {buy_order.item_type} @ ${price:.6f}"
@@ -538,7 +550,7 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                 if not ok:
                     print(f"[Market] ETF bank {_etf_bank_id} has insufficient cash reserves for buyback (need ${total_cost:.2f})")
                     db.rollback()
-                    return
+                    return False
                 seller_player = db.query(Player).filter(Player.id == sell_order.player_id).first()
                 if seller_player:
                     try:
@@ -554,7 +566,7 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                 import traceback
                 traceback.print_exc()
                 db.rollback()
-                return
+                return False
         else:
             # City bank is buying currency from market: pay seller from bank reserves
             try:
@@ -565,11 +577,11 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                 if not city_bank or not seller_player:
                     print(f"[Market] City bank buy error: bank or seller not found")
                     db.rollback()
-                    return
+                    return False
                 if city_bank.cash_reserves < total_cost:
                     print(f"[Market] City bank {bank_buyer_city_id} has insufficient reserves (need ${total_cost:.2f}, have ${city_bank.cash_reserves:.2f})")
                     db.rollback()
-                    return
+                    return False
                 city_bank.cash_reserves -= total_cost
                 try:
                     from reserve_banks import convert_to_legal_tender
@@ -584,7 +596,7 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                 import traceback
                 traceback.print_exc()
                 db.rollback()
-                return
+                return False
 
     else:
         # Regular player-to-player trade: invoke petrodollar hook, then transfer cash
@@ -611,7 +623,7 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                         )
                     except Exception:
                         pass
-                return
+                return False
             if "handled" in petro_msg:
                 petrodollar_handled = True
         except ImportError:
@@ -628,13 +640,13 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                 if not buyer or not seller:
                     print(f"[Market] Cash transfer error: player not found (buyer={buy_order.player_id}, seller={sell_order.player_id})")
                     db.rollback()
-                    return
+                    return False
                 from reserve_banks import spend_player_funds, convert_to_legal_tender
                 ok, _err = spend_player_funds(buy_order.player_id, total_cost)
                 if not ok:
                     print(f"[Market] Cash transfer error: Player {buy_order.player_id} insufficient funds: {_err}")
                     db.rollback()
-                    return
+                    return False
                 # Federal sales tax: 2.02% of trade value, buyer pays to federal government
                 # player_id == 0 is the government itself; all others (players + NPCs) pay.
                 _federal_tax = round(total_cost * 0.0202, 6)
@@ -701,7 +713,7 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                 import traceback
                 traceback.print_exc()
                 db.rollback()
-                return
+                return False
 
     # 6. Transfer inventory (goods from seller to buyer)
     # For bank-buyer trades, the inventory represents currency going into bank reserves —
@@ -768,11 +780,11 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                 _push_market(buy_order.player_id, "Trade Failed — Refunded",
                              f"Your purchase of {buy_order.item_type.replace('_',' ')} failed "
                              f"(seller had insufficient inventory). Payment refunded.")
-            return
+            return False
     except Exception as e:
         print(f"[Market] Inventory Transfer Error: {e}")
         db.rollback()
-        return
+        return False
 
     # 6b. For city bank buy orders: move acquired currency into bank.currency_quantity
     # and clear the virtual inventory entry so bank_list_currency_at_discount stays consistent.
@@ -853,6 +865,8 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
         _push_market(sell_order.player_id, "Trade Executed",
                      f"Sold {quantity:,.4g}× {_item_disp} @ {_price_s} — "
                      f"proceeds {_net_s}{_tax_note}.", item_type=buy_order.item_type)
+
+    return True
 
 # ==========================
 # MARKET DATA FUNCTIONS

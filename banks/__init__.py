@@ -556,7 +556,17 @@ def maintain_etf_share_bid(
 
         max_by_qty = total_shares * qty_pct
         max_by_cash = (cash * reserve_pct) / bid_price
-        qty = max(1.0, min(max_by_qty, max_by_cash))
+        qty = min(max_by_qty, max_by_cash)
+
+        # Never post a bid the fund cannot actually honour. The old code floored
+        # the size to 1.0 share even when cash couldn't cover it, so the order
+        # book showed a bid that silently rolled back on every match — sellers
+        # listed at/below the bid and nothing filled. Shares are fractional, so
+        # post whatever the cash supports; if that's negligible, post nothing.
+        if qty < 0.0001:
+            print(f"[Banks/{bank_id}] Skipping standing bid — cash ${cash:,.2f} "
+                  f"can't honour a buyback at ${bid_price:.6f}")
+            return
 
         _mkt.create_order(
             player_id=bank_player_id,
