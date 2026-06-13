@@ -1,1 +1,5 @@
+<<<<<<< Updated upstream
 1500
+=======
+2280
+>>>>>>> Stashed changes
