@@ -5,10 +5,10 @@
       "active_lines": [
         "ak_47",
         "ak_74m",
-        "machine_gun",
-        "ammunition",
-        "grenade",
-        "missile"
+        "pkm",
+        "762x39_crate",
+        "rgo_grenade",
+        "r77_missile"
       ],
       "business_type": "weapons_factory",
       "district_seed_index": 0
@@ -164,12 +164,6 @@
       "reorder_at": 1,
       "target_inventory": 5
     },
-    "missile": {
-      "market": "regular",
-      "max_price_multiplier": 1.1,
-      "reorder_at": 40,
-      "target_inventory": 200
-    },
     "obstacle_course": {
       "market": "regular",
       "max_price_multiplier": 1.1,
@@ -193,12 +187,6 @@
       "max_price_multiplier": 1.15,
       "reorder_at": 400,
       "target_inventory": 2000
-    },
-    "rifle": {
-      "market": "regular",
-      "max_price_multiplier": 1.1,
-      "reorder_at": 8,
-      "target_inventory": 33
     },
     "rifle_barrel": {
       "market": "regular",
@@ -277,6 +265,18 @@
       "max_price_multiplier": 1.1,
       "reorder_at": 1,
       "target_inventory": 5
+    },
+    "r77_missile": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 40,
+      "target_inventory": 200
+    },
+    "ak_47": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 8,
+      "target_inventory": 33
     }
   },
   "cash_caps": {

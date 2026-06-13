@@ -83,7 +83,7 @@
     "base_price": 1863.466,
     "base_sale_chance": 0.0005,
     "category": "military",
-    "description": "Modernized Russian rifle chambered in 5.45\u00d739mm. Lighter and more accurate than its predecessor.",
+    "description": "Modernized Russian rifle chambered in 5.45×39mm. Lighter and more accurate than its predecessor.",
     "elasticity": 0.5,
     "name": "AK-74M"
   },
@@ -126,22 +126,6 @@
     "description": "Emergency medical vehicle",
     "elasticity": 1.2,
     "name": "Ambulance"
-  },
-  "ammunition": {
-    "base_price": 29.7184,
-    "base_sale_chance": 0.0005,
-    "category": "military",
-    "description": "Small arms rounds",
-    "elasticity": 0.5,
-    "name": "Ammunition"
-  },
-  "ammunition_crate": {
-    "base_price": 2297.1124,
-    "base_sale_chance": 0.0005,
-    "category": "military",
-    "description": "Standardized wooden and steel crate loaded with small-arms cartridges for security and law-enforcement operations.",
-    "elasticity": 0.5,
-    "name": "Ammunition Crate"
   },
   "amx_leclerc": {
     "base_price": 124883.0739,
@@ -222,14 +206,6 @@
     "description": "Nanogram quantities of antihydrogen produced and magnetically trapped in a particle accelerator. Extraordinary value.",
     "elasticity": 1.0,
     "name": "Antimatter Trace"
-  },
-  "apc": {
-    "base_price": 21106.7975,
-    "base_sale_chance": 0.0005,
-    "category": "military",
-    "description": "Troop transport vehicle",
-    "elasticity": 0.5,
-    "name": "Armored Personnel Carrier"
   },
   "aquarium_tank": {
     "base_price": 24809.1285,
@@ -483,9 +459,9 @@
     "base_price": 3264.625,
     "base_sale_chance": 0.0005,
     "category": "military",
-    "description": "Protective vest",
+    "description": "Improved Outer Tactical Vest complete assembly",
     "elasticity": 0.5,
-    "name": "Body Armor"
+    "name": "IOTV Body Armor"
   },
   "body_scanner": {
     "base_price": 20989.7806,
@@ -835,9 +811,9 @@
     "base_price": 1640.7472,
     "base_sale_chance": 0.0005,
     "category": "military",
-    "description": "Head protection",
+    "description": "Advanced Combat Helmet, ballistic protection",
     "elasticity": 0.5,
-    "name": "Combat Helmet"
+    "name": "ACH Combat Helmet"
   },
   "combat_simulator": {
     "base_price": 96621.7975,
@@ -1167,14 +1143,6 @@
     "elasticity": 0.4,
     "name": "Drinking Water"
   },
-  "drone": {
-    "base_price": 39304.2322,
-    "base_sale_chance": 0.0005,
-    "category": "military",
-    "description": "Unmanned aerial vehicle",
-    "elasticity": 0.5,
-    "name": "Military Drone"
-  },
   "duty_free_confections": {
     "base_price": 477.869,
     "base_sale_chance": 0.05,
@@ -1221,7 +1189,7 @@
     "category": "military",
     "description": "Brazilian main battle tank designed by Engesa. Powerful export competitor with French GIAT 120mm gun.",
     "elasticity": 0.5,
-    "name": "EE-T1 Os\u00f3rio"
+    "name": "EE-T1 Osório"
   },
   "electronics_package": {
     "base_price": 39975.0778,
@@ -1259,9 +1227,9 @@
     "base_price": 19798.7787,
     "base_sale_chance": 0.0005,
     "category": "military",
-    "description": "Secure communications",
+    "description": "VINSON voice encryption module for secure comms",
     "elasticity": 0.5,
-    "name": "Encryption Device"
+    "name": "KY-58 Crypto Module"
   },
   "eurofighter_typhoon": {
     "base_price": 385620.1104,
@@ -1303,14 +1271,6 @@
     "elasticity": 1.0,
     "name": "Exotic Isotope"
   },
-  "explosive_ordnance": {
-    "base_price": 7614.2783,
-    "base_sale_chance": 0.0005,
-    "category": "military",
-    "description": "Controlled demolition charges and breaching devices used in high-security tactical operations.",
-    "elasticity": 0.5,
-    "name": "Explosive Ordnance"
-  },
   "f15_eagle": {
     "base_price": 382528.308,
     "base_sale_chance": 0.0005,
@@ -1347,7 +1307,7 @@
     "base_price": 1885.617,
     "base_sale_chance": 0.0005,
     "category": "military",
-    "description": "French bullpup assault rifle. Distinctive silhouette of the Arm\u00e9e de Terre.",
+    "description": "French bullpup assault rifle. Distinctive silhouette of the Armée de Terre.",
     "elasticity": 0.5,
     "name": "FAMAS F1"
   },
@@ -1390,14 +1350,6 @@
     "description": "Complete set of tactical field equipment including webbing, load-bearing vest, and utility pouches.",
     "elasticity": 0.6,
     "name": "Field Gear Set"
-  },
-  "fighter_jet": {
-    "base_price": 229684.9942,
-    "base_sale_chance": 0.0005,
-    "category": "military",
-    "description": "Combat aircraft",
-    "elasticity": 0.5,
-    "name": "Fighter Jet"
   },
   "film_reel": {
     "base_price": 1427.545,
@@ -1607,14 +1559,6 @@
     "elasticity": 1.0,
     "name": "GPS Data License"
   },
-  "grenade": {
-    "base_price": 1168.832,
-    "base_sale_chance": 0.0005,
-    "category": "military",
-    "description": "Hand-thrown explosive",
-    "elasticity": 0.5,
-    "name": "Grenade"
-  },
   "gyro": {
     "base_price": 174.2198,
     "base_sale_chance": 0.05,
@@ -1787,9 +1731,9 @@
     "base_price": 22525.2168,
     "base_sale_chance": 0.0005,
     "category": "military",
-    "description": "Tactical transport vehicle",
+    "description": "High Mobility Multipurpose Wheeled Vehicle",
     "elasticity": 0.5,
-    "name": "Military Humvee"
+    "name": "HMMWV"
   },
   "hvac_unit": {
     "base_price": 5266.5058,
@@ -2355,25 +2299,17 @@
     "base_price": 1078453.2254,
     "base_sale_chance": 0.0005,
     "category": "military",
-    "description": "Turkish domestically built corvette/frigate. Exported to Pakistan and Ukraine \u2014 a key Turkish defense success story.",
+    "description": "Turkish domestically built corvette/frigate. Exported to Pakistan and Ukraine — a key Turkish defense success story.",
     "elasticity": 0.5,
     "name": "MILGEM-class Frigate"
-  },
-  "military_helicopter": {
-    "base_price": 101956.2739,
-    "base_sale_chance": 0.0005,
-    "category": "military",
-    "description": "Attack/transport rotorcraft",
-    "elasticity": 0.5,
-    "name": "Military Helicopter"
   },
   "military_radio": {
     "base_price": 1289.5549,
     "base_sale_chance": 0.0005,
     "category": "military",
-    "description": "Tactical communications",
+    "description": "Handheld multiband tactical radio",
     "elasticity": 0.5,
-    "name": "Military Radio"
+    "name": "AN/PRC-152 Radio"
   },
   "military_training": {
     "base_price": 18242.2374,
@@ -2387,9 +2323,9 @@
     "base_price": 807.3759,
     "base_sale_chance": 0.0005,
     "category": "military",
-    "description": "Combat dress",
+    "description": "Operational Camouflage Pattern combat uniform",
     "elasticity": 0.5,
-    "name": "Military Uniform"
+    "name": "OCP Combat Uniform"
   },
   "milkshake": {
     "base_price": 133.1023,
@@ -2403,17 +2339,9 @@
     "base_price": 565.3527,
     "base_sale_chance": 0.05,
     "category": "retail_food",
-    "description": "Traditional Moroccan tea service \u2014 fresh mint, sugar, and the theatrical three-pour presentation in ornate glass",
+    "description": "Traditional Moroccan tea service — fresh mint, sugar, and the theatrical three-pour presentation in ornate glass",
     "elasticity": 0.6,
     "name": "Mint Tea Ceremony"
-  },
-  "missile": {
-    "base_price": 36316.8793,
-    "base_sale_chance": 0.0005,
-    "category": "military",
-    "description": "Guided munition",
-    "elasticity": 0.5,
-    "name": "Missile"
   },
   "monthly_utility_bill": {
     "base_price": 1030.5449,
@@ -2478,14 +2406,6 @@
     "description": "Refined gas for heating and cooking",
     "elasticity": 0.4,
     "name": "Natural Gas"
-  },
-  "naval_destroyer": {
-    "base_price": 511941.554,
-    "base_sale_chance": 0.0005,
-    "category": "military",
-    "description": "Guided-missile destroyer with radar, sonar, and naval gun systems",
-    "elasticity": 0.5,
-    "name": "Naval Destroyer"
   },
   "neutron_flux_data": {
     "base_price": 944174.3309,
@@ -2991,14 +2911,6 @@
     "elasticity": 1.1,
     "name": "Rhinoceros"
   },
-  "rifle": {
-    "base_price": 981.3089,
-    "base_sale_chance": 0.0005,
-    "category": "military",
-    "description": "Standard infantry weapon",
-    "elasticity": 0.5,
-    "name": "Service Rifle"
-  },
   "robot_labor_contract": {
     "base_price": 163129.205,
     "base_sale_chance": 0.01,
@@ -3432,14 +3344,6 @@
     "elasticity": 0.5,
     "name": "Su-57 Felon"
   },
-  "submarine": {
-    "base_price": 2104568.9448,
-    "base_sale_chance": 0.0005,
-    "category": "military",
-    "description": "Underwater naval vessel",
-    "elasticity": 0.5,
-    "name": "Submarine"
-  },
   "suite_night": {
     "base_price": 2400.4976,
     "base_sale_chance": 0.02,
@@ -3600,14 +3504,6 @@
     "description": "Food packaging box",
     "elasticity": 1.0,
     "name": "Takeout Container"
-  },
-  "tank": {
-    "base_price": 5000000.0,
-    "base_sale_chance": 0.0005,
-    "category": "military",
-    "description": "Armored combat vehicle",
-    "elasticity": 0.5,
-    "name": "Battle Tank"
   },
   "taser": {
     "base_price": 2921.9609,
@@ -4008,5 +3904,677 @@
     "description": "General admission",
     "elasticity": 1.0,
     "name": "Zoo Day Pass"
+  },
+  "556_nato": {
+    "base_price": 0.85,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Standard assault rifle cartridge",
+    "elasticity": 1.2,
+    "name": "5.56×45mm NATO"
+  },
+  "762x39": {
+    "base_price": 0.75,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Soviet-pattern intermediate rifle cartridge",
+    "elasticity": 1.2,
+    "name": "7.62×39mm"
+  },
+  "545x39": {
+    "base_price": 0.7,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Russian assault rifle cartridge",
+    "elasticity": 1.2,
+    "name": "5.45×39mm"
+  },
+  "762_nato": {
+    "base_price": 1.1,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Battle rifle and machine gun cartridge",
+    "elasticity": 1.2,
+    "name": "7.62×51mm NATO"
+  },
+  "50_bmg": {
+    "base_price": 4.5,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Heavy machine gun and anti-materiel rifle cartridge",
+    "elasticity": 1.2,
+    "name": ".50 BMG"
+  },
+  "9mm_para": {
+    "base_price": 0.55,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Standard pistol and SMG cartridge",
+    "elasticity": 1.2,
+    "name": "9mm Parabellum"
+  },
+  "556_nato_crate": {
+    "base_price": 950,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "1000-round crate of 5.56×45mm NATO",
+    "elasticity": 1.2,
+    "name": "5.56 NATO Ammo Crate"
+  },
+  "762x39_crate": {
+    "base_price": 850,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "1000-round crate of 7.62×39mm",
+    "elasticity": 1.2,
+    "name": "7.62×39 Ammo Crate"
+  },
+  "545x39_crate": {
+    "base_price": 790,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "1000-round crate of 5.45×39mm",
+    "elasticity": 1.2,
+    "name": "5.45×39 Ammo Crate"
+  },
+  "762_nato_crate": {
+    "base_price": 1250,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "1000-round crate of 7.62×51mm NATO",
+    "elasticity": 1.2,
+    "name": "7.62 NATO Ammo Crate"
+  },
+  "50_bmg_crate": {
+    "base_price": 5200,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "1000-round crate of .50 BMG",
+    "elasticity": 1.2,
+    "name": ".50 BMG Ammo Crate"
+  },
+  "9mm_crate": {
+    "base_price": 620,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "1000-round crate of 9mm Parabellum",
+    "elasticity": 1.2,
+    "name": "9mm Ammo Crate"
+  },
+  "frag_warhead": {
+    "base_price": 8500,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Anti-personnel/materiel fragmentation warhead",
+    "elasticity": 1.2,
+    "name": "Fragmentation Warhead"
+  },
+  "shaped_charge_warhead": {
+    "base_price": 14000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Anti-armor shaped charge warhead",
+    "elasticity": 1.2,
+    "name": "Shaped Charge Warhead"
+  },
+  "he_warhead": {
+    "base_price": 11000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "General-purpose high-explosive warhead",
+    "elasticity": 1.2,
+    "name": "HE Warhead"
+  },
+  "thermobaric_warhead": {
+    "base_price": 18000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Thermobaric/fuel-air explosive warhead",
+    "elasticity": 1.2,
+    "name": "Thermobaric Warhead"
+  },
+  "radar_seeker": {
+    "base_price": 32000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Active radar homing seeker for missiles",
+    "elasticity": 1.2,
+    "name": "Radar Seeker Head"
+  },
+  "ir_seeker": {
+    "base_price": 22000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Infrared heat-seeking missile guidance head",
+    "elasticity": 1.2,
+    "name": "IR Seeker Head"
+  },
+  "laser_seeker": {
+    "base_price": 28000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Semi-active laser homing seeker",
+    "elasticity": 1.2,
+    "name": "Laser Seeker Head"
+  },
+  "gps_ins_guidance": {
+    "base_price": 45000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "GPS-aided inertial navigation guidance system",
+    "elasticity": 1.2,
+    "name": "GPS/INS Guidance Unit"
+  },
+  "solid_rocket_motor": {
+    "base_price": 12000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Solid-propellant rocket motor for missiles",
+    "elasticity": 1.2,
+    "name": "Solid Rocket Motor"
+  },
+  "turbojet_cruise_motor": {
+    "base_price": 55000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Small turbojet engine for cruise missiles",
+    "elasticity": 1.2,
+    "name": "Turbojet Cruise Motor"
+  },
+  "aim120_amraam": {
+    "base_price": 1850000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Active radar-guided beyond-visual-range air-to-air missile",
+    "elasticity": 1.2,
+    "name": "AIM-120 AMRAAM"
+  },
+  "aim9_sidewinder": {
+    "base_price": 590000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Short-range infrared-guided air-to-air missile",
+    "elasticity": 1.2,
+    "name": "AIM-9 Sidewinder"
+  },
+  "r77_missile": {
+    "base_price": 1200000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Russian active radar-guided air-to-air missile",
+    "elasticity": 1.2,
+    "name": "R-77 Adder"
+  },
+  "agm114_hellfire": {
+    "base_price": 115000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Laser/radar-guided air-to-surface anti-tank missile",
+    "elasticity": 1.2,
+    "name": "AGM-114 Hellfire"
+  },
+  "agm65_maverick": {
+    "base_price": 280000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Electro-optical/IR guided air-to-ground missile",
+    "elasticity": 1.2,
+    "name": "AGM-65 Maverick"
+  },
+  "fgm148_javelin": {
+    "base_price": 175000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Man-portable fire-and-forget anti-tank missile",
+    "elasticity": 1.2,
+    "name": "FGM-148 Javelin"
+  },
+  "bgm109_tomahawk": {
+    "base_price": 2100000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Long-range subsonic land-attack cruise missile",
+    "elasticity": 1.2,
+    "name": "BGM-109 Tomahawk"
+  },
+  "kalibr_missile": {
+    "base_price": 1350000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Russian long-range sea/sub-launched cruise missile",
+    "elasticity": 1.2,
+    "name": "Kalibr Cruise Missile"
+  },
+  "brahmos_missile": {
+    "base_price": 2800000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Supersonic cruise missile (India/Russia joint)",
+    "elasticity": 1.2,
+    "name": "BrahMos Missile"
+  },
+  "agm84_harpoon": {
+    "base_price": 1400000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Active radar-guided anti-ship missile",
+    "elasticity": 1.2,
+    "name": "AGM-84 Harpoon"
+  },
+  "exocet_missile": {
+    "base_price": 1050000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "French sea-skimming anti-ship missile",
+    "elasticity": 1.2,
+    "name": "Exocet Missile"
+  },
+  "sm2_missile": {
+    "base_price": 2200000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Long-range ship-based surface-to-air missile",
+    "elasticity": 1.2,
+    "name": "SM-2 Standard Missile"
+  },
+  "frag_grenade_body": {
+    "base_price": 18,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Steel fragmentation grenade body shell",
+    "elasticity": 1.2,
+    "name": "Frag Grenade Body"
+  },
+  "comp_b_filler": {
+    "base_price": 12,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Composition B explosive filler for grenades",
+    "elasticity": 1.2,
+    "name": "Comp-B Filler"
+  },
+  "m67_grenade": {
+    "base_price": 65,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "US spherical fragmentation hand grenade",
+    "elasticity": 1.2,
+    "name": "M67 Grenade"
+  },
+  "rgo_grenade": {
+    "base_price": 55,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Russian defensive fragmentation grenade",
+    "elasticity": 1.2,
+    "name": "RGO Grenade"
+  },
+  "dm51_grenade": {
+    "base_price": 60,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "German dual-purpose fragmentation grenade",
+    "elasticity": 1.2,
+    "name": "DM51 Grenade"
+  },
+  "arges_hg84": {
+    "base_price": 70,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Swiss fragmentation grenade, NATO-standard",
+    "elasticity": 1.2,
+    "name": "Arges HG 84"
+  },
+  "m18_smoke_grenade": {
+    "base_price": 45,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "US colored smoke signaling grenade",
+    "elasticity": 1.2,
+    "name": "M18 Smoke Grenade"
+  },
+  "m15_wp_grenade": {
+    "base_price": 85,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "US white phosphorus incendiary/screening grenade",
+    "elasticity": 1.2,
+    "name": "M15 WP Grenade"
+  },
+  "m112_c4": {
+    "base_price": 180,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "US standard demolition charge (C4 explosive)",
+    "elasticity": 1.2,
+    "name": "M112 C4"
+  },
+  "semtex_charge": {
+    "base_price": 155,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Czech plastic explosive demolition charge",
+    "elasticity": 1.2,
+    "name": "Semtex Charge"
+  },
+  "m795_shell": {
+    "base_price": 2200,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "US 155mm standard high-explosive artillery round",
+    "elasticity": 1.2,
+    "name": "M795 Artillery Shell"
+  },
+  "m982_excalibur": {
+    "base_price": 68000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "US GPS-guided extended-range 155mm precision shell",
+    "elasticity": 1.2,
+    "name": "M982 Excalibur"
+  },
+  "mk48_torpedo": {
+    "base_price": 3500000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "US heavyweight wire-guided submarine torpedo",
+    "elasticity": 1.2,
+    "name": "Mk 48 Torpedo"
+  },
+  "type53_torpedo": {
+    "base_price": 1800000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Russian standard heavyweight submarine torpedo",
+    "elasticity": 1.2,
+    "name": "Type 53 Torpedo"
+  },
+  "mq9_reaper": {
+    "base_price": 32000000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "US long-endurance armed MALE reconnaissance drone",
+    "elasticity": 1.2,
+    "name": "MQ-9 Reaper"
+  },
+  "bayraktar_tb2": {
+    "base_price": 5000000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Turkish combat drone, laser-guided munitions capable",
+    "elasticity": 1.2,
+    "name": "Bayraktar TB2"
+  },
+  "wing_loong_2": {
+    "base_price": 8000000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Chinese MALE combat reconnaissance drone",
+    "elasticity": 1.2,
+    "name": "Wing Loong II"
+  },
+  "switchblade_600": {
+    "base_price": 95000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "US anti-armor loitering munition",
+    "elasticity": 1.2,
+    "name": "Switchblade 600"
+  },
+  "lancet_3": {
+    "base_price": 35000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Russian anti-armor loitering munition",
+    "elasticity": 1.2,
+    "name": "Lancet-3"
+  },
+  "m2_browning": {
+    "base_price": 14000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "US .50 caliber heavy machine gun",
+    "elasticity": 1.2,
+    "name": "M2 Browning"
+  },
+  "m240b": {
+    "base_price": 6800,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "US 7.62mm medium machine gun",
+    "elasticity": 1.2,
+    "name": "M240B"
+  },
+  "pkm": {
+    "base_price": 4500,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Russian 7.62mm general-purpose machine gun",
+    "elasticity": 1.2,
+    "name": "PKM"
+  },
+  "mg3": {
+    "base_price": 7200,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "German 7.62mm general-purpose machine gun",
+    "elasticity": 1.2,
+    "name": "MG3"
+  },
+  "m2_bradley": {
+    "base_price": 4200000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "US infantry fighting vehicle, 25mm chain gun",
+    "elasticity": 1.2,
+    "name": "M2 Bradley"
+  },
+  "stryker_apc": {
+    "base_price": 4700000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "US wheeled armored personnel carrier",
+    "elasticity": 1.2,
+    "name": "Stryker APC"
+  },
+  "bmp3_ifv": {
+    "base_price": 3100000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Russian infantry fighting vehicle",
+    "elasticity": 1.2,
+    "name": "BMP-3 IFV"
+  },
+  "btr82_apc": {
+    "base_price": 1800000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Russian wheeled armored personnel carrier",
+    "elasticity": 1.2,
+    "name": "BTR-82A APC"
+  },
+  "boxer_apc": {
+    "base_price": 5800000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "German/Dutch modular wheeled APC",
+    "elasticity": 1.2,
+    "name": "Boxer APC"
+  },
+  "puma_ifv": {
+    "base_price": 8100000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "German next-generation infantry fighting vehicle",
+    "elasticity": 1.2,
+    "name": "Puma IFV"
+  },
+  "jltv": {
+    "base_price": 280000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "US Joint Light Tactical Vehicle",
+    "elasticity": 1.2,
+    "name": "JLTV"
+  },
+  "oshkosh_fmtv": {
+    "base_price": 185000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "US Family of Medium Tactical Vehicles military truck",
+    "elasticity": 1.2,
+    "name": "Oshkosh FMTV"
+  },
+  "m109_paladin": {
+    "base_price": 6000000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "US self-propelled 155mm howitzer",
+    "elasticity": 1.2,
+    "name": "M109 Paladin"
+  },
+  "pzh2000": {
+    "base_price": 8500000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "German self-propelled 155mm howitzer",
+    "elasticity": 1.2,
+    "name": "PzH 2000"
+  },
+  "hmmwv": {
+    "base_price": 220000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "US High Mobility Multipurpose Wheeled Vehicle",
+    "elasticity": 1.2,
+    "name": "HMMWV"
+  },
+  "acog_optic": {
+    "base_price": 1400,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Trijicon ACOG 4× fixed-power combat optic",
+    "elasticity": 1.2,
+    "name": "ACOG Optic"
+  },
+  "eotech_holo": {
+    "base_price": 650,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Holographic weapon sight for CQB",
+    "elasticity": 1.2,
+    "name": "EOTech Holographic Sight"
+  },
+  "aimpoint_rds": {
+    "base_price": 850,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Aimpoint red dot sight for rifles",
+    "elasticity": 1.2,
+    "name": "Aimpoint Red Dot Sight"
+  },
+  "sb_sniper_scope": {
+    "base_price": 3800,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "High-power precision scope for sniper rifles",
+    "elasticity": 1.2,
+    "name": "Schmidt & Bender Sniper Scope"
+  },
+  "leupold_scope": {
+    "base_price": 2800,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Leupold Mark 5HD precision rifle scope",
+    "elasticity": 1.2,
+    "name": "Leupold MK5 Scope"
+  },
+  "elcan_optic": {
+    "base_price": 2200,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Dual-role 1-4× combat optic",
+    "elasticity": 1.2,
+    "name": "Elcan Specter DR"
+  },
+  "kahles_scope": {
+    "base_price": 4200,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Austrian 5-25× precision long-range scope",
+    "elasticity": 1.2,
+    "name": "Kahles K525i Scope"
+  },
+  "pvs14_nvg": {
+    "base_price": 3200,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "AN/PVS-14 monocular night vision goggle",
+    "elasticity": 1.2,
+    "name": "PVS-14 NVG"
+  },
+  "pvs31_nvg": {
+    "base_price": 8500,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "AN/PVS-31A dual-tube binocular night vision",
+    "elasticity": 1.2,
+    "name": "PVS-31A NVG"
+  },
+  "esapi_plate": {
+    "base_price": 400,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Enhanced Small Arms Protective Insert ceramic plate",
+    "elasticity": 1.2,
+    "name": "ESAPI Plate"
+  },
+  "plate_carrier": {
+    "base_price": 280,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Modular tactical plate carrier vest",
+    "elasticity": 1.2,
+    "name": "Plate Carrier"
+  },
+  "iotv_vest": {
+    "base_price": 1800,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Improved Outer Tactical Vest with ESAPI plates",
+    "elasticity": 1.2,
+    "name": "IOTV Vest"
+  },
+  "ach_helmet": {
+    "base_price": 380,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "US Advanced Combat Helmet",
+    "elasticity": 1.2,
+    "name": "ACH Helmet"
+  },
+  "anprc152_radio": {
+    "base_price": 8500,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Handheld multiband tactical radio",
+    "elasticity": 1.2,
+    "name": "AN/PRC-152 Radio"
+  },
+  "ky58_crypto": {
+    "base_price": 12000,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "VINSON voice encryption module for secure comms",
+    "elasticity": 1.2,
+    "name": "KY-58 Crypto Module"
+  },
+  "ocp_uniform": {
+    "base_price": 185,
+    "base_sale_chance": 0.15,
+    "category": "military",
+    "description": "Operational Camouflage Pattern combat uniform",
+    "elasticity": 1.2,
+    "name": "OCP Uniform"
   }
 }

@@ -502,6 +502,12 @@ async def lifespan(app: FastAPI):
         print("DB migrations applied")
     except Exception as _me:
         print(f"DB migration error: {_me}")
+    # Burn removed generic military items (one-time migration)
+    try:
+        from military_migration import run_migration as _run_mil_migration
+        _run_mil_migration()
+    except Exception as _mme:
+        print(f"Military migration error: {_mme}")
     # Wiki DB init (migrates wiki_media.json → DB on first run)
     try:
         import wiki as _wiki_mod

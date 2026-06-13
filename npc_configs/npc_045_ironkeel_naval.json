@@ -72,12 +72,6 @@
       "reorder_at": 100,
       "target_inventory": 500
     },
-    "missile": {
-      "market": "regular",
-      "max_price_multiplier": 1.1,
-      "reorder_at": 50,
-      "target_inventory": 200
-    },
     "naval_gun_system": {
       "market": "regular",
       "max_price_multiplier": 1.15,
@@ -132,17 +126,23 @@
       "reorder_at": 4000,
       "target_inventory": 20000
     },
-    "torpedo": {
-      "market": "regular",
-      "max_price_multiplier": 1.15,
-      "reorder_at": 40,
-      "target_inventory": 200
-    },
     "turbofan_engine": {
       "market": "regular",
       "max_price_multiplier": 1.15,
       "reorder_at": 1,
       "target_inventory": 5
+    },
+    "bgm109_tomahawk": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 50,
+      "target_inventory": 200
+    },
+    "mk48_torpedo": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 40,
+      "target_inventory": 200
     }
   },
   "cash_caps": {

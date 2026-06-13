@@ -75,7 +75,20 @@ RIFLES = frozenset({
     "imbel_md97", "caracal_car816",
 })
 
-ALL_PA_ITEMS = CARRIERS | SUBMARINES | DESTROYERS | FIGHTER_JETS | HELICOPTERS | TANKS | RIFLES
+ARMORED_VEHICLES = frozenset({
+    "m2_bradley", "stryker_apc", "bmp3_ifv", "btr82_apc",
+    "boxer_apc", "puma_ifv",
+})
+
+DRONES = frozenset({
+    "mq9_reaper", "bayraktar_tb2", "wing_loong_2",
+    "switchblade_600", "lancet_3",
+})
+
+ALL_PA_ITEMS = (
+    CARRIERS | SUBMARINES | DESTROYERS | FIGHTER_JETS
+    | HELICOPTERS | TANKS | RIFLES | ARMORED_VEHICLES | DRONES
+)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Fleet / Army deployment thresholds
@@ -90,10 +103,12 @@ FLEET_THRESHOLDS: Dict[str, Tuple[frozenset, int]] = {
 }
 
 ARMY_THRESHOLDS: Dict[str, Tuple[frozenset, int]] = {
-    "tanks":        (TANKS,        10),
-    "helicopters":  (HELICOPTERS,  5),
-    "rifles":       (RIFLES,       100),
-    "fighter_jets": (FIGHTER_JETS, 6),
+    "tanks":             (TANKS,             10),
+    "helicopters":       (HELICOPTERS,        5),
+    "rifles":            (RIFLES,           100),
+    "fighter_jets":      (FIGHTER_JETS,       6),
+    "armored_vehicles":  (ARMORED_VEHICLES,   8),
+    "drones":            (DRONES,             4),
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -108,6 +123,8 @@ MAINTENANCE_DAILY: Dict[str, float] = {
     **{i: 50_000.0  for i in FIGHTER_JETS},
     **{i: 40_000.0  for i in HELICOPTERS},
     **{i: 30_000.0  for i in TANKS},
+    **{i: 15_000.0  for i in ARMORED_VEHICLES},
+    **{i: 8_000.0   for i in DRONES},
     **{i: 10.0      for i in RIFLES},
 }
 

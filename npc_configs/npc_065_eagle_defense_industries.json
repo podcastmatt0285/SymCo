@@ -5,10 +5,10 @@
       "active_lines": [
         "m4_carbine",
         "m249_saw",
-        "machine_gun",
-        "ammunition",
-        "grenade",
-        "missile"
+        "m2_browning",
+        "556_nato_crate",
+        "m67_grenade",
+        "aim120_amraam"
       ],
       "business_type": "weapons_factory",
       "district_seed_index": 0
@@ -17,7 +17,7 @@
       "active_lines": [
         "m1a2_abrams",
         "humvee",
-        "apc",
+        "stryker_apc",
         "military_truck"
       ],
       "business_type": "military_vehicle_plant",
@@ -267,16 +267,6 @@
     "starting_cash": 30000000
   },
   "sell_items": {
-    "ammunition": {
-      "market": "regular",
-      "max_order_quantity": 10000,
-      "min_inventory_to_keep": 0
-    },
-    "grenade": {
-      "market": "regular",
-      "max_order_quantity": 2000,
-      "min_inventory_to_keep": 0
-    },
     "humvee": {
       "market": "regular",
       "max_order_quantity": 50,
@@ -297,7 +287,17 @@
       "max_order_quantity": 500,
       "min_inventory_to_keep": 0
     },
-    "machine_gun": {
+    "556_nato_crate": {
+      "market": "regular",
+      "max_order_quantity": 10000,
+      "min_inventory_to_keep": 0
+    },
+    "m67_grenade": {
+      "market": "regular",
+      "max_order_quantity": 2000,
+      "min_inventory_to_keep": 0
+    },
+    "m2_browning": {
       "market": "regular",
       "max_order_quantity": 100,
       "min_inventory_to_keep": 0

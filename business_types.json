@@ -7139,7 +7139,7 @@
             "quantity": 2
           }
         ],
-        "output_item": "torpedo",
+        "output_item": "mk48_torpedo",
         "output_qty": 2
       },
       {
@@ -15135,7 +15135,7 @@
             "quantity": 5
           }
         ],
-        "output_item": "fighter_jet",
+        "output_item": "f16_falcon",
         "output_qty": 1
       },
       {
@@ -15191,7 +15191,7 @@
             "quantity": 2
           }
         ],
-        "output_item": "military_helicopter",
+        "output_item": "uh60_blackhawk",
         "output_qty": 1
       },
       {
@@ -15290,7 +15290,7 @@
             "quantity": 5
           }
         ],
-        "output_item": "main_battle_tank",
+        "output_item": "m1a2_abrams",
         "output_qty": 1
       },
       {
@@ -16798,7 +16798,7 @@
             "quantity": 10
           }
         ],
-        "output_item": "naval_destroyer",
+        "output_item": "arleigh_burke_destroyer",
         "output_qty": 1
       },
       {
@@ -16816,7 +16816,7 @@
             "quantity": 1
           },
           {
-            "item": "torpedo",
+            "item": "mk48_torpedo",
             "quantity": 10
           },
           {
@@ -16832,7 +16832,7 @@
             "quantity": 8
           }
         ],
-        "output_item": "submarine",
+        "output_item": "virginia_class_sub",
         "output_qty": 1
       },
       {
@@ -28179,7 +28179,7 @@
     "base_wage_cost": 800.0,
     "class": "production",
     "cycles_to_complete": 200,
-    "description": "Military arms plant producing rifles, machine guns, ammunition, grenades, and missiles.",
+    "description": "Military arms plant producing assault rifles, machine guns, ammunition crates, grenades, and missiles.",
     "name": "Weapons Factory",
     "production_lines": [
       {
@@ -28205,7 +28205,7 @@
             "quantity": 1
           }
         ],
-        "output_item": "rifle",
+        "output_item": "m4_carbine",
         "output_qty": 2
       },
       {
@@ -28227,7 +28227,7 @@
             "quantity": 1
           }
         ],
-        "output_item": "machine_gun",
+        "output_item": "m2_browning",
         "output_qty": 1
       },
       {
@@ -28249,13 +28249,13 @@
             "quantity": 1
           }
         ],
-        "output_item": "ammunition",
+        "output_item": "556_nato_crate",
         "output_qty": 500
       },
       {
         "inputs": [
           {
-            "item": "grenade_body",
+            "item": "frag_grenade_body",
             "quantity": 5
           },
           {
@@ -28271,7 +28271,7 @@
             "quantity": 1
           }
         ],
-        "output_item": "grenade",
+        "output_item": "m67_grenade",
         "output_qty": 5
       },
       {
@@ -28297,7 +28297,7 @@
             "quantity": 2
           }
         ],
-        "output_item": "missile",
+        "output_item": "aim120_amraam",
         "output_qty": 1
       }
     ],

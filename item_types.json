@@ -185,18 +185,6 @@
     "description": "NH3; primary nitrogen source for fertilizers and chemical synthesis.",
     "name": "Ammonia"
   },
-  "ammunition": {
-    "base_price": 29.7184,
-    "category": "military",
-    "description": "Military-grade ammunition, manufactured for defense applications and armed forces.",
-    "name": "Ammunition"
-  },
-  "ammunition_crate": {
-    "base_price": 2297.1125,
-    "category": "military",
-    "description": "Military-grade ammunition crate, manufactured for defense applications and armed forces.",
-    "name": "Ammunition Crate"
-  },
   "anchovies": {
     "base_price": 52.0038,
     "category": "seafood",
@@ -299,12 +287,6 @@
     "description": "Wound cleaner",
     "name": "Antiseptic"
   },
-  "apc": {
-    "base_price": 21106.7976,
-    "category": "military",
-    "description": "Military-grade apc, manufactured for defense applications and armed forces.",
-    "name": "Apc"
-  },
   "apc_hull": {
     "base_price": 11712.8989,
     "category": "components",
@@ -395,14 +377,6 @@
     "description": "Noble gas extracted from air by fractional distillation. Used in welding, semiconductor processing, and cryogenics.",
     "name": "Argon Gas"
   },
-  "armored_car": {
-    "base_price": 5870.7115,
-    "base_sale_chance": 0.001,
-    "category": "vehicles",
-    "description": "Ballistic and blast protected executive or cash transport vehicle.",
-    "elasticity": 0.8,
-    "name": "Armored Car"
-  },
   "armored_personnel_carrier": {
     "base_price": 38413.4313,
     "category": "vehicles",
@@ -430,7 +404,7 @@
   "art_supplies": {
     "base_price": 251.4651,
     "category": "media",
-    "description": "A cultural or entertainment product \u2014 art supplies \u2014 created for public consumption.",
+    "description": "A cultural or entertainment product — art supplies — created for public consumption.",
     "name": "Art Supplies"
   },
   "artificial_turf": {
@@ -438,12 +412,6 @@
     "category": "accessories",
     "description": "Synthetic grass surface used in sports stadiums, athletic fields, and recreational facilities.",
     "name": "Artificial Turf"
-  },
-  "artillery_shell": {
-    "base_price": 2377.6195,
-    "category": "military",
-    "description": "Large-caliber howitzer round with smokeless or black powder propellant charge.",
-    "name": "Artillery Shell"
   },
   "artisan_fragrance": {
     "base_price": 519.2545,
@@ -538,13 +506,13 @@
   "band_instruments": {
     "base_price": 955.5326,
     "category": "media",
-    "description": "A cultural or entertainment product \u2014 band instruments \u2014 created for public consumption.",
+    "description": "A cultural or entertainment product — band instruments — created for public consumption.",
     "name": "Band Instruments"
   },
   "band_merchandise": {
     "base_price": 309.5397,
     "category": "media",
-    "description": "A cultural or entertainment product \u2014 band merchandise \u2014 created for public consumption.",
+    "description": "A cultural or entertainment product — band merchandise — created for public consumption.",
     "name": "Band Merchandise"
   },
   "bandage": {
@@ -628,7 +596,7 @@
   "bastilla": {
     "base_price": 70.0434,
     "category": "baked_goods",
-    "description": "Flaky Moroccan pastry: slow-braised spiced lamb layered with egg and drizzled with honey and cinnamon beneath a buttery warka crust \u2014 the cornerstone of celebratory Moroccan cuisine",
+    "description": "Flaky Moroccan pastry: slow-braised spiced lamb layered with egg and drizzled with honey and cinnamon beneath a buttery warka crust — the cornerstone of celebratory Moroccan cuisine",
     "name": "Bastilla"
   },
   "battery_cell": {
@@ -886,8 +854,8 @@
   "body_armor": {
     "base_price": 3264.625,
     "category": "military",
-    "description": "Military-grade body armor, manufactured for defense applications and armed forces.",
-    "name": "Body Armor"
+    "description": "Improved Outer Tactical Vest complete assembly",
+    "name": "IOTV Body Armor"
   },
   "body_scanner": {
     "base_price": 22489.0508,
@@ -1126,7 +1094,7 @@
   "canned_lamb": {
     "base_price": 28.2265,
     "category": "food",
-    "description": "Salt-preserved lamb packed in tins \u2014 a durable provisions staple with a long shelf life, traded across supply chains and consumed far from any slaughterhouse.",
+    "description": "Salt-preserved lamb packed in tins — a durable provisions staple with a long shelf life, traded across supply chains and consumed far from any slaughterhouse.",
     "name": "Canned Lamb"
   },
   "canned_mackerel": {
@@ -1270,7 +1238,7 @@
   "cashmere_sheep": {
     "base_price": 674.5519,
     "category": "livestock",
-    "description": "Produces ultra-fine cashmere undercoat \u2014 among the most valuable fibres in the world.",
+    "description": "Produces ultra-fine cashmere undercoat — among the most valuable fibres in the world.",
     "name": "Cashmere Sheep"
   },
   "casino_chips": {
@@ -1840,8 +1808,8 @@
   "combat_helmet": {
     "base_price": 1640.7472,
     "category": "military",
-    "description": "Military-grade combat helmet, manufactured for defense applications and armed forces.",
-    "name": "Combat Helmet"
+    "description": "Advanced Combat Helmet, ballistic protection",
+    "name": "ACH Combat Helmet"
   },
   "combat_simulator": {
     "base_price": 96621.7983,
@@ -2347,12 +2315,6 @@
     "description": "High-strength steel destroyer ship hull and superstructure.",
     "name": "Destroyer Hull"
   },
-  "det_cord": {
-    "base_price": 736.9084,
-    "category": "materials",
-    "description": "PETN-filled cordex line for simultaneous multi-point detonation.",
-    "name": "Detonation Cord"
-  },
   "deuterium": {
     "base_price": 187567.6474,
     "category": "fuel",
@@ -2428,7 +2390,7 @@
   "dokha": {
     "base_price": 366.4603,
     "category": "tobacco",
-    "description": "Extremely potent Middle Eastern tobacco smoked in a traditional midwaha brass pipe \u2014 one draw is enough",
+    "description": "Extremely potent Middle Eastern tobacco smoked in a traditional midwaha brass pipe — one draw is enough",
     "name": "Dokha"
   },
   "dokha_leaf": {
@@ -2502,26 +2464,6 @@
     "category": "utilities",
     "description": "An industrial drinking water, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Drinking Water"
-  },
-  "drone": {
-    "base_price": 33162.9462,
-    "category": "components",
-    "description": "A high-tech drone, used in electronics, computing, and advanced manufacturing.",
-    "name": "Drone"
-  },
-  "drone_avionics": {
-    "base_price": 5274.8495,
-    "category": "components",
-    "description": "Flight controller, GPS, and ESC package for unmanned aerial vehicles.",
-    "name": "Drone Avionics Pack"
-  },
-  "drone_swarm_unit": {
-    "base_price": 25836.2853,
-    "base_sale_chance": 0.0008,
-    "category": "vehicles",
-    "description": "Coordinated expendable micro-drone swarm for electronic warfare.",
-    "elasticity": 0.5,
-    "name": "Drone Swarm Unit"
   },
   "duck": {
     "base_price": 76.948,
@@ -2686,8 +2628,8 @@
   "encryption_device": {
     "base_price": 19798.7788,
     "category": "military",
-    "description": "An industrial encryption device, used in manufacturing, processing, and heavy-industry operations.",
-    "name": "Encryption Device"
+    "description": "VINSON voice encryption module for secure comms",
+    "name": "KY-58 Crypto Module"
   },
   "encyclopedia": {
     "base_price": 1591.2458,
@@ -2785,12 +2727,6 @@
     "description": "Short-lived radioactive isotope produced in particle accelerator collisions. Used in medical imaging and nuclear research.",
     "name": "Exotic Isotope"
   },
-  "explosive_ordnance": {
-    "base_price": 7614.2784,
-    "category": "military",
-    "description": "An industrial explosive ordnance, used in manufacturing, processing, and heavy-industry operations.",
-    "name": "Explosive Ordnance"
-  },
   "explosive_reactive_armor": {
     "base_price": 2066.8889,
     "category": "components",
@@ -2857,16 +2793,10 @@
     "description": "Military field equipment and gear package.",
     "name": "Field Gear Set"
   },
-  "fighter_jet": {
-    "base_price": 65000000.0,
-    "category": "vehicles",
-    "description": "A fully assembled fighter jet, built for transport, logistics, or specialized operations.",
-    "name": "Fighter Jet"
-  },
   "film_reel": {
     "base_price": 1427.545,
     "category": "entertainment",
-    "description": "A cultural or entertainment product \u2014 film reel \u2014 created for public consumption.",
+    "description": "A cultural or entertainment product — film reel — created for public consumption.",
     "name": "Film Reel"
   },
   "finnish_lapphund": {
@@ -3331,18 +3261,6 @@
     "description": "Exceptionally fine aromatic sun-cured Oriental tobacco from northern Greece",
     "name": "Greek Basma Oriental Leaf"
   },
-  "grenade": {
-    "base_price": 1168.832,
-    "category": "military",
-    "description": "Military-grade grenade, manufactured for defense applications and armed forces.",
-    "name": "Grenade"
-  },
-  "grenade_body": {
-    "base_price": 375.1481,
-    "category": "components",
-    "description": "Fragmentation sleeve and fuze assembly for hand grenades.",
-    "name": "Grenade Body"
-  },
   "grid_battery_lfp": {
     "base_price": 6584.4001,
     "category": "components",
@@ -3460,7 +3378,7 @@
   "heat_shield_tile": {
     "base_price": 1374.7017,
     "category": "components",
-    "description": "Ablative reentry protection tile made from carbon-silicon carbide composite with ceramic coating. Withstands 1,600\u00b0C.",
+    "description": "Ablative reentry protection tile made from carbon-silicon carbide composite with ceramic coating. Withstands 1,600°C.",
     "name": "Heat Shield Tile"
   },
   "heather": {
@@ -3496,7 +3414,7 @@
   "heavy_water": {
     "base_price": 13681.9714,
     "category": "materials",
-    "description": "Deuterium oxide (D\u2082O) used as neutron moderator in research reactors and as deuterium source for fusion fuel.",
+    "description": "Deuterium oxide (D₂O) used as neutron moderator in research reactors and as deuterium source for fusion fuel.",
     "name": "Heavy Water"
   },
   "helicopter": {
@@ -3628,8 +3546,8 @@
   "humvee": {
     "base_price": 22525.2169,
     "category": "military",
-    "description": "An industrial humvee, used in manufacturing, processing, and heavy-industry operations.",
-    "name": "Humvee"
+    "description": "High Mobility Multipurpose Wheeled Vehicle",
+    "name": "HMMWV"
   },
   "hvac_unit": {
     "base_price": 5084.9022,
@@ -3713,7 +3631,7 @@
     "base_price": 112.7582,
     "category": "livestock",
     "description": "Refined French breed blending Merino and Leicester blood for balanced production.",
-    "name": "\u00cele-de-France Sheep"
+    "name": "Île-de-France Sheep"
   },
   "ilmenite": {
     "base_price": 49.1531,
@@ -3732,12 +3650,6 @@
     "category": "retail_prison",
     "description": "A government-issued contract for housing and processing inmates at a detention facility.",
     "name": "Incarceration Contract"
-  },
-  "incendiary_rocket": {
-    "base_price": 12834.757,
-    "category": "military",
-    "description": "Unguided rocket with white phosphorus or thermite warhead.",
-    "name": "Incendiary Rocket"
   },
   "inconel": {
     "base_price": 374.1102,
@@ -3775,12 +3687,6 @@
     "description": "IMU providing GPS-independent position and attitude data.",
     "name": "Inertial Navigation Unit"
   },
-  "infantry_fighting_vehicle": {
-    "base_price": 27654.0622,
-    "category": "vehicles",
-    "description": "Tracked IFV combining troop transport with direct fire weapon system.",
-    "name": "Infantry Fighting Vehicle"
-  },
   "inference_api_credit": {
     "base_price": 38589.8336,
     "category": "services",
@@ -3802,7 +3708,7 @@
   "inmate_jumpsuit": {
     "base_price": 595.3769,
     "category": "apparel",
-    "description": "A garment or accessory \u2014 inmate jumpsuit \u2014 manufactured for retail sale.",
+    "description": "A garment or accessory — inmate jumpsuit — manufactured for retail sale.",
     "name": "Inmate Jumpsuit"
   },
   "institutional_furniture_set": {
@@ -4050,7 +3956,7 @@
   "lamb_stew": {
     "base_price": 20.1879,
     "category": "food",
-    "description": "A hearty slow-cooked stew of tender lamb, root vegetables, and lard-based broth \u2014 a warming staple served at soup kitchens and roadside inns.",
+    "description": "A hearty slow-cooked stew of tender lamb, root vegetables, and lard-based broth — a warming staple served at soup kitchens and roadside inns.",
     "name": "Lamb Stew"
   },
   "land_bank_shares": {
@@ -4099,7 +4005,7 @@
     "base_price": 5.0377,
     "category": "beverages",
     "description": "Espresso with steamed milk",
-    "name": "Caff\u00e8 Latte"
+    "name": "Caffè Latte"
   },
   "launch_contract": {
     "base_price": 1589203.4639,
@@ -4268,7 +4174,7 @@
   "liquid_helium": {
     "base_price": 4309.6605,
     "category": "fuel",
-    "description": "Cryogenic coolant at 4 Kelvin (-269\u00b0C). Required for superconducting magnets in MRI machines, quantum computers, and particle accelerators.",
+    "description": "Cryogenic coolant at 4 Kelvin (-269°C). Required for superconducting magnets in MRI machines, quantum computers, and particle accelerators.",
     "name": "Liquid Helium"
   },
   "liquid_hydrogen": {
@@ -4316,13 +4222,13 @@
   "liturgical_lamb_light": {
     "base_price": 4501.2824,
     "category": "luxury",
-    "description": "A devotional tallow candle hand-dipped from rendered lamb fat, scented with cinnamon and vanilla, adorned with a golden pearl and set in richly dyed wax \u2014 lit only during the highest religious ceremonies.",
+    "description": "A devotional tallow candle hand-dipped from rendered lamb fat, scented with cinnamon and vanilla, adorned with a golden pearl and set in richly dyed wax — lit only during the highest religious ceremonies.",
     "name": "Liturgical Lamb Light"
   },
   "live_lake_scrolls": {
     "base_price": 62699.4362,
     "category": "luxury",
-    "description": "Extraordinarily rare sacred scrolls inscribed on lambskin vellum with concentrated ink, gilded with golden pearls, sealed in clay jars anointed with precious essential oils, cinnamon and beeswax \u2014 a once-in-a-generation religious artefact of incalculable spiritual and monetary value.",
+    "description": "Extraordinarily rare sacred scrolls inscribed on lambskin vellum with concentrated ink, gilded with golden pearls, sealed in clay jars anointed with precious essential oils, cinnamon and beeswax — a once-in-a-generation religious artefact of incalculable spiritual and monetary value.",
     "name": "Live Lake Scrolls"
   },
   "livestock_product_supply": {
@@ -4406,7 +4312,7 @@
   "lree_ore": {
     "base_price": 30.8133,
     "category": "ore",
-    "description": "Bastn\u00e4site or monazite ore rich in cerium, lanthanum, neodymium.",
+    "description": "Bastnäsite or monazite ore rich in cerium, lanthanum, neodymium.",
     "name": "Light Rare Earth Ore"
   },
   "lumber": {
@@ -4426,12 +4332,6 @@
     "category": "accessories",
     "description": "High-end mechanical watch with a sapphire crystal face, gold case, and precision movement. Sapphire glass is scratch-proof and far harder than mineral glass.",
     "name": "Luxury Watch"
-  },
-  "machine_gun": {
-    "base_price": 3618.861,
-    "category": "military",
-    "description": "Belt-fed automatic weapon for sustained fire in military applications.",
-    "name": "Machine Gun"
   },
   "mackerel": {
     "base_price": 57.6206,
@@ -4468,12 +4368,6 @@
     "category": "seafood",
     "description": "Tropical pelagic fish with firm, sweet flesh",
     "name": "Mahi-Mahi"
-  },
-  "main_battle_tank": {
-    "base_price": 127508.2793,
-    "category": "vehicles",
-    "description": "Main battle tank with explosive reactive armor package for enhanced RPG protection.",
-    "name": "Main Battle Tank (ERA)"
   },
   "malt": {
     "base_price": 82.201,
@@ -4613,23 +4507,11 @@
     "description": "An industrial microscope, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Microscope"
   },
-  "military_drone": {
-    "base_price": 9075.0727,
-    "category": "vehicles",
-    "description": "Armed or reconnaissance unmanned aerial vehicle.",
-    "name": "Military Drone"
-  },
-  "military_helicopter": {
-    "base_price": 18000000.0,
-    "category": "vehicles",
-    "description": "A fully assembled military helicopter, built for transport, logistics, or specialized operations.",
-    "name": "Military Helicopter"
-  },
   "military_radio": {
     "base_price": 1289.555,
     "category": "military",
-    "description": "Military-grade military radio, manufactured for defense applications and armed forces.",
-    "name": "Military Radio"
+    "description": "Handheld multiband tactical radio",
+    "name": "AN/PRC-152 Radio"
   },
   "military_training": {
     "base_price": 19545.2545,
@@ -4640,14 +4522,14 @@
   "military_truck": {
     "base_price": 3369.7136,
     "category": "vehicles",
-    "description": "Heavy military logistics and troop transport truck.",
-    "name": "Military Truck"
+    "description": "Oshkosh Family of Medium Tactical Vehicles",
+    "name": "Oshkosh FMTV"
   },
   "military_uniform": {
     "base_price": 807.3759,
     "category": "military",
-    "description": "Military-grade military uniform, manufactured for defense applications and armed forces.",
-    "name": "Military Uniform"
+    "description": "Operational Camouflage Pattern combat uniform",
+    "name": "OCP Combat Uniform"
   },
   "milk": {
     "base_price": 1.9209,
@@ -4685,24 +4567,6 @@
     "category": "retail_food",
     "description": "Traditional Moroccan mint tea service ceremony.",
     "name": "Mint Tea Ceremony"
-  },
-  "missile": {
-    "base_price": 36316.8796,
-    "category": "military",
-    "description": "Military-grade missile, manufactured for defense applications and armed forces.",
-    "name": "Missile"
-  },
-  "missile_guidance_unit": {
-    "base_price": 17445.2075,
-    "category": "components",
-    "description": "Inertial/GPS/IR seeker guidance package for precision munitions.",
-    "name": "Missile Guidance Unit"
-  },
-  "missile_warhead": {
-    "base_price": 4058.2717,
-    "category": "components",
-    "description": "High-explosive, shaped-charge, or thermobaric warhead assembly.",
-    "name": "Missile Warhead"
   },
   "mixed_rare_earth_oxide": {
     "base_price": 488.1619,
@@ -4787,7 +4651,7 @@
   "movie_screen": {
     "base_price": 7118.6304,
     "category": "media",
-    "description": "A cultural or entertainment product \u2014 movie screen \u2014 created for public consumption.",
+    "description": "A cultural or entertainment product — movie screen — created for public consumption.",
     "name": "Movie Screen"
   },
   "mre": {
@@ -4837,12 +4701,6 @@
     "category": "utilities",
     "description": "An industrial natural gas, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Natural Gas"
-  },
-  "naval_destroyer": {
-    "base_price": 900000000.0,
-    "category": "vehicles",
-    "description": "Guided-missile destroyer warship.",
-    "name": "Naval Destroyer"
   },
   "naval_gun_system": {
     "base_price": 50583.0461,
@@ -4909,12 +4767,6 @@
     "category": "military",
     "description": "An industrial night vision, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Night Vision"
-  },
-  "night_vision_optic": {
-    "base_price": 7312.9368,
-    "category": "components",
-    "description": "Image-intensifying monocular or scope for low-light operations.",
-    "name": "Night Vision Optic"
   },
   "nightclub_vip": {
     "base_price": 4103.0483,
@@ -5280,7 +5132,7 @@
     "base_price": 78.8824,
     "category": "prepared_food",
     "description": "Rich liver spread",
-    "name": "P\u00e2t\u00e9"
+    "name": "Pâté"
   },
   "payload_fairing": {
     "base_price": 130531.3657,
@@ -5459,7 +5311,7 @@
   "plasma_chamber": {
     "base_price": 1712635.6539,
     "category": "components",
-    "description": "Tungsten-lined toroidal vacuum vessel where fusion plasma is confined by superconducting magnets at 150 million\u00b0C.",
+    "description": "Tungsten-lined toroidal vacuum vessel where fusion plasma is confined by superconducting magnets at 150 million°C.",
     "name": "Plasma Containment Chamber"
   },
   "plastic": {
@@ -5645,7 +5497,7 @@
   "premium_cigar": {
     "base_price": 137.5327,
     "category": "tobacco",
-    "description": "Luxury handrolled cigar using the finest aged wrapper, binder, and filler \u2014 Holt's-quality",
+    "description": "Luxury handrolled cigar using the finest aged wrapper, binder, and filler — Holt's-quality",
     "name": "Premium Cigar"
   },
   "premium_cocktail": {
@@ -5867,7 +5719,7 @@
   "rams_horn": {
     "base_price": 75005.4531,
     "category": "luxury",
-    "description": "A hand-polished ceremonial ram's horn \u2014 an extraordinarily rare luxury religious artefact of immense spiritual significance.",
+    "description": "A hand-polished ceremonial ram's horn — an extraordinarily rare luxury religious artefact of immense spiritual significance.",
     "name": "Ram's Horn"
   },
   "ranunculus": {
@@ -5957,7 +5809,7 @@
   "religious_candle": {
     "base_price": 5903.8418,
     "category": "luxury",
-    "description": "Luxury hand-crafted devotional candle: dyed, cinnamon-scented beeswax poured over a pearl-adorned silk-wrapped cardboard vessel with an apple-fibre rope wick \u2014 a sacred heirloom object",
+    "description": "Luxury hand-crafted devotional candle: dyed, cinnamon-scented beeswax poured over a pearl-adorned silk-wrapped cardboard vessel with an apple-fibre rope wick — a sacred heirloom object",
     "name": "Religious Candle"
   },
   "rental_car": {
@@ -6053,14 +5905,8 @@
   "rideau_arcott": {
     "base_price": 182.7099,
     "category": "livestock",
-    "description": "Canadian breed with extraordinary lambing rates; commonly 3\u20134 lambs per birth.",
+    "description": "Canadian breed with extraordinary lambing rates; commonly 3–4 lambs per birth.",
     "name": "Rideau Arcott"
-  },
-  "rifle": {
-    "base_price": 1500.0,
-    "category": "military",
-    "description": "Military-grade rifle, manufactured for defense applications and armed forces.",
-    "name": "Rifle"
   },
   "rifle_barrel": {
     "base_price": 258.5514,
@@ -6097,12 +5943,6 @@
     "category": "tobacco",
     "description": "Short, thick handrolled cigar delivering a concentrated, full-bodied smoke",
     "name": "Robusto Cigar"
-  },
-  "rocket_motor": {
-    "base_price": 15923.9445,
-    "category": "components",
-    "description": "Solid or liquid-propellant rocket motor for missiles and launch vehicles.",
-    "name": "Rocket Motor"
   },
   "romanov_sheep": {
     "base_price": 104.0512,
@@ -6150,7 +5990,7 @@
     "base_price": 13.3671,
     "category": "alcohol",
     "description": "Light pink wine",
-    "name": "Ros\u00e9 Wine"
+    "name": "Rosé Wine"
   },
   "rottweiler": {
     "base_price": 175.1723,
@@ -6281,7 +6121,7 @@
   "sacred_lamb_offering": {
     "base_price": 227.7733,
     "category": "luxury",
-    "description": "A ritually slaughtered and dressed lamb offering, prepared according to ancient rites and anointed with salt and beeswax \u2014 presented at consecrated altars as a sacrificial act of devotion.",
+    "description": "A ritually slaughtered and dressed lamb offering, prepared according to ancient rites and anointed with salt and beeswax — presented at consecrated altars as a sacrificial act of devotion.",
     "name": "Sacred Lamb Offering"
   },
   "sacred_tobacco": {
@@ -6467,7 +6307,7 @@
   "school_uniform": {
     "base_price": 573.5982,
     "category": "apparel",
-    "description": "A garment or accessory \u2014 school uniform \u2014 manufactured for retail sale.",
+    "description": "A garment or accessory — school uniform — manufactured for retail sale.",
     "name": "School Uniform"
   },
   "scoreboard": {
@@ -6567,14 +6407,6 @@
     "category": "metals",
     "description": "Byproduct of copper refining; used in solar cells and glass.",
     "name": "Selenium"
-  },
-  "self_propelled_artillery": {
-    "base_price": 56137.0888,
-    "base_sale_chance": 0.0005,
-    "category": "vehicles",
-    "description": "Armored howitzer on a tracked or wheeled self-propelled chassis.",
-    "elasticity": 0.5,
-    "name": "Self-Propelled Artillery"
   },
   "semi_truck": {
     "base_price": 21418.7766,
@@ -6753,7 +6585,7 @@
   "smartphone": {
     "base_price": 16888.0406,
     "category": "media",
-    "description": "A cultural or entertainment product \u2014 smartphone \u2014 created for public consumption.",
+    "description": "A cultural or entertainment product — smartphone — created for public consumption.",
     "name": "Smartphone"
   },
   "smartwatch": {
@@ -6762,16 +6594,10 @@
     "description": "Wrist-worn smart device with a sapphire crystal face, OLED display, health sensors, and wireless connectivity.",
     "name": "Smartwatch"
   },
-  "smoke_grenade": {
-    "base_price": 1305.0104,
-    "category": "military",
-    "description": "Colored smoke grenade for signaling and concealment.",
-    "name": "Smoke Grenade"
-  },
   "smoked_eel": {
     "base_price": 68.5723,
     "category": "seafood_product",
-    "description": "Delicately smoked eel fillets \u2013 a Dutch and British delicacy and a sacred offering in several traditional religious ceremonies.",
+    "description": "Delicately smoked eel fillets – a Dutch and British delicacy and a sacred offering in several traditional religious ceremonies.",
     "name": "Smoked Eel"
   },
   "smoked_mackerel": {
@@ -7102,12 +6928,6 @@
     "description": "An industrial sturgeon, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Sturgeon"
   },
-  "submarine": {
-    "base_price": 1500000000.0,
-    "category": "vehicles",
-    "description": "A fully assembled submarine, built for transport, logistics, or specialized operations.",
-    "name": "Submarine"
-  },
   "submarine_hull": {
     "base_price": 1121915.4565,
     "category": "components",
@@ -7291,14 +7111,8 @@
   "tallow_candle": {
     "base_price": 44.7777,
     "category": "home_goods",
-    "description": "A hand-dipped candle rendered from lamb tallow \u2014 the working person's light, practical and long-burning, produced for centuries before beeswax became affordable.",
+    "description": "A hand-dipped candle rendered from lamb tallow — the working person's light, practical and long-burning, produced for centuries before beeswax became affordable.",
     "name": "Tallow Candle"
-  },
-  "tank": {
-    "base_price": 6000000.0,
-    "category": "military",
-    "description": "Military-grade tank, manufactured for defense applications and armed forces.",
-    "name": "Tank"
   },
   "tank_cannon": {
     "base_price": 34592.4899,
@@ -7323,12 +7137,6 @@
     "category": "metals",
     "description": "Refined tantalum from coltan; essential for electronic capacitors.",
     "name": "Tantalum"
-  },
-  "targeting_optic": {
-    "base_price": 1334.8307,
-    "category": "components",
-    "description": "Precision rifle scope or laser rangefinder targeting system.",
-    "name": "Targeting Optic"
   },
   "targhee_sheep": {
     "base_price": 169.1373,
@@ -7543,7 +7351,7 @@
   "tobacco_rope": {
     "base_price": 194.4723,
     "category": "tobacco",
-    "description": "Twisted rope of dark fired tobacco, cut to length for chewing or pipe smoking \u2014 historical trade good",
+    "description": "Twisted rope of dark fired tobacco, cut to length for chewing or pipe smoking — historical trade good",
     "name": "Tobacco Rope"
   },
   "tobacco_seeds": {
@@ -7587,12 +7395,6 @@
     "category": "personal_care",
     "description": "Dental hygiene product",
     "name": "Toothpaste"
-  },
-  "torpedo": {
-    "base_price": 19719.2642,
-    "category": "components",
-    "description": "Self-propelled underwater weapon for submarine and surface launch.",
-    "name": "Torpedo"
   },
   "tortoise": {
     "base_price": 7707.3913,
@@ -7827,7 +7629,7 @@
   "vellum": {
     "base_price": 691.1869,
     "category": "luxury",
-    "description": "Premium lambskin parchment, limed and scraped smooth on a stretching frame \u2014 the finest writing surface for sacred manuscripts and legal instruments, prized over all ordinary paper.",
+    "description": "Premium lambskin parchment, limed and scraped smooth on a stretching frame — the finest writing surface for sacred manuscripts and legal instruments, prized over all ordinary paper.",
     "name": "Vellum"
   },
   "ventilator": {
@@ -8078,12 +7880,6 @@
     "description": "Supervised work release program for qualifying inmates.",
     "name": "Work Release Program"
   },
-  "wp_grenade": {
-    "base_price": 2077.0999,
-    "category": "military",
-    "description": "Smoke and incendiary grenade using white phosphorus fill.",
-    "name": "White Phosphorus Grenade"
-  },
   "xenon": {
     "base_price": 3281.4411,
     "category": "materials",
@@ -8173,5 +7969,509 @@
     "category": "services",
     "description": "Annual zoo admission pass.",
     "name": "Zoo Pass"
+  },
+  "556_nato": {
+    "base_price": 0.85,
+    "category": "military",
+    "description": "Standard assault rifle cartridge",
+    "name": "5.56×45mm NATO"
+  },
+  "762x39": {
+    "base_price": 0.75,
+    "category": "military",
+    "description": "Soviet-pattern intermediate rifle cartridge",
+    "name": "7.62×39mm"
+  },
+  "545x39": {
+    "base_price": 0.7,
+    "category": "military",
+    "description": "Russian assault rifle cartridge",
+    "name": "5.45×39mm"
+  },
+  "762_nato": {
+    "base_price": 1.1,
+    "category": "military",
+    "description": "Battle rifle and machine gun cartridge",
+    "name": "7.62×51mm NATO"
+  },
+  "50_bmg": {
+    "base_price": 4.5,
+    "category": "military",
+    "description": "Heavy machine gun and anti-materiel rifle cartridge",
+    "name": ".50 BMG"
+  },
+  "9mm_para": {
+    "base_price": 0.55,
+    "category": "military",
+    "description": "Standard pistol and SMG cartridge",
+    "name": "9mm Parabellum"
+  },
+  "556_nato_crate": {
+    "base_price": 950,
+    "category": "military",
+    "description": "1000-round crate of 5.56×45mm NATO",
+    "name": "5.56 NATO Ammo Crate"
+  },
+  "762x39_crate": {
+    "base_price": 850,
+    "category": "military",
+    "description": "1000-round crate of 7.62×39mm",
+    "name": "7.62×39 Ammo Crate"
+  },
+  "545x39_crate": {
+    "base_price": 790,
+    "category": "military",
+    "description": "1000-round crate of 5.45×39mm",
+    "name": "5.45×39 Ammo Crate"
+  },
+  "762_nato_crate": {
+    "base_price": 1250,
+    "category": "military",
+    "description": "1000-round crate of 7.62×51mm NATO",
+    "name": "7.62 NATO Ammo Crate"
+  },
+  "50_bmg_crate": {
+    "base_price": 5200,
+    "category": "military",
+    "description": "1000-round crate of .50 BMG",
+    "name": ".50 BMG Ammo Crate"
+  },
+  "9mm_crate": {
+    "base_price": 620,
+    "category": "military",
+    "description": "1000-round crate of 9mm Parabellum",
+    "name": "9mm Ammo Crate"
+  },
+  "frag_warhead": {
+    "base_price": 8500,
+    "category": "military",
+    "description": "Anti-personnel/materiel fragmentation warhead",
+    "name": "Fragmentation Warhead"
+  },
+  "shaped_charge_warhead": {
+    "base_price": 14000,
+    "category": "military",
+    "description": "Anti-armor shaped charge warhead",
+    "name": "Shaped Charge Warhead"
+  },
+  "he_warhead": {
+    "base_price": 11000,
+    "category": "military",
+    "description": "General-purpose high-explosive warhead",
+    "name": "HE Warhead"
+  },
+  "thermobaric_warhead": {
+    "base_price": 18000,
+    "category": "military",
+    "description": "Thermobaric/fuel-air explosive warhead",
+    "name": "Thermobaric Warhead"
+  },
+  "radar_seeker": {
+    "base_price": 32000,
+    "category": "military",
+    "description": "Active radar homing seeker for missiles",
+    "name": "Radar Seeker Head"
+  },
+  "ir_seeker": {
+    "base_price": 22000,
+    "category": "military",
+    "description": "Infrared heat-seeking missile guidance head",
+    "name": "IR Seeker Head"
+  },
+  "laser_seeker": {
+    "base_price": 28000,
+    "category": "military",
+    "description": "Semi-active laser homing seeker",
+    "name": "Laser Seeker Head"
+  },
+  "gps_ins_guidance": {
+    "base_price": 45000,
+    "category": "military",
+    "description": "GPS-aided inertial navigation guidance system",
+    "name": "GPS/INS Guidance Unit"
+  },
+  "solid_rocket_motor": {
+    "base_price": 12000,
+    "category": "military",
+    "description": "Solid-propellant rocket motor for missiles",
+    "name": "Solid Rocket Motor"
+  },
+  "turbojet_cruise_motor": {
+    "base_price": 55000,
+    "category": "military",
+    "description": "Small turbojet engine for cruise missiles",
+    "name": "Turbojet Cruise Motor"
+  },
+  "aim120_amraam": {
+    "base_price": 1850000,
+    "category": "military",
+    "description": "Active radar-guided beyond-visual-range air-to-air missile",
+    "name": "AIM-120 AMRAAM"
+  },
+  "aim9_sidewinder": {
+    "base_price": 590000,
+    "category": "military",
+    "description": "Short-range infrared-guided air-to-air missile",
+    "name": "AIM-9 Sidewinder"
+  },
+  "r77_missile": {
+    "base_price": 1200000,
+    "category": "military",
+    "description": "Russian active radar-guided air-to-air missile",
+    "name": "R-77 Adder"
+  },
+  "agm114_hellfire": {
+    "base_price": 115000,
+    "category": "military",
+    "description": "Laser/radar-guided air-to-surface anti-tank missile",
+    "name": "AGM-114 Hellfire"
+  },
+  "agm65_maverick": {
+    "base_price": 280000,
+    "category": "military",
+    "description": "Electro-optical/IR guided air-to-ground missile",
+    "name": "AGM-65 Maverick"
+  },
+  "fgm148_javelin": {
+    "base_price": 175000,
+    "category": "military",
+    "description": "Man-portable fire-and-forget anti-tank missile",
+    "name": "FGM-148 Javelin"
+  },
+  "bgm109_tomahawk": {
+    "base_price": 2100000,
+    "category": "military",
+    "description": "Long-range subsonic land-attack cruise missile",
+    "name": "BGM-109 Tomahawk"
+  },
+  "kalibr_missile": {
+    "base_price": 1350000,
+    "category": "military",
+    "description": "Russian long-range sea/sub-launched cruise missile",
+    "name": "Kalibr Cruise Missile"
+  },
+  "brahmos_missile": {
+    "base_price": 2800000,
+    "category": "military",
+    "description": "Supersonic cruise missile (India/Russia joint)",
+    "name": "BrahMos Missile"
+  },
+  "agm84_harpoon": {
+    "base_price": 1400000,
+    "category": "military",
+    "description": "Active radar-guided anti-ship missile",
+    "name": "AGM-84 Harpoon"
+  },
+  "exocet_missile": {
+    "base_price": 1050000,
+    "category": "military",
+    "description": "French sea-skimming anti-ship missile",
+    "name": "Exocet Missile"
+  },
+  "sm2_missile": {
+    "base_price": 2200000,
+    "category": "military",
+    "description": "Long-range ship-based surface-to-air missile",
+    "name": "SM-2 Standard Missile"
+  },
+  "frag_grenade_body": {
+    "base_price": 18,
+    "category": "military",
+    "description": "Steel fragmentation grenade body shell",
+    "name": "Frag Grenade Body"
+  },
+  "comp_b_filler": {
+    "base_price": 12,
+    "category": "military",
+    "description": "Composition B explosive filler for grenades",
+    "name": "Comp-B Filler"
+  },
+  "m67_grenade": {
+    "base_price": 65,
+    "category": "military",
+    "description": "US spherical fragmentation hand grenade",
+    "name": "M67 Grenade"
+  },
+  "rgo_grenade": {
+    "base_price": 55,
+    "category": "military",
+    "description": "Russian defensive fragmentation grenade",
+    "name": "RGO Grenade"
+  },
+  "dm51_grenade": {
+    "base_price": 60,
+    "category": "military",
+    "description": "German dual-purpose fragmentation grenade",
+    "name": "DM51 Grenade"
+  },
+  "arges_hg84": {
+    "base_price": 70,
+    "category": "military",
+    "description": "Swiss fragmentation grenade, NATO-standard",
+    "name": "Arges HG 84"
+  },
+  "m18_smoke_grenade": {
+    "base_price": 45,
+    "category": "military",
+    "description": "US colored smoke signaling grenade",
+    "name": "M18 Smoke Grenade"
+  },
+  "m15_wp_grenade": {
+    "base_price": 85,
+    "category": "military",
+    "description": "US white phosphorus incendiary/screening grenade",
+    "name": "M15 WP Grenade"
+  },
+  "m112_c4": {
+    "base_price": 180,
+    "category": "military",
+    "description": "US standard demolition charge (C4 explosive)",
+    "name": "M112 C4"
+  },
+  "semtex_charge": {
+    "base_price": 155,
+    "category": "military",
+    "description": "Czech plastic explosive demolition charge",
+    "name": "Semtex Charge"
+  },
+  "m795_shell": {
+    "base_price": 2200,
+    "category": "military",
+    "description": "US 155mm standard high-explosive artillery round",
+    "name": "M795 Artillery Shell"
+  },
+  "m982_excalibur": {
+    "base_price": 68000,
+    "category": "military",
+    "description": "US GPS-guided extended-range 155mm precision shell",
+    "name": "M982 Excalibur"
+  },
+  "mk48_torpedo": {
+    "base_price": 3500000,
+    "category": "military",
+    "description": "US heavyweight wire-guided submarine torpedo",
+    "name": "Mk 48 Torpedo"
+  },
+  "type53_torpedo": {
+    "base_price": 1800000,
+    "category": "military",
+    "description": "Russian standard heavyweight submarine torpedo",
+    "name": "Type 53 Torpedo"
+  },
+  "mq9_reaper": {
+    "base_price": 32000000,
+    "category": "military",
+    "description": "US long-endurance armed MALE reconnaissance drone",
+    "name": "MQ-9 Reaper"
+  },
+  "bayraktar_tb2": {
+    "base_price": 5000000,
+    "category": "military",
+    "description": "Turkish combat drone, laser-guided munitions capable",
+    "name": "Bayraktar TB2"
+  },
+  "wing_loong_2": {
+    "base_price": 8000000,
+    "category": "military",
+    "description": "Chinese MALE combat reconnaissance drone",
+    "name": "Wing Loong II"
+  },
+  "switchblade_600": {
+    "base_price": 95000,
+    "category": "military",
+    "description": "US anti-armor loitering munition",
+    "name": "Switchblade 600"
+  },
+  "lancet_3": {
+    "base_price": 35000,
+    "category": "military",
+    "description": "Russian anti-armor loitering munition",
+    "name": "Lancet-3"
+  },
+  "m2_browning": {
+    "base_price": 14000,
+    "category": "military",
+    "description": "US .50 caliber heavy machine gun",
+    "name": "M2 Browning"
+  },
+  "m240b": {
+    "base_price": 6800,
+    "category": "military",
+    "description": "US 7.62mm medium machine gun",
+    "name": "M240B"
+  },
+  "pkm": {
+    "base_price": 4500,
+    "category": "military",
+    "description": "Russian 7.62mm general-purpose machine gun",
+    "name": "PKM"
+  },
+  "mg3": {
+    "base_price": 7200,
+    "category": "military",
+    "description": "German 7.62mm general-purpose machine gun",
+    "name": "MG3"
+  },
+  "m2_bradley": {
+    "base_price": 4200000,
+    "category": "military",
+    "description": "US infantry fighting vehicle, 25mm chain gun",
+    "name": "M2 Bradley"
+  },
+  "stryker_apc": {
+    "base_price": 4700000,
+    "category": "military",
+    "description": "US wheeled armored personnel carrier",
+    "name": "Stryker APC"
+  },
+  "bmp3_ifv": {
+    "base_price": 3100000,
+    "category": "military",
+    "description": "Russian infantry fighting vehicle",
+    "name": "BMP-3 IFV"
+  },
+  "btr82_apc": {
+    "base_price": 1800000,
+    "category": "military",
+    "description": "Russian wheeled armored personnel carrier",
+    "name": "BTR-82A APC"
+  },
+  "boxer_apc": {
+    "base_price": 5800000,
+    "category": "military",
+    "description": "German/Dutch modular wheeled APC",
+    "name": "Boxer APC"
+  },
+  "puma_ifv": {
+    "base_price": 8100000,
+    "category": "military",
+    "description": "German next-generation infantry fighting vehicle",
+    "name": "Puma IFV"
+  },
+  "jltv": {
+    "base_price": 280000,
+    "category": "military",
+    "description": "US Joint Light Tactical Vehicle",
+    "name": "JLTV"
+  },
+  "oshkosh_fmtv": {
+    "base_price": 185000,
+    "category": "military",
+    "description": "US Family of Medium Tactical Vehicles military truck",
+    "name": "Oshkosh FMTV"
+  },
+  "m109_paladin": {
+    "base_price": 6000000,
+    "category": "military",
+    "description": "US self-propelled 155mm howitzer",
+    "name": "M109 Paladin"
+  },
+  "pzh2000": {
+    "base_price": 8500000,
+    "category": "military",
+    "description": "German self-propelled 155mm howitzer",
+    "name": "PzH 2000"
+  },
+  "hmmwv": {
+    "base_price": 220000,
+    "category": "military",
+    "description": "US High Mobility Multipurpose Wheeled Vehicle",
+    "name": "HMMWV"
+  },
+  "acog_optic": {
+    "base_price": 1400,
+    "category": "military",
+    "description": "Trijicon ACOG 4× fixed-power combat optic",
+    "name": "ACOG Optic"
+  },
+  "eotech_holo": {
+    "base_price": 650,
+    "category": "military",
+    "description": "Holographic weapon sight for CQB",
+    "name": "EOTech Holographic Sight"
+  },
+  "aimpoint_rds": {
+    "base_price": 850,
+    "category": "military",
+    "description": "Aimpoint red dot sight for rifles",
+    "name": "Aimpoint Red Dot Sight"
+  },
+  "sb_sniper_scope": {
+    "base_price": 3800,
+    "category": "military",
+    "description": "High-power precision scope for sniper rifles",
+    "name": "Schmidt & Bender Sniper Scope"
+  },
+  "leupold_scope": {
+    "base_price": 2800,
+    "category": "military",
+    "description": "Leupold Mark 5HD precision rifle scope",
+    "name": "Leupold MK5 Scope"
+  },
+  "elcan_optic": {
+    "base_price": 2200,
+    "category": "military",
+    "description": "Dual-role 1-4× combat optic",
+    "name": "Elcan Specter DR"
+  },
+  "kahles_scope": {
+    "base_price": 4200,
+    "category": "military",
+    "description": "Austrian 5-25× precision long-range scope",
+    "name": "Kahles K525i Scope"
+  },
+  "pvs14_nvg": {
+    "base_price": 3200,
+    "category": "military",
+    "description": "AN/PVS-14 monocular night vision goggle",
+    "name": "PVS-14 NVG"
+  },
+  "pvs31_nvg": {
+    "base_price": 8500,
+    "category": "military",
+    "description": "AN/PVS-31A dual-tube binocular night vision",
+    "name": "PVS-31A NVG"
+  },
+  "esapi_plate": {
+    "base_price": 400,
+    "category": "military",
+    "description": "Enhanced Small Arms Protective Insert ceramic plate",
+    "name": "ESAPI Plate"
+  },
+  "plate_carrier": {
+    "base_price": 280,
+    "category": "military",
+    "description": "Modular tactical plate carrier vest",
+    "name": "Plate Carrier"
+  },
+  "iotv_vest": {
+    "base_price": 1800,
+    "category": "military",
+    "description": "Improved Outer Tactical Vest with ESAPI plates",
+    "name": "IOTV Vest"
+  },
+  "ach_helmet": {
+    "base_price": 380,
+    "category": "military",
+    "description": "US Advanced Combat Helmet",
+    "name": "ACH Helmet"
+  },
+  "anprc152_radio": {
+    "base_price": 8500,
+    "category": "military",
+    "description": "Handheld multiband tactical radio",
+    "name": "AN/PRC-152 Radio"
+  },
+  "ky58_crypto": {
+    "base_price": 12000,
+    "category": "military",
+    "description": "VINSON voice encryption module for secure comms",
+    "name": "KY-58 Crypto Module"
+  },
+  "ocp_uniform": {
+    "base_price": 185,
+    "category": "military",
+    "description": "Operational Camouflage Pattern combat uniform",
+    "name": "OCP Uniform"
   }
 }

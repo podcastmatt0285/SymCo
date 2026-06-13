@@ -6,16 +6,16 @@
         "m4_carbine",
         "m249_saw",
         "ak_47",
-        "machine_gun",
-        "ammunition",
-        "grenade",
-        "missile",
+        "m2_browning",
+        "556_nato_crate",
+        "m67_grenade",
+        "aim120_amraam",
         "rifle_barrel",
         "rifle_receiver",
         "grenade_body",
         "missile_warhead",
-        "ammunition_crate",
-        "det_cord",
+        "556_nato_crate",
+        "semtex_charge",
         "sniper_kit"
       ],
       "business_type": "weapons_factory",
@@ -70,12 +70,6 @@
       "max_price_multiplier": 1.15,
       "reorder_at": 200,
       "target_inventory": 1000
-    },
-    "artillery_shell": {
-      "market": "regular",
-      "max_price_multiplier": 1.1,
-      "reorder_at": 100,
-      "target_inventory": 500
     },
     "atago_class_destroyer": {
       "market": "district",
@@ -190,12 +184,6 @@
       "max_price_multiplier": 1.1,
       "reorder_at": 8,
       "target_inventory": 30
-    },
-    "explosive_ordnance": {
-      "market": "regular",
-      "max_price_multiplier": 1.1,
-      "reorder_at": 1,
-      "target_inventory": 6
     },
     "explosive_reactive_armor": {
       "market": "regular",
@@ -431,18 +419,6 @@
       "reorder_at": 2000,
       "target_inventory": 10000
     },
-    "tank": {
-      "market": "regular",
-      "max_price_multiplier": 1.1,
-      "reorder_at": 1,
-      "target_inventory": 5
-    },
-    "targeting_optic": {
-      "market": "regular",
-      "max_price_multiplier": 1.15,
-      "reorder_at": 40,
-      "target_inventory": 200
-    },
     "thermite": {
       "market": "regular",
       "max_price_multiplier": 1.1,
@@ -484,6 +460,30 @@
       "max_price_multiplier": 1.2,
       "reorder_at": 40,
       "target_inventory": 200
+    },
+    "m795_shell": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 100,
+      "target_inventory": 500
+    },
+    "m112_c4": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 6
+    },
+    "m1a2_abrams": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "sb_sniper_scope": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 40,
+      "target_inventory": 200
     }
   },
   "cash_caps": {
@@ -516,19 +516,9 @@
       "max_order_quantity": 500,
       "min_inventory_to_keep": 0
     },
-    "ammunition": {
-      "market": "regular",
-      "max_order_quantity": 10000,
-      "min_inventory_to_keep": 0
-    },
     "ammunition_crate": {
       "market": "regular",
       "max_order_quantity": 200,
-      "min_inventory_to_keep": 0
-    },
-    "apc": {
-      "market": "regular",
-      "max_order_quantity": 15,
       "min_inventory_to_keep": 0
     },
     "apc_hull": {
@@ -551,29 +541,14 @@
       "max_order_quantity": 400,
       "min_inventory_to_keep": 0
     },
-    "det_cord": {
-      "market": "regular",
-      "max_order_quantity": 500,
-      "min_inventory_to_keep": 0
-    },
     "dog_tags": {
       "market": "regular",
       "max_order_quantity": 2000,
       "min_inventory_to_keep": 0
     },
-    "drone": {
-      "market": "regular",
-      "max_order_quantity": 50,
-      "min_inventory_to_keep": 0
-    },
     "encryption_device": {
       "market": "regular",
       "max_order_quantity": 50,
-      "min_inventory_to_keep": 0
-    },
-    "grenade": {
-      "market": "regular",
-      "max_order_quantity": 500,
       "min_inventory_to_keep": 0
     },
     "grenade_body": {
@@ -611,11 +586,6 @@
       "max_order_quantity": 500,
       "min_inventory_to_keep": 0
     },
-    "machine_gun": {
-      "market": "regular",
-      "max_order_quantity": 100,
-      "min_inventory_to_keep": 0
-    },
     "military_radio": {
       "market": "regular",
       "max_order_quantity": 200,
@@ -629,11 +599,6 @@
     "military_uniform": {
       "market": "regular",
       "max_order_quantity": 1000,
-      "min_inventory_to_keep": 0
-    },
-    "missile": {
-      "market": "regular",
-      "max_order_quantity": 50,
       "min_inventory_to_keep": 0
     },
     "missile_warhead": {
@@ -694,6 +659,41 @@
     "tank_turret": {
       "market": "regular",
       "max_order_quantity": 10,
+      "min_inventory_to_keep": 0
+    },
+    "556_nato_crate": {
+      "market": "regular",
+      "max_order_quantity": 10000,
+      "min_inventory_to_keep": 0
+    },
+    "stryker_apc": {
+      "market": "regular",
+      "max_order_quantity": 15,
+      "min_inventory_to_keep": 0
+    },
+    "semtex_charge": {
+      "market": "regular",
+      "max_order_quantity": 500,
+      "min_inventory_to_keep": 0
+    },
+    "mq9_reaper": {
+      "market": "regular",
+      "max_order_quantity": 50,
+      "min_inventory_to_keep": 0
+    },
+    "m67_grenade": {
+      "market": "regular",
+      "max_order_quantity": 500,
+      "min_inventory_to_keep": 0
+    },
+    "m2_browning": {
+      "market": "regular",
+      "max_order_quantity": 100,
+      "min_inventory_to_keep": 0
+    },
+    "aim120_amraam": {
+      "market": "regular",
+      "max_order_quantity": 50,
       "min_inventory_to_keep": 0
     }
   }

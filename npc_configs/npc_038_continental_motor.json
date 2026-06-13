@@ -75,12 +75,6 @@
       "reorder_at": 400,
       "target_inventory": 2000
     },
-    "drone_swarm_unit": {
-      "market": "regular",
-      "max_price_multiplier": 1.1,
-      "reorder_at": 1,
-      "target_inventory": 5
-    },
     "electric_car": {
       "market": "regular",
       "max_price_multiplier": 1.1,
@@ -171,23 +165,11 @@
       "reorder_at": 1,
       "target_inventory": 5
     },
-    "military_drone": {
-      "market": "regular",
-      "max_price_multiplier": 1.1,
-      "reorder_at": 1,
-      "target_inventory": 5
-    },
     "motorcycle": {
       "market": "regular",
       "max_price_multiplier": 1.1,
       "reorder_at": 3,
       "target_inventory": 13
-    },
-    "naval_destroyer": {
-      "market": "regular",
-      "max_price_multiplier": 1.1,
-      "reorder_at": 1,
-      "target_inventory": 5
     },
     "neodymium_magnet": {
       "market": "regular",
@@ -278,6 +260,24 @@
       "max_price_multiplier": 1.1,
       "reorder_at": 200,
       "target_inventory": 1000
+    },
+    "bayraktar_tb2": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "mq9_reaper": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "arleigh_burke_destroyer": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
     }
   },
   "cash_caps": {

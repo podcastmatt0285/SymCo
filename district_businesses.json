@@ -2290,7 +2290,7 @@
             "quantity": 10
           },
           {
-            "item": "machine_gun",
+            "item": "m2_browning",
             "quantity": 2
           },
           {
@@ -4430,7 +4430,7 @@
             "quantity": 20
           }
         ],
-        "output_item": "det_cord",
+        "output_item": "semtex_charge",
         "output_qty": 200
       },
       {
@@ -6070,7 +6070,7 @@
             "quantity": 40
           }
         ],
-        "output_item": "night_vision_optic",
+        "output_item": "pvs14_nvg",
         "output_qty": 80
       },
       {
@@ -6096,7 +6096,7 @@
             "quantity": 30
           }
         ],
-        "output_item": "targeting_optic",
+        "output_item": "acog_optic",
         "output_qty": 100
       },
       {
@@ -6148,7 +6148,7 @@
             "quantity": 80
           }
         ],
-        "output_item": "missile_guidance_unit",
+        "output_item": "radar_seeker",
         "output_qty": 50
       },
       {
@@ -6174,7 +6174,7 @@
             "quantity": 50
           }
         ],
-        "output_item": "drone_avionics",
+        "output_item": "avionics_suite",
         "output_qty": 80
       },
       {
@@ -6258,6 +6258,62 @@
         ],
         "output_item": "ruby_laser",
         "output_qty": 20
+      },
+      {
+        "inputs": [
+          {
+            "item": "optical_glass",
+            "quantity": 100
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 20
+          },
+          {
+            "item": "circuit_board",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 25000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ],
+        "output_item": "sb_sniper_scope",
+        "output_qty": 50
+      },
+      {
+        "inputs": [
+          {
+            "item": "optical_glass",
+            "quantity": 120
+          },
+          {
+            "item": "gallium_arsenide",
+            "quantity": 50
+          },
+          {
+            "item": "processor",
+            "quantity": 30
+          },
+          {
+            "item": "circuit_board",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 60000
+          },
+          {
+            "item": "paper",
+            "quantity": 50
+          }
+        ],
+        "output_item": "pvs31_nvg",
+        "output_qty": 40
       }
     ],
     "startup_cost": 8000000
@@ -7192,7 +7248,7 @@
             "quantity": 40
           }
         ],
-        "output_item": "night_vision_optic",
+        "output_item": "pvs14_nvg",
         "output_qty": 80
       },
       {
@@ -7218,7 +7274,7 @@
             "quantity": 30
           }
         ],
-        "output_item": "targeting_optic",
+        "output_item": "sb_sniper_scope",
         "output_qty": 100
       },
       {
@@ -11359,7 +11415,7 @@
             "quantity": 200
           }
         ],
-        "output_item": "rocket_motor",
+        "output_item": "solid_rocket_motor",
         "output_qty": 50
       },
       {
@@ -11421,7 +11477,7 @@
             "quantity": 100
           },
           {
-            "item": "rocket_motor",
+            "item": "solid_rocket_motor",
             "quantity": 10
           },
           {
@@ -11443,7 +11499,7 @@
       {
         "inputs": [
           {
-            "item": "rocket_motor",
+            "item": "solid_rocket_motor",
             "quantity": 10
           },
           {
@@ -11937,7 +11993,7 @@
             "quantity": 500
           },
           {
-            "item": "ammunition_crate",
+            "item": "556_nato_crate",
             "quantity": 10
           },
           {
@@ -12718,7 +12774,7 @@
             "quantity": 1
           },
           {
-            "item": "missile",
+            "item": "agm114_hellfire",
             "quantity": 4
           },
           {
@@ -12762,7 +12818,7 @@
       {
         "inputs": [
           {
-            "item": "drone_avionics",
+            "item": "gps_ins_guidance",
             "quantity": 1
           },
           {
@@ -12786,13 +12842,13 @@
             "quantity": 60
           }
         ],
-        "output_item": "military_drone",
+        "output_item": "mq9_reaper",
         "output_qty": 30
       },
       {
         "inputs": [
           {
-            "item": "drone_avionics",
+            "item": "gps_ins_guidance",
             "quantity": 5
           },
           {
@@ -12816,7 +12872,7 @@
             "quantity": 80
           }
         ],
-        "output_item": "drone_swarm_unit",
+        "output_item": "bayraktar_tb2",
         "output_qty": 10
       },
       {
@@ -12846,7 +12902,7 @@
             "quantity": 1
           },
           {
-            "item": "missile",
+            "item": "aim120_amraam",
             "quantity": 6
           },
           {
@@ -12896,7 +12952,7 @@
             "quantity": 1
           },
           {
-            "item": "missile",
+            "item": "aim120_amraam",
             "quantity": 6
           },
           {
@@ -12946,7 +13002,7 @@
             "quantity": 1
           },
           {
-            "item": "missile",
+            "item": "aim120_amraam",
             "quantity": 6
           },
           {
@@ -12996,7 +13052,7 @@
             "quantity": 1
           },
           {
-            "item": "missile",
+            "item": "aim120_amraam",
             "quantity": 6
           },
           {
@@ -13046,7 +13102,7 @@
             "quantity": 1
           },
           {
-            "item": "missile",
+            "item": "aim120_amraam",
             "quantity": 4
           },
           {
@@ -13096,7 +13152,7 @@
             "quantity": 1
           },
           {
-            "item": "missile",
+            "item": "aim120_amraam",
             "quantity": 8
           },
           {
@@ -13138,7 +13194,7 @@
             "quantity": 1
           },
           {
-            "item": "missile",
+            "item": "aim120_amraam",
             "quantity": 8
           },
           {
@@ -13180,7 +13236,7 @@
             "quantity": 1
           },
           {
-            "item": "missile",
+            "item": "aim120_amraam",
             "quantity": 8
           },
           {
@@ -13222,7 +13278,7 @@
             "quantity": 1
           },
           {
-            "item": "missile",
+            "item": "aim120_amraam",
             "quantity": 6
           },
           {
@@ -13264,7 +13320,7 @@
             "quantity": 1
           },
           {
-            "item": "missile",
+            "item": "aim120_amraam",
             "quantity": 6
           },
           {
@@ -13310,7 +13366,7 @@
             "quantity": 1
           },
           {
-            "item": "missile",
+            "item": "aim120_amraam",
             "quantity": 6
           },
           {
@@ -13356,7 +13412,7 @@
             "quantity": 1
           },
           {
-            "item": "missile",
+            "item": "aim120_amraam",
             "quantity": 8
           },
           {
@@ -13398,7 +13454,7 @@
             "quantity": 1
           },
           {
-            "item": "missile",
+            "item": "aim120_amraam",
             "quantity": 4
           },
           {
@@ -13440,7 +13496,7 @@
             "quantity": 1
           },
           {
-            "item": "missile",
+            "item": "aim120_amraam",
             "quantity": 6
           },
           {
@@ -13478,7 +13534,7 @@
             "quantity": 1
           },
           {
-            "item": "missile",
+            "item": "aim120_amraam",
             "quantity": 8
           },
           {
@@ -13516,7 +13572,7 @@
             "quantity": 1
           },
           {
-            "item": "missile",
+            "item": "aim120_amraam",
             "quantity": 6
           },
           {
@@ -13554,7 +13610,7 @@
             "quantity": 1
           },
           {
-            "item": "missile",
+            "item": "aim120_amraam",
             "quantity": 6
           },
           {
@@ -13592,7 +13648,7 @@
             "quantity": 1
           },
           {
-            "item": "missile",
+            "item": "aim120_amraam",
             "quantity": 4
           },
           {
@@ -13652,7 +13708,7 @@
             "quantity": 1
           },
           {
-            "item": "missile",
+            "item": "aim120_amraam",
             "quantity": 4
           },
           {
@@ -13736,15 +13792,15 @@
       {
         "inputs": [
           {
-            "item": "ammunition_crate",
+            "item": "556_nato_crate",
             "quantity": 100
           },
           {
-            "item": "missile",
+            "item": "aim120_amraam",
             "quantity": 50
           },
           {
-            "item": "ammunition",
+            "item": "556_nato_crate",
             "quantity": 10000
           },
           {
@@ -13760,11 +13816,11 @@
             "quantity": 500000
           },
           {
-            "item": "apc",
+            "item": "stryker_apc",
             "quantity": 5
           },
           {
-            "item": "drone",
+            "item": "mq9_reaper",
             "quantity": 10
           },
           {
@@ -13806,7 +13862,7 @@
             "quantity": 5
           },
           {
-            "item": "ammunition",
+            "item": "556_nato_crate",
             "quantity": 5000
           },
           {
@@ -13834,7 +13890,7 @@
             "quantity": 150000
           },
           {
-            "item": "grenade",
+            "item": "m67_grenade",
             "quantity": 200
           },
           {
@@ -13846,7 +13902,7 @@
             "quantity": 100
           },
           {
-            "item": "ammunition_crate",
+            "item": "556_nato_crate",
             "quantity": 10
           }
         ],
@@ -14016,7 +14072,7 @@
             "quantity": 10
           },
           {
-            "item": "ammunition",
+            "item": "556_nato_crate",
             "quantity": 50000
           },
           {
@@ -14028,7 +14084,7 @@
             "quantity": 500
           },
           {
-            "item": "rifle",
+            "item": "m4_carbine",
             "quantity": 150
           }
         ],
@@ -14046,7 +14102,7 @@
             "quantity": 3
           },
           {
-            "item": "infantry_fighting_vehicle",
+            "item": "m2_bradley",
             "quantity": 6
           },
           {
@@ -14062,7 +14118,7 @@
             "quantity": 500
           },
           {
-            "item": "main_battle_tank",
+            "item": "m1a2_abrams",
             "quantity": 2
           }
         ],
@@ -14084,7 +14140,7 @@
             "quantity": 2
           },
           {
-            "item": "military_drone",
+            "item": "mq9_reaper",
             "quantity": 10
           },
           {
@@ -14096,7 +14152,7 @@
             "quantity": 500
           },
           {
-            "item": "fighter_jet",
+            "item": "f16_falcon",
             "quantity": 2
           }
         ],
@@ -14126,11 +14182,11 @@
             "quantity": 600
           },
           {
-            "item": "naval_destroyer",
+            "item": "arleigh_burke_destroyer",
             "quantity": 1
           },
           {
-            "item": "submarine",
+            "item": "virginia_class_sub",
             "quantity": 1
           }
         ],
@@ -14168,7 +14224,7 @@
             "quantity": 2
           },
           {
-            "item": "military_helicopter",
+            "item": "uh60_blackhawk",
             "quantity": 2
           }
         ],
@@ -14465,11 +14521,11 @@
             "quantity": 80
           },
           {
-            "item": "rocket_motor",
+            "item": "solid_rocket_motor",
             "quantity": 20
           },
           {
-            "item": "missile_guidance_unit",
+            "item": "radar_seeker",
             "quantity": 20
           },
           {
@@ -14481,7 +14537,7 @@
             "quantity": 80
           }
         ],
-        "output_item": "torpedo",
+        "output_item": "mk48_torpedo",
         "output_qty": 50
       },
       {
@@ -14803,7 +14859,7 @@
             "quantity": 1
           },
           {
-            "item": "machine_gun",
+            "item": "m2_browning",
             "quantity": 2
           },
           {
@@ -14823,7 +14879,7 @@
             "quantity": 150
           }
         ],
-        "output_item": "apc",
+        "output_item": "stryker_apc",
         "output_qty": 10
       },
       {
@@ -14861,7 +14917,7 @@
             "quantity": 80000
           }
         ],
-        "output_item": "drone",
+        "output_item": "mq9_reaper",
         "output_qty": 20
       },
       {
@@ -15005,7 +15061,7 @@
             "quantity": 1
           },
           {
-            "item": "missile",
+            "item": "agm114_hellfire",
             "quantity": 4
           },
           {
@@ -15017,7 +15073,7 @@
             "quantity": 180
           }
         ],
-        "output_item": "infantry_fighting_vehicle",
+        "output_item": "m2_bradley",
         "output_qty": 10
       },
       {
@@ -15047,11 +15103,11 @@
             "quantity": 200
           },
           {
-            "item": "artillery_shell",
+            "item": "m795_shell",
             "quantity": 20
           }
         ],
-        "output_item": "self_propelled_artillery",
+        "output_item": "m109_paladin",
         "output_qty": 5
       },
       {
@@ -15077,7 +15133,7 @@
             "quantity": 80
           }
         ],
-        "output_item": "armored_car",
+        "output_item": "jltv",
         "output_qty": 30
       },
       {
@@ -15123,7 +15179,7 @@
             "quantity": 250
           }
         ],
-        "output_item": "main_battle_tank",
+        "output_item": "m1a2_abrams",
         "output_qty": 3
       },
       {
@@ -15722,7 +15778,7 @@
             "quantity": 100
           }
         ],
-        "output_item": "ammunition_crate",
+        "output_item": "556_nato_crate",
         "output_qty": 100
       },
       {
@@ -15732,7 +15788,7 @@
             "quantity": 500
           },
           {
-            "item": "coal",
+            "item": "rdx_explosive",
             "quantity": 1000
           },
           {
@@ -15752,7 +15808,7 @@
             "quantity": 100
           }
         ],
-        "output_item": "explosive_ordnance",
+        "output_item": "m112_c4",
         "output_qty": 20
       },
       {
@@ -15782,21 +15838,21 @@
             "quantity": 25
           }
         ],
-        "output_item": "artillery_shell",
+        "output_item": "m795_shell",
         "output_qty": 100
       },
       {
         "inputs": [
           {
-            "item": "smoke_grenade",
+            "item": "m18_smoke_grenade",
             "quantity": 20
           },
           {
-            "item": "wp_grenade",
+            "item": "m15_wp_grenade",
             "quantity": 10
           },
           {
-            "item": "incendiary_rocket",
+            "item": "switchblade_600",
             "quantity": 5
           },
           {
@@ -15809,6 +15865,66 @@
           }
         ],
         "output_item": "special_munitions_kit",
+        "output_qty": 20
+      },
+      {
+        "inputs": [
+          {
+            "item": "maraging_steel",
+            "quantity": 200
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 100
+          },
+          {
+            "item": "rdx_explosive",
+            "quantity": 150
+          },
+          {
+            "item": "gps_ins_guidance",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 100000
+          },
+          {
+            "item": "paper",
+            "quantity": 80
+          }
+        ],
+        "output_item": "mk48_torpedo",
+        "output_qty": 5
+      },
+      {
+        "inputs": [
+          {
+            "item": "steel",
+            "quantity": 300
+          },
+          {
+            "item": "rdx_explosive",
+            "quantity": 150
+          },
+          {
+            "item": "gps_ins_guidance",
+            "quantity": 20
+          },
+          {
+            "item": "brass",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 50000
+          },
+          {
+            "item": "paper",
+            "quantity": 40
+          }
+        ],
+        "output_item": "m982_excalibur",
         "output_qty": 20
       }
     ],
@@ -15854,7 +15970,7 @@
             "quantity": 3
           },
           {
-            "item": "missile",
+            "item": "bgm109_tomahawk",
             "quantity": 40
           },
           {
@@ -15904,7 +16020,7 @@
             "quantity": 2
           },
           {
-            "item": "missile",
+            "item": "bgm109_tomahawk",
             "quantity": 30
           },
           {
@@ -15958,7 +16074,7 @@
             "quantity": 2
           },
           {
-            "item": "missile",
+            "item": "bgm109_tomahawk",
             "quantity": 30
           },
           {
@@ -16008,7 +16124,7 @@
             "quantity": 2
           },
           {
-            "item": "missile",
+            "item": "bgm109_tomahawk",
             "quantity": 30
           },
           {
@@ -16058,7 +16174,7 @@
             "quantity": 1
           },
           {
-            "item": "missile",
+            "item": "bgm109_tomahawk",
             "quantity": 20
           },
           {
@@ -16096,7 +16212,7 @@
             "quantity": 2
           },
           {
-            "item": "torpedo",
+            "item": "mk48_torpedo",
             "quantity": 24
           },
           {
@@ -16108,7 +16224,7 @@
             "quantity": 3
           },
           {
-            "item": "missile",
+            "item": "bgm109_tomahawk",
             "quantity": 12
           },
           {
@@ -16142,7 +16258,7 @@
             "quantity": 1
           },
           {
-            "item": "torpedo",
+            "item": "mk48_torpedo",
             "quantity": 38
           },
           {
@@ -16154,7 +16270,7 @@
             "quantity": 2
           },
           {
-            "item": "missile",
+            "item": "bgm109_tomahawk",
             "quantity": 8
           },
           {
@@ -16188,7 +16304,7 @@
             "quantity": 1
           },
           {
-            "item": "torpedo",
+            "item": "mk48_torpedo",
             "quantity": 20
           },
           {
@@ -16200,7 +16316,7 @@
             "quantity": 2
           },
           {
-            "item": "missile",
+            "item": "bgm109_tomahawk",
             "quantity": 8
           },
           {
@@ -16234,7 +16350,7 @@
             "quantity": 1
           },
           {
-            "item": "torpedo",
+            "item": "mk48_torpedo",
             "quantity": 30
           },
           {
@@ -16246,7 +16362,7 @@
             "quantity": 2
           },
           {
-            "item": "missile",
+            "item": "bgm109_tomahawk",
             "quantity": 16
           },
           {
@@ -16280,7 +16396,7 @@
             "quantity": 1
           },
           {
-            "item": "torpedo",
+            "item": "mk48_torpedo",
             "quantity": 22
           },
           {
@@ -16292,7 +16408,7 @@
             "quantity": 2
           },
           {
-            "item": "missile",
+            "item": "bgm109_tomahawk",
             "quantity": 8
           },
           {
@@ -16326,7 +16442,7 @@
             "quantity": 1
           },
           {
-            "item": "torpedo",
+            "item": "mk48_torpedo",
             "quantity": 12
           },
           {
@@ -16338,7 +16454,7 @@
             "quantity": 2
           },
           {
-            "item": "missile",
+            "item": "bgm109_tomahawk",
             "quantity": 8
           },
           {
@@ -16384,7 +16500,7 @@
             "quantity": 2
           },
           {
-            "item": "missile",
+            "item": "bgm109_tomahawk",
             "quantity": 12
           },
           {
@@ -16426,7 +16542,7 @@
             "quantity": 1
           },
           {
-            "item": "missile",
+            "item": "bgm109_tomahawk",
             "quantity": 10
           },
           {
@@ -16468,7 +16584,7 @@
             "quantity": 2
           },
           {
-            "item": "missile",
+            "item": "bgm109_tomahawk",
             "quantity": 14
           },
           {
@@ -16510,7 +16626,7 @@
             "quantity": 1
           },
           {
-            "item": "missile",
+            "item": "bgm109_tomahawk",
             "quantity": 10
           },
           {
@@ -16552,7 +16668,7 @@
             "quantity": 1
           },
           {
-            "item": "missile",
+            "item": "bgm109_tomahawk",
             "quantity": 10
           },
           {
@@ -16594,7 +16710,7 @@
             "quantity": 1
           },
           {
-            "item": "missile",
+            "item": "bgm109_tomahawk",
             "quantity": 8
           },
           {
@@ -16636,7 +16752,7 @@
             "quantity": 1
           },
           {
-            "item": "missile",
+            "item": "bgm109_tomahawk",
             "quantity": 10
           },
           {
@@ -16678,7 +16794,7 @@
             "quantity": 1
           },
           {
-            "item": "missile",
+            "item": "bgm109_tomahawk",
             "quantity": 6
           },
           {
@@ -16720,7 +16836,7 @@
             "quantity": 1
           },
           {
-            "item": "missile",
+            "item": "bgm109_tomahawk",
             "quantity": 6
           },
           {
@@ -16758,7 +16874,7 @@
             "quantity": 1
           },
           {
-            "item": "missile",
+            "item": "bgm109_tomahawk",
             "quantity": 4
           },
           {
@@ -23047,7 +23163,7 @@
       {
         "inputs": [
           {
-            "item": "night_vision_optic",
+            "item": "pvs14_nvg",
             "quantity": 1
           },
           {
@@ -23101,7 +23217,7 @@
             "quantity": 35000
           }
         ],
-        "output_item": "military_radio",
+        "output_item": "anprc152_radio",
         "output_qty": 50
       },
       {
@@ -23131,7 +23247,7 @@
             "quantity": 60000
           }
         ],
-        "output_item": "encryption_device",
+        "output_item": "ky58_crypto",
         "output_qty": 25
       },
       {
@@ -23213,7 +23329,7 @@
             "quantity": 20
           },
           {
-            "item": "targeting_optic",
+            "item": "sb_sniper_scope",
             "quantity": 20
           },
           {
@@ -24700,13 +24816,65 @@
             "quantity": 35000
           }
         ],
-        "output_item": "ammunition",
-        "output_qty": 5000
+        "output_item": "556_nato_crate",
+        "output_qty": 500
       },
       {
         "inputs": [
           {
-            "item": "grenade_body",
+            "item": "brass",
+            "quantity": 400
+          },
+          {
+            "item": "lead",
+            "quantity": 250
+          },
+          {
+            "item": "copper",
+            "quantity": 180
+          },
+          {
+            "item": "paper",
+            "quantity": 25
+          },
+          {
+            "item": "energy",
+            "quantity": 30000
+          }
+        ],
+        "output_item": "762x39_crate",
+        "output_qty": 500
+      },
+      {
+        "inputs": [
+          {
+            "item": "brass",
+            "quantity": 350
+          },
+          {
+            "item": "lead",
+            "quantity": 220
+          },
+          {
+            "item": "copper",
+            "quantity": 150
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 28000
+          }
+        ],
+        "output_item": "9mm_crate",
+        "output_qty": 600
+      },
+      {
+        "inputs": [
+          {
+            "item": "frag_grenade_body",
             "quantity": 200
           },
           {
@@ -24714,7 +24882,7 @@
             "quantity": 100
           },
           {
-            "item": "det_cord",
+            "item": "comp_b_filler",
             "quantity": 20
           },
           {
@@ -24726,21 +24894,47 @@
             "quantity": 15
           }
         ],
-        "output_item": "grenade",
+        "output_item": "m67_grenade",
         "output_qty": 300
       },
       {
         "inputs": [
           {
-            "item": "missile_warhead",
+            "item": "frag_grenade_body",
+            "quantity": 200
+          },
+          {
+            "item": "comp_b_filler",
+            "quantity": 100
+          },
+          {
+            "item": "smokeless_powder",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 15000
+          },
+          {
+            "item": "paper",
+            "quantity": 15
+          }
+        ],
+        "output_item": "rgo_grenade",
+        "output_qty": 300
+      },
+      {
+        "inputs": [
+          {
+            "item": "radar_seeker",
             "quantity": 20
           },
           {
-            "item": "rocket_motor",
+            "item": "solid_rocket_motor",
             "quantity": 15
           },
           {
-            "item": "missile_guidance_unit",
+            "item": "gps_ins_guidance",
             "quantity": 20
           },
           {
@@ -24760,7 +24954,71 @@
             "quantity": 80
           }
         ],
-        "output_item": "missile",
+        "output_item": "aim120_amraam",
+        "output_qty": 30
+      },
+      {
+        "inputs": [
+          {
+            "item": "radar_seeker",
+            "quantity": 15
+          },
+          {
+            "item": "solid_rocket_motor",
+            "quantity": 12
+          },
+          {
+            "item": "gps_ins_guidance",
+            "quantity": 15
+          },
+          {
+            "item": "maraging_steel",
+            "quantity": 80
+          },
+          {
+            "item": "jet_fuel",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 80000
+          },
+          {
+            "item": "paper",
+            "quantity": 60
+          }
+        ],
+        "output_item": "r77_missile",
+        "output_qty": 25
+      },
+      {
+        "inputs": [
+          {
+            "item": "laser_seeker",
+            "quantity": 20
+          },
+          {
+            "item": "shaped_charge_warhead",
+            "quantity": 20
+          },
+          {
+            "item": "solid_rocket_motor",
+            "quantity": 20
+          },
+          {
+            "item": "maraging_steel",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 60000
+          },
+          {
+            "item": "paper",
+            "quantity": 50
+          }
+        ],
+        "output_item": "agm114_hellfire",
         "output_qty": 30
       },
       {
@@ -24826,7 +25084,7 @@
             "quantity": 20
           }
         ],
-        "output_item": "grenade_body",
+        "output_item": "frag_grenade_body",
         "output_qty": 500
       },
       {
@@ -24852,34 +25110,8 @@
             "quantity": 40
           }
         ],
-        "output_item": "missile_warhead",
+        "output_item": "frag_warhead",
         "output_qty": 100
-      },
-      {
-        "inputs": [
-          {
-            "item": "ammunition",
-            "quantity": 1000
-          },
-          {
-            "item": "lumber",
-            "quantity": 100
-          },
-          {
-            "item": "steel",
-            "quantity": 50
-          },
-          {
-            "item": "energy",
-            "quantity": 5000
-          },
-          {
-            "item": "paper",
-            "quantity": 10
-          }
-        ],
-        "output_item": "ammunition_crate",
-        "output_qty": 50
       },
       {
         "inputs": [
@@ -24900,7 +25132,29 @@
             "quantity": 15
           }
         ],
-        "output_item": "det_cord",
+        "output_item": "semtex_charge",
+        "output_qty": 200
+      },
+      {
+        "inputs": [
+          {
+            "item": "rdx_explosive",
+            "quantity": 150
+          },
+          {
+            "item": "plastic",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 12000
+          },
+          {
+            "item": "paper",
+            "quantity": 12
+          }
+        ],
+        "output_item": "m112_c4",
         "output_qty": 200
       },
       {
@@ -24926,13 +25180,39 @@
             "quantity": 40
           }
         ],
-        "output_item": "machine_gun",
+        "output_item": "m2_browning",
         "output_qty": 50
       },
       {
         "inputs": [
           {
-            "item": "grenade_body",
+            "item": "steel",
+            "quantity": 150
+          },
+          {
+            "item": "molybdenum",
+            "quantity": 30
+          },
+          {
+            "item": "rifle_barrel",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 40000
+          },
+          {
+            "item": "paper",
+            "quantity": 30
+          }
+        ],
+        "output_item": "pkm",
+        "output_qty": 60
+      },
+      {
+        "inputs": [
+          {
+            "item": "frag_grenade_body",
             "quantity": 150
           },
           {
@@ -24952,13 +25232,13 @@
             "quantity": 12
           }
         ],
-        "output_item": "smoke_grenade",
+        "output_item": "m18_smoke_grenade",
         "output_qty": 200
       },
       {
         "inputs": [
           {
-            "item": "grenade_body",
+            "item": "frag_grenade_body",
             "quantity": 100
           },
           {
@@ -24966,7 +25246,7 @@
             "quantity": 60
           },
           {
-            "item": "det_cord",
+            "item": "comp_b_filler",
             "quantity": 20
           },
           {
@@ -24978,38 +25258,38 @@
             "quantity": 12
           }
         ],
-        "output_item": "wp_grenade",
+        "output_item": "m15_wp_grenade",
         "output_qty": 100
       },
       {
         "inputs": [
           {
-            "item": "rocket_motor",
-            "quantity": 20
+            "item": "solid_rocket_motor",
+            "quantity": 10
           },
           {
-            "item": "white_phosphorus",
-            "quantity": 80
+            "item": "shaped_charge_warhead",
+            "quantity": 10
           },
           {
-            "item": "thermite",
-            "quantity": 40
+            "item": "gps_ins_guidance",
+            "quantity": 10
           },
           {
-            "item": "maraging_steel",
-            "quantity": 50
+            "item": "carbon_fiber",
+            "quantity": 30
           },
           {
             "item": "energy",
-            "quantity": 30000
+            "quantity": 20000
           },
           {
             "item": "paper",
-            "quantity": 25
+            "quantity": 15
           }
         ],
-        "output_item": "incendiary_rocket",
-        "output_qty": 50
+        "output_item": "switchblade_600",
+        "output_qty": 20
       },
       {
         "inputs": [
