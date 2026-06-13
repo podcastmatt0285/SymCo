@@ -418,11 +418,23 @@ def _mint_dashboard_html(sp, owner=None) -> str:
     disp = get_player_display_currency(sp.owner_id)
     owner_pro = bool(owner) and is_pro(owner)
 
-    # ── Load the Business record ────────────────────────────────────────────
+    # ── Load the Business record + ALL of the owner's mints ──────────────────
     biz = None
+    # Sum of total_minted across every mint the owner runs that strikes the SAME
+    # coin as this one. The wallet balance is global (one balance per coin code,
+    # shared by all sources), so a single mint's total_minted will be LESS than
+    # the wallet whenever the owner runs more than one mint of that coin. This
+    # aggregate lets the dashboard reconcile the two and prove there's no leak.
+    minted_by_coin: dict = {}      # coin_code → summed total_minted across owner's mints
+    mint_count_by_coin: dict = {}  # coin_code → how many mints strike it
     try:
         bdb = biz_session()
         biz = bdb.query(Business).filter(Business.id == sp.occupied_by_business_id).first()
+        for ob in bdb.query(Business).filter(Business.owner_id == sp.owner_id).all():
+            _cc = _MINT_TO_COIN.get(ob.business_type, "")
+            if _cc:
+                minted_by_coin[_cc] = minted_by_coin.get(_cc, 0.0) + (ob.total_minted or 0.0)
+                mint_count_by_coin[_cc] = mint_count_by_coin.get(_cc, 0) + 1
         bdb.close()
     except Exception:
         pass
@@ -698,6 +710,54 @@ def _mint_dashboard_html(sp, owner=None) -> str:
         )
     else:
         all_coin_html = ""
+
+    # ── Reconciliation panel: explain why wallet (global) ≠ this mint's total_minted ──
+    recon_html = ""
+    if minted_code:
+        coin_total_minted = minted_by_coin.get(minted_code, 0.0)
+        n_mints           = mint_count_by_coin.get(minted_code, 1)
+        wallet_bal        = holdings  # global wallet balance for this coin
+        # Difference between everything your mints struck (net of seigniorage) and
+        # what's in your wallet. Positive → you've spent/traded some away.
+        diff = coin_total_minted - wallet_bal
+        if n_mints > 1:
+            recon_intro = (
+                f'You run <strong>{n_mints} {minted_code} mints</strong>. Your wallet shows one '
+                f'<strong>combined</strong> {minted_code} balance shared by all of them — that\'s why '
+                f'this single mint\'s "Total Minted" ({total_minted:,.4f}) is smaller than your wallet.'
+            )
+        else:
+            recon_intro = (
+                f'Your wallet holds one {minted_code} balance. It should equal this mint\'s total '
+                f'minted minus anything you\'ve spent or traded.'
+            )
+        # Flag a genuine leak: wallet exceeds total ever struck across ALL your mints.
+        if wallet_bal - coin_total_minted > 0.01:
+            leak = wallet_bal - coin_total_minted
+            flag = (
+                f'<div style="color:#fca5a5;font-size:0.7rem;margin-top:4px;">'
+                f'⚠️ Your wallet ({wallet_bal:,.4f}) exceeds the total ever struck by all your '
+                f'{minted_code} mints ({coin_total_minted:,.4f}) by {leak:,.4f}. '
+                f'If you never received {minted_code} from another player or income conversion, '
+                f'please report this — it may indicate a minting accounting bug.</div>'
+            )
+        else:
+            flag = (
+                f'<div style="color:#16a34a;font-size:0.7rem;margin-top:4px;">'
+                f'✓ Reconciles: all {minted_code} mints struck {coin_total_minted:,.4f} total · '
+                f'wallet holds {wallet_bal:,.4f}'
+                + (f' · {diff:,.4f} spent/traded away' if diff > 0.01 else '')
+                + '</div>'
+            )
+        recon_html = (
+            '<div style="margin-top:8px;padding:8px 10px;background:#0a1525;'
+            'border:1px solid #1e3a5f;border-radius:6px;">'
+            '<div style="color:#38bdf8;font-size:0.68rem;text-transform:uppercase;'
+            'font-weight:bold;margin-bottom:4px;">🔎 Why does my wallet differ from this mint?</div>'
+            f'<div style="color:#94a3b8;font-size:0.72rem;line-height:1.5;">{recon_intro}</div>'
+            f'{flag}</div>'
+        )
+    all_coin_html += recon_html
 
     # Dormant banner — shown only when the subscription has lapsed.
     dormant_banner = ""
