@@ -711,14 +711,14 @@ def _mint_dashboard_html(sp, owner=None) -> str:
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:14px;">
         <div style="background:#111827;border-radius:6px;padding:10px;">
-          <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;letter-spacing:.05em;">Total Minted</div>
+          <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;letter-spacing:.05em;">Total Minted (Lifetime)</div>
           <div style="color:#fbbf24;font-weight:bold;font-size:1.05rem;margin-top:2px;">{minted_str}</div>
-          <div style="color:#475569;font-size:0.65rem;">struck by this Mint, all time</div>
+          <div style="color:#475569;font-size:0.65rem;">all coins ever struck — includes 2% seigniorage, never decreases</div>
         </div>
-        <div style="background:#111827;border-radius:6px;padding:10px;">
-          <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;letter-spacing:.05em;">Current Holdings</div>
+        <div style="background:#0a1f0a;border:1px solid #166534;border-radius:6px;padding:10px;">
+          <div style="color:#4ade80;font-size:0.68rem;text-transform:uppercase;letter-spacing:.05em;font-weight:bold;">⬆ Coins in Hand (Spendable)</div>
           <div style="color:#4ade80;font-weight:bold;font-size:1.05rem;margin-top:2px;">{holdings_str}</div>
-          <div style="color:#475569;font-size:0.65rem;">your live {minted_code or "coinage"} balance</div>
+          <div style="color:#16a34a;font-size:0.65rem;">live wallet balance — matches the forex/bond page</div>
         </div>
       </div>
 
