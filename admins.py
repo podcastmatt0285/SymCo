@@ -2830,6 +2830,200 @@ def cleanup_orphan_shares(admin_id: int) -> dict:
         db.close()
 
 
+def run_db_maintenance(admin_id: int) -> dict:
+    """
+    Single-button database maintenance pass.
+
+    Deletes rows that are genuinely done and serve no further purpose:
+      - Terminal-state orders (filled / cancelled / expired) across every market
+      - Completed/rejected swap offers and their legs/acceptances
+      - Dismissed notifications
+      - Redeemed tax vouchers, sold estate listings, seen inheritance alerts
+      - Terminal city/county applications, polls, and their vote records
+      - Orphaned swap legs and order-book fills whose parents were already deleted
+
+    Explicitly does NOT touch:
+      - Any ACTIVE or PARTIALLY-FILLED order
+      - trade logs, transaction_logs, government_ledger, admin_logs (audit trails)
+      - price_history tables (needed for charts)
+      - cost-basis ledger (wma), bank_transactions, forex_trades
+      - Any row that could affect a live player balance or position
+
+    Finishes with VACUUM ANALYZE so Postgres can actually reclaim the freed pages.
+    """
+    from sqlalchemy import text as _sql
+
+    db = get_db()
+    counts = {}
+    try:
+        # ── 1. Terminal market orders ─────────────────────────────────────────
+        DONE_ORDERS = ("'filled','cancelled','expired'")
+
+        counts["market_orders"] = db.execute(
+            _sql(f"DELETE FROM market_orders WHERE status IN ({DONE_ORDERS})")
+        ).rowcount
+
+        counts["meme_coin_orders"] = db.execute(
+            _sql(f"DELETE FROM meme_coin_orders WHERE status IN ({DONE_ORDERS})")
+        ).rowcount
+
+        counts["district_market_orders"] = db.execute(
+            _sql(f"DELETE FROM district_market_orders WHERE status IN ({DONE_ORDERS})")
+        ).rowcount
+
+        # brokerage order book also has 'rejected' as terminal
+        counts["order_book"] = db.execute(
+            _sql(f"DELETE FROM order_book WHERE status IN ({DONE_ORDERS},'rejected')")
+        ).rowcount
+
+        counts["crypto_exchange_orders"] = db.execute(
+            _sql("DELETE FROM crypto_exchange_orders WHERE status IN ('filled','cancelled')")
+        ).rowcount
+
+        counts["land_buy_orders"] = db.execute(
+            _sql("DELETE FROM land_buy_orders WHERE is_active = FALSE")
+        ).rowcount
+
+        # ── 2. Orphaned order_fills (parent order deleted in step 1) ──────────
+        counts["order_fills"] = db.execute(
+            _sql(
+                "DELETE FROM order_fills "
+                "WHERE buy_order_id NOT IN (SELECT id FROM order_book) "
+                "   OR sell_order_id NOT IN (SELECT id FROM order_book)"
+            )
+        ).rowcount
+
+        # ── 3. Completed swap offers → legs → acceptances ─────────────────────
+        DONE_SWAPS = "'executed','failed','rejected','cancelled'"
+        # legs and acceptances first (FK parents are swap_offers)
+        counts["swap_offer_legs"] = db.execute(
+            _sql(
+                f"DELETE FROM swap_offer_legs WHERE swap_id IN "
+                f"(SELECT id FROM swap_offers WHERE status IN ({DONE_SWAPS}))"
+            )
+        ).rowcount
+        counts["swap_offer_acceptances"] = db.execute(
+            _sql(
+                f"DELETE FROM swap_offer_acceptances WHERE swap_id IN "
+                f"(SELECT id FROM swap_offers WHERE status IN ({DONE_SWAPS}))"
+            )
+        ).rowcount
+        counts["swap_offers"] = db.execute(
+            _sql(f"DELETE FROM swap_offers WHERE status IN ({DONE_SWAPS})")
+        ).rowcount
+
+        # Orphaned legs/acceptances with no parent at all
+        counts["swap_offer_legs_orphan"] = db.execute(
+            _sql(
+                "DELETE FROM swap_offer_legs "
+                "WHERE swap_id NOT IN (SELECT id FROM swap_offers)"
+            )
+        ).rowcount
+        counts["swap_offer_acceptances_orphan"] = db.execute(
+            _sql(
+                "DELETE FROM swap_offer_acceptances "
+                "WHERE swap_id NOT IN (SELECT id FROM swap_offers)"
+            )
+        ).rowcount
+
+        # ── 4. Notifications ─────────────────────────────────────────────────
+        counts["player_notifications"] = db.execute(
+            _sql("DELETE FROM player_notifications WHERE cleared = TRUE")
+        ).rowcount
+
+        counts["persistent_notifications"] = db.execute(
+            _sql("DELETE FROM persistent_notifications WHERE dismissed = TRUE")
+        ).rowcount
+
+        counts["crypto_inheritance_notifications"] = db.execute(
+            _sql("DELETE FROM crypto_inheritance_notifications WHERE is_seen = TRUE")
+        ).rowcount
+
+        # ── 5. Claimed/terminal rewards and listings ─────────────────────────
+        counts["tax_vouchers"] = db.execute(
+            _sql("DELETE FROM tax_vouchers WHERE redeemed = TRUE")
+        ).rowcount
+
+        counts["government_estate_listings"] = db.execute(
+            _sql("DELETE FROM government_estate_listings WHERE sold = TRUE")
+        ).rowcount
+
+        # ── 6. City applications and polls ───────────────────────────────────
+        counts["city_applications"] = db.execute(
+            _sql("DELETE FROM city_applications WHERE status IN ('approved','rejected')")
+        ).rowcount
+
+        # city_votes reference city_polls; delete votes first
+        counts["city_votes"] = db.execute(
+            _sql(
+                "DELETE FROM city_votes WHERE poll_id IN "
+                "(SELECT id FROM city_polls WHERE status IN ('passed','failed','cancelled'))"
+            )
+        ).rowcount
+        counts["city_polls"] = db.execute(
+            _sql("DELETE FROM city_polls WHERE status IN ('passed','failed','cancelled')")
+        ).rowcount
+
+        # ── 7. County petitions and polls ────────────────────────────────────
+        DONE_PETITIONS = "'gov_rejected','poll_passed','poll_failed'"
+        counts["county_petitions"] = db.execute(
+            _sql(f"DELETE FROM county_petitions WHERE status IN ({DONE_PETITIONS})")
+        ).rowcount
+
+        counts["county_votes"] = db.execute(
+            _sql(
+                "DELETE FROM county_votes WHERE poll_id IN "
+                "(SELECT id FROM county_polls WHERE status IN ('passed','failed','cancelled'))"
+            )
+        ).rowcount
+        counts["county_polls"] = db.execute(
+            _sql("DELETE FROM county_polls WHERE status IN ('passed','failed','cancelled')")
+        ).rowcount
+
+        db.commit()
+
+        total = sum(counts.values())
+        log_action(
+            admin_id, "db_maintenance", None,
+            f"Maintenance pass deleted {total:,} rows: "
+            + ", ".join(f"{v} {k}" for k, v in counts.items() if v)
+        )
+
+    except Exception as e:
+        db.rollback()
+        return {"ok": False, "error": str(e), "counts": counts}
+    finally:
+        db.close()
+
+    # ── VACUUM ANALYZE (must run outside any transaction) ─────────────────────
+    vacuum_ok = True
+    vacuum_err = ""
+    try:
+        from sqlalchemy import create_engine as _ce
+        from database import DATABASE_URL as _DBURL
+        _vac_engine = _ce(_DBURL, isolation_level="AUTOCOMMIT")
+        with _vac_engine.connect() as _vc:
+            tables_touched = [t for t, v in counts.items() if v > 0]
+            if tables_touched:
+                for tbl in tables_touched:
+                    try:
+                        _vc.execute(_sql(f"VACUUM ANALYZE {tbl}"))
+                    except Exception:
+                        pass  # table might not exist on this instance; non-fatal
+        _vac_engine.dispose()
+    except Exception as _ve:
+        vacuum_ok = False
+        vacuum_err = str(_ve)
+
+    return {
+        "ok": True,
+        "total": sum(counts.values()),
+        "counts": counts,
+        "vacuum_ok": vacuum_ok,
+        "vacuum_err": vacuum_err,
+    }
+
+
 # ==========================
 # ==========================
 # COUNTY CRYPTO ADMIN TOOLS

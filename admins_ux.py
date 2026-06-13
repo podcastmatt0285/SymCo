@@ -633,6 +633,12 @@ def admin_dashboard(
             <div class="stat-box"><div class="stat-value" style="font-size:1rem;color:#f472b6;">{_beta_twa_today}</div><div class="stat-label">Active Duty Today</div></div>
             <div class="stat-box"><div class="stat-value" style="font-size:1rem;color:{"#ef4444" if _error_count else "#22c55e"};">{_error_count}</div><div class="stat-label">Errors in Log</div></div>
         </div>
+        <div style="margin-top:12px;">
+            <form method="post" action="/admin/db-maintenance" onsubmit="this.querySelector('button').disabled=true;this.querySelector('button').textContent='Running…';">
+                <button type="submit" style="background:#0f2027;border:1px solid #38bdf8;color:#7dd3fc;border-radius:6px;padding:8px 20px;cursor:pointer;font-size:0.82rem;font-weight:600;">🧹 Run DB Maintenance</button>
+            </form>
+            <p style="color:#475569;font-size:0.7rem;margin-top:6px;">Purges filled/cancelled orders, dismissed notifications, redeemed vouchers, terminal polls &amp; applications, orphaned swap legs — then VACUUMs affected tables.</p>
+        </div>
     </div>
 
     <div class="card">
@@ -4032,6 +4038,23 @@ def admin_etf_reconcile(
     except Exception as ex:
         from urllib.parse import quote_plus
         return RedirectResponse(url=f"/admin/etf?err={quote_plus(str(ex)[:120])}", status_code=303)
+
+
+@router.post("/admin/db-maintenance")
+def admin_db_maintenance(session_token: Optional[str] = Cookie(None)):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    from admins import run_db_maintenance
+    from urllib.parse import quote_plus
+    result = run_db_maintenance(admin.id)
+    if result["ok"]:
+        detail = ", ".join(f"{v:,} {k.replace('_',' ')}" for k, v in result["counts"].items() if v)
+        vac = "" if result["vacuum_ok"] else " (VACUUM failed — non-fatal)"
+        msg = f"Maintenance complete: {result['total']:,} rows removed. {detail or 'Nothing to clean.'}{vac}"
+        return RedirectResponse(url=f"/admin?success={quote_plus(msg)}", status_code=303)
+    err = result.get("error", "unknown error")
+    return RedirectResponse(url=f"/admin?error={quote_plus(err[:200])}", status_code=303)
 
 
 @router.post("/admin/etf/cleanup-orphan-shares")
