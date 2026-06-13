@@ -1400,13 +1400,80 @@ def process_income_conversion(player_id: int, usd_amount: float) -> Tuple[float,
 
     code = get_player_legal_tender(player_id)
 
-    # HARD MONEY: precious-metal coinage can ONLY be created by physical minting.
-    # Never auto-convert USD income into coinage (that would let the bank "issue"
-    # Au/Ag/Pt with no mint, inflating the supply). A player may hold coinage as
-    # legal tender to SPEND minted coins, but income lands in USD — you must run a
-    # Mint to acquire more coinage. This is the in-game gold standard.
+    # HARD MONEY: coinage enters circulation ONLY via physical minting — never via
+    # synthetic conversion. Income for a coin-tender holder therefore queues as a
+    # non-transferable CoinageRedemptionNote IOU backed by the deposited income value.
+    # The IOU fills automatically as minting seigniorage (2%) and demurrage reclaim
+    # trickle into the coin bank. Holding is intentionally illiquid: that's the
+    # in-game gold standard. One active IOU per player per bank is upserted so the
+    # table doesn't explode when income arrives every tick.
     if code in COIN_CURRENCY_CODES:
-        code = "USD"
+        db = get_db()
+        try:
+            bank = db.query(StateReserveBank).filter(
+                StateReserveBank.currency_code == code
+            ).first()
+            if not bank or (bank.usd_per_unit or 0.0) <= 0:
+                # No bank or peg not set yet — fall back to USD so no income is lost.
+                _adjust_currency_balance(db, player_id, "USD", usd_amount)
+                db.commit()
+                return usd_amount, "USD"
+
+            # Convert income value to coin units and deduct forex fee.
+            coin_gross = usd_amount / bank.usd_per_unit
+            fee_coin   = coin_gross * FOREX_FEE_RATE
+            net_coin   = coin_gross - fee_coin
+
+            # Deposit the income value into the coin bank's USD reserves as backing —
+            # the IOU is fully collateralised from creation.
+            _add_bank_reserve(db, bank.id, "USD", usd_amount)
+
+            # Positive demand signal: capital flowing into this coin currency.
+            bank.net_demand_wsc = (bank.net_demand_wsc or 0.0) + usd_amount
+
+            # Upsert: grow the player's existing unfulfilled IOU rather than creating
+            # one per income event (prevents millions of tiny rows over time).
+            existing_iou = (
+                db.query(CoinageRedemptionNote)
+                .filter(
+                    CoinageRedemptionNote.bank_id        == bank.id,
+                    CoinageRedemptionNote.requester_type == "player",
+                    CoinageRedemptionNote.requester_id   == player_id,
+                    CoinageRedemptionNote.is_fulfilled   == False,
+                )
+                .with_for_update()
+                .first()
+            )
+            if existing_iou:
+                existing_iou.coin_amount_owed += net_coin
+            else:
+                new_iou = CoinageRedemptionNote(
+                    bank_id          = bank.id,
+                    requester_type   = "player",
+                    requester_id     = player_id,
+                    coin_amount_owed = net_coin,
+                    filled_amount    = 0.0,
+                )
+                db.add(new_iou)
+                db.flush()
+
+            # Fill immediately from whatever coin the bank already holds on reserve.
+            _try_drain_from_reserves(db, bank)
+            db.commit()
+            return net_coin, code
+
+        except Exception as e:
+            db.rollback()
+            print(f"[ReserveBanks] Coin-IOU income error (player {player_id}): {e}")
+            # Fall back to USD so income is never silently lost.
+            try:
+                _adjust_currency_balance(db, player_id, "USD", usd_amount)
+                db.commit()
+            except Exception:
+                pass
+            return usd_amount, "USD"
+        finally:
+            db.close()
 
     if code == "USD":
         # USD is now a reserve currency stored in PlayerCurrencyBalance like all others.

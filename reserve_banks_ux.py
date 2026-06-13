@@ -264,11 +264,13 @@ def bond_market(
         </div>
         <div>{bal_chips}</div>
         <div class="mini" style="color:#475569;margin-top:6px;line-height:1.5;">
-          💡 <strong style="color:#94a3b8;">How USD works:</strong>
-          All USD in the game is stored in your <em>PlayerCurrencyBalance</em> wallet —
-          this is the same balance your businesses earn into, bonds pay out to, and trades settle in.
-          Bond face values shown on the bond cards below are <em>what a bond will pay when it matures</em>,
-          not money you can spend yet.
+          💡 <strong style="color:#94a3b8;">How balances work:</strong>
+          Every currency (including USD) is stored in your <em>PlayerCurrencyBalance</em> wallet —
+          the same place your businesses earn into, bonds pay out to, and trades settle in.
+          Bond face values shown below are <em>what a bond will pay when it matures</em>, not yet spendable.
+          <strong style="color:#f59e0b;">Coin tender holders:</strong> income does not land as spendable coin instantly —
+          it queues as a non-transferable coin IOU backed by the income value deposited into the bank.
+          Coins fill in as your (or any other) mint produces seigniorage. Check your Mint dashboard for IOU status.
         </div>
       </div>
       <div style="margin-bottom:10px;">

@@ -5713,7 +5713,7 @@ def admin_events(session_token: Optional[str] = Cookie(None),
         same path a player uses: their existing reserves are converted into the new currency (repatriation +
         forex fees apply), and they then earn, hold, spend and pay hoarding tax in it. With ~97 NPCs converting
         at once, their forex demand visibly moves the currency's exchange rate and bond yields. Coin targets
-        queue a redemption IOU just like a player coinage switch (future income stays USD — hard-money rule).
+        queue a redemption IOU just like a player coinage switch; all future income also queues as coin IOUs (filled by minting seigniorage + demurrage). NPCs on coin tender cannot spend until their IOU fills — deliberate hard-money scarcity.
       </p>
       <form method="post" action="/admin/events/create" onsubmit="return ncseBuild()">
         <input type="hidden" name="event_type" value="npc_currency_switch">
@@ -5793,7 +5793,7 @@ def admin_events(session_token: Optional[str] = Cookie(None),
           var name = _NCSE_LABELS[code] || code;
           var isCoin = !!_NCSE_COINS[code];
           var note = isCoin
-            ? ' <span style="color:#f97316;">[Hard money — existing reserves convert to a coin IOU like a player switch; future income stays USD]</span>'
+            ? ' <span style="color:#f97316;">[Hard money — existing reserves AND all future income queue as coin IOUs (FIFO, filled by minting seigniorage + demurrage). NPCs cannot spend until IOUs fill — intentional scarcity.]</span>'
             : ' <span style="color:#6ee7b7;">[Real switch: reserves convert to ' + code + '; NPCs then earn, spend &amp; pay tax in it, generating live forex demand]</span>';
           var prev = document.getElementById('ncse_preview');
           if (prev) prev.innerHTML = 'All NPC businesses will switch to <b>' + code + ' (' + name + ')</b> at event start.' + note;
