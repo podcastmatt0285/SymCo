@@ -118,6 +118,71 @@ class PlayerRank(Base):
 
 # ── Task progress helper ──────────────────────────────────────────────────────
 
+def _award_event_trophies(db, ev, player_id: int, trophies: int, now,
+                          category: str = "tasks"):
+    """Credit `trophies` to a player for completing `ev`, recompute their level,
+    and fire push + in-game banner + ledger entry. Caller commits the session.
+
+    Shared by record_task_progress (task events) and record_currency_switch
+    (tender_rush events). Caller is responsible for the completion/dedupe gate.
+    """
+    if trophies <= 0:
+        return
+    rank = db.query(PlayerRank).filter(
+        PlayerRank.player_id == player_id).first()
+    if not rank:
+        rank = PlayerRank(player_id=player_id, trophies=0, level=1)
+        db.add(rank)
+    rank.trophies = (rank.trophies or 0) + trophies
+    rank.updated_at = now
+    level = 1
+    for i, threshold in enumerate(LEVEL_THRESHOLDS):
+        if rank.trophies >= threshold:
+            level = i + 2
+        else:
+            break
+    rank.level = level
+
+    _word = "trophy" if trophies == 1 else "trophies"
+    try:
+        from push_ux import send_push_notification
+        send_push_notification(
+            player_id,
+            f"🏆 {ev.title}",
+            f"You earned {trophies} {_word}!",
+            url="/events",
+            notif_type="tasks_events",
+            tag=f"event-complete-{ev.id}",
+        )
+    except Exception as _e:
+        print(f"[Events] push notification failed for player {player_id}: {_e}")
+    try:
+        from push_ux import create_game_notification
+        create_game_notification(
+            player_id,
+            f"🏆 {ev.title}",
+            f"You earned {trophies} {_word}!",
+            url="/events",
+            notif_type="tasks_events",
+        )
+    except Exception as _e:
+        print(f"[Events] in-game banner failed for player {player_id}: {_e}")
+    try:
+        from stats_ux import log_transaction
+        log_transaction(
+            player_id,
+            transaction_type="trophy_award",
+            category=category,
+            amount=0.0,
+            description=f"Completed: {ev.title}",
+            reference_id=f"event-{ev.id}",
+            item_type="trophy",
+            quantity=float(trophies),
+        )
+    except Exception as _e:
+        print(f"[Events] ledger entry failed for player {player_id}: {_e}")
+
+
 def record_task_progress(player_id: int, metric: str, amount: float):
     """Add `amount` toward every active task event with task_metric == metric.
 
@@ -157,63 +222,7 @@ def record_task_progress(player_id: int, metric: str, amount: float):
             if ev.task_target and prog.progress >= ev.task_target and not prog.completed_at:
                 prog.completed_at = now
                 prog.trophies_awarded = ev.trophy_reward or 0
-
-                # Award trophies + recalculate level
-                rank = db.query(PlayerRank).filter(
-                    PlayerRank.player_id == player_id).first()
-                if not rank:
-                    rank = PlayerRank(player_id=player_id, trophies=0, level=1)
-                    db.add(rank)
-                rank.trophies = (rank.trophies or 0) + prog.trophies_awarded
-                rank.updated_at = now
-                level = 1
-                for i, threshold in enumerate(LEVEL_THRESHOLDS):
-                    if rank.trophies >= threshold:
-                        level = i + 2
-                    else:
-                        break
-                rank.level = level
-
-                # Notify the player of completion
-                if prog.trophies_awarded > 0:
-                    _word = "trophy" if prog.trophies_awarded == 1 else "trophies"
-                    try:
-                        from push_ux import send_push_notification
-                        send_push_notification(
-                            player_id,
-                            f"🏆 Task Complete: {ev.title}",
-                            f"You earned {prog.trophies_awarded} {_word}!",
-                            url="/events",
-                            notif_type="tasks_events",
-                            tag=f"task-complete-{ev.id}",
-                        )
-                    except Exception as _e:
-                        print(f"[Events] push notification failed for player {player_id}: {_e}")
-                    try:
-                        from push_ux import create_game_notification
-                        create_game_notification(
-                            player_id,
-                            f"🏆 {ev.title}",
-                            f"You earned {prog.trophies_awarded} {_word}!",
-                            url="/events",
-                            notif_type="tasks_events",
-                        )
-                    except Exception as _e:
-                        print(f"[Events] in-game banner failed for player {player_id}: {_e}")
-                    try:
-                        from stats_ux import log_transaction
-                        log_transaction(
-                            player_id,
-                            transaction_type="trophy_award",
-                            category="tasks",
-                            amount=0.0,
-                            description=f"Task completed: {ev.title}",
-                            reference_id=f"event-{ev.id}",
-                            item_type="trophy",
-                            quantity=float(prog.trophies_awarded),
-                        )
-                    except Exception as _e:
-                        print(f"[Events] ledger entry failed for player {player_id}: {_e}")
+                _award_event_trophies(db, ev, player_id, prog.trophies_awarded, now)
 
         db.commit()
     except Exception as e:
@@ -222,6 +231,74 @@ def record_task_progress(player_id: int, metric: str, amount: float):
         except Exception:
             pass
         print(f"[Events] record_task_progress error: {e}")
+    finally:
+        db.close()
+
+
+def is_tender_rush_active() -> bool:
+    """True if a currency-switch ('tender_rush') event is currently live.
+
+    Used by the legal-tender switch handler to lift the cooldown.
+    """
+    db = SessionLocal()
+    try:
+        now = datetime.utcnow()
+        row = db.query(GameEvent.id).filter(
+            GameEvent.is_active == True,
+            GameEvent.event_type == "tender_rush",
+            GameEvent.starts_at <= now,
+            (GameEvent.ends_at == None) | (GameEvent.ends_at >= now),
+        ).first()
+        return row is not None
+    except Exception as e:
+        print(f"[Events] is_tender_rush_active error: {e}")
+        return False
+    finally:
+        db.close()
+
+
+def record_currency_switch(player_id: int):
+    """Award trophies (once per player per event) for switching legal tender
+    during an active 'tender_rush' event. Safe to call from any thread.
+    """
+    if player_id <= 0:
+        return
+    db = SessionLocal()
+    try:
+        now = datetime.utcnow()
+        active = db.query(GameEvent).filter(
+            GameEvent.is_active == True,
+            GameEvent.event_type == "tender_rush",
+            GameEvent.starts_at <= now,
+            (GameEvent.ends_at == None) | (GameEvent.ends_at >= now),
+        ).all()
+
+        for ev in active:
+            prog = db.query(PlayerTaskProgress).filter(
+                PlayerTaskProgress.player_id == player_id,
+                PlayerTaskProgress.event_id == ev.id,
+            ).first()
+            if prog and prog.completed_at:
+                continue  # already rewarded this event
+            if not prog:
+                prog = PlayerTaskProgress(
+                    player_id=player_id,
+                    event_id=ev.id,
+                    progress=0.0,
+                )
+                db.add(prog)
+            prog.progress = 1.0
+            prog.completed_at = now
+            prog.trophies_awarded = ev.trophy_reward or 35
+            _award_event_trophies(db, ev, player_id, prog.trophies_awarded, now)
+
+        db.commit()
+    except Exception as e:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        print(f"[Events] record_currency_switch error: {e}")
     finally:
         db.close()
 
@@ -585,7 +662,9 @@ def get_active_item_crisis_factors() -> dict:
     """
     factors: dict = {}
     for eff in get_active_effects():
-        if eff.get("event_type") != "item_crisis":
+        # item_crisis (pf < 1, output cut) and item_boom (pf > 1, output surge)
+        # share the same multiplicative production-factor machinery.
+        if eff.get("event_type") not in ("item_crisis", "item_boom"):
             continue
         ed = eff.get("effect_data", {})
         item = ed.get("item_type")
@@ -604,7 +683,7 @@ def get_active_item_crisis_summary() -> list:
         try:
             now = datetime.utcnow()
             rows = db.query(GameEvent).filter(
-                GameEvent.event_type == "item_crisis",
+                GameEvent.event_type.in_(("item_crisis", "item_boom")),
                 GameEvent.is_active == True,
                 GameEvent.starts_at <= now,
             ).filter(
@@ -618,10 +697,13 @@ def get_active_item_crisis_summary() -> list:
                 item_type = ed.get("item_type", "")
                 pf = ed.get("production_factor", 1.0)
                 drop_pct = round((1.0 - pf) * 100) if pf < 1.0 else 0
+                boost_pct = round((pf - 1.0) * 100) if pf > 1.0 else 0
                 crises.append({
                     "item_type":  item_type,
                     "item_name":  _get_item_display_name(item_type) if item_type else "",
                     "drop_pct":   drop_pct,
+                    "boost_pct":  boost_pct,
+                    "event_type": ev.event_type,
                     "production_factor": pf,
                     "title":      ev.title,
                     "ends_at":    ev.ends_at,
@@ -1476,6 +1558,22 @@ def _on_event_live(event_id: int):
                 except Exception:
                     pass
                 invalidate_effects_cache()
+            elif ev.event_type == "item_boom":
+                try:
+                    ed = _json.loads(ev.effect_data or "{}")
+                    item_type = ed.get("item_type", "")
+                    pf = ed.get("production_factor", 1.0)
+                    boost_pct = round((pf - 1.0) * 100)
+                    if item_type and boost_pct > 0:
+                        item_name = _get_item_display_name(item_type)
+                        body = (
+                            f"A production surge has hit {item_name}! "
+                            f"Output boosted by {boost_pct}%. "
+                            f"Ramp up your businesses while it lasts."
+                        )
+                except Exception:
+                    pass
+                invalidate_effects_cache()
             elif ev.event_type == "npc_currency_switch":
                 try:
                     _ncs_body = _execute_npc_currency_switch(db, ev)
@@ -1534,6 +1632,19 @@ def _on_event_ended(event_id: int):
                         item_name = _get_item_display_name(item_type)
                         body = (
                             f"The {item_name} Crisis has resolved. "
+                            f"Production output returns to normal levels."
+                        )
+                except Exception:
+                    pass
+                invalidate_effects_cache()
+            elif ev.event_type == "item_boom":
+                try:
+                    ed = _json.loads(ev.effect_data or "{}")
+                    item_type = ed.get("item_type", "")
+                    if item_type:
+                        item_name = _get_item_display_name(item_type)
+                        body = (
+                            f"The {item_name} Boom has ended. "
                             f"Production output returns to normal levels."
                         )
                 except Exception:

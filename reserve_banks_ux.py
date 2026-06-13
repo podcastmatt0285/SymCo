@@ -770,7 +770,51 @@ def api_set_legal_tender(
     if not player:
         return RedirectResponse("/login", status_code=303)
 
-    ok, msg = set_player_legal_tender(player.id, currency_code.upper())
+    # A live 'tender_rush' event lifts the 7-day cooldown (Pro gate on coins stays).
+    try:
+        import events
+        rush = events.is_tender_rush_active()
+    except Exception:
+        rush = False
+
+    ok, msg = set_player_legal_tender(
+        player.id, currency_code.upper(), cooldown_override=rush)
+
+    # Award trophies once per player per event for switching during the rush.
+    if ok and rush:
+        try:
+            import events
+            events.record_currency_switch(player.id)
+        except Exception as _e:
+            print(f"[ReserveBanksUX] record_currency_switch error: {_e}")
+
+    # Notify the player of the outcome (previously there was no notification on
+    # either a successful switch or a blocked attempt).
+    try:
+        if ok:
+            from push_ux import send_push_notification
+            send_push_notification(
+                player.id,
+                "💱 Legal Tender Switched",
+                msg,
+                url="/banks",
+                notif_type="corporate",
+                tag=f"tender-{player.id}",
+            )
+        else:
+            from push_ux import create_game_notification
+            create_game_notification(
+                player.id,
+                "💱 Currency Switch Blocked",
+                msg,
+                url="/banks",
+                notif_type="corporate",
+                cooldown_key=f"tender-block-{player.id}",
+                cooldown_secs=600,
+            )
+    except Exception as _e:
+        print(f"[ReserveBanksUX] tender switch notification error: {_e}")
+
     param   = "msg" if ok else "err"
     from urllib.parse import quote
     return RedirectResponse(f"/banks?{param}={quote(msg)}", status_code=303)

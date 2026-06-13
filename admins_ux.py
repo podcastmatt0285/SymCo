@@ -5137,6 +5137,8 @@ def admin_events(session_token: Optional[str] = Cookie(None),
         "land_grant":  "#4ade80",
         "foreign_land_sale": "#dc2626",
         "npc_currency_switch": "#818cf8",
+        "item_boom": "#16a34a",
+        "tender_rush": "#f59e0b",
     }
 
     event_cards = ""
@@ -5427,6 +5429,21 @@ def admin_events(session_token: Optional[str] = Cookie(None),
                 f'<span style="color:#ef4444;font-weight:700;">⚠️ {_ci_name} · '
                 f'production ▼{_cdrop}% (×{_cpf:.2f})</span>'
             )
+        elif ev.event_type == "item_boom":
+            _bi = _ed.get("item_type", "?")
+            _bpf = _ed.get("production_factor", 1.0)
+            _bboost = round((_bpf - 1.0) * 100) if _bpf > 1.0 else 0
+            _bi_name = _bi.replace("_", " ").title()
+            try:
+                import json as _ij3
+                with open("item_types.json") as _f3:
+                    _bi_name = _ij3.load(_f3).get(_bi, {}).get("name", _bi_name)
+            except Exception:
+                pass
+            _meta_parts.append(
+                f'<span style="color:#16a34a;font-weight:700;">🚀 {_bi_name} · '
+                f'production ▲{_bboost}% (×{_bpf:.2f})</span>'
+            )
         elif _ed and not _is_cs:
             _ed_display = _ej.dumps(_ed, separators=(",", ":"))
             _meta_parts.append(
@@ -5609,6 +5626,148 @@ def admin_events(session_token: Optional[str] = Cookie(None),
         .replace("QC_INP", _inp)
         .replace("QC_ITEM_OPTS", _crisis_item_opts)
         .replace("QC_NAMES_JSON", _qc_names_js))
+
+    boom_quick_form = """
+    <div class="card" style="margin-bottom:18px;border:2px solid #166534;background:#080d08;">
+      <div style="font-size:0.9rem;color:#86efac;font-weight:800;margin-bottom:4px;">&#128640; Create Production Boom</div>
+      <p style="font-size:0.74rem;color:#72926f;margin:0 0 12px;line-height:1.45;">
+        The counterpart to a crisis: a breakthrough, bumper harvest or favourable conditions
+        <b>boost</b> production of one commodity. Pick the commodity, the output boost, and whether
+        it runs daily, weekly or monthly &mdash; name, player-facing description and end date are
+        generated automatically. A boom offsets any active crisis on the same item.
+      </p>
+      <form method="post" action="/admin/events/create" onsubmit="return bmBuild()">
+        <input type="hidden" name="event_type" value="item_boom">
+        <input type="hidden" name="task_metric" value="">
+        <input type="hidden" name="task_target" value="0">
+        <input type="hidden" name="trophy_reward" value="0">
+        <input type="hidden" name="title" id="bm_title">
+        <input type="hidden" name="effect_data" id="bm_eff">
+        <div style="display:grid;grid-template-columns:2fr 1fr 1.5fr;gap:8px;margin-bottom:10px;">
+          <div>
+            <div style="font-size:0.68rem;color:#72926f;margin-bottom:3px;">Boosted Commodity *</div>
+            <select id="bm_item" style="QC_SEL" onchange="bmRefresh()">
+              QC_ITEM_OPTS
+            </select>
+          </div>
+          <div>
+            <div style="font-size:0.68rem;color:#72926f;margin-bottom:3px;">Output Boost %</div>
+            <input type="number" id="bm_pct" min="1" max="100" value="40" style="QC_INP" oninput="bmRefresh()">
+            <div style="font-size:0.62rem;color:#3f7f40;margin-top:2px;">40 &rarr; &times;1.40 &middot; 100 &rarr; &times;2.00</div>
+          </div>
+          <div>
+            <div style="font-size:0.68rem;color:#72926f;margin-bottom:3px;">Duration (sets end date)</div>
+            <select name="duration_class" id="bm_dur" style="QC_SEL" onchange="bmRefresh()">
+              <option value="daily">Daily &middot; ends in 24h</option>
+              <option value="weekly" selected>Weekly &middot; ends in 7 days</option>
+              <option value="monthly">Monthly &middot; ends in 30 days</option>
+            </select>
+          </div>
+        </div>
+        <div id="bm_preview" style="background:#081a08;border:1px solid #166534;border-radius:4px;
+             padding:9px 11px;margin-bottom:10px;font-size:0.74rem;color:#86efac;line-height:1.5;">&hellip;</div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button type="submit" style="background:#166534;color:#fff;border:none;border-radius:4px;
+                  padding:8px 20px;font-size:0.85rem;font-weight:800;cursor:pointer;">&#128640; Launch Boom</button>
+          <label style="display:flex;align-items:center;gap:6px;color:#72926f;font-size:0.78rem;cursor:pointer;">
+            <input type="checkbox" name="activate_now" value="1" style="width:auto;margin:0;" checked> Active immediately
+          </label>
+        </div>
+        <script>
+        var _BM_NAMES = QC_NAMES_JSON;
+        function _bmParts() {
+          var item = document.getElementById('bm_item').value;
+          var pct  = Math.min(100, Math.max(1, parseInt(document.getElementById('bm_pct').value) || 40));
+          var dur  = document.getElementById('bm_dur').value;
+          var name = _BM_NAMES[item] || item.replace(/_/g,' ').replace(/\\b\\w/g,function(c){return c.toUpperCase();});
+          var factor = parseFloat(((100+pct)/100).toFixed(4));
+          return {item:item, pct:pct, dur:dur, name:name, factor:factor};
+        }
+        function _bmDesc(p) {
+          var span = {daily:'24 hours', weekly:'one week', monthly:'one month'}[p.dur] || p.dur;
+          return 'A production breakthrough has supercharged ' + p.name +
+                 ' output, boosting production by ' + p.pct + '% for ' + span + '.';
+        }
+        function bmRefresh() {
+          var p = _bmParts();
+          var prev = document.getElementById('bm_preview');
+          if (prev) prev.innerHTML = '<b>' + p.name + ' Boom!</b> &mdash; ' + _bmDesc(p) +
+            ' <span style="color:#3f7f40;">(output &times;' + p.factor.toFixed(2) + ')</span>';
+        }
+        function bmBuild() {
+          var p = _bmParts();
+          document.getElementById('bm_title').value = p.name + ' Boom!';
+          document.getElementById('bm_eff').value   = JSON.stringify({item_type:p.item, production_factor:p.factor});
+          return true;
+        }
+        bmRefresh();
+        </script>
+      </form>
+    </div>"""
+    boom_quick_form = (boom_quick_form
+        .replace("QC_SEL", _sel)
+        .replace("QC_INP", _inp)
+        .replace("QC_ITEM_OPTS", _crisis_item_opts)
+        .replace("QC_NAMES_JSON", _qc_names_js))
+
+    tender_rush_form = """
+    <div class="card" style="margin-bottom:18px;border:2px solid #b45309;background:#0d0a05;">
+      <div style="font-size:0.9rem;color:#fcd34d;font-weight:800;margin-bottom:4px;">&#128176; Create Currency Switch Rush</div>
+      <p style="font-size:0.74rem;color:#a18345;margin:0 0 12px;line-height:1.45;">
+        Lifts the 7-day legal-tender cooldown for everyone while it runs &mdash; any player can
+        switch currency even if they switched recently. The first switch each player makes during
+        the event awards trophies (once per player). The Pro-subscription requirement for
+        precious-metal coin currencies still applies.
+      </p>
+      <form method="post" action="/admin/events/create" onsubmit="return trBuild()">
+        <input type="hidden" name="event_type" value="tender_rush">
+        <input type="hidden" name="task_metric" value="">
+        <input type="hidden" name="task_target" value="0">
+        <input type="hidden" name="effect_data" value="{}">
+        <input type="hidden" name="title" id="tr_title">
+        <div style="display:grid;grid-template-columns:1fr 1.5fr;gap:8px;margin-bottom:10px;">
+          <div>
+            <div style="font-size:0.68rem;color:#a18345;margin-bottom:3px;">Trophy Reward</div>
+            <input type="number" name="trophy_reward" id="tr_troph" min="0" max="500" value="35" style="QC_INP" oninput="trRefresh()">
+          </div>
+          <div>
+            <div style="font-size:0.68rem;color:#a18345;margin-bottom:3px;">Duration (sets end date)</div>
+            <select name="duration_class" id="tr_dur" style="QC_SEL" onchange="trRefresh()">
+              <option value="daily" selected>Daily &middot; ends in 24h</option>
+              <option value="weekly">Weekly &middot; ends in 7 days</option>
+              <option value="monthly">Monthly &middot; ends in 30 days</option>
+            </select>
+          </div>
+        </div>
+        <div id="tr_preview" style="background:#1a1205;border:1px solid #b45309;border-radius:4px;
+             padding:9px 11px;margin-bottom:10px;font-size:0.74rem;color:#fcd34d;line-height:1.5;">&hellip;</div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button type="submit" style="background:#b45309;color:#fff;border:none;border-radius:4px;
+                  padding:8px 20px;font-size:0.85rem;font-weight:800;cursor:pointer;">&#128176; Launch Rush</button>
+          <label style="display:flex;align-items:center;gap:6px;color:#a18345;font-size:0.78rem;cursor:pointer;">
+            <input type="checkbox" name="activate_now" value="1" style="width:auto;margin:0;" checked> Active immediately
+          </label>
+        </div>
+        <script>
+        function trRefresh() {
+          var t   = Math.max(0, parseInt(document.getElementById('tr_troph').value) || 0);
+          var dur = document.getElementById('tr_dur').value;
+          var span = {daily:'24 hours', weekly:'one week', monthly:'one month'}[dur] || dur;
+          var prev = document.getElementById('tr_preview');
+          if (prev) prev.innerHTML = '<b>Currency Switch Rush!</b> &mdash; cooldown lifted for ' + span +
+            '. First switch per player awards ' + t + ' trophies.';
+        }
+        function trBuild() {
+          document.getElementById('tr_title').value = 'Currency Switch Rush';
+          return true;
+        }
+        trRefresh();
+        </script>
+      </form>
+    </div>"""
+    tender_rush_form = (tender_rush_form
+        .replace("QC_SEL", _sel)
+        .replace("QC_INP", _inp))
     body = f"""
     {flash}
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
@@ -5618,6 +5777,8 @@ def admin_events(session_token: Optional[str] = Cookie(None),
         </div>
     </div>
     {crisis_quick_form}
+    {boom_quick_form}
+    {tender_rush_form}
     <div class="card" style="margin-bottom:18px;border:2px solid #7f1d1d;background:#0b0202;">
       <div style="font-size:0.9rem;color:#fca5a5;font-weight:800;margin-bottom:4px;">🌍 Foreign Land Sale (Emergency Reset)</div>
       <p style="font-size:0.74rem;color:#7c3a3a;margin:0 0 12px;line-height:1.45;">
@@ -6119,12 +6280,13 @@ def admin_event_create(
         end       = _parse(ends_at)
         is_active = activate_now == "1"
         metric    = (task_metric.strip() or None) if task_metric else None
-        # Item Crisis: the duration class alone determines when it ends — no manual
-        # start/stop required, and the player-facing description is auto-generated.
-        if event_type == "item_crisis":
+        # Item Crisis / Boom / Tender Rush: the duration class alone determines when
+        # the event ends — no manual start/stop required.
+        if event_type in ("item_crisis", "item_boom", "tender_rush"):
             _crisis_span = {"daily": _td(days=1), "weekly": _td(days=7),
                             "monthly": _td(days=30)}.get(duration_class.strip(), _td(days=7))
             end = start + _crisis_span
+        if event_type == "item_crisis":
             if not (description and description.strip()):
                 try:
                     _cd = _json.loads(effect_data) if (effect_data and effect_data.strip()) else {}
@@ -6138,6 +6300,26 @@ def admin_event_create(
                                    f"disrupted {_nm} supply chains, cutting production by {_cdr}% for {_span_lbl}.")
                 except Exception:
                     pass
+        if event_type == "item_boom":
+            if not (description and description.strip()):
+                try:
+                    _bd = _json.loads(effect_data) if (effect_data and effect_data.strip()) else {}
+                    _bit = _bd.get("item_type", "")
+                    _bpf = float(_bd.get("production_factor", 1.4))
+                    _bbo = int(round((_bpf - 1.0) * 100))
+                    _span_lbl = {"daily": "24 hours", "weekly": "one week",
+                                 "monthly": "one month"}.get(duration_class.strip(), duration_class.strip())
+                    _nm = _bit.replace("_", " ").title() if _bit else "this commodity"
+                    description = (f"A production breakthrough has supercharged {_nm} output, "
+                                   f"boosting production by {_bbo}% for {_span_lbl}.")
+                except Exception:
+                    pass
+        if event_type == "tender_rush":
+            if not (description and description.strip()):
+                _span_lbl = {"daily": "24 hours", "weekly": "one week",
+                             "monthly": "one month"}.get(duration_class.strip(), duration_class.strip())
+                description = (f"Currency Switch Rush! The legal-tender cooldown is lifted for {_span_lbl} — "
+                               f"switch your currency now and earn {trophy_reward} trophies (first switch per player).")
         # index_challenge and land_grant are monthly-only — enforce server-side
         if event_type in ("index_challenge", "land_grant") and duration_class != "monthly":
             return RedirectResponse(

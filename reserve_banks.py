@@ -1983,7 +1983,8 @@ def get_player_legal_tender(player_id: int) -> str:
 
 def set_player_legal_tender(player_id: int, currency_code: str,
                             admin_override: bool = False,
-                            record_forex: bool = False) -> Tuple[bool, str]:
+                            record_forex: bool = False,
+                            cooldown_override: bool = False) -> Tuple[bool, str]:
     """
     Change a player's legal tender.
 
@@ -2054,7 +2055,7 @@ def set_player_legal_tender(player_id: int, currency_code: str,
             return False, f"Your legal tender is already {code}."
 
         # ── Cooldown check ────────────────────────────────────────────────────
-        if row and row.changed_at and not admin_override:
+        if row and row.changed_at and not admin_override and not cooldown_override:
             days_since = (datetime.utcnow() - row.changed_at).total_seconds() / 86400
             if days_since < TENDER_SWITCH_COOLDOWN_DAYS:
                 days_left = TENDER_SWITCH_COOLDOWN_DAYS - days_since
