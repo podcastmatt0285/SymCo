@@ -633,12 +633,17 @@ def admin_dashboard(
             <div class="stat-box"><div class="stat-value" style="font-size:1rem;color:#f472b6;">{_beta_twa_today}</div><div class="stat-label">Active Duty Today</div></div>
             <div class="stat-box"><div class="stat-value" style="font-size:1rem;color:{"#ef4444" if _error_count else "#22c55e"};">{_error_count}</div><div class="stat-label">Errors in Log</div></div>
         </div>
-        <div style="margin-top:12px;">
-            <form method="post" action="/admin/db-maintenance" onsubmit="this.querySelector('button').disabled=true;this.querySelector('button').textContent='Running…';">
+        <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
+            <form method="post" action="/admin/db-maintenance" onsubmit="this.querySelector('button').disabled=true;this.querySelector('button').textContent='Counting…';">
+                <input type="hidden" name="dry_run" value="1">
+                <button type="submit" style="background:#0f1f2a;border:1px solid #64748b;color:#cbd5e1;border-radius:6px;padding:8px 20px;cursor:pointer;font-size:0.82rem;font-weight:600;">🔍 Preview (dry run)</button>
+            </form>
+            <form method="post" action="/admin/db-maintenance" onsubmit="if(!confirm('Permanently delete completed/cancelled orders, dismissed notifications, redeemed vouchers, concluded polls and orphaned rows? Order history newer than 14 days is protected. Run Preview first if unsure.')){{return false;}} this.querySelector('button').disabled=true;this.querySelector('button').textContent='Running…';">
+                <input type="hidden" name="dry_run" value="0">
                 <button type="submit" style="background:#0f2027;border:1px solid #38bdf8;color:#7dd3fc;border-radius:6px;padding:8px 20px;cursor:pointer;font-size:0.82rem;font-weight:600;">🧹 Run DB Maintenance</button>
             </form>
-            <p style="color:#475569;font-size:0.7rem;margin-top:6px;">Purges filled/cancelled orders, dismissed notifications, redeemed vouchers, terminal polls &amp; applications, orphaned swap legs — then VACUUMs affected tables.</p>
         </div>
+        <p style="color:#475569;font-size:0.7rem;margin-top:6px;">Purges completed/cancelled orders (older than 14 days, so in-game order history is preserved), dismissed notifications, redeemed vouchers, concluded polls &amp; applications, and orphaned swap legs — then VACUUMs the affected tables. <b>Preview</b> counts what would go without deleting anything.</p>
     </div>
 
     <div class="card">
@@ -4041,20 +4046,34 @@ def admin_etf_reconcile(
 
 
 @router.post("/admin/db-maintenance")
-def admin_db_maintenance(session_token: Optional[str] = Cookie(None)):
+def admin_db_maintenance(
+    session_token: Optional[str] = Cookie(None),
+    dry_run: Optional[str] = Form(None),
+):
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
     from admins import run_db_maintenance
     from urllib.parse import quote_plus
-    result = run_db_maintenance(admin.id)
-    if result["ok"]:
-        detail = ", ".join(f"{v:,} {k.replace('_',' ')}" for k, v in result["counts"].items() if v)
+    is_preview = (dry_run == "1")
+    result = run_db_maintenance(admin.id, dry_run=is_preview)
+    if not result["ok"]:
+        err = result.get("error", "unknown error")
+        return RedirectResponse(url=f"/admin?error={quote_plus(err[:200])}", status_code=303)
+
+    detail = ", ".join(f"{v:,} {k.replace('_',' ')}" for k, v in result["counts"].items() if v)
+    err_note = ""
+    if result.get("errors"):
+        err_note = " | skipped: " + ", ".join(result["errors"].keys())
+    if is_preview:
+        msg = (f"PREVIEW (nothing deleted): {result['total']:,} rows would be removed"
+               f" — {detail or 'nothing to clean'}. "
+               f"Order history younger than {result['grace_days']} days is protected.{err_note}")
+    else:
         vac = "" if result["vacuum_ok"] else " (VACUUM failed — non-fatal)"
-        msg = f"Maintenance complete: {result['total']:,} rows removed. {detail or 'Nothing to clean.'}{vac}"
-        return RedirectResponse(url=f"/admin?success={quote_plus(msg)}", status_code=303)
-    err = result.get("error", "unknown error")
-    return RedirectResponse(url=f"/admin?error={quote_plus(err[:200])}", status_code=303)
+        msg = (f"Maintenance complete: {result['total']:,} rows removed. "
+               f"{detail or 'Nothing to clean.'}{vac}{err_note}")
+    return RedirectResponse(url=f"/admin?success={quote_plus(msg)}", status_code=303)
 
 
 @router.post("/admin/etf/cleanup-orphan-shares")

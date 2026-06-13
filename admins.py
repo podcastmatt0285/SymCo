@@ -2830,182 +2830,150 @@ def cleanup_orphan_shares(admin_id: int) -> dict:
         db.close()
 
 
-def run_db_maintenance(admin_id: int) -> dict:
+def run_db_maintenance(admin_id: int, dry_run: bool = False) -> dict:
     """
-    Single-button database maintenance pass.
+    Single-button database maintenance pass (with a dry-run preview mode).
 
-    Deletes rows that are genuinely done and serve no further purpose:
-      - Terminal-state orders (filled / cancelled / expired) across every market
-      - Completed/rejected swap offers and their legs/acceptances
-      - Dismissed notifications
-      - Redeemed tax vouchers, sold estate listings, seen inheritance alerts
-      - Terminal city/county applications, polls, and their vote records
-      - Orphaned swap legs and order-book fills whose parents were already deleted
+    Removes rows that are genuinely done and serve no further purpose, then
+    VACUUMs the affected tables so Postgres can reclaim the freed pages and
+    refresh planner stats. When dry_run=True it only COUNTS what would be
+    deleted and changes nothing — use it to see the impact before committing.
 
-    Explicitly does NOT touch:
-      - Any ACTIVE or PARTIALLY-FILLED order
-      - trade logs, transaction_logs, government_ledger, admin_logs (audit trails)
-      - price_history tables (needed for charts)
-      - cost-basis ledger (wma), bank_transactions, forex_trades
-      - Any row that could affect a live player balance or position
+    SAFETY DESIGN (why this is safe to run):
+      * Each statement runs inside its own SAVEPOINT, so a missing table or a
+        single failed statement can never abort the whole pass or leave it
+        half-applied — the rest still complete and the bad one is reported.
+      * Order tables (market/meme/district/crypto/brokerage/land) are pruned
+        only for rows OLDER than ORDER_HISTORY_GRACE_DAYS. Players have an
+        in-game "recent orders (all statuses)" view (e.g. memecoins
+        get_player_order_history) that reads terminal orders; the grace window
+        guarantees nothing currently visible there is ever deleted.
+      * order_fills has real FK constraints onto order_book and is the permanent
+        trade tape, so we never delete a fill, and never delete an order_book
+        row a fill still points at (NOT EXISTS guard) — no FK violation, no lost
+        history.
+      * Notifications are only removed once the player has dismissed/seen them;
+        vouchers only once redeemed; estate listings only once sold.
 
-    Finishes with VACUUM ANALYZE so Postgres can actually reclaim the freed pages.
+    NEVER TOUCHED: active/partial orders, trades/transaction_logs/
+    government_ledger/admin_logs (audit trails), *_price_history (charts),
+    inventory_cost_ledger (cost basis), bank_transactions, forex_trades, or
+    anything that affects a live player balance or position.
     """
     from sqlalchemy import text as _sql
+    from datetime import datetime as _dt, timedelta as _td
+
+    ORDER_HISTORY_GRACE_DAYS = 14
+    cutoff = _dt.utcnow() - _td(days=ORDER_HISTORY_GRACE_DAYS)
+
+    DONE_ORDERS = "'filled','cancelled','expired'"
+    DONE_SWAPS = "'executed','failed','rejected','cancelled'"
+
+    # Each op: (label, table, where_clause, uses_grace).
+    # uses_grace=True appends "AND created_at < :cutoff" so recent history that
+    # players can still see in-game is preserved. Children are listed before
+    # their parents so the subqueries that key off a parent's status still see
+    # those parent rows at delete time.
+    OPS = [
+        # ── High-volume order tables (grace-windowed) ─────────────────────────
+        ("market_orders",          "market_orders",          f"status IN ({DONE_ORDERS})", True),
+        ("meme_coin_orders",       "meme_coin_orders",        f"status IN ({DONE_ORDERS})", True),
+        ("district_market_orders", "district_market_orders",  f"status IN ({DONE_ORDERS})", True),
+        ("crypto_exchange_orders", "crypto_exchange_orders",  "status IN ('filled','cancelled')", True),
+        ("land_buy_orders",        "land_buy_orders",         "is_active = FALSE", True),
+        # brokerage order_book: terminal AND no fill references it (FK-safe tape).
+        ("order_book",             "order_book",
+         f"status IN ({DONE_ORDERS},'rejected') AND NOT EXISTS "
+         "(SELECT 1 FROM order_fills f WHERE f.buy_order_id = order_book.id "
+         "OR f.sell_order_id = order_book.id)", True),
+
+        # ── Completed swaps: children first, then parents, then any orphans ───
+        ("swap_offer_legs",        "swap_offer_legs",
+         f"swap_id IN (SELECT id FROM swap_offers WHERE status IN ({DONE_SWAPS})) "
+         "OR swap_id NOT IN (SELECT id FROM swap_offers)", False),
+        ("swap_offer_acceptances", "swap_offer_acceptances",
+         f"swap_id IN (SELECT id FROM swap_offers WHERE status IN ({DONE_SWAPS})) "
+         "OR swap_id NOT IN (SELECT id FROM swap_offers)", False),
+        ("swap_offers",            "swap_offers",             f"status IN ({DONE_SWAPS})", False),
+
+        # ── Player-acknowledged ephemera (safe immediately) ───────────────────
+        ("player_notifications",            "player_notifications",            "cleared = TRUE", False),
+        ("persistent_notifications",        "persistent_notifications",        "dismissed = TRUE", False),
+        ("crypto_inheritance_notifications","crypto_inheritance_notifications","is_seen = TRUE", False),
+        ("tax_vouchers",                    "tax_vouchers",                    "redeemed = TRUE", False),
+        ("government_estate_listings",      "government_estate_listings",      "sold = TRUE", False),
+
+        # ── Concluded governance: votes (children) before polls (parents) ─────
+        ("city_applications", "city_applications", "status IN ('approved','rejected')", False),
+        ("city_votes",        "city_votes",
+         "poll_id IN (SELECT id FROM city_polls WHERE status IN ('passed','failed','cancelled')) "
+         "OR poll_id NOT IN (SELECT id FROM city_polls)", False),
+        ("city_polls",        "city_polls",        "status IN ('passed','failed','cancelled')", False),
+        ("county_petitions",  "county_petitions",  "status IN ('gov_rejected','poll_passed','poll_failed')", False),
+        ("county_votes",      "county_votes",
+         "poll_id IN (SELECT id FROM county_polls WHERE status IN ('passed','failed','cancelled')) "
+         "OR poll_id NOT IN (SELECT id FROM county_polls)", False),
+        ("county_polls",      "county_polls",      "status IN ('passed','failed','cancelled')", False),
+    ]
 
     db = get_db()
     counts = {}
+    errors = {}
     try:
-        # ── 1. Terminal market orders ─────────────────────────────────────────
-        DONE_ORDERS = ("'filled','cancelled','expired'")
+        for label, table, where, uses_grace in OPS:
+            clause = where
+            params = {}
+            if uses_grace:
+                clause = f"({where}) AND created_at < :cutoff"
+                params = {"cutoff": cutoff}
+            verb = "SELECT COUNT(*)" if dry_run else "DELETE"
+            target = f"FROM {table} WHERE {clause}"
+            # SAVEPOINT per statement: a failure (e.g. table absent on this
+            # instance) rolls back only this op and is recorded, never aborting
+            # the rest of the pass.
+            try:
+                with db.begin_nested():
+                    res = db.execute(_sql(f"{verb} {target}"), params)
+                    counts[label] = (res.scalar() or 0) if dry_run else res.rowcount
+            except Exception as _op_e:
+                counts[label] = 0
+                errors[label] = str(_op_e).splitlines()[0][:200]
 
-        counts["market_orders"] = db.execute(
-            _sql(f"DELETE FROM market_orders WHERE status IN ({DONE_ORDERS})")
-        ).rowcount
-
-        counts["meme_coin_orders"] = db.execute(
-            _sql(f"DELETE FROM meme_coin_orders WHERE status IN ({DONE_ORDERS})")
-        ).rowcount
-
-        counts["district_market_orders"] = db.execute(
-            _sql(f"DELETE FROM district_market_orders WHERE status IN ({DONE_ORDERS})")
-        ).rowcount
-
-        # brokerage order book: 'rejected' is also terminal here. BUT order_fills
-        # has real FK constraints (buy_order_id/sell_order_id → order_book.id) and
-        # is the permanent trade tape. So we must NOT delete any order that a fill
-        # still points at — doing so would either violate the FK (aborting the whole
-        # pass on Postgres) or orphan/destroy legitimate trade history. Only prune
-        # terminal orders that produced no fill (cancelled/expired/rejected noise,
-        # plus any stray filled-with-no-fills row).
-        counts["order_book"] = db.execute(
-            _sql(
-                f"DELETE FROM order_book WHERE status IN ({DONE_ORDERS},'rejected') "
-                "AND NOT EXISTS (SELECT 1 FROM order_fills f "
-                "WHERE f.buy_order_id = order_book.id OR f.sell_order_id = order_book.id)"
+        if dry_run:
+            db.rollback()  # discard the read-only savepoints, change nothing
+        else:
+            db.commit()
+            total = sum(counts.values())
+            log_action(
+                admin_id, "db_maintenance", None,
+                f"Maintenance pass deleted {total:,} rows: "
+                + (", ".join(f"{v} {k}" for k, v in counts.items() if v) or "nothing")
+                + (f" | errors: {errors}" if errors else "")
             )
-        ).rowcount
-
-        counts["crypto_exchange_orders"] = db.execute(
-            _sql("DELETE FROM crypto_exchange_orders WHERE status IN ('filled','cancelled')")
-        ).rowcount
-
-        counts["land_buy_orders"] = db.execute(
-            _sql("DELETE FROM land_buy_orders WHERE is_active = FALSE")
-        ).rowcount
-
-        # NOTE: order_fills (brokerage trade tape) is deliberately NOT pruned — it
-        # is load-bearing history read by the per-company trade feed.
-
-        # ── 3. Completed swap offers → legs → acceptances ─────────────────────
-        DONE_SWAPS = "'executed','failed','rejected','cancelled'"
-        # legs and acceptances first (FK parents are swap_offers)
-        counts["swap_offer_legs"] = db.execute(
-            _sql(
-                f"DELETE FROM swap_offer_legs WHERE swap_id IN "
-                f"(SELECT id FROM swap_offers WHERE status IN ({DONE_SWAPS}))"
-            )
-        ).rowcount
-        counts["swap_offer_acceptances"] = db.execute(
-            _sql(
-                f"DELETE FROM swap_offer_acceptances WHERE swap_id IN "
-                f"(SELECT id FROM swap_offers WHERE status IN ({DONE_SWAPS}))"
-            )
-        ).rowcount
-        counts["swap_offers"] = db.execute(
-            _sql(f"DELETE FROM swap_offers WHERE status IN ({DONE_SWAPS})")
-        ).rowcount
-
-        # Orphaned legs/acceptances with no parent at all
-        counts["swap_offer_legs_orphan"] = db.execute(
-            _sql(
-                "DELETE FROM swap_offer_legs "
-                "WHERE swap_id NOT IN (SELECT id FROM swap_offers)"
-            )
-        ).rowcount
-        counts["swap_offer_acceptances_orphan"] = db.execute(
-            _sql(
-                "DELETE FROM swap_offer_acceptances "
-                "WHERE swap_id NOT IN (SELECT id FROM swap_offers)"
-            )
-        ).rowcount
-
-        # ── 4. Notifications ─────────────────────────────────────────────────
-        counts["player_notifications"] = db.execute(
-            _sql("DELETE FROM player_notifications WHERE cleared = TRUE")
-        ).rowcount
-
-        counts["persistent_notifications"] = db.execute(
-            _sql("DELETE FROM persistent_notifications WHERE dismissed = TRUE")
-        ).rowcount
-
-        counts["crypto_inheritance_notifications"] = db.execute(
-            _sql("DELETE FROM crypto_inheritance_notifications WHERE is_seen = TRUE")
-        ).rowcount
-
-        # ── 5. Claimed/terminal rewards and listings ─────────────────────────
-        counts["tax_vouchers"] = db.execute(
-            _sql("DELETE FROM tax_vouchers WHERE redeemed = TRUE")
-        ).rowcount
-
-        counts["government_estate_listings"] = db.execute(
-            _sql("DELETE FROM government_estate_listings WHERE sold = TRUE")
-        ).rowcount
-
-        # ── 6. City applications and polls ───────────────────────────────────
-        counts["city_applications"] = db.execute(
-            _sql("DELETE FROM city_applications WHERE status IN ('approved','rejected')")
-        ).rowcount
-
-        # city_votes reference city_polls; delete votes first
-        counts["city_votes"] = db.execute(
-            _sql(
-                "DELETE FROM city_votes WHERE poll_id IN "
-                "(SELECT id FROM city_polls WHERE status IN ('passed','failed','cancelled'))"
-            )
-        ).rowcount
-        counts["city_polls"] = db.execute(
-            _sql("DELETE FROM city_polls WHERE status IN ('passed','failed','cancelled')")
-        ).rowcount
-
-        # ── 7. County petitions and polls ────────────────────────────────────
-        DONE_PETITIONS = "'gov_rejected','poll_passed','poll_failed'"
-        counts["county_petitions"] = db.execute(
-            _sql(f"DELETE FROM county_petitions WHERE status IN ({DONE_PETITIONS})")
-        ).rowcount
-
-        counts["county_votes"] = db.execute(
-            _sql(
-                "DELETE FROM county_votes WHERE poll_id IN "
-                "(SELECT id FROM county_polls WHERE status IN ('passed','failed','cancelled'))"
-            )
-        ).rowcount
-        counts["county_polls"] = db.execute(
-            _sql("DELETE FROM county_polls WHERE status IN ('passed','failed','cancelled')")
-        ).rowcount
-
-        db.commit()
-
-        total = sum(counts.values())
-        log_action(
-            admin_id, "db_maintenance", None,
-            f"Maintenance pass deleted {total:,} rows: "
-            + ", ".join(f"{v} {k}" for k, v in counts.items() if v)
-        )
-
     except Exception as e:
         db.rollback()
-        return {"ok": False, "error": str(e), "counts": counts}
+        return {"ok": False, "error": str(e), "counts": counts, "errors": errors}
     finally:
         db.close()
+
+    result = {
+        "ok": True,
+        "dry_run": dry_run,
+        "total": sum(counts.values()),
+        "counts": counts,
+        "errors": errors,
+        "grace_days": ORDER_HISTORY_GRACE_DAYS,
+        "vacuum_ok": True,
+        "vacuum_err": "",
+    }
+    if dry_run:
+        return result
 
     # ── Reclaim space (must run outside any transaction) ──────────────────────
     # Deleting rows alone doesn't return disk to the OS or refresh planner stats;
     # the VACUUM is where the actual performance win comes from. Syntax differs by
     # backend: Postgres takes per-table "VACUUM (ANALYZE) <table>"; SQLite only
     # supports a bare database-wide "VACUUM" plus a separate "ANALYZE".
-    vacuum_ok = True
-    vacuum_err = ""
     tables_touched = [t for t, v in counts.items() if v > 0]
     if tables_touched:
         try:
@@ -3023,16 +2991,10 @@ def run_db_maintenance(admin_id: int) -> dict:
                         except Exception:
                             pass  # table absent on this instance — non-fatal
         except Exception as _ve:
-            vacuum_ok = False
-            vacuum_err = str(_ve)
+            result["vacuum_ok"] = False
+            result["vacuum_err"] = str(_ve)
 
-    return {
-        "ok": True,
-        "total": sum(counts.values()),
-        "counts": counts,
-        "vacuum_ok": vacuum_ok,
-        "vacuum_err": vacuum_err,
-    }
+    return result
 
 
 # ==========================
