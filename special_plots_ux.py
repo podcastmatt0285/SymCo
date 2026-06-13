@@ -446,21 +446,27 @@ def _mint_dashboard_html(sp, owner=None) -> str:
     except Exception:
         pass
 
-    # ── Load live coin prices ───────────────────────────────────────────────
+    # ── Load live coin prices + ALL coinage balances ────────────────────────
     coin_banks = {}
     # Current holdings of the struck coin (the player's live coinage balance).
     holdings = 0.0
+    all_coin_balances: dict = {}   # code → balance for every non-zero coin the player holds
     try:
         rb_db = rb_get_db()
         coin_banks = {b.currency_code: b for b in rb_db.query(StateReserveBank).filter(
             StateReserveBank.currency_code.in_(list(_COIN_INFO.keys()))
         ).all()}
+        # Load ALL coinage balances so the dashboard can show which silver/gold/platinum
+        # coins the player owns — prevents confusion when they have both AG999 and AG925.
+        from reserve_banks import COIN_CURRENCY_CODES
+        for cb in rb_db.query(PlayerCurrencyBalance).filter(
+            PlayerCurrencyBalance.player_id == sp.owner_id,
+            PlayerCurrencyBalance.currency_code.in_(list(COIN_CURRENCY_CODES)),
+            PlayerCurrencyBalance.balance != 0.0,
+        ).all():
+            all_coin_balances[cb.currency_code] = cb.balance
         if minted_code:
-            bal = rb_db.query(PlayerCurrencyBalance).filter(
-                PlayerCurrencyBalance.player_id == sp.owner_id,
-                PlayerCurrencyBalance.currency_code == minted_code,
-            ).first()
-            holdings = bal.balance if bal else 0.0
+            holdings = all_coin_balances.get(minted_code, 0.0)
         rb_db.close()
     except Exception:
         pass
@@ -663,6 +669,36 @@ def _mint_dashboard_html(sp, owner=None) -> str:
     minted_str   = f"{total_minted:,.4f} {minted_code}" if minted_code else f"{total_minted:,.4f}"
     holdings_str = f"{holdings:,.4f} {minted_code}" if minted_code else f"{holdings:,.4f}"
 
+    # Build "all coinage balances" panel so AG999 vs AG925 is never confused.
+    if all_coin_balances:
+        _coin_chips = ""
+        for _c, _v in sorted(all_coin_balances.items()):
+            _is_mine = (_c == minted_code)
+            _bg    = "#0a1f0a" if _is_mine else "#111827"
+            _br    = "#166534" if _is_mine else "#334155"
+            _col   = "#4ade80" if _is_mine else "#94a3b8"
+            _vcol  = "#4ade80" if _is_mine else "#e2e8f0"
+            _tag   = ' <span style="color:#166534;font-size:0.65rem;">← this Mint</span>' if _is_mine else ""
+            _coin_chips += (
+                f'<span style="display:inline-block;background:{_bg};border:1px solid {_br};'
+                f'border-radius:4px;padding:4px 8px;font-size:0.82rem;margin:2px 4px 2px 0;">'
+                f'<strong style="color:{_col};">{_c}</strong> '
+                f'<span style="color:{_vcol};">{_v:,.4f}</span>{_tag}</span>'
+            )
+        all_coin_html = (
+            '<div style="margin-top:8px;padding:8px 10px;background:#1a1505;'
+            'border:1px solid #78350f;border-radius:6px;">'
+            '<div style="color:#f59e0b;font-size:0.68rem;text-transform:uppercase;'
+            'font-weight:bold;margin-bottom:4px;">🪙 All your coinage balances</div>'
+            f'<div style="display:flex;flex-wrap:wrap;">{_coin_chips}</div>'
+            '<div style="color:#78350f;font-size:0.62rem;margin-top:4px;">'
+            'AG999 = Silver 999-fine · AG925 = Silver 925 Sterling · AU24/22 = Gold · PT9995/950 = Platinum'
+            ' — each code is a separate, non-interchangeable currency.</div>'
+            '</div>'
+        )
+    else:
+        all_coin_html = ""
+
     # Dormant banner — shown only when the subscription has lapsed.
     dormant_banner = ""
     if not owner_pro:
@@ -713,14 +749,15 @@ def _mint_dashboard_html(sp, owner=None) -> str:
         <div style="background:#111827;border-radius:6px;padding:10px;">
           <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;letter-spacing:.05em;">Total Minted (Lifetime)</div>
           <div style="color:#fbbf24;font-weight:bold;font-size:1.05rem;margin-top:2px;">{minted_str}</div>
-          <div style="color:#475569;font-size:0.65rem;">all coins ever struck — includes 2% seigniorage, never decreases</div>
+          <div style="color:#475569;font-size:0.65rem;">all {minted_code or "coins"} ever struck by this Mint — includes 2% seigniorage to bank, never decreases</div>
         </div>
         <div style="background:#0a1f0a;border:1px solid #166534;border-radius:6px;padding:10px;">
-          <div style="color:#4ade80;font-size:0.68rem;text-transform:uppercase;letter-spacing:.05em;font-weight:bold;">⬆ Coins in Hand (Spendable)</div>
+          <div style="color:#4ade80;font-size:0.68rem;text-transform:uppercase;letter-spacing:.05em;font-weight:bold;">⬆ {minted_code or "Coins"} in Hand (Spendable)</div>
           <div style="color:#4ade80;font-weight:bold;font-size:1.05rem;margin-top:2px;">{holdings_str}</div>
-          <div style="color:#16a34a;font-size:0.65rem;">live wallet balance — matches the forex/bond page</div>
+          <div style="color:#16a34a;font-size:0.65rem;">your {minted_code} wallet — same value shown on Forex/Bonds page</div>
         </div>
       </div>
+      {all_coin_html}
 
       <div style="margin-top:14px;">
         <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:#94a3b8;margin-bottom:4px;">

@@ -182,15 +182,42 @@ def bond_market(
     })
     # Sort: legal tender first, then by code
     bal_chips_list.sort(key=lambda b: (b["currency_code"] != my_tender, b["currency_code"]))
-    if bal_chips_list:
-        bal_chips = "".join(
-            f'<span style="margin-right:14px;">{b["flag"]} <strong>{b["currency_code"]}</strong> '
-            f'<strong style="color:#22c55e;">{b["currency_symbol"]}{b["balance"]:,.4f}</strong> '
-            f'<span class="mini">≈ {fmt_usd(b["usd_value"], disp)}</span></span>'
-            for b in bal_chips_list
-        )
+
+    from reserve_banks import COIN_CURRENCY_CODES
+    # Split into precious-metal coinage vs regular fiat so they're never confused.
+    # AG999 and AG925 are both "Ag 🥈 silver" — without separation a player with
+    # both easily misreads one balance as the other.
+    coin_balances = [b for b in bal_chips_list if b["currency_code"] in COIN_CURRENCY_CODES]
+    fiat_balances = [b for b in bal_chips_list if b["currency_code"] not in COIN_CURRENCY_CODES]
+
+    def _chip(b, color="#22c55e"):
+        return (f'<span style="display:inline-block;margin:2px 10px 2px 0;">'
+                f'{b["flag"]} <strong style="font-size:0.9rem;">{b["currency_code"]}</strong> '
+                f'<strong style="color:{color};">{b["currency_symbol"]}{b["balance"]:,.4f}</strong>'
+                f'<span class="mini"> ≈ {fmt_usd(b["usd_value"], disp)}</span></span>')
+
+    if fiat_balances:
+        fiat_chips = "".join(_chip(b) for b in fiat_balances)
     else:
-        bal_chips = '<span style="color:#475569;">None yet — earn income with your legal tender set to a foreign currency.</span>'
+        fiat_chips = '<span style="color:#475569;font-size:0.82rem;">No fiat balances yet.</span>'
+
+    if coin_balances:
+        coin_chips = "".join(_chip(b, color="#fbbf24") for b in coin_balances)
+        coin_section = f'''
+        <div style="margin-top:8px;padding:8px 10px;background:#1a1505;border:1px solid #78350f;border-radius:6px;">
+          <div class="mini" style="color:#f59e0b;font-weight:bold;margin-bottom:4px;">
+            🥇 Precious Metal Coinage — each code is a separate currency
+          </div>
+          <div style="line-height:2;">{coin_chips}</div>
+          <div class="mini" style="color:#78350f;margin-top:4px;">
+            AU24 = Gold 24k · AU22 = Gold 22k · AG999 = Silver 999-fine · AG925 = Silver 925 Sterling ·
+            PT9995 = Platinum 9995 · PT950 = Platinum 950 — balances are independent, not interchangeable.
+          </div>
+        </div>'''
+    else:
+        coin_section = ""
+
+    bal_chips = fiat_chips + coin_section
 
     # Yield farming deposits row
     if my_deposits:
@@ -232,8 +259,8 @@ def bond_market(
         </div>
       </div>
       <div style="margin-bottom:10px;">
-        <div class="mini" style="margin-bottom:4px;">Currency balances
-          <span style="color:#475569;font-style:italic;"> — spendable cash in each currency (USD = PlayerCurrencyBalance, your in-game wallet)</span>
+        <div class="mini" style="margin-bottom:4px;">Currency &amp; Coinage Balances
+          <span style="color:#475569;font-style:italic;"> — spendable wallet in each currency</span>
         </div>
         <div>{bal_chips}</div>
         <div class="mini" style="color:#475569;margin-top:6px;line-height:1.5;">
