@@ -16,6 +16,21 @@
         android:resource="@xml/wadsworth_widget_info" />
 </receiver>
 
+<receiver
+    android:name="PACKAGE_NAME.MemeCoinsWidget"
+    android:exported="true">
+    <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        <action android:name="PACKAGE_NAME.MEMECOINS_REFRESH" />
+        <action android:name="PACKAGE_NAME.MEMECOINS_NEXT" />
+        <action android:name="PACKAGE_NAME.MEMECOINS_PREV" />
+        <action android:name="PACKAGE_NAME.MEMECOINS_SORT" />
+    </intent-filter>
+    <meta-data
+        android:name="android.appwidget.provider"
+        android:resource="@xml/memecoins_widget_info" />
+</receiver>
+
 <!--
   Also add this permission near the top of AndroidManifest.xml
   (inside <manifest>, outside <application>):
