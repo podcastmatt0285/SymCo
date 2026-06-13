@@ -1207,7 +1207,6 @@ def _sparkline_svg(snaps: list[IndexSnapshot], color: str = "#38bdf8") -> str:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _shell(title, body, balance=0.0, player_id=None):
-    from ux import _nav_loader_html as _nav_loader
     try:
         from ux import shell as ux_shell
         return ux_shell(title, body, balance, player_id)
@@ -1218,6 +1217,7 @@ def _shell(title, body, balance=0.0, player_id=None):
 def _guest_shell(title: str, body: str) -> str:
     """Minimal HTML shell for unauthenticated visitors — no game nav."""
     from skin_utils import skin_links
+    from ux import _nav_loader_html as _nav_loader
     skin_tags = skin_links(None)
     return f"""<!DOCTYPE html>
 <html lang="en">
