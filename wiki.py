@@ -328,19 +328,18 @@ def _seed_port_authority_entries():
             "The Port Authority is a sovereign maritime INSTITUTION — the same prestige tier as the Mint. "
             "It must be built on WATER terrain (coastal, island, lake, ocean, or a riverside plot). "
             "Sacrifice the required land plots (Wadsworth Pro required, Fibonacci count) to create a "
-            "'Port Authority' institution, then build your command on it.\n\n"
-            "Three pillars of the Port Authority:\n\n"
-            "1. FEDERAL PROCUREMENT CONTRACTS — The government periodically lists contracts (Events) "
-            "requiring specific military items. Fulfill them from your PA inventory to earn large USD "
-            "payouts directly from the federal treasury.\n\n"
-            "2. IMMIGRATION CONTROL — Set your immigration policy (volume 0–3×, wealth 0.5–2×). "
-            "Higher volume raises retail foot traffic (base_sale_chance). Wealthier immigrants are less "
-            "price-sensitive (lower effective elasticity) — raising profit margins. Poorer or fewer "
-            "immigrants suppress retail demand across the entire economy.\n\n"
-            "3. NAVAL & MILITARY MISSIONS — Deploy Fleet or Army forces against other players:\n"
-            "• Procurement raid — seize target items from another player's Port Authority (50/50 RNG).\n"
-            "• Blockade — freeze a target player's transfers of a specific item for 24 hours (50/50 RNG).\n\n"
-            "Any mission failure destroys 10% of your PA inventory. Build here requires water terrain.",
+            "'Port Authority' institution, then build your command on it. Only one Port Authority per player.\n\n"
+            "GOVERNMENT CONTRACTS — The federal government periodically issues massive procurement contracts. "
+            "Contracts appear in your Port Authority dashboard. Submit a bid with a security deposit to compete. "
+            "Bid windows stay open for 5 days, then the best bid wins automatically.\n\n"
+            "• If you WIN: fulfill the contract by gathering all required items in your regular inventory "
+            "and declaring shipment before the deadline. The government buys at inflated prices — payment "
+            "is TAX FREE. You also earn trophies (the biggest prize!) and your security deposit back.\n"
+            "• If you LOSE the bid: your security deposit is returned immediately.\n"
+            "• If you WIN but MISS the deadline: the government keeps your full deposit and re-issues the contract.\n\n"
+            "Contracts require real-world quantities of production items (food, goods, materials) — not military assets. "
+            "Example: 'Federal Government: Feeding the Homeless' might require 100,000 burgers, 50,000 sodas, "
+            "1,000,000 bread, 500,000 apples — and pays far above market price.",
         ),
         (
             "Fleet & Army Composition",

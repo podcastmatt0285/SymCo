@@ -58,62 +58,171 @@ def _readiness_rows(breakdown: dict) -> str:
     return "".join(rows)
 
 
-def _procurement_section(player_id: int, pa_inv: dict) -> str:
-    """Render active federal procurement contracts."""
+def _contracts_section(player_id: int, player_inv: dict) -> str:
+    """Render the three government contracts panels."""
     try:
-        from events import GameEvent, SessionLocal as ev_session
-        from database import SessionLocal
-        import json as _j
-        from datetime import datetime
-        db = SessionLocal()
-        now = datetime.utcnow()
-        contracts = db.query(GameEvent).filter(
-            GameEvent.event_type == "procurement_contract",
-            GameEvent.is_active == True,
-            (GameEvent.ends_at == None) | (GameEvent.ends_at >= now),
-        ).all()
-        db.close()
+        from port_authority import get_open_contracts, get_player_bids, get_won_contract
+        from datetime import datetime, timezone
+        open_contracts = get_open_contracts()
+        my_bids = {b["contract_id"]: b for b in get_player_bids(player_id, limit=50)}
+        won = get_won_contract(player_id)
     except Exception as e:
         return f"<p style='color:#f87171;'>Error loading contracts: {e}</p>"
 
-    if not contracts:
-        return "<p style='color:#94a3b8;'>No federal procurement contracts active right now.</p>"
+    now = datetime.utcnow()
 
-    rows = []
-    for ev in contracts:
-        try:
-            effect = json.loads(ev.effect_data or "{}")
-        except Exception:
-            effect = {}
-        req = effect.get("required_items", {})
-        per_slot = effect.get("per_slot_payment", 0.0)
-        slots_avail = int(effect.get("slots_available", 1))
-        slots_filled = int(effect.get("slots_filled", 0))
-        slots_left = slots_avail - slots_filled
+    # ── Panel A: Open Contracts ──────────────────────────────────────────
+    if open_contracts:
+        contract_cards = []
+        for c in open_contracts:
+            cid = c["id"]
+            req = c["required_items"]
+            closes = c["bid_closes_at"][:16] if c.get("bid_closes_at") else "—"
+            def _req_row(it, qty):
+                c_ok = "#4ade80" if player_inv.get(it, 0) >= qty else "#f87171"
+                return (f"<tr><td style='padding:2px 8px;'>{_label(it)}</td>"
+                        f"<td style='padding:2px 8px;text-align:right;'>"
+                        f"<b style='color:{c_ok};'>{player_inv.get(it,0):g}</b>"
+                        f" / {qty:g}</td></tr>")
+            req_rows = "".join(_req_row(it, qty) for it, qty in req.items())
+            existing_bid = my_bids.get(cid)
+            if existing_bid:
+                bid_html = (
+                    f"<div style='margin-top:8px;padding:6px;background:#1a2a1a;border:1px solid #2D4A1A;'>"
+                    f"<b style='color:#4ade80;'>✓ Bid Submitted</b> — "
+                    f"Status: <b>{existing_bid['status'].title()}</b> &nbsp;•&nbsp; "
+                    f"Deposit: ${existing_bid['deposit_paid_usd']:,.0f}"
+                    f"</div>"
+                )
+            else:
+                method = c.get("selection_method", "cheapest")
+                if method == "best_volume":
+                    bid_input = (
+                        f"<label style='display:flex;flex-direction:column;gap:3px;'>"
+                        f"Volume Multiplier (e.g. 1.5 = 50% extra delivery offered)<br>"
+                        f"<input id='bid-vol-{cid}' type='number' min='1' step='0.01' value='1.0' "
+                        f"style='padding:5px;width:140px;'></label>"
+                    )
+                    bid_param = f"bidVol: parseFloat(document.getElementById('bid-vol-{cid}').value)"
+                else:
+                    _pay_placeholder = f"e.g. {c['payment_usd']:,.0f}"
+                    bid_input = (
+                        f"<label style='display:flex;flex-direction:column;gap:3px;'>"
+                        f"Your Bid Price (what you charge gov, USD)<br>"
+                        f"<input id='bid-price-{cid}' type='number' min='0' step='1000' "
+                        f"placeholder='{_pay_placeholder}' "
+                        f"style='padding:5px;width:180px;'></label>"
+                    )
+                    bid_param = f"bidPrice: parseFloat(document.getElementById('bid-price-{cid}').value||'0')"
+                bid_html = f"""
+                <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+                  {bid_input}
+                  <button onclick="paSubmitBid({cid},{bid_param})"
+                    style="padding:6px 16px;cursor:pointer;background:#8B4513;color:#F5F5DC;border:1px solid #B08D57;">
+                    Submit Bid (${c['security_deposit_usd']:,.0f} deposit)
+                  </button>
+                </div>"""
 
-        # Check if player can fulfill
-        can_fulfill = all(pa_inv.get(it, 0) >= qty for it, qty in req.items())
-        req_html = ", ".join(f"{qty}× {_label(it)}" for it, qty in req.items())
-        btn_style = "background:#8B4513;color:#F5F5DC;border:1px solid #B08D57;" if can_fulfill else "background:#374151;color:#9ca3af;border:1px solid #4b5563;"
-        btn_disabled = "" if can_fulfill else "disabled"
+            selection_label = "Cheapest bid wins" if c.get("selection_method","cheapest") == "cheapest" else "Highest volume offered wins"
+            contract_cards.append(f"""
+            <div style="border:1px solid #2D1810;padding:12px;margin-bottom:10px;">
+              <b style="color:#B08D57;font-size:1.05em;">{c['title']}</b>
+              <p style="color:#94a3b8;margin:4px 0 8px;">{c.get('description') or ''}</p>
+              <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:8px;">
+                <span>💰 Payment: <b style="color:#4ade80;">${c['payment_usd']:,.0f}</b></span>
+                <span>🏆 Trophies: <b style="color:#fbbf24;">{c['trophy_reward']}</b></span>
+                <span>📅 Bid closes: <b style="color:#F5F5DC;">{closes} UTC</b></span>
+                <span>⏱ Fulfillment: <b>{c['fulfillment_days']} days</b> after winning</span>
+                <span style="color:#94a3b8;font-size:0.85em;">{selection_label}</span>
+              </div>
+              <p style="margin:4px 0 6px;">Required items <span style="color:#94a3b8;font-size:0.85em;">(your inventory / needed)</span>:</p>
+              <table style="border-collapse:collapse;margin-bottom:6px;">{req_rows}</table>
+              {bid_html}
+            </div>""")
+        open_html = "".join(contract_cards)
+    else:
+        open_html = "<p style='color:#94a3b8;'>No government contracts are open for bidding right now. Check back after the next contract cycle.</p>"
 
-        rows.append(f"""
-        <div style="border:1px solid #2D1810;padding:10px;margin-bottom:8px;">
-          <b style="color:#B08D57;">{ev.title}</b>
-          <p style="color:#94a3b8;font-size:0.9em;margin:4px 0;">{ev.description or ''}</p>
-          <p style="margin:4px 0;">
-            Required: <span style="color:#F5F5DC;">{req_html}</span><br>
-            Payment: <b style="color:#4ade80;">${per_slot:,.0f}</b> per slot &nbsp;•&nbsp;
-            Slots: {slots_left}/{slots_avail} remaining
+    # ── Panel B: Active Won Contract ─────────────────────────────────────
+    if won:
+        req = won["required_items"]
+        deadline = won.get("fulfill_deadline", "")[:16] if won.get("fulfill_deadline") else "—"
+        def _won_row(it, qty):
+            c_ok = "#4ade80" if player_inv.get(it, 0) >= qty else "#f87171"
+            return (f"<tr><td style='padding:3px 10px;'>{_label(it)}</td>"
+                    f"<td style='padding:3px 10px;text-align:right;'>"
+                    f"<b style='color:{c_ok};'>{player_inv.get(it,0):g}</b>"
+                    f" / {qty:g} needed</td></tr>")
+        req_rows = "".join(_won_row(it, qty) for it, qty in req.items())
+        can_ship = all(player_inv.get(it, 0) >= qty for it, qty in req.items())
+        ship_btn = (
+            f"<button onclick=\"paFulfill({won['id']})\" "
+            f"style='padding:8px 20px;cursor:pointer;background:#1a4a1a;color:#4ade80;"
+            f"border:2px solid #4ade80;font-size:1rem;margin-top:12px;'>"
+            f"📦 Declare Ready — Ship to Government</button>"
+        ) if can_ship else (
+            "<p style='color:#f87171;margin-top:10px;'>⚠ You don't have all required items yet. "
+            "Gather them and return to ship.</p>"
+        )
+        won_html = f"""
+        <div style="border:2px solid #4ade80;padding:14px;background:#0a1a0a;">
+          <b style="color:#4ade80;font-size:1.1em;">🏆 Won Contract: {won['title']}</b>
+          <p style="color:#94a3b8;margin:4px 0;">{won.get('description') or ''}</p>
+          <p style="margin:6px 0;">
+            Deadline: <b style="color:#fbbf24;">{deadline} UTC</b> &nbsp;•&nbsp;
+            Payment on delivery: <b style="color:#4ade80;">${won['payment_usd']:,.0f}</b> (tax-free) &nbsp;•&nbsp;
+            Trophies: <b style="color:#fbbf24;">{won['trophy_reward']}</b> &nbsp;•&nbsp;
+            Deposit returned: <b>${won.get('deposit_paid_usd',0):,.0f}</b>
           </p>
-          <button onclick="paFulfill({ev.id})" {btn_disabled}
-            style="margin-top:6px;padding:6px 14px;cursor:{'pointer' if can_fulfill else 'default'};{btn_style}">
-            {'Fulfill Contract' if can_fulfill else 'Insufficient Inventory'}
-          </button>
-        </div>
-        """)
+          <p style="margin:4px 0;">Required items <span style="color:#94a3b8;font-size:0.85em;">(your inventory / needed)</span>:</p>
+          <table style="border-collapse:collapse;">{req_rows}</table>
+          {ship_btn}
+        </div>"""
+    else:
+        won_html = "<p style='color:#94a3b8;'>You have no active won contracts to fulfill.</p>"
 
-    return "".join(rows)
+    # ── Panel C: Bid History ─────────────────────────────────────────────
+    bid_list = list(my_bids.values())
+    if bid_list:
+        status_colors = {"won": "#4ade80", "fulfilled": "#4ade80", "pending": "#fbbf24",
+                         "lost": "#94a3b8", "forfeited": "#f87171"}
+        def _bid_row(b):
+            sc = status_colors.get(b["status"], "#F5F5DC")
+            dep_color = "#4ade80" if b["deposit_returned"] else "#94a3b8"
+            dep_label = "✓ Returned" if b["deposit_returned"] else "Held"
+            return (f"<tr><td style='padding:4px 10px;'>{b['contract_title']}</td>"
+                    f"<td style='padding:4px 10px;text-align:right;'>${b['bid_price_usd']:,.0f}</td>"
+                    f"<td style='padding:4px 10px;'><b style='color:{sc};'>{b['status'].title()}</b></td>"
+                    f"<td style='padding:4px 10px;text-align:right;'>${b['deposit_paid_usd']:,.0f}</td>"
+                    f"<td style='padding:4px 10px;color:{dep_color};'>{dep_label}</td></tr>")
+        history_rows = "".join(_bid_row(b) for b in bid_list[:15])
+        history_html = f"""
+        <table style="width:100%;border-collapse:collapse;border:1px solid #2D1810;">
+          <tr style="color:#94a3b8;border-bottom:1px solid #2D1810;">
+            <td style="padding:4px 10px;">Contract</td>
+            <td style="padding:4px 10px;text-align:right;">Bid Price</td>
+            <td style="padding:4px 10px;">Status</td>
+            <td style="padding:4px 10px;text-align:right;">Deposit</td>
+            <td style="padding:4px 10px;">Deposit</td>
+          </tr>
+          {history_rows}
+        </table>"""
+    else:
+        history_html = "<p style='color:#94a3b8;'>No bids submitted yet.</p>"
+
+    return f"""
+    <!-- ── Panel B: Active Contract ──────────────────────────────────────── -->
+    <h3 style="color:#4ade80;margin-top:0 0 10px;">Active Contract</h3>
+    {won_html}
+
+    <!-- ── Panel A: Open Contracts ──────────────────────────────────────── -->
+    <h3 style="color:#B08D57;margin-top:22px;">Open Contracts — Bidding Now</h3>
+    {open_html}
+
+    <!-- ── Panel C: Bid History ──────────────────────────────────────────── -->
+    <h3 style="color:#B08D57;margin-top:22px;">My Bid History</h3>
+    {history_html}
+    """
 
 
 @router.get("/port-authority", response_class=HTMLResponse)
@@ -274,8 +383,8 @@ def port_authority_dashboard(session_token: Optional[str] = Cookie(None)):
         "".join(_blockade_row(b, "placed") for b in blockades_by_me)
     ) or "<tr><td colspan='4' style='padding:10px;color:#94a3b8;'>No active blockades.</td></tr>"
 
-    # Procurement section
-    procurement_html = _procurement_section(player.id, inv)
+    # Government contracts section (uses player's regular inventory, not PA inv)
+    contracts_html = _contracts_section(player.id, player_inv)
 
     body = f"""
     <div style="max-width:800px;margin:0 auto;padding:16px;color:#F5F5DC;font-family:Georgia,serif;">
@@ -297,9 +406,16 @@ def port_authority_dashboard(session_token: Optional[str] = Cookie(None)):
         </div>
       </div>
 
-      <!-- ── Federal Procurement Contracts ─────────────────────────── -->
-      <h3 style="color:#B08D57;margin-top:22px;">📋 Federal Procurement Contracts</h3>
-      {procurement_html}
+      <!-- ── Government Contracts ──────────────────────────────────── -->
+      <h2 style="color:#B08D57;margin-top:28px;border-top:1px solid #2D1810;padding-top:16px;">
+        📋 Government Contracts
+      </h2>
+      <p style="color:#94a3b8;margin:0 0 16px;font-size:0.9em;">
+        Bid on federal procurement contracts — win by submitting the best bid,
+        fulfill within the deadline to earn tax-free payment + trophies.
+        Items ship from your regular inventory, not your PA military depot.
+      </p>
+      {contracts_html}
 
       <!-- ── Immigration Policy ─────────────────────────────────────── -->
       <h3 style="color:#B08D57;margin-top:22px;">🌍 Immigration Policy</h3>
@@ -409,11 +525,22 @@ def port_authority_dashboard(session_token: Optional[str] = Cookie(None)):
       if(j.ok) setTimeout(()=>location.reload(), 600);
     }}
 
-    async function paFulfill(eventId){{
-      const r = await fetch('/api/port-authority/procurement/'+eventId, {{method:'POST'}});
+    async function paSubmitBid(contractId, bidPrice, bidVol){{
+      const body = {{bid_price_usd: bidPrice || 0, bid_volume_multiplier: bidVol || 1.0}};
+      const r = await fetch('/api/port-authority/contracts/'+contractId+'/bid', {{
+        method:'POST', headers:{{'Content-Type':'application/json'}}, body:JSON.stringify(body)
+      }});
       const j = await r.json();
       _show(j.message || j.error || '');
       if(j.ok) setTimeout(()=>location.reload(), 800);
+    }}
+
+    async function paFulfill(contractId){{
+      if(!confirm('Ship all required items to the government? This cannot be undone.')) return;
+      const r = await fetch('/api/port-authority/contracts/'+contractId+'/fulfill', {{method:'POST'}});
+      const j = await r.json();
+      _show(j.message || j.error || '');
+      if(j.ok) setTimeout(()=>location.reload(), 1200);
     }}
 
     async function paSetImmigration(){{

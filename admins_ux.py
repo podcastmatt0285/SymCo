@@ -84,6 +84,7 @@ def admin_shell(title: str, body: str, player_name: str = "", active_nav: str = 
         ("/admin", "Home"),
         ("/admin/players", "Players"),
         ("/admin/events", "Events"),
+        ("/admin/pa-contracts", "PA Contracts"),
         ("/admin/cities", "Cities"),
         ("/admin/moderators", "Moderators"),
         ("/admin/notification-sound", "Notif Sound"),
@@ -6672,3 +6673,257 @@ def admin_indices_force_snapshot(session_token: Optional[str] = Cookie(None)):
     except Exception as e:
         m = urllib.parse.quote(f"Snapshot error: {str(e)[:120]}")
     return RedirectResponse(f"/admin/indices?msg={m}", status_code=303)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Port Authority Contracts — Admin Management
+# ─────────────────────────────────────────────────────────────────────────────
+
+@router.get("/admin/pa-contracts", response_class=HTMLResponse)
+def admin_pa_contracts(
+    session_token: Optional[str] = Cookie(None),
+    msg: Optional[str] = None,
+    err: Optional[str] = None,
+):
+    admin = require_admin(session_token)
+    if isinstance(admin, RedirectResponse): return admin
+
+    try:
+        from port_authority import admin_get_all_contracts
+        contracts = admin_get_all_contracts(limit=100)
+    except Exception as e:
+        contracts = []
+        err = str(e)
+
+    status_colors = {
+        "bidding": "#fbbf24", "awarded": "#60a5fa", "fulfilled": "#4ade80",
+        "forfeited": "#f87171", "expired": "#94a3b8",
+    }
+
+    if contracts:
+        rows = []
+        for c in contracts:
+            sc = status_colors.get(c["status"], "#F5F5DC")
+            rows.append(
+                f"<tr>"
+                f"<td style='padding:6px 10px;'>{c['id']}</td>"
+                f"<td style='padding:6px 10px;'>{c['title']}</td>"
+                f"<td style='padding:6px 10px;'><b style='color:{sc};'>{c['status'].title()}</b></td>"
+                f"<td style='padding:6px 10px;text-align:right;'>${c['payment_usd']:,.0f}</td>"
+                f"<td style='padding:6px 10px;text-align:right;'>${c['security_deposit_usd']:,.0f}</td>"
+                f"<td style='padding:6px 10px;text-align:right;'>{c['trophy_reward']}</td>"
+                f"<td style='padding:6px 10px;'>{c['bid_closes_at'][:16] if c.get('bid_closes_at') else '—'}</td>"
+                f"<td style='padding:6px 10px;'>{c.get('bid_count',0)} bid(s)</td>"
+                f"<td style='padding:6px 10px;'>"
+                + (f"<form method='post' action='/admin/pa-contracts/{c['id']}/cancel' style='display:inline;'>"
+                   f"<input type='hidden' name='session_token' value=''>"
+                   f"<button type='submit' onclick=\"return confirm('Cancel contract and return deposits?')\" "
+                   f"style='padding:3px 10px;background:#7f1d1d;color:#fca5a5;border:1px solid #ef4444;cursor:pointer;'>Cancel</button>"
+                   f"</form>" if c["status"] == "bidding" else "—")
+                + "</td></tr>"
+            )
+        table_html = f"""
+        <table style="width:100%;border-collapse:collapse;border:1px solid #2a2a2a;">
+          <tr style="color:#94a3b8;border-bottom:1px solid #2a2a2a;background:#111;">
+            <td style="padding:6px 10px;">ID</td>
+            <td style="padding:6px 10px;">Title</td>
+            <td style="padding:6px 10px;">Status</td>
+            <td style="padding:6px 10px;text-align:right;">Payment</td>
+            <td style="padding:6px 10px;text-align:right;">Deposit</td>
+            <td style="padding:6px 10px;text-align:right;">Trophies</td>
+            <td style="padding:6px 10px;">Bid Closes</td>
+            <td style="padding:6px 10px;">Bids</td>
+            <td style="padding:6px 10px;">Action</td>
+          </tr>
+          {''.join(rows)}
+        </table>"""
+    else:
+        table_html = "<p style='color:#94a3b8;'>No contracts created yet.</p>"
+
+    now_str = datetime.utcnow().strftime("%Y-%m-%dT%H:%M")
+    msg_html = f"<div style='padding:8px;margin-bottom:12px;background:#14532d;color:#4ade80;border:1px solid #166534;'>{msg}</div>" if msg else ""
+    err_html = f"<div style='padding:8px;margin-bottom:12px;background:#450a0a;color:#f87171;border:1px solid #7f1d1d;'>{err}</div>" if err else ""
+
+    body = f"""
+    <div style="max-width:1000px;margin:0 auto;padding:20px;color:#F5F5DC;">
+      {msg_html}{err_html}
+      <h1 style="color:#ef4444;">📋 Port Authority — Government Contracts</h1>
+      <p style="color:#94a3b8;">
+        Create large-scale procurement contracts for Port Authority owners to bid on.
+        Contracts are tax-free for winners. Bid window = 5 days from open date.
+        On forfeiture the contract automatically re-issues.
+      </p>
+
+      <h2 style="color:#ef4444;margin-top:24px;">All Contracts</h2>
+      {table_html}
+
+      <h2 style="color:#ef4444;margin-top:32px;">Create New Contract</h2>
+      <form method="post" action="/admin/pa-contracts/create" style="display:flex;flex-direction:column;gap:14px;max-width:620px;">
+        <label>
+          Title<br>
+          <input name="title" type="text" required placeholder="e.g. Federal Government: Feeding the Homeless"
+            style="width:100%;padding:8px;background:#111;border:1px solid #333;color:#F5F5DC;margin-top:4px;">
+        </label>
+        <label>
+          Description<br>
+          <textarea name="description" rows="3" placeholder="Describe the contract and its purpose..."
+            style="width:100%;padding:8px;background:#111;border:1px solid #333;color:#F5F5DC;margin-top:4px;"></textarea>
+        </label>
+        <label>
+          Required Items (JSON)<br>
+          <small style="color:#94a3b8;">Format: {{"burger": 100000, "bread": 1000000, "apple": 500000}}</small><br>
+          <textarea name="required_items" rows="5" required
+            placeholder='{{"burger": 100000, "soda": 50000, "bread": 1000000}}'
+            style="width:100%;padding:8px;background:#111;border:1px solid #333;color:#F5F5DC;font-family:monospace;font-size:0.85rem;margin-top:4px;"></textarea>
+        </label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <label>
+            Total Payment USD (inflated price)<br>
+            <input name="payment_usd" type="number" min="0" step="1000" required
+              placeholder="e.g. 50000000"
+              style="width:100%;padding:8px;background:#111;border:1px solid #333;color:#F5F5DC;margin-top:4px;">
+          </label>
+          <label>
+            Security Deposit USD<br>
+            <input name="security_deposit_usd" type="number" min="0" step="1000" required
+              placeholder="e.g. 5000000"
+              style="width:100%;padding:8px;background:#111;border:1px solid #333;color:#F5F5DC;margin-top:4px;">
+          </label>
+          <label>
+            Trophy Reward<br>
+            <input name="trophy_reward" type="number" min="0" value="500"
+              style="width:100%;padding:8px;background:#111;border:1px solid #333;color:#F5F5DC;margin-top:4px;">
+          </label>
+          <label>
+            Fulfillment Days (after bid closes)<br>
+            <input name="fulfillment_days" type="number" min="1" value="14"
+              style="width:100%;padding:8px;background:#111;border:1px solid #333;color:#F5F5DC;margin-top:4px;">
+          </label>
+        </div>
+        <label>
+          Bid Selection Method<br>
+          <select name="selection_method"
+            style="padding:8px;background:#111;border:1px solid #333;color:#F5F5DC;margin-top:4px;">
+            <option value="cheapest">Cheapest wins — lowest bid price wins</option>
+            <option value="best_volume">Best volume wins — highest volume multiplier wins</option>
+          </select>
+        </label>
+        <label>
+          Bid Opens At (UTC)<br>
+          <input name="bid_opens_at" type="datetime-local" value="{now_str}"
+            style="padding:8px;background:#111;border:1px solid #333;color:#F5F5DC;margin-top:4px;">
+        </label>
+        <button type="submit"
+          style="padding:10px 24px;background:#7f1d1d;color:#fca5a5;border:2px solid #ef4444;
+                 font-size:1rem;cursor:pointer;align-self:flex-start;">
+          📋 Post Government Contract
+        </button>
+      </form>
+    </div>
+    """
+    return HTMLResponse(admin_shell("PA Contracts", body, admin.business_name,
+                                   "/admin/pa-contracts", player_id=admin.id))
+
+
+@router.post("/admin/pa-contracts/create")
+def admin_pa_contract_create(
+    session_token:        Optional[str] = Cookie(None),
+    title:                str           = Form(...),
+    description:          Optional[str] = Form(None),
+    required_items:       str           = Form(...),
+    payment_usd:          float         = Form(...),
+    security_deposit_usd: float         = Form(...),
+    trophy_reward:        int           = Form(500),
+    fulfillment_days:     int           = Form(14),
+    selection_method:     str           = Form("cheapest"),
+    bid_opens_at:         Optional[str] = Form(None),
+):
+    admin = require_admin(session_token)
+    if isinstance(admin, RedirectResponse): return admin
+    import json as _j
+    try:
+        # Validate required_items JSON
+        try:
+            req_parsed = _j.loads(required_items.strip())
+            if not isinstance(req_parsed, dict) or not req_parsed:
+                raise ValueError("Must be a non-empty JSON object")
+        except Exception as je:
+            return RedirectResponse(
+                f"/admin/pa-contracts?err={urllib.parse.quote(f'required_items JSON error: {je}')}",
+                status_code=303)
+
+        from datetime import datetime as _dt, timedelta as _td
+        now = _dt.utcnow()
+        opens = _dt.fromisoformat(bid_opens_at) if bid_opens_at and bid_opens_at.strip() else now
+        closes = opens + _td(days=5)
+
+        from port_authority import PAContract, SessionLocal as _PS
+        db = _PS()
+        try:
+            contract = PAContract(
+                title=title.strip(),
+                description=(description.strip() if description else None),
+                required_items=_j.dumps(req_parsed),
+                payment_usd=float(payment_usd),
+                security_deposit_usd=float(security_deposit_usd),
+                trophy_reward=int(trophy_reward),
+                fulfillment_days=int(fulfillment_days),
+                selection_method=selection_method,
+                bid_opens_at=opens,
+                bid_closes_at=closes,
+                status="bidding",
+                created_by=admin.id,
+            )
+            db.add(contract)
+            db.commit()
+            db.refresh(contract)
+            cid = contract.id
+        finally:
+            db.close()
+
+        # Notify all PA owners
+        try:
+            from port_authority import PortAuthorityInstance, SessionLocal as _PS2
+            from push_ux import send_push_notification
+            _db2 = _PS2()
+            try:
+                owners = _db2.query(PortAuthorityInstance).all()
+                for pa in owners:
+                    send_push_notification(
+                        pa.owner_id,
+                        "📋 New Government Contract Available",
+                        f"'{title.strip()}' — ${payment_usd:,.0f} + {trophy_reward} trophies. "
+                        f"Bidding closes in 5 days.",
+                        url="/port-authority",
+                        notif_type="institutions",
+                        tag=f"pa-contract-{cid}",
+                    )
+            finally:
+                _db2.close()
+        except Exception as ne:
+            print(f"[Admin] PA contract push error: {ne}")
+
+        msg = urllib.parse.quote(f"Contract '{title.strip()}' created (ID {cid}). PA owners notified.")
+        return RedirectResponse(f"/admin/pa-contracts?msg={msg}", status_code=303)
+    except Exception as e:
+        return RedirectResponse(
+            f"/admin/pa-contracts?err={urllib.parse.quote(str(e)[:200])}",
+            status_code=303)
+
+
+@router.post("/admin/pa-contracts/{contract_id}/cancel")
+def admin_pa_contract_cancel(
+    contract_id:   int           = 0,
+    session_token: Optional[str] = Cookie(None),
+):
+    admin = require_admin(session_token)
+    if isinstance(admin, RedirectResponse): return admin
+    try:
+        from port_authority import admin_cancel_contract
+        ok, msg = admin_cancel_contract(contract_id)
+        key = "msg" if ok else "err"
+        return RedirectResponse(f"/admin/pa-contracts?{key}={urllib.parse.quote(msg)}", status_code=303)
+    except Exception as e:
+        return RedirectResponse(
+            f"/admin/pa-contracts?err={urllib.parse.quote(str(e)[:200])}",
+            status_code=303)

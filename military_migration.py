@@ -92,6 +92,39 @@ def run_migration():
             "ALTER TABLE port_authority_missions ADD COLUMN IF NOT EXISTS target_item_type VARCHAR",
             "ALTER TABLE port_authority_missions ADD COLUMN IF NOT EXISTS target_quantity INTEGER DEFAULT 1",
             "ALTER TABLE port_authority_missions ADD COLUMN IF NOT EXISTS items_acquired TEXT",
+            # PA contract tables
+            """CREATE TABLE IF NOT EXISTS pa_contracts (
+                id SERIAL PRIMARY KEY,
+                title VARCHAR NOT NULL,
+                description TEXT,
+                required_items TEXT NOT NULL,
+                payment_usd FLOAT NOT NULL,
+                security_deposit_usd FLOAT NOT NULL,
+                trophy_reward INTEGER DEFAULT 0,
+                fulfillment_days INTEGER DEFAULT 14,
+                selection_method VARCHAR DEFAULT 'cheapest',
+                bid_opens_at TIMESTAMP NOT NULL,
+                bid_closes_at TIMESTAMP NOT NULL,
+                status VARCHAR DEFAULT 'bidding',
+                winner_player_id INTEGER,
+                winning_bid_id INTEGER,
+                fulfill_deadline TIMESTAMP,
+                created_by INTEGER,
+                created_at TIMESTAMP DEFAULT NOW()
+            )""",
+            """CREATE TABLE IF NOT EXISTS pa_contract_bids (
+                id SERIAL PRIMARY KEY,
+                contract_id INTEGER NOT NULL,
+                player_id INTEGER NOT NULL,
+                bid_price_usd FLOAT DEFAULT 0.0,
+                bid_volume_multiplier FLOAT DEFAULT 1.0,
+                deposit_paid_usd FLOAT DEFAULT 0.0,
+                status VARCHAR DEFAULT 'pending',
+                submitted_at TIMESTAMP DEFAULT NOW(),
+                deposit_returned BOOLEAN DEFAULT FALSE
+            )""",
+            # Drop the old procurement_submissions table if it exists
+            "DROP TABLE IF EXISTS procurement_submissions",
         ]
         for ddl in schema_ddl:
             try:
