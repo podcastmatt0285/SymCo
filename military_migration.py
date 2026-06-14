@@ -81,15 +81,25 @@ def run_migration():
         # Schema migration — runs every boot, idempotent via IF NOT EXISTS, and
         # independent of the one-time burn flag below. Port Authority became a
         # true Institution built on a special plot, so it needs special_plot_id.
-        try:
-            db.execute(text(
-                "ALTER TABLE port_authority_instances "
-                "ADD COLUMN IF NOT EXISTS special_plot_id INTEGER"
-            ))
-            db.commit()
-        except Exception as _ce:
-            db.rollback()
-            print(f"[migration] PA special_plot_id column: {_ce}")
+        # Idempotent schema migrations — run every boot
+        schema_ddl = [
+            "ALTER TABLE port_authority_instances ADD COLUMN IF NOT EXISTS special_plot_id INTEGER",
+            "ALTER TABLE port_authority_instances ADD COLUMN IF NOT EXISTS immigration_volume FLOAT DEFAULT 1.0",
+            "ALTER TABLE port_authority_instances ADD COLUMN IF NOT EXISTS immigration_wealth FLOAT DEFAULT 1.0",
+            # Mission table redesign (new columns alongside old ones for zero-downtime)
+            "ALTER TABLE port_authority_missions ADD COLUMN IF NOT EXISTS mission_subtype VARCHAR",
+            "ALTER TABLE port_authority_missions ADD COLUMN IF NOT EXISTS target_player_id INTEGER",
+            "ALTER TABLE port_authority_missions ADD COLUMN IF NOT EXISTS target_item_type VARCHAR",
+            "ALTER TABLE port_authority_missions ADD COLUMN IF NOT EXISTS target_quantity INTEGER DEFAULT 1",
+            "ALTER TABLE port_authority_missions ADD COLUMN IF NOT EXISTS items_acquired TEXT",
+        ]
+        for ddl in schema_ddl:
+            try:
+                db.execute(text(ddl))
+                db.commit()
+            except Exception as _ce:
+                db.rollback()
+                print(f"[migration] DDL failed: {ddl[:60]}... — {_ce}")
 
         if flag:
             print(f"[migration] {MIGRATION_NAME}: already applied, skipping.")

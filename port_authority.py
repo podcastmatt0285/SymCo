@@ -15,11 +15,11 @@ Design choices (per product spec):
 """
 
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Tuple
 
 from sqlalchemy import (
-    Column, Integer, String, Float, DateTime, Text,
+    Column, Integer, String, Float, DateTime, Text, Boolean,
     UniqueConstraint, update as sa_update,
 )
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -130,19 +130,10 @@ MAINTENANCE_DAILY: Dict[str, float] = {
 
 MAINTENANCE_INTERVAL = 86_400  # ticks between automatic maintenance charges
 
-# Attack mission: winner steals this fraction of target's USD balance
-LOOT_FRACTION = 0.05
-LOOT_CAP_USD  = 10_000_000.0   # maximum loot per successful attack
-
 # On failure: this fraction of PA inventory is destroyed (random items)
 LOSS_FRACTION = 0.10
 
-# Government skim on successful attack loot (mirrors federal taxes on other money
-# movements). The winner keeps (1 - PA_LOOT_TAX_RATE); the rest flows to the
-# federal government and is recorded in the government ledger.
-PA_LOOT_TAX_RATE        = 0.05
-# Daily maintenance is taxed too — a small share of every upkeep dollar collected
-# is logged to the government ledger as Port Authority Upkeep Tax.
+# Daily maintenance: a small share flows to the federal government ledger.
 PA_MAINTENANCE_TAX_RATE = 0.10
 
 
@@ -172,10 +163,11 @@ class PortAuthorityInstance(Base):
     name                  = Column(String, default="Port Authority")
     created_at            = Column(DateTime, default=datetime.utcnow)
     last_maintenance_tick = Column(Integer, default=0)
-    # The Institution (special plot) this Port Authority is built on. A PA is a
-    # true institution: it can only be built on a "port_authority" special plot
-    # created by sacrificing land (Wadsworth Pro, Fibonacci plot count).
+    # The Institution (special plot) this Port Authority is built on.
     special_plot_id       = Column(Integer, index=True, nullable=True)
+    # Immigration policy multipliers
+    immigration_volume    = Column(Float, default=1.0)   # 0.0–3.0, multiplier on retail sales volume
+    immigration_wealth    = Column(Float, default=1.0)   # 0.5–2.0, multiplier on price/elasticity
 
 
 class PortAuthorityInventory(Base):
@@ -191,17 +183,39 @@ class PortAuthorityInventory(Base):
 class PortAuthorityMission(Base):
     __tablename__ = "port_authority_missions"
 
-    id            = Column(Integer, primary_key=True)
-    pa_id         = Column(Integer, index=True, nullable=False)
-    mission_type  = Column(String, nullable=False)   # "attack" | "defend"
-    force_type    = Column(String, nullable=False)   # "fleet"  | "army"
-    target_player = Column(Integer, nullable=True)
-    target_note   = Column(String, nullable=True)
-    outcome       = Column(String, nullable=True)    # "success" | "failure"
-    loot_usd      = Column(Float, default=0.0)
-    items_lost    = Column(Text, nullable=True)       # JSON summary of losses
-    created_at    = Column(DateTime, default=datetime.utcnow)
-    resolved_at   = Column(DateTime, nullable=True)
+    id               = Column(Integer, primary_key=True)
+    pa_id            = Column(Integer, index=True, nullable=False)
+    mission_subtype  = Column(String, nullable=False)   # "procurement" | "blockade"
+    target_player_id = Column(Integer, nullable=True)
+    target_item_type = Column(String, nullable=True)
+    target_quantity  = Column(Integer, default=1)
+    items_acquired   = Column(Text, nullable=True)      # JSON: {item_type: qty} on success
+    items_lost       = Column(Text, nullable=True)      # JSON: {item_type: qty} on failure
+    outcome          = Column(String, nullable=True)    # "success" | "failure"
+    created_at       = Column(DateTime, default=datetime.utcnow)
+    resolved_at      = Column(DateTime, nullable=True)
+
+
+class ProcurementSubmission(Base):
+    __tablename__ = "procurement_submissions"
+
+    id                   = Column(Integer, primary_key=True)
+    player_id            = Column(Integer, index=True, nullable=False)
+    event_id             = Column(Integer, nullable=False, index=True)
+    submitted_at         = Column(DateTime, default=datetime.utcnow)
+    payment_received_usd = Column(Float, default=0.0)
+
+
+class BlockadeInstance(Base):
+    __tablename__ = "blockade_instances"
+
+    id                = Column(Integer, primary_key=True)
+    blocker_player_id = Column(Integer, index=True, nullable=False)
+    target_player_id  = Column(Integer, index=True, nullable=False)
+    item_type         = Column(String, nullable=False)
+    created_at        = Column(DateTime, default=datetime.utcnow)
+    expires_at        = Column(DateTime, nullable=False)
+    lifted            = Column(Boolean, default=False)
 
 
 def init_db():
@@ -361,6 +375,8 @@ def get_port_authority(player_id: int) -> Optional[dict]:
             "army_ready":            army_ready,
             "army_breakdown":        army_bd,
             "daily_maintenance_usd": daily_cost,
+            "immigration_volume":    pa.immigration_volume if pa.immigration_volume is not None else 1.0,
+            "immigration_wealth":    pa.immigration_wealth if pa.immigration_wealth is not None else 1.0,
         }
     finally:
         db.close()
@@ -420,28 +436,30 @@ def withdraw_weapon(player_id: int, item_type: str, quantity: float) -> Tuple[bo
 
 def deploy_mission(
     player_id: int,
-    force_type: str,        # "fleet" | "army"
-    mission_type: str,      # "attack" | "defend"
-    target_player_id: Optional[int] = None,
-    target_note: Optional[str] = None,
+    mission_subtype: str,       # "procurement" | "blockade"
+    target_player_id: int,
+    target_item_type: str,
+    target_quantity: int = 1,
 ) -> Tuple[bool, dict]:
     """
-    Launch a mission.  Returns (ok, result_dict).
+    Launch a procurement or blockade mission.  Returns (ok, result_dict).
 
-    Attack:
-      success → steal min(5 % of target's balance, $10 M) in cash
-      failure → lose 10 % of PA inventory (random items destroyed)
+    Either fleet or army readiness is sufficient to deploy.
 
-    Defend:
-      success → no loss, defence holds
-      failure → lose 10 % of PA inventory (random items destroyed)
+    procurement:
+      success → steal target_quantity of target_item_type from target's PA inventory
+      failure → lose 10% of own PA inventory
+
+    blockade:
+      success → create a 24-hour blockade on target's item transfers
+      failure → lose 10% of own PA inventory
 
     Outcome is a pure 50/50 coin-flip.
     """
-    if force_type not in ("fleet", "army"):
-        return False, {"error": "force_type must be 'fleet' or 'army'"}
-    if mission_type not in ("attack", "defend"):
-        return False, {"error": "mission_type must be 'attack' or 'defend'"}
+    import json
+
+    if mission_subtype not in ("procurement", "blockade"):
+        return False, {"error": "mission_subtype must be 'procurement' or 'blockade'"}
 
     db = SessionLocal()
     try:
@@ -450,44 +468,22 @@ def deploy_mission(
             return False, {"error": "You do not own a Port Authority."}
 
         inventory = _get_pa_inventory(db, pa.id)
-        thresholds = FLEET_THRESHOLDS if force_type == "fleet" else ARMY_THRESHOLDS
-        ready, breakdown = _check_thresholds(inventory, thresholds)
-        if not ready:
-            unmet = [k for k, v in breakdown.items() if not v["met"]]
+
+        # Check fleet OR army readiness — either qualifies the player to deploy
+        fleet_ready, fleet_bd = _check_thresholds(inventory, FLEET_THRESHOLDS)
+        army_ready, army_bd   = _check_thresholds(inventory, ARMY_THRESHOLDS)
+        if not fleet_ready and not army_ready:
             return False, {
-                "error": f"{'Fleet' if force_type == 'fleet' else 'Army'} not ready. "
-                         f"Missing: {', '.join(unmet)}.",
-                "breakdown": breakdown,
+                "error": "Neither fleet nor army is ready for deployment.",
+                "fleet_breakdown": fleet_bd,
+                "army_breakdown":  army_bd,
             }
 
         # ── Pure RNG resolution ──────────────────────────────────────────────
         success = random.random() < 0.5
 
-        loot_usd   = 0.0
+        items_acquired_summary: Dict[str, float] = {}
         items_lost_summary: Dict[str, float] = {}
-
-        if success and mission_type == "attack" and target_player_id is not None:
-            from reserve_banks import get_usd_balance, spend_player_funds
-            target_balance = get_usd_balance(target_player_id)
-            loot = min(target_balance * LOOT_FRACTION, LOOT_CAP_USD)
-            if loot > 0:
-                ok, _ = spend_player_funds(target_player_id, loot)
-                if ok:
-                    from reserve_banks import credit_usd
-                    # Government skims a share of the loot (federal tax), the
-                    # attacker keeps the remainder. credit_usd auto-converts to
-                    # the player's legal tender; spend/credit handle multi-currency.
-                    tax        = loot * PA_LOOT_TAX_RATE
-                    net_loot   = loot - tax
-                    credit_usd(player_id, net_loot)
-                    loot_usd = net_loot
-                    try:
-                        from govt_ledger import log_gov_event
-                        log_gov_event("pa_loot_tax", "in", tax, "USD",
-                                      counterparty=f"player:{player_id}",
-                                      description=f"PA attack loot tax (PA#{pa.id})")
-                    except Exception:
-                        pass
 
         if not success:
             # Destroy LOSS_FRACTION of each PA item
@@ -498,56 +494,305 @@ def deploy_mission(
                     _pa_remove_item(db, pa.id, item_type, float(loss))
                     items_lost_summary[item_type] = float(loss)
 
-        import json
+        if success and mission_subtype == "procurement":
+            # Find target's PA and steal target_item_type
+            target_pa = db.query(PortAuthorityInstance).filter_by(owner_id=target_player_id).first()
+            if target_pa:
+                target_inv = _get_pa_inventory(db, target_pa.id)
+                qty_available = min(target_quantity, target_inv.get(target_item_type, 0))
+                if qty_available > 0:
+                    _pa_remove_item(db, target_pa.id, target_item_type, float(qty_available))
+                    _pa_add_item(db, pa.id, target_item_type, float(qty_available))
+                    items_acquired_summary[target_item_type] = float(qty_available)
+                    # Notify target
+                    _fire_pa_push(
+                        target_player_id,
+                        "Port Authority: Procurement Alert",
+                        f"Your {target_item_type} inventory was raided — {qty_available} units acquired.",
+                    )
+                    # Log transactions for both players
+                    try:
+                        from stats_ux import log_transaction
+                        log_transaction(
+                            player_id, "pa_procurement_acquired", "resource", 0.0,
+                            f"Acquired {qty_available:g} × {target_item_type} via procurement from player {target_player_id}",
+                            item_type=target_item_type, quantity=qty_available,
+                        )
+                        log_transaction(
+                            target_player_id, "pa_procurement_lost", "resource", 0.0,
+                            f"Lost {qty_available:g} × {target_item_type} to procurement by player {player_id}",
+                            item_type=target_item_type, quantity=qty_available,
+                        )
+                    except Exception:
+                        pass
+
+        if success and mission_subtype == "blockade":
+            blockade = BlockadeInstance(
+                blocker_player_id=player_id,
+                target_player_id=target_player_id,
+                item_type=target_item_type,
+                expires_at=datetime.utcnow() + timedelta(hours=24),
+            )
+            db.add(blockade)
+            _fire_pa_push(
+                target_player_id,
+                "Port Authority: Blockade Imposed",
+                f"A blockade on your {target_item_type} transfers is now active for 24 hours.",
+            )
+
         mission = PortAuthorityMission(
             pa_id=pa.id,
-            mission_type=mission_type,
-            force_type=force_type,
-            target_player=target_player_id,
-            target_note=target_note,
-            outcome="success" if success else "failure",
-            loot_usd=loot_usd,
+            mission_subtype=mission_subtype,
+            target_player_id=target_player_id,
+            target_item_type=target_item_type,
+            target_quantity=target_quantity,
+            items_acquired=json.dumps(items_acquired_summary) if items_acquired_summary else None,
             items_lost=json.dumps(items_lost_summary) if items_lost_summary else None,
+            outcome="success" if success else "failure",
             resolved_at=datetime.utcnow(),
         )
         db.add(mission)
         db.commit()
 
-        # Personal transaction ledger + push notification (best-effort).
+        # Log losses to player ledger
         try:
             from stats_ux import log_transaction
-            if loot_usd > 0:
-                log_transaction(player_id, "pa_attack_loot", "money", loot_usd,
-                                f"Port Authority {force_type} attack loot"
-                                + (f" from player {target_player_id}" if target_player_id else ""))
             for it, qty in items_lost_summary.items():
                 log_transaction(player_id, "pa_loss", "resource", 0.0,
-                                f"Lost {qty:g} × {it} in failed {force_type} {mission_type}",
+                                f"Lost {qty:g} × {it} in failed {mission_subtype} mission",
                                 item_type=it, quantity=qty)
         except Exception:
             pass
 
         outcome = "success" if success else "failure"
-        force_label = "Fleet" if force_type == "fleet" else "Army"
-        if outcome == "success" and loot_usd > 0:
-            body = f"{force_label} {mission_type} succeeded — looted ${loot_usd:,.0f}."
+        if outcome == "success" and mission_subtype == "procurement" and items_acquired_summary:
+            total_acq = sum(items_acquired_summary.values())
+            body = f"Procurement succeeded — acquired {total_acq:g} × {target_item_type}."
+        elif outcome == "success" and mission_subtype == "blockade":
+            body = f"Blockade on {target_item_type} imposed for 24 hours."
         elif outcome == "success":
-            body = f"{force_label} {mission_type} succeeded."
+            body = f"{mission_subtype.capitalize()} mission succeeded."
         else:
             lost = sum(items_lost_summary.values())
-            body = f"{force_label} {mission_type} failed — lost {lost:g} units of materiel."
-        _fire_pa_push(player_id, f"Port Authority: {force_label} {outcome}", body)
+            body = f"{mission_subtype.capitalize()} mission failed — lost {lost:g} units of materiel."
+        _fire_pa_push(player_id, f"Port Authority: {mission_subtype.capitalize()} {outcome}", body)
 
         return True, {
-            "outcome":      outcome,
-            "force_type":   force_type,
-            "mission_type": mission_type,
-            "loot_usd":     loot_usd,
-            "items_lost":   items_lost_summary,
+            "outcome":          outcome,
+            "mission_subtype":  mission_subtype,
+            "target_player_id": target_player_id,
+            "target_item_type": target_item_type,
+            "items_acquired":   items_acquired_summary,
+            "items_lost":       items_lost_summary,
         }
     except Exception as e:
         db.rollback()
         return False, {"error": str(e)}
+    finally:
+        db.close()
+
+
+def submit_procurement_delivery(player_id: int, event_id: int) -> Tuple[bool, str]:
+    """Submit PA inventory items to fulfill a federal procurement contract (GameEvent).
+
+    The GameEvent must have event_type="procurement_contract" and be active.
+    effect_data JSON schema: {
+        "required_items": {"item_slug": quantity, ...},
+        "per_slot_payment": 1500000.0,
+        "slots_available": 3,
+        "slots_filled": 0
+    }
+    """
+    import json
+    db = SessionLocal()
+    try:
+        pa = db.query(PortAuthorityInstance).filter_by(owner_id=player_id).first()
+        if not pa:
+            return False, "You do not own a Port Authority."
+
+        from events import GameEvent
+        ev = db.query(GameEvent).filter(
+            GameEvent.id == event_id,
+            GameEvent.is_active == True,
+            GameEvent.event_type == "procurement_contract",
+        ).first()
+        if not ev:
+            return False, "Contract not found or no longer active."
+
+        now = datetime.utcnow()
+        if ev.ends_at and ev.ends_at < now:
+            return False, "Contract has expired."
+
+        effect = json.loads(ev.effect_data or "{}")
+        required_items = effect.get("required_items", {})
+        per_slot_payment = float(effect.get("per_slot_payment", 0.0))
+        slots_available = int(effect.get("slots_available", 1))
+        slots_filled = int(effect.get("slots_filled", 0))
+
+        if slots_filled >= slots_available:
+            return False, "Contract is fully filled — no slots remaining."
+
+        # Check PA inventory has all required items
+        pa_inv = _get_pa_inventory(db, pa.id)
+        for item_slug, qty_needed in required_items.items():
+            if pa_inv.get(item_slug, 0) < qty_needed:
+                return False, f"Insufficient {item_slug} in Port Authority inventory (need {qty_needed})."
+
+        # Deduct items
+        for item_slug, qty_needed in required_items.items():
+            if not _pa_remove_item(db, pa.id, item_slug, float(qty_needed)):
+                return False, f"Failed to deduct {item_slug}."
+
+        # Pay player from government
+        if per_slot_payment > 0:
+            from reserve_banks import credit_usd
+            credit_usd(player_id, per_slot_payment)
+            try:
+                from govt_ledger import log_gov_event
+                log_gov_event("procurement_payment", "out", per_slot_payment, "USD",
+                              counterparty=f"player:{player_id}",
+                              description=f"PA procurement contract #{event_id} slot payment")
+            except Exception:
+                pass
+            try:
+                from stats_ux import log_transaction
+                log_transaction(player_id, "procurement_contract", "money", per_slot_payment,
+                                f"Federal procurement contract fulfilled (event #{event_id})",
+                                reference_id=f"event-{event_id}")
+            except Exception:
+                pass
+
+        # Update slots_filled
+        effect["slots_filled"] = slots_filled + 1
+        ev.effect_data = json.dumps(effect)
+        if effect["slots_filled"] >= slots_available:
+            ev.is_active = False  # contract fully filled
+
+        # Record submission
+        sub = ProcurementSubmission(
+            player_id=player_id,
+            event_id=event_id,
+            payment_received_usd=per_slot_payment,
+        )
+        db.add(sub)
+        db.commit()
+
+        try:
+            from events import record_task_progress
+            record_task_progress(player_id, "procurement_delivery", 1)
+        except Exception:
+            pass
+
+        _fire_pa_push(player_id, "Procurement Contract Filled",
+                      f"Delivered items for contract #{event_id}. Received ${per_slot_payment:,.0f}.")
+
+        return True, f"Contract fulfilled — ${per_slot_payment:,.0f} credited."
+    except Exception as e:
+        db.rollback()
+        return False, str(e)
+    finally:
+        db.close()
+
+
+def set_immigration_policy(player_id: int, volume: float, wealth: float) -> Tuple[bool, str]:
+    """Update immigration policy for a player's Port Authority.
+
+    volume: 0.0–3.0 multiplier on retail base_sale_chance
+    wealth: 0.5–2.0 multiplier on effective price/elasticity
+    """
+    volume = max(0.0, min(3.0, float(volume)))
+    wealth = max(0.5, min(2.0, float(wealth)))
+    db = SessionLocal()
+    try:
+        pa = db.query(PortAuthorityInstance).filter_by(owner_id=player_id).first()
+        if not pa:
+            return False, "You do not own a Port Authority."
+        pa.immigration_volume = volume
+        pa.immigration_wealth = wealth
+        db.commit()
+        return True, f"Immigration policy updated: volume={volume:.2f}, wealth={wealth:.2f}."
+    except Exception as e:
+        db.rollback()
+        return False, str(e)
+    finally:
+        db.close()
+
+
+def get_active_blockades_against(player_id: int) -> list:
+    """Return active blockades targeting this player."""
+    db = SessionLocal()
+    try:
+        now = datetime.utcnow()
+        rows = db.query(BlockadeInstance).filter(
+            BlockadeInstance.target_player_id == player_id,
+            BlockadeInstance.expires_at > now,
+            BlockadeInstance.lifted == False,
+        ).all()
+        return [{"id": r.id, "blocker_player_id": r.blocker_player_id,
+                 "item_type": r.item_type, "expires_at": r.expires_at.isoformat()} for r in rows]
+    finally:
+        db.close()
+
+
+def get_active_blockades_by(player_id: int) -> list:
+    """Return active blockades placed by this player."""
+    db = SessionLocal()
+    try:
+        now = datetime.utcnow()
+        rows = db.query(BlockadeInstance).filter(
+            BlockadeInstance.blocker_player_id == player_id,
+            BlockadeInstance.expires_at > now,
+            BlockadeInstance.lifted == False,
+        ).all()
+        return [{"id": r.id, "target_player_id": r.target_player_id,
+                 "item_type": r.item_type, "expires_at": r.expires_at.isoformat()} for r in rows]
+    finally:
+        db.close()
+
+
+# Module-level cache for immigration modifiers
+_imm_cache: tuple = (1.0, 1.0)
+_imm_cache_ts: float = 0.0
+
+
+def get_immigration_modifiers() -> tuple:
+    """Return (volume_multiplier, wealth_multiplier) averaged across all active PAs.
+
+    Called by supplydemand integration to adjust retail base_sale_chance and price.
+    Cached for 60 seconds.
+    """
+    import time
+    global _imm_cache, _imm_cache_ts
+    now = time.time()
+    if now - _imm_cache_ts < 60:
+        return _imm_cache
+    db = SessionLocal()
+    try:
+        pas = db.query(PortAuthorityInstance).all()
+        if not pas:
+            _imm_cache = (1.0, 1.0)
+        else:
+            avg_vol = sum(pa.immigration_volume or 1.0 for pa in pas) / len(pas)
+            avg_wlth = sum(pa.immigration_wealth or 1.0 for pa in pas) / len(pas)
+            _imm_cache = (avg_vol, avg_wlth)
+        _imm_cache_ts = now
+        return _imm_cache
+    finally:
+        db.close()
+
+
+def is_item_blockaded(player_id: int, item_type: str) -> bool:
+    """Check if player has an active blockade on this item type."""
+    db = SessionLocal()
+    try:
+        now = datetime.utcnow()
+        row = db.query(BlockadeInstance).filter(
+            BlockadeInstance.target_player_id == player_id,
+            BlockadeInstance.item_type == item_type,
+            BlockadeInstance.expires_at > now,
+            BlockadeInstance.lifted == False,
+        ).first()
+        return row is not None
     finally:
         db.close()
 
@@ -596,16 +841,16 @@ def get_missions(player_id: int, limit: int = 20) -> List[dict]:
         import json
         return [
             {
-                "id":            r.id,
-                "mission_type":  r.mission_type,
-                "force_type":    r.force_type,
-                "target_player": r.target_player,
-                "target_note":   r.target_note,
-                "outcome":       r.outcome,
-                "loot_usd":      r.loot_usd,
-                "items_lost":    json.loads(r.items_lost) if r.items_lost else {},
-                "created_at":    r.created_at.isoformat() if r.created_at else None,
-                "resolved_at":   r.resolved_at.isoformat() if r.resolved_at else None,
+                "id":               r.id,
+                "mission_subtype":  r.mission_subtype,
+                "target_player_id": r.target_player_id,
+                "target_item_type": r.target_item_type,
+                "target_quantity":  r.target_quantity,
+                "items_acquired":   json.loads(r.items_acquired) if r.items_acquired else {},
+                "items_lost":       json.loads(r.items_lost) if r.items_lost else {},
+                "outcome":          r.outcome,
+                "created_at":       r.created_at.isoformat() if r.created_at else None,
+                "resolved_at":      r.resolved_at.isoformat() if r.resolved_at else None,
             }
             for r in rows
         ]
@@ -738,13 +983,34 @@ async def api_deploy(request: Request):
     pid = _player_id(request)
     if not pid:
         return JSONResponse({"error": "Not logged in."}, status_code=401)
-    body         = await request.json()
-    force_type   = body.get("force_type", "")
-    mission_type = body.get("mission_type", "")
-    target_pid   = body.get("target_player_id")
-    target_note  = body.get("target_note")
-    ok, result = deploy_mission(pid, force_type, mission_type, target_pid, target_note)
+    body             = await request.json()
+    mission_subtype  = body.get("mission_subtype", "")
+    target_player_id = body.get("target_player_id")
+    target_item_type = body.get("target_item_type", "")
+    target_quantity  = int(body.get("target_quantity", 1))
+    ok, result = deploy_mission(pid, mission_subtype, target_player_id, target_item_type, target_quantity)
     return JSONResponse({"ok": ok, **result}, status_code=200 if ok else 400)
+
+
+@router.post("/procurement/{event_id}")
+async def api_procurement_delivery(event_id: int, request: Request):
+    pid = _player_id(request)
+    if not pid:
+        return JSONResponse({"error": "Not logged in."}, status_code=401)
+    ok, msg = submit_procurement_delivery(pid, event_id)
+    return JSONResponse({"ok": ok, "message": msg}, status_code=200 if ok else 400)
+
+
+@router.post("/immigration")
+async def api_immigration(request: Request):
+    pid = _player_id(request)
+    if not pid:
+        return JSONResponse({"error": "Not logged in."}, status_code=401)
+    body   = await request.json()
+    volume = float(body.get("volume", 1.0))
+    wealth = float(body.get("wealth", 1.0))
+    ok, msg = set_immigration_policy(pid, volume, wealth)
+    return JSONResponse({"ok": ok, "message": msg}, status_code=200 if ok else 400)
 
 
 @router.get("/missions")

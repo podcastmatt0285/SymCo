@@ -26,6 +26,20 @@ BASE_SALE_CHANCE GUIDE (per-item probability each production cycle):
 import math
 
 
+def get_immigration_modifiers() -> tuple:
+    """Return (volume_multiplier, wealth_multiplier) from Port Authority immigration policy.
+
+    volume_multiplier: multiplied into base_sale_chance (more immigrants = more retail demand)
+    wealth_multiplier: multiplied into effective price / divided into elasticity
+    Cached for 60 s. Falls back to (1.0, 1.0) if PA module is unavailable.
+    """
+    try:
+        from port_authority import get_immigration_modifiers as _pa_get
+        return _pa_get()
+    except Exception:
+        return (1.0, 1.0)
+
+
 class SupplyDemandEngine:
     """
     Supply and demand calculator for retail businesses.

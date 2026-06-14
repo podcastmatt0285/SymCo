@@ -7,6 +7,7 @@ fast-load navigation loader, the player's skin/theme, and standard chrome.
 All mutations go through the existing JSON API in port_authority.router.
 """
 
+import json
 from typing import Optional
 from fastapi import APIRouter, Cookie
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -57,6 +58,64 @@ def _readiness_rows(breakdown: dict) -> str:
     return "".join(rows)
 
 
+def _procurement_section(player_id: int, pa_inv: dict) -> str:
+    """Render active federal procurement contracts."""
+    try:
+        from events import GameEvent, SessionLocal as ev_session
+        from database import SessionLocal
+        import json as _j
+        from datetime import datetime
+        db = SessionLocal()
+        now = datetime.utcnow()
+        contracts = db.query(GameEvent).filter(
+            GameEvent.event_type == "procurement_contract",
+            GameEvent.is_active == True,
+            (GameEvent.ends_at == None) | (GameEvent.ends_at >= now),
+        ).all()
+        db.close()
+    except Exception as e:
+        return f"<p style='color:#f87171;'>Error loading contracts: {e}</p>"
+
+    if not contracts:
+        return "<p style='color:#94a3b8;'>No federal procurement contracts active right now.</p>"
+
+    rows = []
+    for ev in contracts:
+        try:
+            effect = json.loads(ev.effect_data or "{}")
+        except Exception:
+            effect = {}
+        req = effect.get("required_items", {})
+        per_slot = effect.get("per_slot_payment", 0.0)
+        slots_avail = int(effect.get("slots_available", 1))
+        slots_filled = int(effect.get("slots_filled", 0))
+        slots_left = slots_avail - slots_filled
+
+        # Check if player can fulfill
+        can_fulfill = all(pa_inv.get(it, 0) >= qty for it, qty in req.items())
+        req_html = ", ".join(f"{qty}× {_label(it)}" for it, qty in req.items())
+        btn_style = "background:#8B4513;color:#F5F5DC;border:1px solid #B08D57;" if can_fulfill else "background:#374151;color:#9ca3af;border:1px solid #4b5563;"
+        btn_disabled = "" if can_fulfill else "disabled"
+
+        rows.append(f"""
+        <div style="border:1px solid #2D1810;padding:10px;margin-bottom:8px;">
+          <b style="color:#B08D57;">{ev.title}</b>
+          <p style="color:#94a3b8;font-size:0.9em;margin:4px 0;">{ev.description or ''}</p>
+          <p style="margin:4px 0;">
+            Required: <span style="color:#F5F5DC;">{req_html}</span><br>
+            Payment: <b style="color:#4ade80;">${per_slot:,.0f}</b> per slot &nbsp;•&nbsp;
+            Slots: {slots_left}/{slots_avail} remaining
+          </p>
+          <button onclick="paFulfill({ev.id})" {btn_disabled}
+            style="margin-top:6px;padding:6px 14px;cursor:{'pointer' if can_fulfill else 'default'};{btn_style}">
+            {'Fulfill Contract' if can_fulfill else 'Insufficient Inventory'}
+          </button>
+        </div>
+        """)
+
+    return "".join(rows)
+
+
 @router.get("/port-authority", response_class=HTMLResponse)
 def port_authority_dashboard(session_token: Optional[str] = Cookie(None)):
     player = _require_auth(session_token)
@@ -67,6 +126,7 @@ def port_authority_dashboard(session_token: Optional[str] = Cookie(None)):
         from port_authority import (
             get_port_authority, get_missions, ALL_PA_ITEMS,
             FLEET_THRESHOLDS, ARMY_THRESHOLDS, MAINTENANCE_DAILY,
+            get_active_blockades_against, get_active_blockades_by,
         )
         from inventory import get_player_inventory
         from reserve_banks import fmt_usd
@@ -77,23 +137,26 @@ def port_authority_dashboard(session_token: Optional[str] = Cookie(None)):
 
     pa = get_port_authority(player.id)
 
-    # ── No PA yet — it's an Institution, so route through land sacrifice ──────
+    # ── No PA yet — route through land sacrifice ──────────────────────────────
     if pa is None:
         from port_authority import get_unbuilt_pa_plot
         ready_plot = get_unbuilt_pa_plot(player.id)
 
         intro = """
-          <p>The Port Authority is a sovereign military <b>Institution</b>. Deposit
-          weapons and platforms from your inventory, then deploy <b>Fleet</b> or
-          <b>Army</b> forces on global missions — attack rivals for loot, or defend
-          your assets.</p>
-          <ul style="line-height:1.7;">
-            <li>Mission outcomes are a pure 50/50 coin-flip.</li>
-            <li>Successful attack → steal up to 5% of the target's balance (cap $10M); a federal loot tax applies.</li>
-            <li>Any failure → lose 10% of your Port Authority inventory.</li>
-            <li>Daily upkeep is auto-deducted; if you can't pay, a random item is lost.</li>
-            <li>As an Institution it also pays a monthly federal tax, like a Mint.</li>
+          <p>The Port Authority is a sovereign maritime <b>Institution</b> built on
+          <b>water terrain</b> (coastal, island, lake, ocean, or riverside). It gives you
+          control over three powerful systems:</p>
+          <ul style="line-height:1.8;">
+            <li><b>Federal Procurement Contracts</b> — fulfill government weapons contracts
+              from your PA inventory for large USD payouts from the federal treasury.</li>
+            <li><b>Immigration Control</b> — set volume (retail foot traffic) and wealth
+              (customer spending power) to reshape demand across the entire economy.</li>
+            <li><b>Naval &amp; Military Missions</b> — deploy Fleet or Army forces to
+              <em>procurement-raid</em> another player's PA inventory or impose a
+              24-hour <em>blockade</em> on their item transfers. Pure 50/50 RNG.</li>
           </ul>
+          <p style="color:#94a3b8;">Any mission failure destroys 10% of your PA inventory.
+          Maintenance is auto-deducted daily. Like the Mint, it pays a monthly institution tax.</p>
         """
 
         if ready_plot is not None:
@@ -113,8 +176,9 @@ def port_authority_dashboard(session_token: Optional[str] = Cookie(None)):
             """
         else:
             action = """
-              <p style="color:#fbbf24;">A Port Authority is built on an Institution. First sacrifice
-              land to create a <b>Port Authority</b> Institution (Wadsworth Pro required), then return here to build.</p>
+              <p style="color:#fbbf24;">A Port Authority is built on a water-terrain Institution.
+              First sacrifice <b>coastal, island, lake, or ocean</b> land to create a
+              <b>Port Authority</b> Institution (Wadsworth Pro required), then return here to build.</p>
               <a href="/special-plots/create" style="display:inline-block;margin-top:8px;padding:12px 24px;background:#8B4513;color:#F5F5DC;border:2px solid #B08D57;font-family:Georgia,serif;font-size:1rem;text-decoration:none;">
                 🏛️ Create a Port Authority Institution
               </a>
@@ -132,6 +196,8 @@ def port_authority_dashboard(session_token: Optional[str] = Cookie(None)):
     # ── Dashboard ────────────────────────────────────────────────────────────
     inv = pa["inventory"]
     daily = pa["daily_maintenance_usd"]
+    imm_vol = pa.get("immigration_volume", 1.0)
+    imm_wlth = pa.get("immigration_wealth", 1.0)
 
     # PA inventory table
     if inv:
@@ -161,22 +227,54 @@ def port_authority_dashboard(session_token: Optional[str] = Cookie(None)):
     # Mission history
     missions = get_missions(player.id, limit=10)
     if missions:
-        m_rows = "".join(
-            f"<tr><td style='padding:4px 10px;'>{m['force_type'].title()}</td>"
-            f"<td style='padding:4px 10px;'>{m['mission_type'].title()}</td>"
-            f"<td style='padding:4px 10px;color:{'#4ade80' if m['outcome']=='success' else '#f87171'};'>{(m['outcome'] or '').title()}</td>"
-            f"<td style='padding:4px 10px;text-align:right;'>{fmt_usd(m['loot_usd']) if m['loot_usd'] else '—'}</td></tr>"
-            for m in missions
-        )
+        m_rows = []
+        for m in missions:
+            outcome_color = "#4ade80" if m["outcome"] == "success" else "#f87171"
+            subtype = m.get("mission_subtype") or m.get("mission_type", "")
+            detail = ""
+            if m.get("items_acquired"):
+                acq = m["items_acquired"] if isinstance(m["items_acquired"], dict) else {}
+                detail = "Acquired: " + ", ".join(f"{v:g}×{_label(k)}" for k, v in acq.items())
+            elif m.get("items_lost"):
+                lost = m["items_lost"] if isinstance(m["items_lost"], dict) else {}
+                detail = "Lost: " + ", ".join(f"{v:g}×{_label(k)}" for k, v in lost.items())
+            m_rows.append(
+                f"<tr><td style='padding:4px 10px;'>{_label(subtype)}</td>"
+                f"<td style='padding:4px 10px;'>Player {m.get('target_player_id') or m.get('target_player','—')}</td>"
+                f"<td style='padding:4px 10px;'>{_label(m.get('target_item_type','') or '')}</td>"
+                f"<td style='padding:4px 10px;color:{outcome_color};'>{(m['outcome'] or '').title()}</td>"
+                f"<td style='padding:4px 10px;color:#94a3b8;font-size:0.85em;'>{detail}</td></tr>"
+            )
+        m_rows_html = "".join(m_rows)
     else:
-        m_rows = "<tr><td colspan='4' style='padding:10px;color:#94a3b8;'>No missions yet.</td></tr>"
+        m_rows_html = "<tr><td colspan='5' style='padding:10px;color:#94a3b8;'>No missions yet.</td></tr>"
+
+    # Active blockades
+    blockades_on_me = get_active_blockades_against(player.id)
+    blockades_by_me = get_active_blockades_by(player.id)
+    def _blockade_row(b, perspective):
+        other = b.get("target_player_id") if perspective == "placed" else b.get("blocker_player_id")
+        return (f"<tr><td style='padding:4px 10px;'>{perspective.title()}</td>"
+                f"<td style='padding:4px 10px;'>Player {other}</td>"
+                f"<td style='padding:4px 10px;'>{_label(b.get('item_type',''))}</td>"
+                f"<td style='padding:4px 10px;color:#94a3b8;font-size:0.85em;'>"
+                f"Expires {b.get('expires_at','')[:16]}</td></tr>")
+    blockade_rows = (
+        "".join(_blockade_row(b, "against you") for b in blockades_on_me) +
+        "".join(_blockade_row(b, "placed") for b in blockades_by_me)
+    ) or "<tr><td colspan='4' style='padding:10px;color:#94a3b8;'>No active blockades.</td></tr>"
+
+    # Procurement section
+    procurement_html = _procurement_section(player.id, inv)
 
     body = f"""
-    <div style="max-width:760px;margin:0 auto;padding:16px;color:#F5F5DC;font-family:Georgia,serif;">
+    <div style="max-width:800px;margin:0 auto;padding:16px;color:#F5F5DC;font-family:Georgia,serif;">
       <h1 style="color:#B08D57;">⚓ {pa['name']}</h1>
-      <p style="color:#94a3b8;">Daily upkeep: <b style="color:#fbbf24;">{fmt_usd(daily)}/day</b>
-      &nbsp;•&nbsp; Fleet: <b style="color:{'#4ade80' if fleet_ready else '#f87171'};">{'READY' if fleet_ready else 'not ready'}</b>
-      &nbsp;•&nbsp; Army: <b style="color:{'#4ade80' if army_ready else '#f87171'};">{'READY' if army_ready else 'not ready'}</b></p>
+      <p style="color:#94a3b8;">
+        Daily upkeep: <b style="color:#fbbf24;">{fmt_usd(daily)}/day</b>
+        &nbsp;•&nbsp; Fleet: <b style="color:{'#4ade80' if fleet_ready else '#f87171'};">{'READY' if fleet_ready else 'not ready'}</b>
+        &nbsp;•&nbsp; Army: <b style="color:{'#4ade80' if army_ready else '#f87171'};">{'READY' if army_ready else 'not ready'}</b>
+      </p>
 
       <div style="display:flex;flex-wrap:wrap;gap:16px;margin-top:12px;">
         <div style="flex:1;min-width:260px;border:1px solid #2D1810;padding:10px;">
@@ -189,7 +287,40 @@ def port_authority_dashboard(session_token: Optional[str] = Cookie(None)):
         </div>
       </div>
 
-      <h3 style="color:#B08D57;margin-top:18px;">Inventory</h3>
+      <!-- ── Federal Procurement Contracts ─────────────────────────── -->
+      <h3 style="color:#B08D57;margin-top:22px;">📋 Federal Procurement Contracts</h3>
+      {procurement_html}
+
+      <!-- ── Immigration Policy ─────────────────────────────────────── -->
+      <h3 style="color:#B08D57;margin-top:22px;">🌍 Immigration Policy</h3>
+      <div style="border:1px solid #2D1810;padding:12px;">
+        <p style="color:#94a3b8;margin:0 0 10px;">
+          Controls retail demand across the economy.
+          Volume = foot traffic (0–3×). Wealth = spending power &amp; price tolerance (0.5–2×).
+        </p>
+        <div style="display:flex;gap:24px;flex-wrap:wrap;">
+          <label style="flex:1;min-width:200px;">
+            Volume <span id="vol-val">{imm_vol:.2f}</span>×
+            <input type="range" min="0" max="3" step="0.05" value="{imm_vol}"
+              oninput="document.getElementById('vol-val').textContent=parseFloat(this.value).toFixed(2)"
+              id="imm-vol" style="width:100%;margin-top:4px;">
+            <small style="color:#94a3b8;">0 = no immigration, 3 = triple retail demand</small>
+          </label>
+          <label style="flex:1;min-width:200px;">
+            Wealth <span id="wlth-val">{imm_wlth:.2f}</span>×
+            <input type="range" min="0.5" max="2" step="0.05" value="{imm_wlth}"
+              oninput="document.getElementById('wlth-val').textContent=parseFloat(this.value).toFixed(2)"
+              id="imm-wlth" style="width:100%;margin-top:4px;">
+            <small style="color:#94a3b8;">0.5 = poor / price-sensitive, 2 = affluent / pays premium</small>
+          </label>
+        </div>
+        <button onclick="paSetImmigration()" style="margin-top:10px;padding:6px 16px;cursor:pointer;background:#8B4513;color:#F5F5DC;border:1px solid #B08D57;">
+          Apply Immigration Policy
+        </button>
+      </div>
+
+      <!-- ── Inventory ──────────────────────────────────────────────── -->
+      <h3 style="color:#B08D57;margin-top:22px;">Inventory</h3>
       <table style="width:100%;border-collapse:collapse;border:1px solid #2D1810;">{inv_rows}</table>
 
       <h3 style="color:#B08D57;margin-top:18px;">Deposit Weapons</h3>
@@ -199,24 +330,67 @@ def port_authority_dashboard(session_token: Optional[str] = Cookie(None)):
         <button onclick="paMove('deposit', document.getElementById('dep-item').value)" style="padding:6px 14px;cursor:pointer;">Deposit</button>
       </div>
 
-      <h3 style="color:#B08D57;margin-top:18px;">Deploy Mission</h3>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-        <select id="force" style="padding:6px;"><option value="fleet">Fleet</option><option value="army">Army</option></select>
-        <select id="mtype" style="padding:6px;"><option value="attack">Attack</option><option value="defend">Defend</option></select>
-        <input id="target" type="number" placeholder="Target player ID (attack)" style="padding:6px;width:200px;">
-        <button onclick="paDeploy()" style="padding:6px 14px;cursor:pointer;background:#8B4513;color:#F5F5DC;border:1px solid #B08D57;">Deploy</button>
+      <!-- ── Deploy Mission ─────────────────────────────────────────── -->
+      <h3 style="color:#B08D57;margin-top:22px;">⚔️ Deploy Mission</h3>
+      <div style="border:1px solid #2D1810;padding:12px;">
+        <p style="color:#94a3b8;margin:0 0 10px;">
+          Requires Fleet (carriers/subs/destroyers/jets) or Army (tanks/helos/rifles/armored/drones) readiness.
+          Outcome is 50/50 — failure destroys 10% of PA inventory.
+        </p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+          <label style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:160px;">
+            Mission type
+            <select id="msubtype" style="padding:6px;">
+              <option value="procurement">Procurement Raid (seize items)</option>
+              <option value="blockade">Blockade (freeze transfers 24h)</option>
+            </select>
+          </label>
+          <label style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:160px;">
+            Target Player ID
+            <input id="target-pid" type="number" placeholder="Player ID" style="padding:6px;">
+          </label>
+          <label style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:160px;">
+            Target Item (slug)
+            <input id="target-item" type="text" placeholder="e.g. m1a2_abrams" style="padding:6px;">
+          </label>
+          <label id="qty-wrap" style="display:flex;flex-direction:column;gap:4px;width:90px;">
+            Quantity
+            <input id="target-qty" type="number" min="1" value="1" style="padding:6px;">
+          </label>
+          <button onclick="paDeploy()" style="padding:6px 14px;cursor:pointer;background:#8B4513;color:#F5F5DC;border:1px solid #B08D57;">Deploy</button>
+        </div>
       </div>
 
-      <h3 style="color:#B08D57;margin-top:18px;">Recent Missions</h3>
+      <!-- ── Active Blockades ───────────────────────────────────────── -->
+      <h3 style="color:#B08D57;margin-top:22px;">🚫 Active Blockades</h3>
       <table style="width:100%;border-collapse:collapse;border:1px solid #2D1810;">
-        <tr style="color:#94a3b8;"><td style="padding:4px 10px;">Force</td><td style="padding:4px 10px;">Type</td><td style="padding:4px 10px;">Outcome</td><td style="padding:4px 10px;text-align:right;">Loot</td></tr>
-        {m_rows}
+        <tr style="color:#94a3b8;">
+          <td style="padding:4px 10px;">Direction</td>
+          <td style="padding:4px 10px;">Player</td>
+          <td style="padding:4px 10px;">Item</td>
+          <td style="padding:4px 10px;">Expires</td>
+        </tr>
+        {blockade_rows}
       </table>
 
-      <div id="pa-msg" style="margin-top:14px;min-height:20px;"></div>
+      <!-- ── Mission History ────────────────────────────────────────── -->
+      <h3 style="color:#B08D57;margin-top:22px;">Recent Missions</h3>
+      <table style="width:100%;border-collapse:collapse;border:1px solid #2D1810;">
+        <tr style="color:#94a3b8;">
+          <td style="padding:4px 10px;">Type</td>
+          <td style="padding:4px 10px;">Target</td>
+          <td style="padding:4px 10px;">Item</td>
+          <td style="padding:4px 10px;">Outcome</td>
+          <td style="padding:4px 10px;">Detail</td>
+        </tr>
+        {m_rows_html}
+      </table>
+
+      <div id="pa-msg" style="margin-top:14px;min-height:20px;color:#fbbf24;"></div>
     </div>
     <script>
     function _show(t){{ document.getElementById('pa-msg').textContent = t; }}
+
     async function paMove(action, item){{
       if(!item){{ _show('Select an item first.'); return; }}
       const qty = action==='deposit' ? parseFloat(document.getElementById('dep-qty').value||'1') : 1;
@@ -224,15 +398,49 @@ def port_authority_dashboard(session_token: Optional[str] = Cookie(None)):
       const j = await r.json(); _show(j.message || j.error || '');
       if(j.ok) setTimeout(()=>location.reload(), 600);
     }}
+
+    async function paFulfill(eventId){{
+      const r = await fetch('/api/port-authority/procurement/'+eventId, {{method:'POST'}});
+      const j = await r.json();
+      _show(j.message || j.error || '');
+      if(j.ok) setTimeout(()=>location.reload(), 800);
+    }}
+
+    async function paSetImmigration(){{
+      const volume = parseFloat(document.getElementById('imm-vol').value);
+      const wealth = parseFloat(document.getElementById('imm-wlth').value);
+      const r = await fetch('/api/port-authority/immigration', {{
+        method:'POST', headers:{{'Content-Type':'application/json'}},
+        body: JSON.stringify({{volume, wealth}})
+      }});
+      const j = await r.json();
+      _show(j.message || j.error || '');
+    }}
+
+    document.getElementById('msubtype').addEventListener('change', function(){{
+      document.getElementById('qty-wrap').style.display = this.value==='procurement' ? '' : 'none';
+    }});
+
     async function paDeploy(){{
-      const body = {{force_type:document.getElementById('force').value, mission_type:document.getElementById('mtype').value}};
-      const t = document.getElementById('target').value;
-      if(t) body.target_player_id = parseInt(t);
+      const subtype = document.getElementById('msubtype').value;
+      const pid = parseInt(document.getElementById('target-pid').value||'0');
+      const item = document.getElementById('target-item').value.trim();
+      const qty  = parseInt(document.getElementById('target-qty').value||'1');
+      if(!pid){{ _show('Enter target player ID.'); return; }}
+      if(!item){{ _show('Enter target item slug.'); return; }}
+      const body = {{mission_subtype: subtype, target_player_id: pid, target_item_type: item, target_quantity: qty}};
       const r = await fetch('/api/port-authority/deploy', {{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify(body)}});
       const j = await r.json();
       if(j.error){{ _show(j.error); return; }}
-      _show('Mission '+(j.outcome||'')+ (j.loot_usd? ' — looted $'+Math.round(j.loot_usd).toLocaleString():''));
-      setTimeout(()=>location.reload(), 1200);
+      const outcome = j.outcome || '';
+      let detail = '';
+      if(j.items_acquired && Object.keys(j.items_acquired).length){{
+        detail = ' — acquired: ' + Object.entries(j.items_acquired).map(([k,v])=>v+'×'+k).join(', ');
+      }} else if(j.blockade_placed){{
+        detail = ' — 24h blockade imposed';
+      }}
+      _show('Mission ' + outcome + detail);
+      setTimeout(()=>location.reload(), 1500);
     }}
     </script>
     """

@@ -50,13 +50,14 @@ SPECIAL_PLOT_TYPES = {
     "port_authority": {
         "name": "Port Authority",
         "description": (
-            "A sovereign military command. Deposit weapons and platforms, then "
-            "deploy Fleet or Army forces on global missions for loot or defense."
+            "A sovereign maritime institution. Controls federal procurement contracts, "
+            "immigration policy (adjusting retail supply & demand), and deploys naval "
+            "& military missions — procurement raids or blockades against other players."
         ),
-        "allowed_terrain": [
-            "urban", "prairie", "hills", "mountain", "desert",
-            "savanna", "forest", "tundra", "jungle", "island", "coastal",
-        ],
+        # Water-only terrain: coastal, island, lake, ocean.
+        # Plots with 'riverside' proximity feature are also allowed (checked separately
+        # in create_special_plot() below).
+        "allowed_terrain": ["coastal", "island", "lake", "ocean"],
         "special_terrain": "special_port_authority",
         "base_tax": 75_000.0,
         "subscriber_only": True,
@@ -254,8 +255,19 @@ def create_special_plot(
     # Mixed terrain is allowed — every sacrificed plot's terrain just has to be
     # permitted by this institution type. The resulting plot takes the
     # institution's own special terrain regardless of what went into it.
+    # Exception: plots with 'riverside' proximity feature bypass the terrain check
+    # (relevant for Port Authority, which requires water terrain).
     allowed = cfg["allowed_terrain"]
-    bad = sorted({p.terrain_type for p in plots if p.terrain_type not in allowed})
+    bad = []
+    for p in plots:
+        if p.terrain_type not in allowed:
+            # Allow bypass via riverside proximity feature
+            pf = getattr(p, "proximity_features", None) or ""
+            import json as _json
+            features = _json.loads(pf) if isinstance(pf, str) and pf.startswith("[") else (pf.split(",") if pf else [])
+            if "riverside" not in features:
+                bad.append(p.terrain_type)
+    bad = sorted(set(bad))
     if bad:
         db.close()
         return None, f"{cfg['name']} cannot be built from {', '.join(bad)} terrain"

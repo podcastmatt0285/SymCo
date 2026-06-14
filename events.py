@@ -1710,6 +1710,120 @@ def _rearm_on_startup():
         print(f"[Events] rearm on startup failed: {e}")
 
 
+def seed_procurement_contracts():
+    """Create 1–3 federal procurement contract events if fewer than 2 are currently active.
+
+    Called on startup and periodically. Each contract lists required military items that
+    Port Authority owners can deliver for payment from the federal government.
+    event_type = "procurement_contract"
+    effect_data = {
+        "required_items": {item_slug: qty, ...},
+        "per_slot_payment": <float>,
+        "slots_available": <int>,
+        "slots_filled": 0
+    }
+    """
+    import json as _json, random as _rnd
+    from datetime import timedelta
+
+    CONTRACTS = [
+        {
+            "title": "Defense Procurement: Armored Vehicle Delivery",
+            "description": (
+                "The federal government requires IFVs for national defense. "
+                "Port Authority owners: deliver the required assets to claim payment."
+            ),
+            "required_items": {"m2_bradley": 3, "stryker_apc": 2},
+            "per_slot_payment": 2_500_000.0,
+            "slots_available": 3,
+        },
+        {
+            "title": "Defense Procurement: Air Superiority Package",
+            "description": (
+                "Federal contract for air-to-air missile systems. "
+                "Fulfill delivery through your Port Authority."
+            ),
+            "required_items": {"aim120_amraam": 20, "aim9_sidewinder": 10},
+            "per_slot_payment": 3_000_000.0,
+            "slots_available": 2,
+        },
+        {
+            "title": "Defense Procurement: Naval Strike Package",
+            "description": (
+                "Anti-ship and cruise missile systems required for fleet expansion. "
+                "Submit via Port Authority inventory."
+            ),
+            "required_items": {"agm84_harpoon": 8, "bgm109_tomahawk": 4},
+            "per_slot_payment": 4_500_000.0,
+            "slots_available": 2,
+        },
+        {
+            "title": "Defense Procurement: Drone Reconnaissance Fleet",
+            "description": (
+                "Government contract for UAV surveillance assets. "
+                "Port Authority owners may deliver via their command."
+            ),
+            "required_items": {"mq9_reaper": 5, "bayraktar_tb2": 3},
+            "per_slot_payment": 1_800_000.0,
+            "slots_available": 4,
+        },
+        {
+            "title": "Defense Procurement: Anti-Tank Systems",
+            "description": (
+                "Federal ground forces need precision anti-tank munitions. "
+                "Deliver through your Port Authority to collect."
+            ),
+            "required_items": {"fgm148_javelin": 15, "agm114_hellfire": 10},
+            "per_slot_payment": 2_000_000.0,
+            "slots_available": 3,
+        },
+    ]
+
+    db = SessionLocal()
+    try:
+        now = datetime.utcnow()
+        active_count = db.query(GameEvent).filter(
+            GameEvent.event_type == "procurement_contract",
+            GameEvent.is_active == True,
+            (GameEvent.ends_at == None) | (GameEvent.ends_at >= now),
+        ).count()
+
+        if active_count >= 2:
+            return  # enough contracts already live
+
+        to_create = _rnd.randint(1, 3)
+        templates = _rnd.sample(CONTRACTS, min(to_create, len(CONTRACTS)))
+        for t in templates:
+            ends = now + timedelta(days=7)
+            effect = {
+                "required_items":  t["required_items"],
+                "per_slot_payment": t["per_slot_payment"],
+                "slots_available":  t["slots_available"],
+                "slots_filled":     0,
+            }
+            ev = GameEvent(
+                title=t["title"],
+                description=t["description"],
+                duration_class="weekly",
+                event_type="procurement_contract",
+                starts_at=now,
+                ends_at=ends,
+                effect_data=_json.dumps(effect),
+                is_active=True,
+                task_metric="procurement_delivery",
+                task_target=float(t["slots_available"]),
+                trophy_reward=50,
+            )
+            db.add(ev)
+        db.commit()
+        print(f"[Events] seeded {len(templates)} procurement contract(s).")
+    except Exception as e:
+        db.rollback()
+        print(f"[Events] seed_procurement_contracts error: {e}")
+    finally:
+        db.close()
+
+
 def initialize():
     """Create all events tables, then rearm timers for any pending events."""
     Base.metadata.create_all(bind=engine)
@@ -1725,6 +1839,7 @@ def initialize():
     finally:
         _db.close()
     _rearm_on_startup()
+    seed_procurement_contracts()
 
 
 def tick(current_tick, now):

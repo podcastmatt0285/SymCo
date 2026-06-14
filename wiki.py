@@ -325,61 +325,81 @@ def _seed_port_authority_entries():
     _PA_ENTRIES = [
         (
             "Port Authority",
-            "The Port Authority is a sovereign military INSTITUTION — the same prestige tier as the Mint. "
-            "Like any institution it is built by SACRIFICING land (Wadsworth Pro required): create a "
-            "'Port Authority' institution from Land → Institutions, then build your command on it. "
-            "Once built, you deposit weapons and platforms from your inventory and deploy a Fleet or an "
-            "Army on global missions — to attack rivals for loot, or to defend your assets.\n\n"
-            "Core loop:\n"
-            "• Create the institution — sacrifice the required plots (Fibonacci count) to forge a Port Authority plot.\n"
-            "• Build — establish the Port Authority on that vacant institution plot.\n"
-            "• Deposit — move weapons from your inventory into the Port Authority (fully reversible; withdraw any time).\n"
-            "• Deploy — once a force meets its composition threshold, launch an Attack or Defend mission.\n"
-            "• Outcome — a pure 50/50 coin-flip. More weapons only let you field more forces, never improve the odds.\n\n"
-            "Attack success steals up to 5% of the target's balance (capped at $10M); a federal loot tax "
-            "is skimmed off the top. ANY failure destroys 10% of your Port Authority inventory. As an "
-            "institution it also pays a monthly federal tax. Manage yours at the Port Authority page.",
+            "The Port Authority is a sovereign maritime INSTITUTION — the same prestige tier as the Mint. "
+            "It must be built on WATER terrain (coastal, island, lake, ocean, or a riverside plot). "
+            "Sacrifice the required land plots (Wadsworth Pro required, Fibonacci count) to create a "
+            "'Port Authority' institution, then build your command on it.\n\n"
+            "Three pillars of the Port Authority:\n\n"
+            "1. FEDERAL PROCUREMENT CONTRACTS — The government periodically lists contracts (Events) "
+            "requiring specific military items. Fulfill them from your PA inventory to earn large USD "
+            "payouts directly from the federal treasury.\n\n"
+            "2. IMMIGRATION CONTROL — Set your immigration policy (volume 0–3×, wealth 0.5–2×). "
+            "Higher volume raises retail foot traffic (base_sale_chance). Wealthier immigrants are less "
+            "price-sensitive (lower effective elasticity) — raising profit margins. Poorer or fewer "
+            "immigrants suppress retail demand across the entire economy.\n\n"
+            "3. NAVAL & MILITARY MISSIONS — Deploy Fleet or Army forces against other players:\n"
+            "• Procurement raid — seize target items from another player's Port Authority (50/50 RNG).\n"
+            "• Blockade — freeze a target player's transfers of a specific item for 24 hours (50/50 RNG).\n\n"
+            "Any mission failure destroys 10% of your PA inventory. Build here requires water terrain.",
         ),
         (
             "Fleet & Army Composition",
             "Each force type unlocks once you hold enough of the right platforms in your Port Authority.\n\n"
-            "FLEET (sea & air):\n"
+            "FLEET (enables naval missions):\n"
             "• Carriers — 1+\n• Submarines — 2+\n• Destroyers/frigates — 4+\n• Fighter jets — 12+\n\n"
-            "ARMY (ground & air):\n"
+            "ARMY (enables land missions):\n"
             "• Tanks — 10+\n• Helicopters — 5+\n• Rifles — 100+\n• Fighter jets — 6+\n"
             "• Armored vehicles (IFVs/APCs) — 8+\n• Drones — 4+\n\n"
-            "Each slot is independent — any mix that meets a force's thresholds can deploy. "
-            "Fighter jets count toward both Fleet and Army.",
+            "Meeting either threshold lets you launch that class of mission. Fighter jets count toward "
+            "both Fleet and Army. Mission outcomes are always 50/50 — more assets don't improve odds, "
+            "they only unlock eligibility.",
         ),
         (
             "Port Authority Upkeep & Taxes",
             "Every item in your Port Authority carries a daily maintenance cost in USD, auto-deducted once "
             "per in-game day. Representative rates: carriers $500k/day, submarines $200k, destroyers $100k, "
             "fighter jets $50k, helicopters $40k, tanks $30k, armored vehicles $15k, drones $8k, rifles $10.\n\n"
-            "• If you can't afford the full upkeep, one random item is destroyed as a penalty and you get a push alert.\n"
-            "• A federal upkeep tax is skimmed from each maintenance charge and recorded in the government ledger.\n"
-            "• Every charge, loot gain, and loss appears in your personal transaction ledger.\n\n"
-            "Tip: withdraw platforms you aren't deploying to cut the daily drag, and keep your account funded.",
+            "• If you can't afford upkeep, one random item is destroyed as a penalty and you receive a push alert.\n"
+            "• A federal upkeep tax is recorded in the government ledger each maintenance cycle.\n"
+            "• Procurement contract payments, mission results, and inventory losses all appear in your transaction ledger.\n\n"
+            "Tip: withdraw platforms you aren't actively deploying to cut the daily drag.",
+        ),
+        (
+            "Immigration Policy",
+            "The Port Authority gives you control over immigration policy — a lever that adjusts retail "
+            "supply and demand across the entire economy.\n\n"
+            "VOLUME (0–3×): Scales base_sale_chance for all retail businesses. "
+            "Setting volume to 2.0 doubles how often items sell. Setting it to 0.5 halves retail throughput.\n\n"
+            "WEALTH (0.5–2×): Scales customer purchasing power and price sensitivity. "
+            "Wealthy immigrants (2×) are less price-sensitive — effective elasticity halves, so "
+            "retailers can charge higher margins. Poor immigrants (0.5×) become twice as price-sensitive, "
+            "compressing margins economy-wide.\n\n"
+            "Practical effects:\n"
+            "• Open immigration + wealthy arrivals = booming retail, high prices, strong margins.\n"
+            "• Closed immigration or poor arrivals = sluggish retail, price compression.\n"
+            "Changes take effect within 60 seconds (cached). Multiple PA owners' policies are averaged.",
         ),
     ]
 
     db = _db()
     try:
         for title, description in _PA_ENTRIES:
-            if db.query(WikiMedia).filter(WikiMedia.title == title).first():
-                continue
-            max_order = db.query(WikiMedia).count()
-            db.add(WikiMedia(
-                youtube_id="",
-                kind="video",
-                title=title,
-                description=description,
-                category="institutions",
-                sort_order=max_order,
-                pinned=False,
-            ))
+            existing = db.query(WikiMedia).filter(WikiMedia.title == title).first()
+            if existing:
+                existing.description = description  # update text in place
+            else:
+                max_order = db.query(WikiMedia).count()
+                db.add(WikiMedia(
+                    youtube_id="",
+                    kind="video",
+                    title=title,
+                    description=description,
+                    category="institutions",
+                    sort_order=max_order,
+                    pinned=False,
+                ))
         db.commit()
-        print("[Wiki] Seeded Port Authority entries")
+        print("[Wiki] Seeded/updated Port Authority entries")
     except Exception as e:
         db.rollback()
         print(f"[Wiki] Seed Port Authority error: {e}")

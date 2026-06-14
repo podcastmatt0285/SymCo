@@ -159,6 +159,13 @@ def transfer_item(from_player_id: int, to_player_id: int, item_type: str, quanti
     # neither side can oversell or create duplicate rows under concurrency.
     if quantity <= 0:
         return True
+    # Check for active Port Authority blockade on the sender's item
+    try:
+        from port_authority import is_item_blockaded
+        if is_item_blockaded(from_player_id, item_type):
+            return False  # Blockade in effect — transfer rejected
+    except Exception:
+        pass  # PA module unavailable — proceed normally
     if not remove_item(from_player_id, item_type, quantity):
         return False
     try:

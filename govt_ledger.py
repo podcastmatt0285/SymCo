@@ -35,8 +35,8 @@ EVENT_META = {
     "land_hoarding_tax":   ("Land Hoarding Tax",        "in",  "#fb923c"),
     "death_tax":           ("Estate / Death Tax",       "in",  "#f472b6"),
     "forex_fee":           ("Forex Transaction Fee",    "in",  "#38bdf8"),
-    "pa_maintenance_tax":  ("Port Authority Upkeep Tax","in",  "#f59e0b"),
-    "pa_loot_tax":         ("Port Authority Loot Tax",  "in",  "#fb923c"),
+    "pa_maintenance_tax":  ("Port Authority Upkeep Tax",       "in",  "#f59e0b"),
+    "procurement_payment": ("Federal Procurement Contract",    "out", "#fb923c"),
     # ── Outlays ───────────────────────────────────────────────────────────────
     "city_grant":          ("City Bank Grant",          "out", "#f87171"),
     "bond_purchase":       ("Bond Purchase",            "out", "#818cf8"),
