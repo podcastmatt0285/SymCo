@@ -46,7 +46,21 @@ SPECIAL_PLOT_TYPES = {
         "special_terrain": "special_mint",
         "base_tax": 100_000.0,
         "subscriber_only": True,
-    }
+    },
+    "port_authority": {
+        "name": "Port Authority",
+        "description": (
+            "A sovereign military command. Deposit weapons and platforms, then "
+            "deploy Fleet or Army forces on global missions for loot or defense."
+        ),
+        "allowed_terrain": [
+            "urban", "prairie", "hills", "mountain", "desert",
+            "savanna", "forest", "tundra", "jungle", "island", "coastal",
+        ],
+        "special_terrain": "special_port_authority",
+        "base_tax": 75_000.0,
+        "subscriber_only": True,
+    },
 }
 
 

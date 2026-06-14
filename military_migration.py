@@ -78,6 +78,19 @@ def run_migration():
     try:
         # Check flag
         flag = db.query(MigrationFlag).filter_by(name=MIGRATION_NAME).first()
+        # Schema migration — runs every boot, idempotent via IF NOT EXISTS, and
+        # independent of the one-time burn flag below. Port Authority became a
+        # true Institution built on a special plot, so it needs special_plot_id.
+        try:
+            db.execute(text(
+                "ALTER TABLE port_authority_instances "
+                "ADD COLUMN IF NOT EXISTS special_plot_id INTEGER"
+            ))
+            db.commit()
+        except Exception as _ce:
+            db.rollback()
+            print(f"[migration] PA special_plot_id column: {_ce}")
+
         if flag:
             print(f"[migration] {MIGRATION_NAME}: already applied, skipping.")
             return

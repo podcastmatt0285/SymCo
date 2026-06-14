@@ -325,17 +325,20 @@ def _seed_port_authority_entries():
     _PA_ENTRIES = [
         (
             "Port Authority",
-            "The Port Authority is your personal military institution. You deposit weapons and "
-            "weapon platforms from your inventory into it, then deploy a Fleet or an Army on global "
-            "missions — to attack rivals for loot, or to defend your assets.\n\n"
+            "The Port Authority is a sovereign military INSTITUTION — the same prestige tier as the Mint. "
+            "Like any institution it is built by SACRIFICING land (Wadsworth Pro required): create a "
+            "'Port Authority' institution from Land → Institutions, then build your command on it. "
+            "Once built, you deposit weapons and platforms from your inventory and deploy a Fleet or an "
+            "Army on global missions — to attack rivals for loot, or to defend your assets.\n\n"
             "Core loop:\n"
+            "• Create the institution — sacrifice the required plots (Fibonacci count) to forge a Port Authority plot.\n"
+            "• Build — establish the Port Authority on that vacant institution plot.\n"
             "• Deposit — move weapons from your inventory into the Port Authority (fully reversible; withdraw any time).\n"
-            "• Field a force — once a force meets its composition threshold it can deploy.\n"
-            "• Deploy — launch an Attack (steal cash from a target) or a Defend mission.\n"
-            "• Outcome — a pure 50/50 coin-flip. There is no stat-weighting; more weapons only let you field more forces.\n\n"
+            "• Deploy — once a force meets its composition threshold, launch an Attack or Defend mission.\n"
+            "• Outcome — a pure 50/50 coin-flip. More weapons only let you field more forces, never improve the odds.\n\n"
             "Attack success steals up to 5% of the target's balance (capped at $10M); a federal loot tax "
-            "is skimmed off the top. ANY failure destroys 10% of your Port Authority inventory. "
-            "Manage yours at the Port Authority page.",
+            "is skimmed off the top. ANY failure destroys 10% of your Port Authority inventory. As an "
+            "institution it also pays a monthly federal tax. Manage yours at the Port Authority page.",
         ),
         (
             "Fleet & Army Composition",

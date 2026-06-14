@@ -77,33 +77,55 @@ def port_authority_dashboard(session_token: Optional[str] = Cookie(None)):
 
     pa = get_port_authority(player.id)
 
-    # ── No PA yet — offer to create one ──────────────────────────────────────
+    # ── No PA yet — it's an Institution, so route through land sacrifice ──────
     if pa is None:
-        body = """
-        <div style="max-width:640px;margin:0 auto;padding:20px;color:#F5F5DC;font-family:Georgia,serif;">
-          <h1 style="color:#B08D57;">⚓ Port Authority</h1>
-          <p>The Port Authority is your military institution. Deposit weapons and
-          platforms from your inventory, then deploy <b>Fleet</b> or <b>Army</b> forces
-          on global missions — attack rivals for loot, or defend your assets.</p>
+        from port_authority import get_unbuilt_pa_plot
+        ready_plot = get_unbuilt_pa_plot(player.id)
+
+        intro = """
+          <p>The Port Authority is a sovereign military <b>Institution</b>. Deposit
+          weapons and platforms from your inventory, then deploy <b>Fleet</b> or
+          <b>Army</b> forces on global missions — attack rivals for loot, or defend
+          your assets.</p>
           <ul style="line-height:1.7;">
             <li>Mission outcomes are a pure 50/50 coin-flip.</li>
             <li>Successful attack → steal up to 5% of the target's balance (cap $10M); a federal loot tax applies.</li>
             <li>Any failure → lose 10% of your Port Authority inventory.</li>
             <li>Daily upkeep is auto-deducted; if you can't pay, a random item is lost.</li>
+            <li>As an Institution it also pays a monthly federal tax, like a Mint.</li>
           </ul>
-          <button onclick="paCreate()" style="margin-top:16px;padding:12px 24px;background:#8B4513;color:#F5F5DC;border:2px solid #B08D57;font-family:Georgia,serif;font-size:1rem;cursor:pointer;">
-            Establish a Port Authority
-          </button>
-          <div id="pa-msg" style="margin-top:14px;"></div>
+        """
+
+        if ready_plot is not None:
+            action = f"""
+              <p style="color:#4ade80;">You have a vacant Port Authority Institution (plot #{ready_plot.id}). Build your command there:</p>
+              <button onclick="paBuild({ready_plot.id})" style="margin-top:8px;padding:12px 24px;background:#8B4513;color:#F5F5DC;border:2px solid #B08D57;font-family:Georgia,serif;font-size:1rem;cursor:pointer;">
+                ⚓ Build Port Authority
+              </button>
+              <div id="pa-msg" style="margin-top:14px;"></div>
+              <script>
+              async function paBuild(pid){{
+                const r = await fetch('/special-plots/'+pid+'/build-port-authority', {{method:'POST'}});
+                if (r.redirected) {{ location.href = '/port-authority'; return; }}
+                location.reload();
+              }}
+              </script>
+            """
+        else:
+            action = """
+              <p style="color:#fbbf24;">A Port Authority is built on an Institution. First sacrifice
+              land to create a <b>Port Authority</b> Institution (Wadsworth Pro required), then return here to build.</p>
+              <a href="/special-plots/create" style="display:inline-block;margin-top:8px;padding:12px 24px;background:#8B4513;color:#F5F5DC;border:2px solid #B08D57;font-family:Georgia,serif;font-size:1rem;text-decoration:none;">
+                🏛️ Create a Port Authority Institution
+              </a>
+            """
+
+        body = f"""
+        <div style="max-width:640px;margin:0 auto;padding:20px;color:#F5F5DC;font-family:Georgia,serif;">
+          <h1 style="color:#B08D57;">⚓ Port Authority</h1>
+          {intro}
+          {action}
         </div>
-        <script>
-        async function paCreate(){
-          const r = await fetch('/api/port-authority/create', {method:'POST'});
-          const j = await r.json();
-          document.getElementById('pa-msg').textContent = j.message || j.error || '';
-          if (j.ok) setTimeout(()=>location.reload(), 700);
-        }
-        </script>
         """
         return HTMLResponse(_shell("Port Authority", body, 0.0, player.id))
 

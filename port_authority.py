@@ -172,6 +172,10 @@ class PortAuthorityInstance(Base):
     name                  = Column(String, default="Port Authority")
     created_at            = Column(DateTime, default=datetime.utcnow)
     last_maintenance_tick = Column(Integer, default=0)
+    # The Institution (special plot) this Port Authority is built on. A PA is a
+    # true institution: it can only be built on a "port_authority" special plot
+    # created by sacrificing land (Wadsworth Pro, Fibonacci plot count).
+    special_plot_id       = Column(Integer, index=True, nullable=True)
 
 
 class PortAuthorityInventory(Base):
@@ -256,22 +260,82 @@ def _pa_remove_item(db, pa_id: int, item_type: str, quantity: float) -> bool:
 # Public API
 # ─────────────────────────────────────────────────────────────────────────────
 
-def create_port_authority(player_id: int) -> Tuple[bool, str]:
-    """Create a Port Authority for *player_id*.  Returns (ok, message)."""
+def get_unbuilt_pa_plot(player_id: int):
+    """Return the player's first vacant 'port_authority' Institution plot, or None.
+
+    A Port Authority is a true Institution — it must be built on a special plot
+    of type 'port_authority' that the player created by sacrificing land
+    (Wadsworth Pro required). This finds a plot ready to host one.
+    """
+    try:
+        from special_plots import get_player_special_plots
+        for sp in get_player_special_plots(player_id):
+            if sp.special_type == "port_authority" and not sp.occupied_by_business_id:
+                return sp
+    except Exception as e:
+        print(f"[PortAuthority] plot lookup error: {e}")
+    return None
+
+
+def build_port_authority(player_id: int, special_plot_id: int) -> Tuple[bool, str]:
+    """Build a Port Authority on a 'port_authority' Institution plot the player owns.
+
+    Mirrors create_mint_business: the player must already own a vacant special
+    plot of the right type (which required Wadsworth Pro + a land sacrifice to
+    create). Marks the plot occupied so it pays the monthly institution tax.
+    """
+    from special_plots import get_special_plot, occupy_special_plot
+
+    sp = get_special_plot(special_plot_id)
+    if not sp or sp.owner_id != player_id:
+        return False, "Institution not found."
+    if sp.special_type != "port_authority":
+        return False, "That Institution is not a Port Authority plot."
+    if sp.occupied_by_business_id is not None:
+        return False, "This Institution already hosts a Port Authority."
+
     db = SessionLocal()
     try:
-        existing = db.query(PortAuthorityInstance).filter_by(owner_id=player_id).first()
-        if existing:
-            return False, "You already own a Port Authority."
-        pa = PortAuthorityInstance(owner_id=player_id)
+        if db.query(PortAuthorityInstance).filter_by(owner_id=player_id).first():
+            return False, "You already operate a Port Authority."
+        pa = PortAuthorityInstance(owner_id=player_id, special_plot_id=special_plot_id)
         db.add(pa)
         db.commit()
-        return True, "Port Authority established."
+        pa_id = pa.id
     except Exception as e:
         db.rollback()
         return False, str(e)
     finally:
         db.close()
+
+    # Mark the Institution plot occupied (occupy_special_plot uses its own
+    # session) only after the PA is safely committed — reusing
+    # occupied_by_business_id as the "facility present" marker, like the Mint.
+    try:
+        occupy_special_plot(special_plot_id, pa_id)
+    except Exception as e:
+        print(f"[PortAuthority] occupy plot error: {e}")
+    return True, "Port Authority established on your Institution."
+
+
+def create_port_authority(player_id: int) -> Tuple[bool, str]:
+    """Build a Port Authority — requires a vacant 'port_authority' Institution plot.
+
+    Kept as the public entry point used by the API/UI: it locates the player's
+    ready Institution plot and builds on it, or explains the prerequisite.
+    """
+    db = SessionLocal()
+    try:
+        if db.query(PortAuthorityInstance).filter_by(owner_id=player_id).first():
+            return False, "You already operate a Port Authority."
+    finally:
+        db.close()
+    sp = get_unbuilt_pa_plot(player_id)
+    if not sp:
+        return False, ("A Port Authority is an Institution. First sacrifice land to "
+                       "create a Port Authority Institution (Wadsworth Pro required), "
+                       "then build here.")
+    return build_port_authority(player_id, sp.id)
 
 
 def get_port_authority(player_id: int) -> Optional[dict]:

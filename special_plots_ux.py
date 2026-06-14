@@ -121,9 +121,10 @@ def special_plots_dashboard(
             Unlike district merges, sacrificed plots <strong>do not need to be occupied</strong>.
           </p>
           <p style="color:#94a3b8;font-size:0.9rem;margin:0;">
-            Currently available: <strong style="color:#e2e8f0;">Precious Metal Mint</strong> —
-            a sovereign minting facility that converts gold, silver, or platinum into real
-            in-game coinage currencies backed by live commodity prices.
+            Available types: <strong style="color:#e2e8f0;">Precious Metal Mint</strong> —
+            converts gold, silver, or platinum into real in-game coinage backed by live
+            commodity prices; and <strong style="color:#e2e8f0;">Port Authority</strong> —
+            a military command where you deploy Fleet and Army forces on global missions.
           </p>
         </div>
 
@@ -330,6 +331,23 @@ async def api_create_special_plot(
     )
 
 
+@router.post("/special-plots/{plot_id}/build-port-authority")
+async def api_build_port_authority(
+    plot_id: int,
+    session_token: Optional[str] = Cookie(None),
+):
+    player = _require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+    try:
+        from port_authority import build_port_authority
+        ok, msg = build_port_authority(player.id, plot_id)
+    except Exception as e:
+        ok, msg = False, str(e)
+    qs = ("msg=" if ok else "err=") + msg.replace(" ", "+")
+    return RedirectResponse(url=f"/special-plots/{plot_id}?{qs}", status_code=303)
+
+
 # ── Per-institution dashboard ────────────────────────────────────────────────
 
 @router.get("/special-plots/{plot_id}", response_class=HTMLResponse)
@@ -357,6 +375,7 @@ def institution_dashboard(
         cfg = SPECIAL_PLOT_TYPES.get(sp.special_type, {})
         plot_name = cfg.get("name", sp.special_type.title())
         is_mint = sp.special_type == "mint"
+        is_pa = sp.special_type == "port_authority"
 
         banner = ""
         if msg:
@@ -389,13 +408,28 @@ def institution_dashboard(
         """
 
         if not sp.occupied_by_business_id:
-            html += f'''
-            <div class="card" style="text-align:center;padding:32px;">
-              <p style="color:#94a3b8;margin:0 0 16px;">This institution is vacant. Build a facility to put it to work.</p>
-              <a href="/special-plots/{sp.id}/build" style="display:inline-block;padding:10px 24px;background:#7c3aed;color:#fff;border-radius:4px;text-decoration:none;font-weight:bold;">🏗️ Build Mint</a>
-            </div>'''
+            if is_pa:
+                html += f'''
+                <div class="card" style="text-align:center;padding:32px;">
+                  <p style="color:#94a3b8;margin:0 0 16px;">This Institution is vacant. Establish your Port Authority to deploy Fleet and Army forces.</p>
+                  <form action="/special-plots/{sp.id}/build-port-authority" method="post" style="margin:0;">
+                    <button type="submit" style="padding:10px 24px;background:#7c3aed;color:#fff;border:none;border-radius:4px;font-weight:bold;cursor:pointer;">⚓ Build Port Authority</button>
+                  </form>
+                </div>'''
+            else:
+                html += f'''
+                <div class="card" style="text-align:center;padding:32px;">
+                  <p style="color:#94a3b8;margin:0 0 16px;">This institution is vacant. Build a facility to put it to work.</p>
+                  <a href="/special-plots/{sp.id}/build" style="display:inline-block;padding:10px 24px;background:#7c3aed;color:#fff;border-radius:4px;text-decoration:none;font-weight:bold;">🏗️ Build Mint</a>
+                </div>'''
         elif is_mint:
             html += _mint_dashboard_html(sp, player)
+        elif is_pa:
+            html += '''
+            <div class="card" style="text-align:center;padding:32px;">
+              <p style="color:#4ade80;margin:0 0 16px;">⚓ Your Port Authority is operational on this Institution.</p>
+              <a href="/port-authority" style="display:inline-block;padding:10px 24px;background:#7c3aed;color:#fff;border-radius:4px;text-decoration:none;font-weight:bold;">Open Port Authority Command →</a>
+            </div>'''
 
         return HTMLResponse(_shell(plot_name, html, 0.0, player.id))
 
