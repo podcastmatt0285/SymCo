@@ -129,11 +129,21 @@ def port_authority_dashboard(session_token: Optional[str] = Cookie(None)):
             get_active_blockades_against, get_active_blockades_by,
         )
         from inventory import get_player_inventory
-        from reserve_banks import fmt_usd
+        from reserve_banks import fmt_usd as _fmt_usd, get_player_display_currency
     except Exception as e:
         return HTMLResponse(_shell("Port Authority",
                                    f"<div style='color:#ef4444;'>Module error: {e}</div>",
                                    0.0, player.id))
+
+    # Display currency for fmt_usd (player's legal tender). Local wrapper so the
+    # body f-string can call fmt_usd(amount) without threading disp everywhere.
+    try:
+        _disp = get_player_display_currency(player.id)
+    except Exception:
+        _disp = {"code": "USD", "symbol": "$", "usd_per_unit": 1.0}
+
+    def fmt_usd(amount, precision: int = 0):
+        return _fmt_usd(amount, _disp, precision=precision)
 
     pa = get_port_authority(player.id)
 

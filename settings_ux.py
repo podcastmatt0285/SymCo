@@ -2972,14 +2972,22 @@ def _skins_tab(player) -> str:
     pro_cards  = "".join(_build_card(r) for r in pro_skins)  or '<p style="color:var(--text-muted);">None available.</p>'
 
     cards = f"""
+    <style>
+      /* Mobile-first: the skin-picker card grids use auto-fill, which escapes the
+         global mobile-stack rule and leaves cramped 2-up cards on phones. Collapse
+         to a single column at the app-wide 640px breakpoint. Page-scoped. */
+      @media (max-width: 640px) {{
+        .skin-card-grid {{ grid-template-columns: 1fr !important; }}
+      }}
+    </style>
     <h4 style="margin:0 0 10px;color:var(--text-secondary);font-size:0.8rem;
         text-transform:uppercase;letter-spacing:0.08em;">Free</h4>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin-bottom:24px;">
+    <div class="skin-card-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin-bottom:24px;">
         {free_cards}
     </div>
     <h4 style="margin:0 0 10px;color:var(--accent-3);font-size:0.8rem;
         text-transform:uppercase;letter-spacing:0.08em;">🌟 Pro Subscribers</h4>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;">
+    <div class="skin-card-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;">
         {pro_cards}
     </div>"""
 

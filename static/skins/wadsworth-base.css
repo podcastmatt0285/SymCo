@@ -310,4 +310,25 @@ table { max-width: 100%; }
     [style*="font-size:20px"], [style*="font-size: 20px"] {
         font-size: clamp(15px, 5vw, 20px) !important;
     }
+
+    /* ── Wide auto-fit/auto-fill KPI grids → single column on phones ──────────
+       The grid-stack selectors above only catch repeat(N, …) and "display: grid"
+       (with a space). Inline KPI/card dashboards across the app use
+       "display:grid; …repeat(auto-fill/auto-fit, minmax(Xpx, 1fr))", which slips
+       past that rule and leaves cramped 2-up columns that shred large currency
+       figures on narrow phones (government, settings, banks, world map, stats…).
+       Collapse them here. We only target large mins (>=180px): admin/staff chip
+       grids use minmax(120–160px) and read fine multi-column, so they're spared.
+       Anything >=210px is already single-column on a phone, so listing the larger
+       sizes simply guarantees the collapse up to the 640px breakpoint. */
+    [style*="minmax(180px"], [style*="minmax(190px"], [style*="minmax(200px"],
+    [style*="minmax(210px"], [style*="minmax(220px"], [style*="minmax(230px"],
+    [style*="minmax(240px"], [style*="minmax(250px"], [style*="minmax(260px"],
+    [style*="minmax(280px"], [style*="minmax(300px"], [style*="minmax(320px"],
+    [style*="minmax(340px"],
+    [style*="minmax(min(180px"], [style*="minmax(min(190px"], [style*="minmax(min(200px"],
+    [style*="minmax(min(220px"], [style*="minmax(min(240px"], [style*="minmax(min(280px"],
+    [style*="minmax(min(300px"], [style*="minmax(min(340px"] {
+        grid-template-columns: 1fr !important;
+    }
 }
