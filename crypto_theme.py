@@ -54,7 +54,8 @@ body {
   font-size: 14px !important; line-height: 1.5 !important;
   -webkit-font-smoothing: antialiased !important;
 }
-.container { max-width: 1100px !important; margin: 0 auto !important; padding: 0 16px !important; }
+.container { max-width: 1000px !important; margin: 0 auto !important; padding: 20px 16px !important; overflow-x: hidden; }
+@media (max-width: 640px) { .container { padding: 12px 10px !important; } }
 a { color: var(--color-sky,#38bdf8); text-decoration: none; }
 a:hover { text-decoration: underline; }
 

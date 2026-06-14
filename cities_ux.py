@@ -38,7 +38,7 @@ CITY_STYLES = """
         min-height: 100vh;
         padding: 20px;
     }
-    .container { max-width: 1200px; margin: 0 auto; }
+    .container { max-width: 1000px; margin: 0 auto; }
     .header {
         display: flex;
         justify-content: space-between;
@@ -79,9 +79,16 @@ CITY_STYLES = """
        narrow phones (Pixel 6a = 412px) under overflow-wrap: anywhere. */
     .grid-2 { grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); }
     .grid-3 { grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); }
-    @media (max-width: 768px) {
-        /* !important so the collapse also beats any inline grid-template-columns */
-        .grid-2, .grid-3 { grid-template-columns: 1fr !important; }
+    /* Collapse to a single column on phones (matches the main dashboard's
+       mobile-first flexbox sizing). 640px aligns with the app-wide breakpoint
+       so tablets/landscape keep their multi-column grids instead of stretching
+       full-width single-column cards. The inline-grid selectors also catch
+       auto-fit/auto-fill rows that would otherwise stay cramped on narrow phones. */
+    @media (max-width: 640px) {
+        .grid-2, .grid-3,
+        div[style*="auto-fit"], div[style*="auto-fill"] {
+            grid-template-columns: 1fr !important;
+        }
     }
     /* Stat rows: wrap label/value as whole units — never shred into letters */
     .stat { flex-wrap: wrap; }

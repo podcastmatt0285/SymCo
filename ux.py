@@ -3290,7 +3290,15 @@ def government_dashboard(
             {"" if not sub else f'<div style="color:#475569;font-size:0.7rem;margin-top:3px;">{sub}</div>'}
         </div>"""
 
-    kpis = f"""<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin-bottom:28px;">
+    kpis = f"""<style>
+      /* Mobile-first: collapse the KPI grid to a single column on phones so the
+         large treasury figures aren't shredded into cramped 2-up columns.
+         Page-scoped (only rendered on /government) so admin/home are untouched. */
+      @media (max-width: 640px) {{
+        .gov-kpi-grid {{ grid-template-columns: 1fr !important; }}
+      }}
+    </style>
+    <div class="gov-kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin-bottom:28px;">
         {_kpi("TREASURY (USD)", _usd(gov_treasury),
               "Taxes · fees · customs · loan repayments · bond interest", "#e2e8f0")}
         {_kpi("FOREIGN CURRENCIES", _usd(total_foreign_usd),
