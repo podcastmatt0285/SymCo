@@ -6704,12 +6704,15 @@ def admin_pa_contracts(
         rows = []
         for c in contracts:
             sc = status_colors.get(c["status"], "#F5F5DC")
+            _pay_cell = (f"${c['payment_usd']:,.0f}"
+                         if c.get("selection_method") == "best_volume" and c.get("payment_usd", 0) > 0
+                         else "Winner's bid")
             rows.append(
                 f"<tr>"
                 f"<td style='padding:6px 10px;'>{c['id']}</td>"
                 f"<td style='padding:6px 10px;'>{c['title']}</td>"
                 f"<td style='padding:6px 10px;'><b style='color:{sc};'>{c['status'].title()}</b></td>"
-                f"<td style='padding:6px 10px;text-align:right;'>${c['payment_usd']:,.0f}</td>"
+                f"<td style='padding:6px 10px;text-align:right;'>{_pay_cell}</td>"
                 f"<td style='padding:6px 10px;text-align:right;'>${c['security_deposit_usd']:,.0f}</td>"
                 f"<td style='padding:6px 10px;text-align:right;'>{c['trophy_reward']}</td>"
                 f"<td style='padding:6px 10px;'>{c['bid_closes_at'][:16] if c.get('bid_closes_at') else '—'}</td>"
@@ -6756,16 +6759,20 @@ def admin_pa_contracts(
         for d in library:
             req = d.get("required_items", {})
             items_str = ", ".join(f"{q:,g} × {slug}" for slug, q in req.items())
+            _method = d.get("selection_method", "cheapest")
+            _pay_chip = (f"💰 ${float(d.get('payment_usd',0)):,.0f}"
+                         if _method == "best_volume" and float(d.get("payment_usd", 0) or 0) > 0
+                         else "💰 Winner's bid")
             lib_cards.append(f"""
             <div style="border:1px solid #333;background:#0d0d0d;padding:14px;margin-bottom:12px;">
               <b style="color:#fbbf24;font-size:1.05em;">{d.get('title','(untitled)')}</b>
               <p style="color:#94a3b8;margin:4px 0;">{d.get('description','') or ''}</p>
               <div style="display:flex;gap:18px;flex-wrap:wrap;color:#cbd5e1;font-size:0.9em;margin:6px 0;">
-                <span>💰 ${float(d.get('payment_usd',0)):,.0f}</span>
+                <span>{_pay_chip}</span>
                 <span>🔒 ${float(d.get('security_deposit_usd',0)):,.0f} deposit</span>
                 <span>🏆 {d.get('trophy_reward',500)} trophies</span>
                 <span>⏱ {d.get('fulfillment_days',14)}d fulfillment</span>
-                <span>📊 {d.get('selection_method','cheapest')}</span>
+                <span>📊 {_method}</span>
               </div>
               <p style="color:#94a3b8;font-size:0.85em;margin:4px 0;">Items: {items_str}</p>
               <form method="post" action="/admin/pa-contracts/post/{d.get('key','')}" style="margin-top:8px;">

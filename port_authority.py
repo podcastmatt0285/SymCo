@@ -1175,10 +1175,9 @@ def admin_cancel_contract(contract_id: int) -> Tuple[bool, str]:
 #       "title":          "Federal Government: Feeding the Homeless",
 #       "description":    "Short flavor text shown to players.",
 #       "required_items": {"burger": 100000, "bread": 1000000},  # slug -> qty
-#       "payment_usd":            50_000_000,       # for "cheapest": the "up to" reference
-#                                                   #   shown to players (NOT an enforced cap;
-#                                                   #   winners are paid their own winning bid).
-#                                                   #   For "best_volume": the fixed payout.
+#       "payment_usd":            50_000_000,       # ONLY for "best_volume" (fixed payout).
+#                                                   #   OMIT for "cheapest" — those winners
+#                                                   #   are paid their own winning bid.
 #       "security_deposit_usd":    5_000_000,       # refundable bid deposit
 #       "trophy_reward":   500,
 #       "fulfillment_days": 14,                     # days to fulfill after bid window closes
@@ -1206,7 +1205,6 @@ CONTRACT_LIBRARY: List[dict] = [
             "orange_seeds": 10_000_000,
             "lettuce": 1_000_000,
         },
-        "payment_usd": 27_000_000,      # "up to" reference (10M·$1 + 10M·$1 + 1M·$7); not a cap
         "security_deposit_usd": 500_000,
         "trophy_reward": 125,
         "fulfillment_days": 27,
@@ -1264,7 +1262,7 @@ def post_library_contract(key: str, admin_id: int,
             title=definition["title"].strip(),
             description=(definition.get("description") or "").strip() or None,
             required_items=_j.dumps(req),
-            payment_usd=float(definition["payment_usd"]),
+            payment_usd=float(definition.get("payment_usd", 0) or 0),
             security_deposit_usd=float(definition["security_deposit_usd"]),
             trophy_reward=int(definition.get("trophy_reward", 500)),
             fulfillment_days=int(definition.get("fulfillment_days", 14)),
@@ -1280,12 +1278,20 @@ def post_library_contract(key: str, admin_id: int,
         cid = contract.id
         title = contract.title
         payment = contract.payment_usd
+        method = contract.selection_method
         trophies = contract.trophy_reward
     except Exception as e:
         db.rollback()
         return False, str(e)
     finally:
         db.close()
+
+    # Payment phrasing: "cheapest" pays the winner's own bid, so there's no figure
+    # to advertise; "best_volume" has a fixed payout.
+    if method == "best_volume" and payment > 0:
+        pay_phrase = f"${payment:,.0f} + {trophies} trophies"
+    else:
+        pay_phrase = f"{trophies} trophies + your winning bid"
 
     # Notify all PA owners
     try:
@@ -1297,8 +1303,8 @@ def post_library_contract(key: str, admin_id: int,
                 send_push_notification(
                     pa.owner_id,
                     "📋 New Government Contract Available",
-                    f"'{title}' — ${payment:,.0f} + {trophies} trophies. "
-                    f"Bidding closes in 5 days.",
+                    f"'{title}' — {pay_phrase}. "
+                    f"Bidding closes in {window_days} day(s).",
                     url="/port-authority",
                     notif_type="institutions",
                     tag=f"pa-contract-{cid}",

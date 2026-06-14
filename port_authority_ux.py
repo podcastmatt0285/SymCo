@@ -111,7 +111,6 @@ def _contracts_section(player_id: int, player_inv: dict, fmt_usd=None) -> str:
                     )
                     bid_param = f"bidVol: parseFloat(document.getElementById('bid-vol-{cid}').value)"
                 else:
-                    _pay_placeholder = f"e.g. {c['payment_usd']:,.0f}"
                     bid_input = (
                         f"<label style='display:flex;flex-direction:column;gap:3px;'>"
                         f"Your TOTAL Bid Price — what you charge the government for everything, in USD "
@@ -120,8 +119,8 @@ def _contracts_section(player_id: int, player_inv: dict, fmt_usd=None) -> str:
                         f"Bids quoted in USD for fair comparison; your deposit &amp; payout settle in your "
                         f"own currency.)</span><br>"
                         f"<input id='bid-price-{cid}' type='number' min='0' step='1000' "
-                        f"placeholder='{_pay_placeholder}' "
-                        f"style='padding:5px;width:180px;'></label>"
+                        f"placeholder='Enter your total price' "
+                        f"style='padding:5px;width:200px;'></label>"
                     )
                     bid_param = f"bidPrice: parseFloat(document.getElementById('bid-price-{cid}').value||'0')"
                 bid_html = f"""
@@ -135,9 +134,9 @@ def _contracts_section(player_id: int, player_inv: dict, fmt_usd=None) -> str:
 
             _is_cheapest = c.get("selection_method", "cheapest") == "cheapest"
             selection_label = "Cheapest bid wins" if _is_cheapest else "Highest volume offered wins"
-            # For reverse-auction ("cheapest") contracts the payout is the winner's own bid,
-            # so payment_usd is shown as an "up to" reference rather than a fixed payout.
-            pay_label = (f'💰 Pays up to: <b style="color:#4ade80;">{fmt_usd(c["payment_usd"])}</b> total'
+            # "cheapest" winners are paid their own winning bid, so there's no fixed payout
+            # figure to show; "best_volume" has a fixed payment.
+            pay_label = (f'💰 Pays: <b style="color:#4ade80;">your winning bid</b>'
                          if _is_cheapest else
                          f'💰 Payment: <b style="color:#4ade80;">{fmt_usd(c["payment_usd"])}</b>')
             contract_cards.append(f"""
