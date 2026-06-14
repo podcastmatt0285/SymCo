@@ -207,12 +207,6 @@
       "reorder_at": 1000,
       "target_inventory": 5000
     },
-    "self_propelled_artillery": {
-      "market": "regular",
-      "max_price_multiplier": 1.1,
-      "reorder_at": 1,
-      "target_inventory": 5
-    },
     "steel": {
       "market": "regular",
       "max_price_multiplier": 1.1,
@@ -274,6 +268,12 @@
       "target_inventory": 5
     },
     "arleigh_burke_destroyer": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
+    },
+    "m109_paladin": {
       "market": "regular",
       "max_price_multiplier": 1.1,
       "reorder_at": 1,

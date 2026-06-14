@@ -997,6 +997,8 @@ except ModuleNotFoundError:
 try:
     from port_authority import router as port_authority_router
     app.include_router(port_authority_router)
+    from port_authority_ux import router as port_authority_ux_router
+    app.include_router(port_authority_ux_router)
     print("Port Authority routes registered")
 except ModuleNotFoundError:
     pass

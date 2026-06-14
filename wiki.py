@@ -80,6 +80,7 @@ def initialize():
     _seed_annuity_entries()
     _seed_index_challenge_entry()
     _seed_institution_entries()
+    _seed_port_authority_entries()
     _seed_npc_currency_mandate_entry()
     _seed_market_indices_entry()
     _seed_cities_counties_entries()
@@ -316,6 +317,69 @@ def _seed_institution_entries():
     except Exception as e:
         db.rollback()
         print(f"[Wiki] Seed institution error: {e}")
+    finally:
+        db.close()
+
+
+def _seed_port_authority_entries():
+    _PA_ENTRIES = [
+        (
+            "Port Authority",
+            "The Port Authority is your personal military institution. You deposit weapons and "
+            "weapon platforms from your inventory into it, then deploy a Fleet or an Army on global "
+            "missions — to attack rivals for loot, or to defend your assets.\n\n"
+            "Core loop:\n"
+            "• Deposit — move weapons from your inventory into the Port Authority (fully reversible; withdraw any time).\n"
+            "• Field a force — once a force meets its composition threshold it can deploy.\n"
+            "• Deploy — launch an Attack (steal cash from a target) or a Defend mission.\n"
+            "• Outcome — a pure 50/50 coin-flip. There is no stat-weighting; more weapons only let you field more forces.\n\n"
+            "Attack success steals up to 5% of the target's balance (capped at $10M); a federal loot tax "
+            "is skimmed off the top. ANY failure destroys 10% of your Port Authority inventory. "
+            "Manage yours at the Port Authority page.",
+        ),
+        (
+            "Fleet & Army Composition",
+            "Each force type unlocks once you hold enough of the right platforms in your Port Authority.\n\n"
+            "FLEET (sea & air):\n"
+            "• Carriers — 1+\n• Submarines — 2+\n• Destroyers/frigates — 4+\n• Fighter jets — 12+\n\n"
+            "ARMY (ground & air):\n"
+            "• Tanks — 10+\n• Helicopters — 5+\n• Rifles — 100+\n• Fighter jets — 6+\n"
+            "• Armored vehicles (IFVs/APCs) — 8+\n• Drones — 4+\n\n"
+            "Each slot is independent — any mix that meets a force's thresholds can deploy. "
+            "Fighter jets count toward both Fleet and Army.",
+        ),
+        (
+            "Port Authority Upkeep & Taxes",
+            "Every item in your Port Authority carries a daily maintenance cost in USD, auto-deducted once "
+            "per in-game day. Representative rates: carriers $500k/day, submarines $200k, destroyers $100k, "
+            "fighter jets $50k, helicopters $40k, tanks $30k, armored vehicles $15k, drones $8k, rifles $10.\n\n"
+            "• If you can't afford the full upkeep, one random item is destroyed as a penalty and you get a push alert.\n"
+            "• A federal upkeep tax is skimmed from each maintenance charge and recorded in the government ledger.\n"
+            "• Every charge, loot gain, and loss appears in your personal transaction ledger.\n\n"
+            "Tip: withdraw platforms you aren't deploying to cut the daily drag, and keep your account funded.",
+        ),
+    ]
+
+    db = _db()
+    try:
+        for title, description in _PA_ENTRIES:
+            if db.query(WikiMedia).filter(WikiMedia.title == title).first():
+                continue
+            max_order = db.query(WikiMedia).count()
+            db.add(WikiMedia(
+                youtube_id="",
+                kind="video",
+                title=title,
+                description=description,
+                category="institutions",
+                sort_order=max_order,
+                pinned=False,
+            ))
+        db.commit()
+        print("[Wiki] Seeded Port Authority entries")
+    except Exception as e:
+        db.rollback()
+        print(f"[Wiki] Seed Port Authority error: {e}")
     finally:
         db.close()
 

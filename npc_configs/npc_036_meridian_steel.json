@@ -89,12 +89,6 @@
       "reorder_at": 1,
       "target_inventory": 5
     },
-    "drone_avionics": {
-      "market": "regular",
-      "max_price_multiplier": 1.1,
-      "reorder_at": 2,
-      "target_inventory": 9
-    },
     "dysprosium": {
       "market": "regular",
       "max_price_multiplier": 1.1,
@@ -304,6 +298,12 @@
       "max_price_multiplier": 1.05,
       "reorder_at": 6000,
       "target_inventory": 30000
+    },
+    "avionics_suite": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 2,
+      "target_inventory": 9
     }
   },
   "cash_caps": {

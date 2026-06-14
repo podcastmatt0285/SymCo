@@ -369,6 +369,11 @@ def _page(title, subtitle, back_href, back_label, active_nav, body_html, player_
     for href, label in pages:
         cls = "nav-pill active" if href == active_nav else "nav-pill"
         nav += f'<a href="{href}" class="{cls}">{label}</a>'
+    try:
+        from ux import _nav_loader_html as _nl
+        loader = _nl()
+    except Exception:
+        loader = ""
     return f"""{_leather_head(player_id)}
 <title>{title} — Wadsworth</title>
 </head>
@@ -380,6 +385,7 @@ def _page(title, subtitle, back_href, back_label, active_nav, body_html, player_
   <div class="ledger-subtitle">{subtitle}</div>
   {body_html}
 </div>
+{loader}
 {_LEATHER_FOOT}"""
 
 
@@ -407,6 +413,7 @@ SITEMAP_ENTRIES = [
     ("/districts/create",            "Create District",        "Found a new district on your land — set type, name, and membership rules"),
     ("/district-market",             "District Market",        "Order book for district-specific goods and specialty commodities"),
     ("/special-plots",               "Institutions",           "Subscriber-only mega-facilities — build a Mint to strike metal-backed coinage currencies"),
+    ("/port-authority",              "Port Authority",         "Deposit weapons and deploy Fleet or Army forces on global missions for loot or defense"),
     # ── Markets & Finance ─────────────────────────────────────────────────────
     ("/market",                      "Commodity Market",       "Continuous double-auction order book for all raw and finished goods"),
     ("/brokerage/trading",           "Brokerage (WPE)",        "Wadsworth Public Exchange — trade company shares, ETFs, and IPOs"),

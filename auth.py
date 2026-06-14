@@ -1627,6 +1627,11 @@ def login_page(session_token: Optional[str] = Cookie(None)):
                     </details>
 
                     <details class="faq-item">
+                        <summary>What is the Port Authority? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">The <strong>Port Authority</strong> is your personal military institution. You deposit weapons and weapon platforms from your inventory into it, then deploy a <strong>Fleet</strong> (carriers, submarines, destroyers, fighter jets) or an <strong>Army</strong> (tanks, helicopters, rifles, armored vehicles, drones, jets) on global missions once you meet each force's composition threshold. Mission outcomes are a pure 50/50 coin-flip: a successful <strong>attack</strong> steals up to 5% of the target's balance (capped at $10M, minus a federal loot tax), while <strong>any</strong> failure destroys 10% of your Port Authority inventory. Every platform carries a daily upkeep cost that's auto-deducted; if you can't pay, a random item is lost. Manage yours at the <a href="/port-authority"><strong>Port Authority</strong></a> page.</div>
+                    </details>
+
+                    <details class="faq-item">
                         <summary>Can I create more than one account? <span class="faq-icon">+</span></summary>
                         <div class="faq-answer">No. Multiple accounts are prohibited — it creates an unfair economic advantage. If you want a fresh start, use <strong>Declare Bankruptcy</strong> under <strong>Settings → Account</strong>: it liquidates all your holdings and restarts your company with $20,000 and a starter prairie plot (your account and any Wadsworth Pro subscription stay intact). To permanently close an account, use <strong>Delete Account</strong> in the Estate Office (Settings → Account → Estate Office); it's irreversible and confirmed by typing your business name.</div>
                     </details>

@@ -2309,7 +2309,7 @@ def _notifications_tab(player, from_tutorial: bool = False) -> str:
   {_toggle("notif_push_corporate",    push_corp, "Corporate Alerts",   "Acquisition offers, counter-offers, diffuse notices, renegotiation proposals, buyout events, and income sweeps", disabled=not has_cco)}
   {_toggle("notif_push_govt",         push_govt, "Government Alerts",  "Hoard tax, district tax failure, liens, city membership changes",        disabled=not has_cco)}
   {_toggle("notif_push_tasks_events", push_tevt, "Tasks &amp; Events", "Task completions, event go-live / ended alerts, and trophy awards",      disabled=not has_cco)}
-  {_toggle("notif_push_institutions", push_inst, "Institution Alerts", "Mint built, monthly institution tax charged or failed",                  disabled=not has_cco)}
+  {_toggle("notif_push_institutions", push_inst, "Institution Alerts", "Mint events, plus Port Authority mission outcomes and maintenance failures", disabled=not has_cco)}
   {_toggle("notif_push_indices",      push_idx,  "Market Index Alerts", "Greed &amp; Fear extremes and large WBC-50 moves",                          disabled=not has_cco)}
   {_toggle("notif_push_crypto",       push_cry,  "Crypto Alerts", "Mining payouts, county petition results, and meme token launches",            disabled=not has_cco)}
 </div>"""

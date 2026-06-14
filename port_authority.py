@@ -137,6 +137,28 @@ LOOT_CAP_USD  = 10_000_000.0   # maximum loot per successful attack
 # On failure: this fraction of PA inventory is destroyed (random items)
 LOSS_FRACTION = 0.10
 
+# Government skim on successful attack loot (mirrors federal taxes on other money
+# movements). The winner keeps (1 - PA_LOOT_TAX_RATE); the rest flows to the
+# federal government and is recorded in the government ledger.
+PA_LOOT_TAX_RATE        = 0.05
+# Daily maintenance is taxed too — a small share of every upkeep dollar collected
+# is logged to the government ledger as Port Authority Upkeep Tax.
+PA_MAINTENANCE_TAX_RATE = 0.10
+
+
+def _fire_pa_push(player_id: int, title: str, body: str, url: str = "/port-authority"):
+    """Fire an 'institutions' push notification for a Port Authority event.
+
+    Honours the player's notif_push_institutions toggle (handled inside
+    send_push_notification). Never raises.
+    """
+    try:
+        from push_ux import send_push_notification
+        send_push_notification(player_id, title, body, url,
+                               notif_type="institutions", tag="port-authority")
+    except Exception as e:
+        print(f"[PortAuthority] push error: {e}")
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # DB Models
@@ -388,8 +410,20 @@ def deploy_mission(
                 ok, _ = spend_player_funds(target_player_id, loot)
                 if ok:
                     from reserve_banks import credit_usd
-                    credit_usd(player_id, loot)
-                    loot_usd = loot
+                    # Government skims a share of the loot (federal tax), the
+                    # attacker keeps the remainder. credit_usd auto-converts to
+                    # the player's legal tender; spend/credit handle multi-currency.
+                    tax        = loot * PA_LOOT_TAX_RATE
+                    net_loot   = loot - tax
+                    credit_usd(player_id, net_loot)
+                    loot_usd = net_loot
+                    try:
+                        from govt_ledger import log_gov_event
+                        log_gov_event("pa_loot_tax", "in", tax, "USD",
+                                      counterparty=f"player:{player_id}",
+                                      description=f"PA attack loot tax (PA#{pa.id})")
+                    except Exception:
+                        pass
 
         if not success:
             # Destroy LOSS_FRACTION of each PA item
@@ -415,8 +449,33 @@ def deploy_mission(
         db.add(mission)
         db.commit()
 
+        # Personal transaction ledger + push notification (best-effort).
+        try:
+            from stats_ux import log_transaction
+            if loot_usd > 0:
+                log_transaction(player_id, "pa_attack_loot", "money", loot_usd,
+                                f"Port Authority {force_type} attack loot"
+                                + (f" from player {target_player_id}" if target_player_id else ""))
+            for it, qty in items_lost_summary.items():
+                log_transaction(player_id, "pa_loss", "resource", 0.0,
+                                f"Lost {qty:g} × {it} in failed {force_type} {mission_type}",
+                                item_type=it, quantity=qty)
+        except Exception:
+            pass
+
+        outcome = "success" if success else "failure"
+        force_label = "Fleet" if force_type == "fleet" else "Army"
+        if outcome == "success" and loot_usd > 0:
+            body = f"{force_label} {mission_type} succeeded — looted ${loot_usd:,.0f}."
+        elif outcome == "success":
+            body = f"{force_label} {mission_type} succeeded."
+        else:
+            lost = sum(items_lost_summary.values())
+            body = f"{force_label} {mission_type} failed — lost {lost:g} units of materiel."
+        _fire_pa_push(player_id, f"Port Authority: {force_label} {outcome}", body)
+
         return True, {
-            "outcome":      "success" if success else "failure",
+            "outcome":      outcome,
             "force_type":   force_type,
             "mission_type": mission_type,
             "loot_usd":     loot_usd,
@@ -425,6 +484,33 @@ def deploy_mission(
     except Exception as e:
         db.rollback()
         return False, {"error": str(e)}
+    finally:
+        db.close()
+
+
+def admin_get_all_port_authorities(limit: int = 200) -> List[dict]:
+    """Admin view: every Port Authority with owner, inventory size and daily upkeep."""
+    db = SessionLocal()
+    try:
+        pas = db.query(PortAuthorityInstance).limit(limit).all()
+        out = []
+        for pa in pas:
+            inv = _get_pa_inventory(db, pa.id)
+            daily_cost = sum(MAINTENANCE_DAILY.get(it, 0.0) * qty for it, qty in inv.items())
+            fleet_ready, _ = _check_thresholds(inv, FLEET_THRESHOLDS)
+            army_ready, _  = _check_thresholds(inv, ARMY_THRESHOLDS)
+            out.append({
+                "id":                pa.id,
+                "owner_id":          pa.owner_id,
+                "name":              pa.name,
+                "inventory_types":   len(inv),
+                "total_units":       sum(inv.values()),
+                "daily_maintenance": daily_cost,
+                "fleet_ready":       fleet_ready,
+                "army_ready":        army_ready,
+                "created_at":        pa.created_at.isoformat() if pa.created_at else None,
+            })
+        return out
     finally:
         db.close()
 
@@ -487,12 +573,32 @@ def tick(current_tick: int, now: datetime):
             if daily_cost <= 0:
                 continue
             ok, _ = spend_player_funds(pa.owner_id, daily_cost)
-            if not ok:
+            if ok:
+                # Upkeep was paid — record it in the player's ledger and skim the
+                # federal upkeep tax into the government ledger.
+                try:
+                    from stats_ux import log_transaction
+                    log_transaction(pa.owner_id, "pa_maintenance", "money", -daily_cost,
+                                    f"Port Authority daily maintenance (${daily_cost:,.0f})")
+                except Exception:
+                    pass
+                try:
+                    from govt_ledger import log_gov_event
+                    log_gov_event("pa_maintenance_tax", "in",
+                                  daily_cost * PA_MAINTENANCE_TAX_RATE, "USD",
+                                  counterparty=f"player:{pa.owner_id}",
+                                  description=f"PA upkeep tax (PA#{pa.id})")
+                except Exception:
+                    pass
+            else:
                 # Cannot afford maintenance — destroy a random PA item as penalty
                 items = [it for it, qty in inventory.items() if qty >= 1]
                 if items:
                     victim = random.choice(items)
                     _pa_remove_item(db, pa.id, victim, 1.0)
+                    _fire_pa_push(pa.owner_id, "Port Authority: Maintenance Failed",
+                                  f"Could not afford ${daily_cost:,.0f} upkeep — "
+                                  f"lost 1 × {victim}.")
             pa.last_maintenance_tick = current_tick
         db.commit()
     except Exception as e:

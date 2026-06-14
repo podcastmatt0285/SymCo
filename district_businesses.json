@@ -6314,6 +6314,214 @@
         ],
         "output_item": "pvs31_nvg",
         "output_qty": 40
+      },
+      {
+        "inputs": [
+          {
+            "item": "processor",
+            "quantity": 80
+          },
+          {
+            "item": "gallium_arsenide",
+            "quantity": 30
+          },
+          {
+            "item": "inertial_nav_unit",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 80000
+          },
+          {
+            "item": "paper",
+            "quantity": 80
+          }
+        ],
+        "output_item": "ir_seeker",
+        "output_qty": 50
+      },
+      {
+        "inputs": [
+          {
+            "item": "processor",
+            "quantity": 80
+          },
+          {
+            "item": "gallium_arsenide",
+            "quantity": 30
+          },
+          {
+            "item": "inertial_nav_unit",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 80000
+          },
+          {
+            "item": "paper",
+            "quantity": 80
+          }
+        ],
+        "output_item": "laser_seeker",
+        "output_qty": 50
+      },
+      {
+        "inputs": [
+          {
+            "item": "processor",
+            "quantity": 80
+          },
+          {
+            "item": "gallium_arsenide",
+            "quantity": 30
+          },
+          {
+            "item": "inertial_nav_unit",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 80000
+          },
+          {
+            "item": "paper",
+            "quantity": 80
+          }
+        ],
+        "output_item": "gps_ins_guidance",
+        "output_qty": 50
+      },
+      {
+        "inputs": [
+          {
+            "item": "optical_glass",
+            "quantity": 80
+          },
+          {
+            "item": "circuit_board",
+            "quantity": 30
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 30000
+          },
+          {
+            "item": "paper",
+            "quantity": 30
+          }
+        ],
+        "output_item": "eotech_holo",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "optical_glass",
+            "quantity": 80
+          },
+          {
+            "item": "circuit_board",
+            "quantity": 30
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 30000
+          },
+          {
+            "item": "paper",
+            "quantity": 30
+          }
+        ],
+        "output_item": "aimpoint_rds",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "optical_glass",
+            "quantity": 80
+          },
+          {
+            "item": "circuit_board",
+            "quantity": 30
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 30000
+          },
+          {
+            "item": "paper",
+            "quantity": 30
+          }
+        ],
+        "output_item": "leupold_scope",
+        "output_qty": 50
+      },
+      {
+        "inputs": [
+          {
+            "item": "optical_glass",
+            "quantity": 80
+          },
+          {
+            "item": "circuit_board",
+            "quantity": 30
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 30000
+          },
+          {
+            "item": "paper",
+            "quantity": 30
+          }
+        ],
+        "output_item": "elcan_optic",
+        "output_qty": 80
+      },
+      {
+        "inputs": [
+          {
+            "item": "optical_glass",
+            "quantity": 80
+          },
+          {
+            "item": "circuit_board",
+            "quantity": 30
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 30000
+          },
+          {
+            "item": "paper",
+            "quantity": 30
+          }
+        ],
+        "output_item": "kahles_scope",
+        "output_qty": 50
       }
     ],
     "startup_cost": 8000000
@@ -11525,6 +11733,32 @@
         ],
         "output_item": "liquid_rocket_engine",
         "output_qty": 20
+      },
+      {
+        "inputs": [
+          {
+            "item": "maraging_steel",
+            "quantity": 200
+          },
+          {
+            "item": "smokeless_powder",
+            "quantity": 300
+          },
+          {
+            "item": "titanium_alloy",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 300000
+          },
+          {
+            "item": "paper",
+            "quantity": 200
+          }
+        ],
+        "output_item": "turbojet_cruise_motor",
+        "output_qty": 40
       }
     ],
     "startup_cost": 10000000
@@ -13774,6 +14008,66 @@
         ],
         "output_item": "hal_dhruv",
         "output_qty": 5
+      },
+      {
+        "inputs": [
+          {
+            "item": "gps_ins_guidance",
+            "quantity": 5
+          },
+          {
+            "item": "carbon_fiber",
+            "quantity": 50
+          },
+          {
+            "item": "lithium_battery_pack",
+            "quantity": 5
+          },
+          {
+            "item": "encrypted_radio",
+            "quantity": 1
+          },
+          {
+            "item": "energy",
+            "quantity": 100000
+          },
+          {
+            "item": "paper",
+            "quantity": 80
+          }
+        ],
+        "output_item": "wing_loong_2",
+        "output_qty": 10
+      },
+      {
+        "inputs": [
+          {
+            "item": "gps_ins_guidance",
+            "quantity": 5
+          },
+          {
+            "item": "carbon_fiber",
+            "quantity": 50
+          },
+          {
+            "item": "lithium_battery_pack",
+            "quantity": 5
+          },
+          {
+            "item": "encrypted_radio",
+            "quantity": 1
+          },
+          {
+            "item": "energy",
+            "quantity": 100000
+          },
+          {
+            "item": "paper",
+            "quantity": 80
+          }
+        ],
+        "output_item": "lancet_3",
+        "output_qty": 80
       }
     ],
     "startup_cost": 60000000
@@ -14565,6 +14859,36 @@
         ],
         "output_item": "naval_gun_system",
         "output_qty": 20
+      },
+      {
+        "inputs": [
+          {
+            "item": "maraging_steel",
+            "quantity": 100
+          },
+          {
+            "item": "rdx_explosive",
+            "quantity": 80
+          },
+          {
+            "item": "solid_rocket_motor",
+            "quantity": 20
+          },
+          {
+            "item": "radar_seeker",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 100000
+          },
+          {
+            "item": "paper",
+            "quantity": 80
+          }
+        ],
+        "output_item": "type53_torpedo",
+        "output_qty": 50
       }
     ],
     "startup_cost": 20000000
@@ -15737,6 +16061,244 @@
         ],
         "output_item": "ee_t1_osorio",
         "output_qty": 3
+      },
+      {
+        "inputs": [
+          {
+            "item": "apc_hull",
+            "quantity": 1
+          },
+          {
+            "item": "diesel_engine",
+            "quantity": 1
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "m2_browning",
+            "quantity": 2
+          },
+          {
+            "item": "composite_armor_panel",
+            "quantity": 10
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 150
+          },
+          {
+            "item": "energy",
+            "quantity": 200000
+          },
+          {
+            "item": "paper",
+            "quantity": 150
+          }
+        ],
+        "output_item": "bmp3_ifv",
+        "output_qty": 10
+      },
+      {
+        "inputs": [
+          {
+            "item": "apc_hull",
+            "quantity": 1
+          },
+          {
+            "item": "diesel_engine",
+            "quantity": 1
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "m2_browning",
+            "quantity": 2
+          },
+          {
+            "item": "composite_armor_panel",
+            "quantity": 10
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 150
+          },
+          {
+            "item": "energy",
+            "quantity": 200000
+          },
+          {
+            "item": "paper",
+            "quantity": 150
+          }
+        ],
+        "output_item": "btr82_apc",
+        "output_qty": 10
+      },
+      {
+        "inputs": [
+          {
+            "item": "apc_hull",
+            "quantity": 1
+          },
+          {
+            "item": "diesel_engine",
+            "quantity": 1
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "m2_browning",
+            "quantity": 2
+          },
+          {
+            "item": "composite_armor_panel",
+            "quantity": 10
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 150
+          },
+          {
+            "item": "energy",
+            "quantity": 200000
+          },
+          {
+            "item": "paper",
+            "quantity": 150
+          }
+        ],
+        "output_item": "boxer_apc",
+        "output_qty": 10
+      },
+      {
+        "inputs": [
+          {
+            "item": "apc_hull",
+            "quantity": 1
+          },
+          {
+            "item": "diesel_engine",
+            "quantity": 1
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "m2_browning",
+            "quantity": 2
+          },
+          {
+            "item": "composite_armor_panel",
+            "quantity": 10
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 150
+          },
+          {
+            "item": "energy",
+            "quantity": 200000
+          },
+          {
+            "item": "paper",
+            "quantity": 150
+          }
+        ],
+        "output_item": "puma_ifv",
+        "output_qty": 10
+      },
+      {
+        "inputs": [
+          {
+            "item": "stainless_steel",
+            "quantity": 200
+          },
+          {
+            "item": "blast_resistant_glass",
+            "quantity": 20
+          },
+          {
+            "item": "diesel_engine",
+            "quantity": 1
+          },
+          {
+            "item": "energy",
+            "quantity": 100000
+          },
+          {
+            "item": "paper",
+            "quantity": 80
+          }
+        ],
+        "output_item": "oshkosh_fmtv",
+        "output_qty": 30
+      },
+      {
+        "inputs": [
+          {
+            "item": "stainless_steel",
+            "quantity": 200
+          },
+          {
+            "item": "blast_resistant_glass",
+            "quantity": 20
+          },
+          {
+            "item": "diesel_engine",
+            "quantity": 1
+          },
+          {
+            "item": "energy",
+            "quantity": 100000
+          },
+          {
+            "item": "paper",
+            "quantity": 80
+          }
+        ],
+        "output_item": "hmmwv",
+        "output_qty": 30
+      },
+      {
+        "inputs": [
+          {
+            "item": "tank_hull",
+            "quantity": 1
+          },
+          {
+            "item": "tank_cannon",
+            "quantity": 2
+          },
+          {
+            "item": "diesel_engine",
+            "quantity": 2
+          },
+          {
+            "item": "fire_control_system",
+            "quantity": 1
+          },
+          {
+            "item": "energy",
+            "quantity": 350000
+          },
+          {
+            "item": "paper",
+            "quantity": 200
+          },
+          {
+            "item": "m795_shell",
+            "quantity": 20
+          }
+        ],
+        "output_item": "pzh2000",
+        "output_qty": 5
       }
     ],
     "startup_cost": 35000000
@@ -15926,6 +16488,360 @@
         ],
         "output_item": "m982_excalibur",
         "output_qty": 20
+      },
+      {
+        "inputs": [
+          {
+            "item": "lead",
+            "quantity": 2000
+          },
+          {
+            "item": "copper",
+            "quantity": 1000
+          },
+          {
+            "item": "iron",
+            "quantity": 500
+          },
+          {
+            "item": "energy",
+            "quantity": 50000
+          },
+          {
+            "item": "paper",
+            "quantity": 100
+          }
+        ],
+        "output_item": "556_nato",
+        "output_qty": 100000
+      },
+      {
+        "inputs": [
+          {
+            "item": "lead",
+            "quantity": 2000
+          },
+          {
+            "item": "copper",
+            "quantity": 1000
+          },
+          {
+            "item": "iron",
+            "quantity": 500
+          },
+          {
+            "item": "energy",
+            "quantity": 50000
+          },
+          {
+            "item": "paper",
+            "quantity": 100
+          }
+        ],
+        "output_item": "762x39",
+        "output_qty": 100000
+      },
+      {
+        "inputs": [
+          {
+            "item": "lead",
+            "quantity": 2000
+          },
+          {
+            "item": "copper",
+            "quantity": 1000
+          },
+          {
+            "item": "iron",
+            "quantity": 500
+          },
+          {
+            "item": "energy",
+            "quantity": 50000
+          },
+          {
+            "item": "paper",
+            "quantity": 100
+          }
+        ],
+        "output_item": "545x39",
+        "output_qty": 100000
+      },
+      {
+        "inputs": [
+          {
+            "item": "lead",
+            "quantity": 2000
+          },
+          {
+            "item": "copper",
+            "quantity": 1000
+          },
+          {
+            "item": "iron",
+            "quantity": 500
+          },
+          {
+            "item": "energy",
+            "quantity": 50000
+          },
+          {
+            "item": "paper",
+            "quantity": 100
+          }
+        ],
+        "output_item": "762_nato",
+        "output_qty": 80000
+      },
+      {
+        "inputs": [
+          {
+            "item": "lead",
+            "quantity": 2000
+          },
+          {
+            "item": "copper",
+            "quantity": 1000
+          },
+          {
+            "item": "iron",
+            "quantity": 500
+          },
+          {
+            "item": "energy",
+            "quantity": 50000
+          },
+          {
+            "item": "paper",
+            "quantity": 100
+          }
+        ],
+        "output_item": "50_bmg",
+        "output_qty": 40000
+      },
+      {
+        "inputs": [
+          {
+            "item": "lead",
+            "quantity": 2000
+          },
+          {
+            "item": "copper",
+            "quantity": 1000
+          },
+          {
+            "item": "iron",
+            "quantity": 500
+          },
+          {
+            "item": "energy",
+            "quantity": 50000
+          },
+          {
+            "item": "paper",
+            "quantity": 100
+          }
+        ],
+        "output_item": "9mm_para",
+        "output_qty": 120000
+      },
+      {
+        "inputs": [
+          {
+            "item": "lead",
+            "quantity": 2000
+          },
+          {
+            "item": "copper",
+            "quantity": 1000
+          },
+          {
+            "item": "iron",
+            "quantity": 500
+          },
+          {
+            "item": "energy",
+            "quantity": 50000
+          },
+          {
+            "item": "paper",
+            "quantity": 100
+          }
+        ],
+        "output_item": "545x39_crate",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "lead",
+            "quantity": 2000
+          },
+          {
+            "item": "copper",
+            "quantity": 1000
+          },
+          {
+            "item": "iron",
+            "quantity": 500
+          },
+          {
+            "item": "energy",
+            "quantity": 50000
+          },
+          {
+            "item": "paper",
+            "quantity": 100
+          }
+        ],
+        "output_item": "762_nato_crate",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "lead",
+            "quantity": 2000
+          },
+          {
+            "item": "copper",
+            "quantity": 1000
+          },
+          {
+            "item": "iron",
+            "quantity": 500
+          },
+          {
+            "item": "energy",
+            "quantity": 50000
+          },
+          {
+            "item": "paper",
+            "quantity": 100
+          }
+        ],
+        "output_item": "50_bmg_crate",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "lead",
+            "quantity": 500
+          },
+          {
+            "item": "rdx_explosive",
+            "quantity": 1000
+          },
+          {
+            "item": "iron",
+            "quantity": 500
+          },
+          {
+            "item": "copper",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 80000
+          },
+          {
+            "item": "paper",
+            "quantity": 100
+          }
+        ],
+        "output_item": "shaped_charge_warhead",
+        "output_qty": 40
+      },
+      {
+        "inputs": [
+          {
+            "item": "lead",
+            "quantity": 500
+          },
+          {
+            "item": "rdx_explosive",
+            "quantity": 1000
+          },
+          {
+            "item": "iron",
+            "quantity": 500
+          },
+          {
+            "item": "copper",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 80000
+          },
+          {
+            "item": "paper",
+            "quantity": 100
+          }
+        ],
+        "output_item": "he_warhead",
+        "output_qty": 40
+      },
+      {
+        "inputs": [
+          {
+            "item": "lead",
+            "quantity": 500
+          },
+          {
+            "item": "rdx_explosive",
+            "quantity": 1000
+          },
+          {
+            "item": "iron",
+            "quantity": 500
+          },
+          {
+            "item": "copper",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 80000
+          },
+          {
+            "item": "paper",
+            "quantity": 100
+          }
+        ],
+        "output_item": "thermobaric_warhead",
+        "output_qty": 30
+      },
+      {
+        "inputs": [
+          {
+            "item": "lead",
+            "quantity": 500
+          },
+          {
+            "item": "rdx_explosive",
+            "quantity": 1000
+          },
+          {
+            "item": "iron",
+            "quantity": 500
+          },
+          {
+            "item": "copper",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 80000
+          },
+          {
+            "item": "paper",
+            "quantity": 100
+          }
+        ],
+        "output_item": "comp_b_filler",
+        "output_qty": 2000
       }
     ],
     "startup_cost": 22000000
@@ -23351,6 +24267,152 @@
         ],
         "output_item": "sniper_kit",
         "output_qty": 30
+      },
+      {
+        "inputs": [
+          {
+            "item": "ballistic_plate",
+            "quantity": 100
+          },
+          {
+            "item": "kevlar_fiber",
+            "quantity": 150
+          },
+          {
+            "item": "aramid_fabric",
+            "quantity": 80
+          },
+          {
+            "item": "nylon",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 40000
+          },
+          {
+            "item": "paper",
+            "quantity": 40
+          }
+        ],
+        "output_item": "esapi_plate",
+        "output_qty": 400
+      },
+      {
+        "inputs": [
+          {
+            "item": "polyester",
+            "quantity": 100
+          },
+          {
+            "item": "kevlar_fiber",
+            "quantity": 50
+          },
+          {
+            "item": "nylon",
+            "quantity": 50
+          },
+          {
+            "item": "plastic",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 20000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ],
+        "output_item": "plate_carrier",
+        "output_qty": 300
+      },
+      {
+        "inputs": [
+          {
+            "item": "ballistic_plate",
+            "quantity": 100
+          },
+          {
+            "item": "kevlar_fiber",
+            "quantity": 150
+          },
+          {
+            "item": "aramid_fabric",
+            "quantity": 80
+          },
+          {
+            "item": "nylon",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 40000
+          },
+          {
+            "item": "paper",
+            "quantity": 40
+          }
+        ],
+        "output_item": "iotv_vest",
+        "output_qty": 200
+      },
+      {
+        "inputs": [
+          {
+            "item": "kevlar_fiber",
+            "quantity": 120
+          },
+          {
+            "item": "composite_armor_panel",
+            "quantity": 20
+          },
+          {
+            "item": "aramid_fabric",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 25000
+          },
+          {
+            "item": "paper",
+            "quantity": 25
+          }
+        ],
+        "output_item": "ach_helmet",
+        "output_qty": 300
+      },
+      {
+        "inputs": [
+          {
+            "item": "polyester",
+            "quantity": 100
+          },
+          {
+            "item": "kevlar_fiber",
+            "quantity": 50
+          },
+          {
+            "item": "nylon",
+            "quantity": 50
+          },
+          {
+            "item": "plastic",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 20000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ],
+        "output_item": "ocp_uniform",
+        "output_qty": 300
       }
     ],
     "startup_cost": 8000000
@@ -25830,6 +26892,416 @@
         ],
         "output_item": "caracal_car816",
         "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "radar_seeker",
+            "quantity": 20
+          },
+          {
+            "item": "solid_rocket_motor",
+            "quantity": 15
+          },
+          {
+            "item": "gps_ins_guidance",
+            "quantity": 20
+          },
+          {
+            "item": "maraging_steel",
+            "quantity": 100
+          },
+          {
+            "item": "jet_fuel",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 100000
+          },
+          {
+            "item": "paper",
+            "quantity": 80
+          }
+        ],
+        "output_item": "aim9_sidewinder",
+        "output_qty": 40
+      },
+      {
+        "inputs": [
+          {
+            "item": "radar_seeker",
+            "quantity": 20
+          },
+          {
+            "item": "solid_rocket_motor",
+            "quantity": 15
+          },
+          {
+            "item": "gps_ins_guidance",
+            "quantity": 20
+          },
+          {
+            "item": "maraging_steel",
+            "quantity": 100
+          },
+          {
+            "item": "jet_fuel",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 100000
+          },
+          {
+            "item": "paper",
+            "quantity": 80
+          }
+        ],
+        "output_item": "agm65_maverick",
+        "output_qty": 30
+      },
+      {
+        "inputs": [
+          {
+            "item": "radar_seeker",
+            "quantity": 20
+          },
+          {
+            "item": "solid_rocket_motor",
+            "quantity": 15
+          },
+          {
+            "item": "gps_ins_guidance",
+            "quantity": 20
+          },
+          {
+            "item": "maraging_steel",
+            "quantity": 100
+          },
+          {
+            "item": "jet_fuel",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 100000
+          },
+          {
+            "item": "paper",
+            "quantity": 80
+          }
+        ],
+        "output_item": "fgm148_javelin",
+        "output_qty": 40
+      },
+      {
+        "inputs": [
+          {
+            "item": "radar_seeker",
+            "quantity": 20
+          },
+          {
+            "item": "solid_rocket_motor",
+            "quantity": 15
+          },
+          {
+            "item": "gps_ins_guidance",
+            "quantity": 20
+          },
+          {
+            "item": "maraging_steel",
+            "quantity": 100
+          },
+          {
+            "item": "jet_fuel",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 100000
+          },
+          {
+            "item": "paper",
+            "quantity": 80
+          }
+        ],
+        "output_item": "kalibr_missile",
+        "output_qty": 20
+      },
+      {
+        "inputs": [
+          {
+            "item": "radar_seeker",
+            "quantity": 20
+          },
+          {
+            "item": "solid_rocket_motor",
+            "quantity": 15
+          },
+          {
+            "item": "gps_ins_guidance",
+            "quantity": 20
+          },
+          {
+            "item": "maraging_steel",
+            "quantity": 100
+          },
+          {
+            "item": "jet_fuel",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 100000
+          },
+          {
+            "item": "paper",
+            "quantity": 80
+          }
+        ],
+        "output_item": "brahmos_missile",
+        "output_qty": 15
+      },
+      {
+        "inputs": [
+          {
+            "item": "radar_seeker",
+            "quantity": 20
+          },
+          {
+            "item": "solid_rocket_motor",
+            "quantity": 15
+          },
+          {
+            "item": "gps_ins_guidance",
+            "quantity": 20
+          },
+          {
+            "item": "maraging_steel",
+            "quantity": 100
+          },
+          {
+            "item": "jet_fuel",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 100000
+          },
+          {
+            "item": "paper",
+            "quantity": 80
+          }
+        ],
+        "output_item": "exocet_missile",
+        "output_qty": 25
+      },
+      {
+        "inputs": [
+          {
+            "item": "radar_seeker",
+            "quantity": 20
+          },
+          {
+            "item": "solid_rocket_motor",
+            "quantity": 15
+          },
+          {
+            "item": "gps_ins_guidance",
+            "quantity": 20
+          },
+          {
+            "item": "maraging_steel",
+            "quantity": 100
+          },
+          {
+            "item": "jet_fuel",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 100000
+          },
+          {
+            "item": "paper",
+            "quantity": 80
+          }
+        ],
+        "output_item": "sm2_missile",
+        "output_qty": 20
+      },
+      {
+        "inputs": [
+          {
+            "item": "radar_seeker",
+            "quantity": 20
+          },
+          {
+            "item": "solid_rocket_motor",
+            "quantity": 15
+          },
+          {
+            "item": "gps_ins_guidance",
+            "quantity": 20
+          },
+          {
+            "item": "maraging_steel",
+            "quantity": 100
+          },
+          {
+            "item": "jet_fuel",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 100000
+          },
+          {
+            "item": "paper",
+            "quantity": 80
+          }
+        ],
+        "output_item": "bgm109_tomahawk",
+        "output_qty": 20
+      },
+      {
+        "inputs": [
+          {
+            "item": "stainless_steel",
+            "quantity": 200
+          },
+          {
+            "item": "steel",
+            "quantity": 100
+          },
+          {
+            "item": "rifle_barrel",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 50000
+          },
+          {
+            "item": "paper",
+            "quantity": 40
+          }
+        ],
+        "output_item": "m240b",
+        "output_qty": 50
+      },
+      {
+        "inputs": [
+          {
+            "item": "stainless_steel",
+            "quantity": 200
+          },
+          {
+            "item": "steel",
+            "quantity": 100
+          },
+          {
+            "item": "rifle_barrel",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 50000
+          },
+          {
+            "item": "paper",
+            "quantity": 40
+          }
+        ],
+        "output_item": "mg3",
+        "output_qty": 50
+      },
+      {
+        "inputs": [
+          {
+            "item": "frag_grenade_body",
+            "quantity": 200
+          },
+          {
+            "item": "smokeless_powder",
+            "quantity": 100
+          },
+          {
+            "item": "comp_b_filler",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 15000
+          },
+          {
+            "item": "paper",
+            "quantity": 15
+          }
+        ],
+        "output_item": "dm51_grenade",
+        "output_qty": 300
+      },
+      {
+        "inputs": [
+          {
+            "item": "frag_grenade_body",
+            "quantity": 200
+          },
+          {
+            "item": "smokeless_powder",
+            "quantity": 100
+          },
+          {
+            "item": "comp_b_filler",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 15000
+          },
+          {
+            "item": "paper",
+            "quantity": 15
+          }
+        ],
+        "output_item": "arges_hg84",
+        "output_qty": 300
+      },
+      {
+        "inputs": [
+          {
+            "item": "radar_seeker",
+            "quantity": 20
+          },
+          {
+            "item": "solid_rocket_motor",
+            "quantity": 15
+          },
+          {
+            "item": "gps_ins_guidance",
+            "quantity": 20
+          },
+          {
+            "item": "maraging_steel",
+            "quantity": 100
+          },
+          {
+            "item": "jet_fuel",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 100000
+          },
+          {
+            "item": "paper",
+            "quantity": 80
+          }
+        ],
+        "output_item": "agm84_harpoon",
+        "output_qty": 25
       }
     ],
     "startup_cost": 25000000

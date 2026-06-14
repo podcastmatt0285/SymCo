@@ -864,6 +864,24 @@ def _player_pro_panel(pid, detail):
     except Exception:
         pass
 
+    # Port Authority (military institution) panel
+    pa_html = ""
+    try:
+        from port_authority import get_port_authority
+        _pa = get_port_authority(pid)
+        if _pa:
+            _units = sum(_pa["inventory"].values())
+            pa_html = f"""
+            <div style="margin-top:10px;border-top:1px solid #1e293b;padding-top:8px;">
+              <div style="color:#fb923c;font-size:0.75rem;font-weight:600;margin-bottom:4px;">
+                ⚓ {_pa['name']} · {len(_pa['inventory'])} types / {_units:g} units
+                · upkeep ${_pa['daily_maintenance_usd']:,.0f}/day
+                · Fleet {'✓' if _pa['fleet_ready'] else '✗'} · Army {'✓' if _pa['army_ready'] else '✗'}</div>
+            </div>"""
+    except Exception:
+        pass
+    sp_html += pa_html
+
     return f"""
     <div class="card">
         <h3>Wadsworth Pro</h3>

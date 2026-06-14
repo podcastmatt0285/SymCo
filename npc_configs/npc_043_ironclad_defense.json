@@ -12,8 +12,8 @@
         "aim120_amraam",
         "rifle_barrel",
         "rifle_receiver",
-        "grenade_body",
-        "missile_warhead",
+        "frag_grenade_body",
+        "he_warhead",
         "556_nato_crate",
         "semtex_charge",
         "sniper_kit"
@@ -30,13 +30,13 @@
         "m1a2_abrams",
         "k2_black_panther",
         "humvee",
-        "apc",
+        "stryker_apc",
         "military_truck",
         "tank_hull",
         "tank_turret",
         "tank_cannon",
         "apc_hull",
-        "infantry_fighting_vehicle"
+        "m2_bradley"
       ],
       "business_type": "military_vehicle_plant",
       "district_seed_index": 0
@@ -293,23 +293,11 @@
       "reorder_at": 1,
       "target_inventory": 5
     },
-    "missile_guidance_unit": {
-      "market": "regular",
-      "max_price_multiplier": 1.15,
-      "reorder_at": 20,
-      "target_inventory": 100
-    },
     "molybdenum": {
       "market": "regular",
       "max_price_multiplier": 1.1,
       "reorder_at": 200,
       "target_inventory": 1000
-    },
-    "night_vision_optic": {
-      "market": "regular",
-      "max_price_multiplier": 1.15,
-      "reorder_at": 40,
-      "target_inventory": 200
     },
     "nitroglycerin": {
       "market": "regular",
@@ -370,12 +358,6 @@
       "max_price_multiplier": 1.15,
       "reorder_at": 100,
       "target_inventory": 500
-    },
-    "rocket_motor": {
-      "market": "regular",
-      "max_price_multiplier": 1.1,
-      "reorder_at": 40,
-      "target_inventory": 200
     },
     "rubber": {
       "market": "regular",
@@ -449,12 +431,6 @@
       "reorder_at": 60,
       "target_inventory": 300
     },
-    "wp_grenade": {
-      "market": "regular",
-      "max_price_multiplier": 1.1,
-      "reorder_at": 6,
-      "target_inventory": 24
-    },
     "yttrium": {
       "market": "regular",
       "max_price_multiplier": 1.2,
@@ -484,6 +460,30 @@
       "max_price_multiplier": 1.15,
       "reorder_at": 40,
       "target_inventory": 200
+    },
+    "radar_seeker": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 20,
+      "target_inventory": 100
+    },
+    "pvs14_nvg": {
+      "market": "regular",
+      "max_price_multiplier": 1.15,
+      "reorder_at": 40,
+      "target_inventory": 200
+    },
+    "solid_rocket_motor": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 40,
+      "target_inventory": 200
+    },
+    "m15_wp_grenade": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 6,
+      "target_inventory": 24
     }
   },
   "cash_caps": {
@@ -516,11 +516,6 @@
       "max_order_quantity": 500,
       "min_inventory_to_keep": 0
     },
-    "ammunition_crate": {
-      "market": "regular",
-      "max_order_quantity": 200,
-      "min_inventory_to_keep": 0
-    },
     "apc_hull": {
       "market": "regular",
       "max_order_quantity": 15,
@@ -551,19 +546,9 @@
       "max_order_quantity": 50,
       "min_inventory_to_keep": 0
     },
-    "grenade_body": {
-      "market": "regular",
-      "max_order_quantity": 500,
-      "min_inventory_to_keep": 0
-    },
     "humvee": {
       "market": "regular",
       "max_order_quantity": 30,
-      "min_inventory_to_keep": 0
-    },
-    "infantry_fighting_vehicle": {
-      "market": "regular",
-      "max_order_quantity": 10,
       "min_inventory_to_keep": 0
     },
     "k2_black_panther": {
@@ -599,11 +584,6 @@
     "military_uniform": {
       "market": "regular",
       "max_order_quantity": 1000,
-      "min_inventory_to_keep": 0
-    },
-    "missile_warhead": {
-      "market": "regular",
-      "max_order_quantity": 50,
       "min_inventory_to_keep": 0
     },
     "mre": {
@@ -663,7 +643,7 @@
     },
     "556_nato_crate": {
       "market": "regular",
-      "max_order_quantity": 10000,
+      "max_order_quantity": 200,
       "min_inventory_to_keep": 0
     },
     "stryker_apc": {
@@ -692,6 +672,21 @@
       "min_inventory_to_keep": 0
     },
     "aim120_amraam": {
+      "market": "regular",
+      "max_order_quantity": 50,
+      "min_inventory_to_keep": 0
+    },
+    "frag_grenade_body": {
+      "market": "regular",
+      "max_order_quantity": 500,
+      "min_inventory_to_keep": 0
+    },
+    "m2_bradley": {
+      "market": "regular",
+      "max_order_quantity": 10,
+      "min_inventory_to_keep": 0
+    },
+    "he_warhead": {
       "market": "regular",
       "max_order_quantity": 50,
       "min_inventory_to_keep": 0

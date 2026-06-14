@@ -19,12 +19,6 @@
     }
   ],
   "buy_items": {
-    "armored_car": {
-      "market": "regular",
-      "max_price_multiplier": 1.1,
-      "reorder_at": 2,
-      "target_inventory": 8
-    },
     "attack_helicopter": {
       "market": "regular",
       "max_price_multiplier": 1.1,
@@ -109,12 +103,6 @@
       "reorder_at": 1,
       "target_inventory": 5
     },
-    "main_battle_tank": {
-      "market": "regular",
-      "max_price_multiplier": 1.1,
-      "reorder_at": 1,
-      "target_inventory": 5
-    },
     "nanosatellite": {
       "market": "regular",
       "max_price_multiplier": 1.1,
@@ -192,6 +180,18 @@
       "max_price_multiplier": 1.1,
       "reorder_at": 1,
       "target_inventory": 5
+    },
+    "boxer_apc": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 2,
+      "target_inventory": 8
+    },
+    "m1a2_abrams": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
     }
   },
   "cash_caps": {
@@ -200,7 +200,7 @@
     "soft_high": 16000000,
     "soft_low": 4000000
   },
-  "description": "Automotive components manufacturer running two factories that build fuel tanks and car batteries — the two automotive parts every boat yard and vehicle assembler needs. A second source alongside Blackvein so the marine and vehicle trades stay stocked. Hoards nothing.",
+  "description": "Automotive components manufacturer running two factories that build fuel tanks and car batteries \u2014 the two automotive parts every boat yard and vehicle assembler needs. A second source alongside Blackvein so the marine and vehicle trades stay stocked. Hoards nothing.",
   "ipo": {
     "shares_to_offer": 600000,
     "ticker": "AXLE",

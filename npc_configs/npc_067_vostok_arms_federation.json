@@ -122,12 +122,6 @@
       "reorder_at": 1,
       "target_inventory": 5
     },
-    "grenade_body": {
-      "market": "regular",
-      "max_price_multiplier": 1.1,
-      "reorder_at": 600,
-      "target_inventory": 3000
-    },
     "hal_dhruv": {
       "market": "district",
       "max_price_multiplier": 1.1,
@@ -139,12 +133,6 @@
       "max_price_multiplier": 1.1,
       "reorder_at": 6,
       "target_inventory": 26
-    },
-    "incendiary_rocket": {
-      "market": "regular",
-      "max_price_multiplier": 1.1,
-      "reorder_at": 1,
-      "target_inventory": 5
     },
     "j16_flanker": {
       "market": "district",
@@ -277,6 +265,18 @@
       "max_price_multiplier": 1.1,
       "reorder_at": 8,
       "target_inventory": 33
+    },
+    "frag_grenade_body": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "switchblade_600": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 1,
+      "target_inventory": 5
     }
   },
   "cash_caps": {

@@ -103,12 +103,6 @@
       "reorder_at": 6,
       "target_inventory": 26
     },
-    "grenade_body": {
-      "market": "regular",
-      "max_price_multiplier": 1.1,
-      "reorder_at": 600,
-      "target_inventory": 3000
-    },
     "hk416": {
       "market": "district",
       "max_price_multiplier": 1.1,
@@ -181,12 +175,6 @@
       "reorder_at": 1000,
       "target_inventory": 5000
     },
-    "smoke_grenade": {
-      "market": "regular",
-      "max_price_multiplier": 1.1,
-      "reorder_at": 9,
-      "target_inventory": 38
-    },
     "steel": {
       "market": "regular",
       "max_price_multiplier": 1.1,
@@ -240,6 +228,18 @@
       "max_price_multiplier": 1.1,
       "reorder_at": 1,
       "target_inventory": 5
+    },
+    "frag_grenade_body": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 600,
+      "target_inventory": 3000
+    },
+    "m18_smoke_grenade": {
+      "market": "regular",
+      "max_price_multiplier": 1.1,
+      "reorder_at": 9,
+      "target_inventory": 38
     }
   },
   "cash_caps": {

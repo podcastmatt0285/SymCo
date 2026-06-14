@@ -7,7 +7,7 @@
         "fire_control_system",
         "avionics_suite",
         "sonar_system",
-        "torpedo",
+        "mk48_torpedo",
         "naval_gun_system"
       ],
       "business_type": "defense_electronics_factory",
@@ -123,7 +123,7 @@
       "max_order_quantity": 15,
       "min_inventory_to_keep": 5
     },
-    "torpedo": {
+    "mk48_torpedo": {
       "market": "regular",
       "max_order_quantity": 100,
       "min_inventory_to_keep": 20

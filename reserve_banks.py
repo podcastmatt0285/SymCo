@@ -173,6 +173,28 @@ COIN_METAL_COMPOSITIONS: dict = {
 # Set of coin currency codes for O(1) membership tests.
 COIN_CURRENCY_CODES: frozenset = frozenset(COIN_METAL_COMPOSITIONS)
 
+
+def get_live_coin_usd_per_unit(currency_code: str, fallback: float = 0.0) -> float:
+    """Single source of truth for a coin's USD value: Σ (alloy_fraction × live metal price).
+
+    Both the mint (credit_mint_coinage) and every display path must value coin
+    currencies through THIS function so the per-unit value never diverges between
+    the Mint, market, bank, and forex pages. Returns `fallback` if the currency is
+    not a metal coin or live pricing is unavailable.
+    """
+    composition = COIN_METAL_COMPOSITIONS.get(currency_code)
+    if not composition:
+        return fallback
+    try:
+        import market as _mkt
+        value = sum(
+            fraction * (_mkt.get_market_price(metal) or 0.0)
+            for metal, fraction in composition.items()
+        )
+        return value if value > 0 else fallback
+    except Exception:
+        return fallback
+
 # How long a player must wait between legal-tender switches (days).
 TENDER_SWITCH_COOLDOWN_DAYS = 7
 
@@ -503,8 +525,41 @@ def initialize():
 # TICK (called hourly by app)
 # ==========================
 
+def _refresh_coin_pegs(now: datetime):
+    """Re-peg every metal coin's usd_per_unit to the live metal price EVERY tick.
+
+    The displays (Mint, market net-worth, bank/forex board) all read the stored
+    bank.usd_per_unit, while the mint values coinage off the live metal price. If
+    the stored peg only refreshed hourly the two would disagree by up to an hour,
+    which is exactly the "values are off everywhere" symptom. Refreshing the stored
+    peg each tick keeps the displayed per-unit value in lockstep with the live rate
+    the mint uses, so Mint / market / bank / forex always agree.
+    """
+    db = get_db()
+    try:
+        coin_banks = db.query(StateReserveBank).filter(
+            StateReserveBank.currency_code.in_(tuple(COIN_CURRENCY_CODES))
+        ).all()
+        changed = False
+        for bank in coin_banks:
+            live = get_live_coin_usd_per_unit(bank.currency_code)
+            if live > 0 and live != bank.usd_per_unit:
+                bank.usd_per_unit = live
+                changed = True
+        if changed:
+            db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"[ReserveBanks] Coin peg refresh error: {e}")
+    finally:
+        db.close()
+
+
 def tick(app_tick: int, now: datetime):
     """Hourly housekeeping: accrue bond interest, adjust yields + FX rates, snapshot history."""
+    # Re-peg metal coins to live prices every tick so all pages show one value.
+    _refresh_coin_pegs(now)
+
     if app_tick % RESERVE_BANKS_TICK_INTERVAL != 0:
         return
 
@@ -656,25 +711,13 @@ def credit_mint_coinage(player_id: int, currency_code: str, metal_usd_value: flo
             print(f"[Mint] No active bank for {currency_code}")
             return 0.0
 
-        # Compute the peg FRESH from live metal prices rather than reading the
-        # bank's usd_per_unit field (which only updates on the hourly peg tick).
-        # Because metal_usd_value is also computed from current prices in the same
-        # cycle, this makes `amount` exactly the metal-unit count and fully
-        # price-independent — no stale-rate arbitrage, no minting loss when the
-        # peg lags a price move. Fall back to the stored rate if pricing fails.
-        unit_rate = bank.usd_per_unit
-        composition = COIN_METAL_COMPOSITIONS.get(currency_code)
-        if composition:
-            try:
-                import market as _mkt
-                fresh = sum(
-                    frac * (_mkt.get_market_price(metal) or 0.0)
-                    for metal, frac in composition.items()
-                )
-                if fresh > 0:
-                    unit_rate = fresh
-            except Exception:
-                pass
+        # Value the coin through the SINGLE shared live-peg helper so the mint and
+        # every display page agree on usd_per_unit. The reserve-bank tick also
+        # refreshes bank.usd_per_unit to this same value every tick, so the stored
+        # field the display pages read never diverges from what we mint at here.
+        # Because metal_usd_value is computed from current prices in the same cycle,
+        # `amount` stays exactly the metal-unit count and fully price-independent.
+        unit_rate = get_live_coin_usd_per_unit(currency_code, fallback=bank.usd_per_unit)
         if unit_rate <= 0:
             print(f"[Mint] Zero rate for {currency_code}; cannot mint")
             return 0.0
@@ -691,7 +734,10 @@ def credit_mint_coinage(player_id: int, currency_code: str, metal_usd_value: flo
 
         _adjust_currency_balance(db, player_id, currency_code, player_amount)
         _coin_inflow(db, bank, seigniorage)           # drains IOU queue, then → reserves
-        bank.total_face_value_wsc += metal_usd_value  # track total minted supply in USD equiv
+        # Track total minted supply in USD equiv at the SAME rate we minted at, so
+        # this counter stays reconciled with (circulating coins × usd_per_unit).
+        # amount * unit_rate == metal_usd_value when unit_rate is the live peg.
+        bank.total_face_value_wsc += amount * unit_rate
         db.commit()
         # Ledger entry (USD-equivalent value of minted coinage — operator's share only)
         try:
@@ -838,17 +884,9 @@ def _peg_coin_to_metals(db, bank: StateReserveBank):
         Idle coin yields simply hold at their demurrage level; demand still pushes
         them further negative (down to min_yield) but never above the 0 ceiling.
     """
-    composition = COIN_METAL_COMPOSITIONS.get(bank.currency_code, {})
-    try:
-        import market as _mkt
-        usd_value = sum(
-            fraction * (_mkt.get_market_price(metal) or 0.0)
-            for metal, fraction in composition.items()
-        )
-        if usd_value > 0:
-            bank.usd_per_unit = usd_value
-    except Exception as _e:
-        print(f"[ReserveBanks] Metal peg error for {bank.currency_code}: {_e}")
+    usd_value = get_live_coin_usd_per_unit(bank.currency_code)
+    if usd_value > 0:
+        bank.usd_per_unit = usd_value
 
     # Demand still moves yield (net buying → more negative), but no upward reversion
     # and a hard 0 ceiling from max_yield. Net buyers can't pull it positive.
