@@ -332,14 +332,16 @@ def _seed_port_authority_entries():
             "GOVERNMENT CONTRACTS — The federal government periodically issues massive procurement contracts. "
             "Contracts appear in your Port Authority dashboard. Submit a bid with a security deposit to compete. "
             "Bid windows stay open for 5 days, then the best bid wins automatically.\n\n"
-            "• If you WIN: fulfill the contract by gathering all required items in your regular inventory "
-            "and declaring shipment before the deadline. The government buys at inflated prices — payment "
-            "is TAX FREE. You also earn trophies (the biggest prize!) and your security deposit back.\n"
+            "• If you WIN: fulfill the contract PROGRESSIVELY — ship what you have now, and the progress bar "
+            "fills over time. Click 'Ship What I Have' each time you produce or acquire more stock. "
+            "Payment is TAX FREE and releases only when ALL items are shipped. You also earn trophies and your deposit back.\n"
             "• If you LOSE the bid: your security deposit is returned immediately.\n"
             "• If you WIN but MISS the deadline: the government keeps your full deposit and re-issues the contract.\n\n"
             "Contracts require real-world quantities of production items (food, goods, materials) — not military assets. "
             "Example: 'Federal Government: Feeding the Homeless' might require 100,000 burgers, 50,000 sodas, "
-            "1,000,000 bread, 500,000 apples — and pays far above market price.",
+            "1,000,000 bread, 500,000 apples — and pays far above market price.\n\n"
+            "CDO EXECUTIVE BONUS — Hire a Chief Defense Officer to reduce daily maintenance costs and boost "
+            "contract payouts. The CDO's 'military' effect stacks with all other exec bonuses.",
         ),
         (
             "Fleet & Army Composition",

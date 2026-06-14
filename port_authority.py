@@ -516,9 +516,22 @@ def deploy_mission(
         items_lost_summary: Dict[str, float] = {}
 
         if not success:
-            # Destroy LOSS_FRACTION of each PA item
+            # CDO executive reduces loss severity
+            effective_loss_fraction = LOSS_FRACTION
+            try:
+                from executive import get_player_job_bonus
+                from database import SessionLocal as _ES
+                _edb = _ES()
+                try:
+                    _mil_bonus = get_player_job_bonus(_edb, player_id, "military")
+                finally:
+                    _edb.close()
+                effective_loss_fraction = max(0.01, LOSS_FRACTION * (1.0 - _mil_bonus))
+            except Exception:
+                pass
+            # Destroy effective_loss_fraction of each PA item
             for item_type, qty in list(inventory.items()):
-                loss = max(1, int(qty * LOSS_FRACTION))
+                loss = max(1, int(qty * effective_loss_fraction))
                 loss = min(loss, int(qty))
                 if loss > 0:
                     _pa_remove_item(db, pa.id, item_type, float(loss))
@@ -827,8 +840,21 @@ def fulfill_contract(player_id: int, contract_id: int) -> Tuple[bool, dict]:
 
         if fully_complete:
             from reserve_banks import credit_usd, debit_usd
-            credit_usd(player_id, contract.payment_usd)
-            debit_usd(GOVERNMENT_PLAYER_ID, contract.payment_usd)
+            # CDO executive boosts contract payment
+            effective_payment = contract.payment_usd
+            try:
+                from executive import get_player_job_bonus
+                from database import SessionLocal as _ES
+                _edb = _ES()
+                try:
+                    _mil_bonus = get_player_job_bonus(_edb, player_id, "military")
+                finally:
+                    _edb.close()
+                effective_payment = contract.payment_usd * (1.0 + _mil_bonus)
+            except Exception:
+                pass
+            credit_usd(player_id, effective_payment)
+            debit_usd(GOVERNMENT_PLAYER_ID, effective_payment)
 
             if bid and not bid.deposit_returned:
                 credit_usd(player_id, bid.deposit_paid_usd)
@@ -861,14 +887,14 @@ def fulfill_contract(player_id: int, contract_id: int) -> Tuple[bool, dict]:
 
             try:
                 from stats_ux import log_transaction
-                log_transaction(player_id, "pa_contract_payment", "money", contract.payment_usd,
+                log_transaction(player_id, "pa_contract_payment", "money", effective_payment,
                                 f"Gov contract fulfilled (tax-free): {contract.title}",
                                 reference_id=f"pa-contract-{contract_id}")
             except Exception:
                 pass
             try:
                 from govt_ledger import log_gov_event
-                log_gov_event("pa_contract_payment", "out", contract.payment_usd, "USD",
+                log_gov_event("pa_contract_payment", "out", effective_payment, "USD",
                               counterparty=f"player:{player_id}",
                               description=f"PA contract fulfilled: {contract.title} (#{contract_id})")
             except Exception:
@@ -876,16 +902,16 @@ def fulfill_contract(player_id: int, contract_id: int) -> Tuple[bool, dict]:
 
             dep_back = bid.deposit_paid_usd if bid else 0
             _fire_pa_push(player_id, "🎉 Contract Fully Fulfilled!",
-                          f"'{contract.title}' — received ${contract.payment_usd:,.0f} "
+                          f"'{contract.title}' — received ${effective_payment:,.0f} "
                           f"(tax-free) + {contract.trophy_reward} trophies + "
                           f"${dep_back:,.0f} security deposit returned.")
             return True, {
                 "fully_completed": True,
                 "shipped_now": shipped_now,
                 "fulfilled": fulfilled_so_far,
-                "payment_usd": contract.payment_usd,
+                "payment_usd": effective_payment,
                 "trophies": contract.trophy_reward,
-                "message": f"Contract fully fulfilled! ${contract.payment_usd:,.0f} credited + {contract.trophy_reward} trophies.",
+                "message": f"Contract fully fulfilled! ${effective_payment:,.0f} credited + {contract.trophy_reward} trophies.",
             }
         else:
             db.commit()
@@ -1332,6 +1358,18 @@ def tick(current_tick: int, now: datetime):
             )
             if daily_cost <= 0:
                 continue
+            # Executive CDO bonus reduces maintenance cost
+            try:
+                from executive import get_player_job_bonus
+                from database import SessionLocal as _ES
+                _edb = _ES()
+                try:
+                    _mil_bonus = get_player_job_bonus(_edb, pa.owner_id, "military")
+                finally:
+                    _edb.close()
+                daily_cost = daily_cost * max(0.0, 1.0 - _mil_bonus)
+            except Exception:
+                pass
             ok, _ = spend_player_funds(pa.owner_id, daily_cost)
             if ok:
                 # Upkeep was paid — record it in the player's ledger and skim the

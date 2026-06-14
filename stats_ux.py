@@ -1455,6 +1455,8 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         "land_grant":      ("land_grant_award",),
         # Institutions / Mint coinage
         "institutions":    ("special_plot_", "business_purchase", "coin_mint"),
+        # Port Authority
+        "port_authority":  ("pa_contract", "pa_maintenance", "pa_procurement", "pa_loss"),
     }
     # Build a flat JSON map of type → category list for JS
     type_to_tabs: Dict[str, List[str]] = {}
@@ -1827,6 +1829,7 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         ("annuities",       "Annuities",       count_by_tab.get("annuities", 0)),
         ("trophies",        "Trophies",        count_by_tab.get("trophies", 0)),
         ("institutions",    "Institutions",    count_by_tab.get("institutions", 0)),
+        ("port_authority",  "Port Authority",  count_by_tab.get("port_authority", 0)),
     ]
     def _chip(k, label, cnt):
         active_cls = " txchip-active" if k == "all" else ""

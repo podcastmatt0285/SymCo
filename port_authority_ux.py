@@ -414,6 +414,23 @@ def port_authority_dashboard(session_token: Optional[str] = Cookie(None)):
     # Government contracts section (uses player's regular inventory, not PA inv)
     contracts_html = _contracts_section(player.id, player_inv)
 
+    # Executive military bonus
+    mil_bonus = 0.0
+    try:
+        from executive import get_player_job_bonus
+        from database import SessionLocal as _ES
+        _edb = _ES()
+        try:
+            mil_bonus = get_player_job_bonus(_edb, player.id, "military")
+        finally:
+            _edb.close()
+    except Exception:
+        pass
+    mil_bonus_note = (
+        f' &nbsp;•&nbsp; <span style="color:#a78bfa;">CDO Bonus: −{mil_bonus*100:.0f}% upkeep / +{mil_bonus*100:.0f}% contracts</span>'
+        if mil_bonus > 0 else ""
+    )
+
     body = f"""
     <div style="max-width:800px;margin:0 auto;padding:16px;color:#F5F5DC;font-family:Georgia,serif;">
       <h1 style="color:#B08D57;">⚓ {pa['name']}</h1>
@@ -421,6 +438,7 @@ def port_authority_dashboard(session_token: Optional[str] = Cookie(None)):
         Daily upkeep: <b style="color:#fbbf24;">{fmt_usd(daily)}/day</b>
         &nbsp;•&nbsp; Fleet: <b style="color:{'#4ade80' if fleet_ready else '#f87171'};">{'READY' if fleet_ready else 'not ready'}</b>
         &nbsp;•&nbsp; Army: <b style="color:{'#4ade80' if army_ready else '#f87171'};">{'READY' if army_ready else 'not ready'}</b>
+        {mil_bonus_note}
       </p>
 
       <div style="display:flex;flex-wrap:wrap;gap:16px;margin-top:12px;">

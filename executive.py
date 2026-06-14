@@ -266,6 +266,13 @@ EXECUTIVE_JOBS = {
         "description": "Manages DMs, contract notifications, and P2P deal flow. Unlocks push notifications, in-app sounds, and app icon badges.",
         "effect": "p2p",
     },
+    # ── MILITARY / PORT AUTHORITY ─────────────────────────────────────────────
+    "chief_defense": {
+        "title": "Chief Defense Officer", "abbr": "CDO",
+        "category": "military",
+        "description": "Oversees Port Authority operations — lowers maintenance costs, boosts contract payouts, and reduces mission losses",
+        "effect": "military",
+    },
     # ── SPECIAL: FIRST LADY (tutorial reward) ─────────────────────────────────
     "first_lady": {
         "title": "Former First Lady", "abbr": "FL",
@@ -377,6 +384,19 @@ EXEC_ABILITIES = {
     "annexation_right":    {"name": "Annexation Rights",       "desc": "District monthly taxes −15%",                          "effect": "districts",  "value": 0.15},
     "agri_bonus":          {"name": "Agricultural Bonus",      "desc": "Land purchase prices and hoarding taxes −15%",         "effect": "land",       "value": 0.15},
     "regional_hub":        {"name": "Regional Hub",            "desc": "Business production output +10%",                      "effect": "production", "value": 0.10},
+    # ── MILITARY / PORT AUTHORITY ─────────────────────────────────────────────
+    # Hookpoints:
+    #   port_authority.py maintenance_tick: cost * (1 - military_bonus)
+    #   port_authority.py fulfill_contract: payment * (1 + military_bonus)
+    #   port_authority.py run_pa_mission: loss_pct * (1 - military_bonus)
+    "logistics_commander":  {"name": "Logistics Commander",     "desc": "Port Authority maintenance costs −15%",                "effect": "military", "value": 0.15},
+    "supply_chain_officer": {"name": "Supply Chain Officer",    "desc": "Port Authority maintenance costs −10%",                "effect": "military", "value": 0.10},
+    "contract_liaison":     {"name": "Government Contract Liaison", "desc": "PA contract payouts +12%",                        "effect": "military", "value": 0.12},
+    "strategic_planner":    {"name": "Strategic Planner",       "desc": "PA mission loss damage −20%",                         "effect": "military", "value": 0.20},
+    "defense_attache":      {"name": "Defense Attaché",         "desc": "PA maintenance costs −8% and contract payouts +8%",   "effect": "military", "value": 0.08},
+    "procurement_officer":  {"name": "Procurement Officer",     "desc": "PA maintenance costs −12%",                           "effect": "military", "value": 0.12},
+    "fleet_commander":      {"name": "Fleet Commander",         "desc": "PA mission loss damage −25%",                         "effect": "military", "value": 0.25},
+    "intel_director":       {"name": "Intelligence Director",   "desc": "PA mission loss damage −15%",                         "effect": "military", "value": 0.15},
     # ── P2P ───────────────────────────────────────────────────────────────────
     # Hookpoint: p2p.py charge_p2p_access fee * (1 - p2p_bonus)
     # Special UI abilities use effect "special" — checked via player_has_ability(), not get_player_job_bonus()
