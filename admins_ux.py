@@ -6720,9 +6720,9 @@ def admin_pa_contracts(
                 f"<td style='padding:6px 10px;'>"
                 + (f"<form method='post' action='/admin/pa-contracts/{c['id']}/cancel' style='display:inline;'>"
                    f"<input type='hidden' name='session_token' value=''>"
-                   f"<button type='submit' onclick=\"return confirm('Cancel contract and return deposits?')\" "
+                   f"<button type='submit' onclick=\"return confirm('Cancel this contract, return all deposits, and return any shipped items?')\" "
                    f"style='padding:3px 10px;background:#7f1d1d;color:#fca5a5;border:1px solid #ef4444;cursor:pointer;'>Cancel</button>"
-                   f"</form>" if c["status"] == "bidding" else "—")
+                   f"</form>" if c["status"] in ("bidding", "awarded") else "—")
                 + "</td></tr>"
             )
         table_html = f"""

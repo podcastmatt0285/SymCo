@@ -1129,22 +1129,47 @@ def admin_get_all_contracts(limit: int = 100) -> List[dict]:
 
 
 def admin_cancel_contract(contract_id: int) -> Tuple[bool, str]:
-    """Admin: cancel a bidding contract, return all pending deposits."""
+    """Admin: cancel a contract and void it.
+
+    Works on both "bidding" (return all pending deposits) and "awarded" contracts
+    (return the winner's deposit AND any items they already shipped progressively).
+    """
+    import json as _j
     db = SessionLocal()
     try:
         contract = db.query(PAContract).filter_by(id=contract_id).first()
         if not contract:
             return False, "Contract not found."
-        if contract.status not in ("bidding",):
+        if contract.status not in ("bidding", "awarded"):
             return False, f"Cannot cancel a contract with status '{contract.status}'."
 
         from reserve_banks import credit_usd, debit_usd
-        bids = db.query(PAContractBid).filter_by(contract_id=contract_id, status="pending").all()
+
+        # Return deposits for any still-active bids (pending on bidding, won on awarded).
+        bids = db.query(PAContractBid).filter(
+            PAContractBid.contract_id == contract_id,
+            PAContractBid.status.in_(("pending", "won")),
+        ).all()
+        returned_items_note = ""
         for bid in bids:
             if not bid.deposit_returned:
                 credit_usd(bid.player_id, bid.deposit_paid_usd)
                 debit_usd(GOVERNMENT_PLAYER_ID, bid.deposit_paid_usd)
                 bid.deposit_returned = True
+
+            # If this is the awarded winner, return any items they already shipped.
+            if bid.status == "won" and bid.fulfilled_items:
+                try:
+                    from inventory import transfer_item
+                    shipped = _j.loads(bid.fulfilled_items or "{}")
+                    for slug, qty in shipped.items():
+                        if qty and qty > 0:
+                            transfer_item(GOVERNMENT_PLAYER_ID, bid.player_id, slug, float(qty))
+                    if shipped:
+                        returned_items_note = " Shipped items were returned."
+                except Exception as _ie:
+                    print(f"[PA] item return on cancel error: {_ie}")
+
             bid.status = "lost"
             _fire_pa_push(bid.player_id, "Contract Cancelled",
                           f"The contract '{contract.title}' was cancelled by the government. "
@@ -1152,7 +1177,8 @@ def admin_cancel_contract(contract_id: int) -> Tuple[bool, str]:
 
         contract.status = "expired"
         db.commit()
-        return True, f"Contract #{contract_id} cancelled; {len(bids)} deposit(s) returned."
+        return True, (f"Contract #{contract_id} cancelled; "
+                      f"{len(bids)} deposit(s) returned.{returned_items_note}")
     except Exception as e:
         db.rollback()
         return False, str(e)
