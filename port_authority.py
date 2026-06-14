@@ -841,8 +841,13 @@ def fulfill_contract(player_id: int, contract_id: int) -> Tuple[bool, dict]:
 
         if fully_complete:
             from reserve_banks import credit_usd, debit_usd
+            # Reverse auction: "cheapest" winners are paid THEIR winning bid (they keep
+            # the margin over their cost); "best_volume" winners are paid the fixed payment.
+            base_payment = (bid.bid_price_usd
+                            if contract.selection_method == "cheapest"
+                            else contract.payment_usd)
             # CDO executive boosts contract payment
-            effective_payment = contract.payment_usd
+            effective_payment = base_payment
             try:
                 from executive import get_player_job_bonus
                 from database import SessionLocal as _ES
@@ -851,7 +856,7 @@ def fulfill_contract(player_id: int, contract_id: int) -> Tuple[bool, dict]:
                     _mil_bonus = get_player_job_bonus(_edb, player_id, "military")
                 finally:
                     _edb.close()
-                effective_payment = contract.payment_usd * (1.0 + _mil_bonus)
+                effective_payment = base_payment * (1.0 + _mil_bonus)
             except Exception:
                 pass
             credit_usd(player_id, effective_payment)
@@ -976,7 +981,11 @@ def check_contract_forfeitures():
                 except Exception:
                     pass
 
-            # Restart: create a new contract with same parameters
+            # Restart: create a new contract with same parameters, preserving the
+            # original bid window (don't reset everything to a hardcoded 5 days).
+            window = contract.bid_closes_at - contract.bid_opens_at
+            if window <= timedelta(0):
+                window = timedelta(days=5)
             new_contract = PAContract(
                 title=contract.title,
                 description=contract.description,
@@ -987,7 +996,7 @@ def check_contract_forfeitures():
                 fulfillment_days=contract.fulfillment_days,
                 selection_method=contract.selection_method,
                 bid_opens_at=now,
-                bid_closes_at=now + timedelta(days=5),
+                bid_closes_at=now + window,
                 status="bidding",
                 created_by=contract.created_by,
             )
@@ -1000,7 +1009,7 @@ def check_contract_forfeitures():
                 for pa in owners:
                     _fire_pa_push(pa.owner_id, "📋 Government Contract Re-Issued",
                                   f"'{contract.title}' is available for bidding again. "
-                                  f"Bid window closes in 5 days.")
+                                  f"Bid window closes in {window.days} day(s).")
             except Exception:
                 pass
 
@@ -1075,6 +1084,7 @@ def get_won_contract(player_id: int) -> Optional[dict]:
         d = _contract_to_dict(contract)
         d["deposit_paid_usd"] = bid.deposit_paid_usd
         d["bid_id"] = bid.id
+        d["winning_bid_price_usd"] = bid.bid_price_usd
         d["fulfilled_items"] = _j.loads(bid.fulfilled_items or "{}")
         return d
     finally:
@@ -1165,10 +1175,14 @@ def admin_cancel_contract(contract_id: int) -> Tuple[bool, str]:
 #       "title":          "Federal Government: Feeding the Homeless",
 #       "description":    "Short flavor text shown to players.",
 #       "required_items": {"burger": 100000, "bread": 1000000},  # slug -> qty
-#       "payment_usd":            50_000_000,       # tax-free payout on full fulfillment
+#       "payment_usd":            50_000_000,       # for "cheapest": the "up to" reference
+#                                                   #   shown to players (NOT an enforced cap;
+#                                                   #   winners are paid their own winning bid).
+#                                                   #   For "best_volume": the fixed payout.
 #       "security_deposit_usd":    5_000_000,       # refundable bid deposit
 #       "trophy_reward":   500,
 #       "fulfillment_days": 14,                     # days to fulfill after bid window closes
+#       "bid_window_days":  5,                      # optional, days bidding stays open (default 5)
 #       "selection_method": "cheapest",             # "cheapest" | "best_volume"
 #   }
 #
@@ -1176,7 +1190,29 @@ def admin_cancel_contract(contract_id: int) -> Tuple[bool, str]:
 # typo is caught before the contract goes live (no silent broken contracts).
 #
 CONTRACT_LIBRARY: List[dict] = [
-    # Authored contracts go here — one dict per contract, added on request.
+    {
+        "key": "wazzy_appleseed",
+        "title": "Wazzy Appleseed",
+        "description": (
+            "In the spirit of Johnny Appleseed, the federal government is launching a "
+            "nationwide planting drive to grow food across the country. It needs a vast "
+            "supply of seeds and fresh greens. The government will pay up to $1 per apple "
+            "seed, up to $1 per orange seed, and up to $7 per head of lettuce. Submit your "
+            "best TOTAL price — the cheapest total bid wins, and you are paid your winning "
+            "bid (you keep the difference over your production cost as profit)."
+        ),
+        "required_items": {
+            "apple_seeds": 10_000_000,
+            "orange_seeds": 10_000_000,
+            "lettuce": 1_000_000,
+        },
+        "payment_usd": 27_000_000,      # "up to" reference (10M·$1 + 10M·$1 + 1M·$7); not a cap
+        "security_deposit_usd": 500_000,
+        "trophy_reward": 125,
+        "fulfillment_days": 27,
+        "bid_window_days": 3,
+        "selection_method": "cheapest",
+    },
 ]
 
 
@@ -1219,7 +1255,8 @@ def post_library_contract(key: str, admin_id: int,
 
     now = datetime.utcnow()
     opens = bid_opens_at or now
-    closes = opens + timedelta(days=5)
+    window_days = int(definition.get("bid_window_days", 5))
+    closes = opens + timedelta(days=window_days)
 
     db = SessionLocal()
     try:

@@ -114,9 +114,11 @@ def _contracts_section(player_id: int, player_inv: dict, fmt_usd=None) -> str:
                     _pay_placeholder = f"e.g. {c['payment_usd']:,.0f}"
                     bid_input = (
                         f"<label style='display:flex;flex-direction:column;gap:3px;'>"
-                        f"Your Bid Price — what you charge the government, in USD "
-                        f"<span style='color:#94a3b8;font-size:0.85em;'>(all bids quoted in USD for fair comparison; "
-                        f"your deposit & payout settle in your own currency)</span><br>"
+                        f"Your TOTAL Bid Price — what you charge the government for everything, in USD "
+                        f"<span style='color:#94a3b8;font-size:0.85em;'>(cheapest total bid wins, and you're "
+                        f"paid your own winning bid — you keep the difference over your cost as profit. "
+                        f"Bids quoted in USD for fair comparison; your deposit &amp; payout settle in your "
+                        f"own currency.)</span><br>"
                         f"<input id='bid-price-{cid}' type='number' min='0' step='1000' "
                         f"placeholder='{_pay_placeholder}' "
                         f"style='padding:5px;width:180px;'></label>"
@@ -131,13 +133,19 @@ def _contracts_section(player_id: int, player_inv: dict, fmt_usd=None) -> str:
                   </button>
                 </div>"""
 
-            selection_label = "Cheapest bid wins" if c.get("selection_method","cheapest") == "cheapest" else "Highest volume offered wins"
+            _is_cheapest = c.get("selection_method", "cheapest") == "cheapest"
+            selection_label = "Cheapest bid wins" if _is_cheapest else "Highest volume offered wins"
+            # For reverse-auction ("cheapest") contracts the payout is the winner's own bid,
+            # so payment_usd is shown as an "up to" reference rather than a fixed payout.
+            pay_label = (f'💰 Pays up to: <b style="color:#4ade80;">{fmt_usd(c["payment_usd"])}</b> total'
+                         if _is_cheapest else
+                         f'💰 Payment: <b style="color:#4ade80;">{fmt_usd(c["payment_usd"])}</b>')
             contract_cards.append(f"""
             <div style="border:1px solid #2D1810;padding:12px;margin-bottom:10px;">
               <b style="color:#B08D57;font-size:1.05em;">{c['title']}</b>
               <p style="color:#94a3b8;margin:4px 0 8px;">{c.get('description') or ''}</p>
               <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:8px;">
-                <span>💰 Payment: <b style="color:#4ade80;">{fmt_usd(c['payment_usd'])}</b></span>
+                <span>{pay_label}</span>
                 <span>🏆 Trophies: <b style="color:#fbbf24;">{c['trophy_reward']}</b></span>
                 <span>📅 Bid closes: <b style="color:#F5F5DC;">{closes} UTC</b></span>
                 <span>⏱ Fulfillment: <b>{c['fulfillment_days']} days</b> after winning</span>
@@ -200,13 +208,23 @@ def _contracts_section(player_id: int, player_inv: dict, fmt_usd=None) -> str:
                 "Produce or purchase them and return here to ship.</p>"
             )
 
+        # For "cheapest" contracts the payout is the player's own winning bid, not the
+        # contract's "up to" reference; "best_volume" pays the fixed payment_usd.
+        _won_payout = (won.get("winning_bid_price_usd")
+                       if won.get("selection_method", "cheapest") == "cheapest"
+                       else won.get("payment_usd"))
+        if _won_payout is None:
+            _won_payout = won.get("payment_usd", 0)
+        _payout_note = ("your winning bid, tax-free"
+                        if won.get("selection_method", "cheapest") == "cheapest"
+                        else "tax-free")
         won_html = f"""
         <div style="border:2px solid #4ade80;padding:14px;background:#0a1a0a;">
           <b style="color:#4ade80;font-size:1.1em;">🏆 Won Contract: {won['title']}</b>
           <p style="color:#94a3b8;margin:4px 0;">{won.get('description') or ''}</p>
           <p style="margin:6px 0;">
             Deadline: <b style="color:#fbbf24;">{deadline} UTC</b> &nbsp;•&nbsp;
-            Payment on completion: <b style="color:#4ade80;">{fmt_usd(won['payment_usd'])}</b> (tax-free) &nbsp;•&nbsp;
+            Payment on completion: <b style="color:#4ade80;">{fmt_usd(_won_payout)}</b> ({_payout_note}) &nbsp;•&nbsp;
             Trophies: <b style="color:#fbbf24;">{won['trophy_reward']}</b> &nbsp;•&nbsp;
             Deposit back: <b>{fmt_usd(won.get('deposit_paid_usd',0))}</b>
           </p>
