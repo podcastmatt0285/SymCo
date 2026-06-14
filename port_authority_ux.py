@@ -58,8 +58,14 @@ def _readiness_rows(breakdown: dict) -> str:
     return "".join(rows)
 
 
-def _contracts_section(player_id: int, player_inv: dict) -> str:
-    """Render the three government contracts panels."""
+def _contracts_section(player_id: int, player_inv: dict, fmt_usd=None) -> str:
+    """Render the three government contracts panels.
+
+    `fmt_usd` is the display-currency formatter from the page render (converts a
+    USD amount to the player's legal tender for display). Falls back to plain USD.
+    """
+    if fmt_usd is None:
+        fmt_usd = lambda amount, precision=0: f"${amount:,.{precision}f}"
     try:
         from port_authority import get_open_contracts, get_player_bids, get_won_contract
         from datetime import datetime, timezone
@@ -91,7 +97,7 @@ def _contracts_section(player_id: int, player_inv: dict) -> str:
                     f"<div style='margin-top:8px;padding:6px;background:#1a2a1a;border:1px solid #2D4A1A;'>"
                     f"<b style='color:#4ade80;'>✓ Bid Submitted</b> — "
                     f"Status: <b>{existing_bid['status'].title()}</b> &nbsp;•&nbsp; "
-                    f"Deposit: ${existing_bid['deposit_paid_usd']:,.0f}"
+                    f"Deposit: {fmt_usd(existing_bid['deposit_paid_usd'])}"
                     f"</div>"
                 )
             else:
@@ -108,7 +114,9 @@ def _contracts_section(player_id: int, player_inv: dict) -> str:
                     _pay_placeholder = f"e.g. {c['payment_usd']:,.0f}"
                     bid_input = (
                         f"<label style='display:flex;flex-direction:column;gap:3px;'>"
-                        f"Your Bid Price (what you charge gov, USD)<br>"
+                        f"Your Bid Price — what you charge the government, in USD "
+                        f"<span style='color:#94a3b8;font-size:0.85em;'>(all bids quoted in USD for fair comparison; "
+                        f"your deposit & payout settle in your own currency)</span><br>"
                         f"<input id='bid-price-{cid}' type='number' min='0' step='1000' "
                         f"placeholder='{_pay_placeholder}' "
                         f"style='padding:5px;width:180px;'></label>"
@@ -119,7 +127,7 @@ def _contracts_section(player_id: int, player_inv: dict) -> str:
                   {bid_input}
                   <button onclick="paSubmitBid({cid},{bid_param})"
                     style="padding:6px 16px;cursor:pointer;background:#8B4513;color:#F5F5DC;border:1px solid #B08D57;">
-                    Submit Bid (${c['security_deposit_usd']:,.0f} deposit)
+                    Submit Bid ({fmt_usd(c['security_deposit_usd'])} deposit)
                   </button>
                 </div>"""
 
@@ -129,7 +137,7 @@ def _contracts_section(player_id: int, player_inv: dict) -> str:
               <b style="color:#B08D57;font-size:1.05em;">{c['title']}</b>
               <p style="color:#94a3b8;margin:4px 0 8px;">{c.get('description') or ''}</p>
               <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:8px;">
-                <span>💰 Payment: <b style="color:#4ade80;">${c['payment_usd']:,.0f}</b></span>
+                <span>💰 Payment: <b style="color:#4ade80;">{fmt_usd(c['payment_usd'])}</b></span>
                 <span>🏆 Trophies: <b style="color:#fbbf24;">{c['trophy_reward']}</b></span>
                 <span>📅 Bid closes: <b style="color:#F5F5DC;">{closes} UTC</b></span>
                 <span>⏱ Fulfillment: <b>{c['fulfillment_days']} days</b> after winning</span>
@@ -198,9 +206,9 @@ def _contracts_section(player_id: int, player_inv: dict) -> str:
           <p style="color:#94a3b8;margin:4px 0;">{won.get('description') or ''}</p>
           <p style="margin:6px 0;">
             Deadline: <b style="color:#fbbf24;">{deadline} UTC</b> &nbsp;•&nbsp;
-            Payment on completion: <b style="color:#4ade80;">${won['payment_usd']:,.0f}</b> (tax-free) &nbsp;•&nbsp;
+            Payment on completion: <b style="color:#4ade80;">{fmt_usd(won['payment_usd'])}</b> (tax-free) &nbsp;•&nbsp;
             Trophies: <b style="color:#fbbf24;">{won['trophy_reward']}</b> &nbsp;•&nbsp;
-            Deposit back: <b>${won.get('deposit_paid_usd',0):,.0f}</b>
+            Deposit back: <b>{fmt_usd(won.get('deposit_paid_usd',0))}</b>
           </p>
           <p style="margin:4px 0;">Contract fulfillment progress:</p>
           <table style="border-collapse:collapse;width:100%;">{req_rows}</table>
@@ -219,9 +227,9 @@ def _contracts_section(player_id: int, player_inv: dict) -> str:
             dep_color = "#4ade80" if b["deposit_returned"] else "#94a3b8"
             dep_label = "✓ Returned" if b["deposit_returned"] else "Held"
             return (f"<tr><td style='padding:4px 10px;'>{b['contract_title']}</td>"
-                    f"<td style='padding:4px 10px;text-align:right;'>${b['bid_price_usd']:,.0f}</td>"
+                    f"<td style='padding:4px 10px;text-align:right;'>{fmt_usd(b['bid_price_usd'])}</td>"
                     f"<td style='padding:4px 10px;'><b style='color:{sc};'>{b['status'].title()}</b></td>"
-                    f"<td style='padding:4px 10px;text-align:right;'>${b['deposit_paid_usd']:,.0f}</td>"
+                    f"<td style='padding:4px 10px;text-align:right;'>{fmt_usd(b['deposit_paid_usd'])}</td>"
                     f"<td style='padding:4px 10px;color:{dep_color};'>{dep_label}</td></tr>")
         history_rows = "".join(_bid_row(b) for b in bid_list[:15])
         history_html = f"""
@@ -412,7 +420,7 @@ def port_authority_dashboard(session_token: Optional[str] = Cookie(None)):
     ) or "<tr><td colspan='4' style='padding:10px;color:#94a3b8;'>No active blockades.</td></tr>"
 
     # Government contracts section (uses player's regular inventory, not PA inv)
-    contracts_html = _contracts_section(player.id, player_inv)
+    contracts_html = _contracts_section(player.id, player_inv, fmt_usd)
 
     # Executive military bonus
     mil_bonus = 0.0

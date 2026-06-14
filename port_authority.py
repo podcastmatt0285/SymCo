@@ -672,9 +672,10 @@ def submit_contract_bid(
             return False, "You have already submitted a bid for this contract."
 
         deposit = contract.security_deposit_usd
-        from reserve_banks import debit_usd, credit_usd
-        if not debit_usd(player_id, deposit):
-            return False, f"Insufficient funds — security deposit of ${deposit:,.0f} required."
+        from reserve_banks import spend_player_funds, credit_usd
+        ok_dep, dep_err = spend_player_funds(player_id, deposit)
+        if not ok_dep:
+            return False, dep_err or f"Insufficient funds — security deposit of ${deposit:,.0f} required."
         credit_usd(GOVERNMENT_PLAYER_ID, deposit)
 
         bid = PAContractBid(
