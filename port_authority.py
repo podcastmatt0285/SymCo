@@ -223,15 +223,17 @@ class PAContractBid(Base):
     """A player's bid on a PAContract."""
     __tablename__ = "pa_contract_bids"
 
-    id                   = Column(Integer, primary_key=True)
-    contract_id          = Column(Integer, index=True, nullable=False)
-    player_id            = Column(Integer, index=True, nullable=False)
-    bid_price_usd        = Column(Float, default=0.0)        # for "cheapest" — player's charge
-    bid_volume_multiplier= Column(Float, default=1.0)        # for "best_volume" — extra volume offered
-    deposit_paid_usd     = Column(Float, default=0.0)
-    status               = Column(String, default="pending") # pending|won|lost|fulfilled|forfeited
-    submitted_at         = Column(DateTime, default=datetime.utcnow)
-    deposit_returned     = Column(Boolean, default=False)
+    id                    = Column(Integer, primary_key=True)
+    contract_id           = Column(Integer, index=True, nullable=False)
+    player_id             = Column(Integer, index=True, nullable=False)
+    bid_price_usd         = Column(Float, default=0.0)        # for "cheapest" — player's charge
+    bid_volume_multiplier = Column(Float, default=1.0)        # for "best_volume" — extra volume offered
+    deposit_paid_usd      = Column(Float, default=0.0)
+    status                = Column(String, default="pending") # pending|won|lost|fulfilled|forfeited
+    submitted_at          = Column(DateTime, default=datetime.utcnow)
+    deposit_returned      = Column(Boolean, default=False)
+    # Progressive fulfillment: {item_slug: qty_shipped_so_far}
+    fulfilled_items       = Column(Text, default="{}")
 
 
 class BlockadeInstance(Base):
@@ -768,101 +770,144 @@ def close_contract_bids(contract_id: int):
         db.close()
 
 
-def fulfill_contract(player_id: int, contract_id: int) -> Tuple[bool, str]:
-    """Declare fulfillment: transfer required items to government, receive payment + trophies."""
+def fulfill_contract(player_id: int, contract_id: int) -> Tuple[bool, dict]:
+    """Progressive fulfillment: auto-pull what the player has toward the contract quota.
+
+    Each call ships as much as possible from the player's regular inventory.
+    Returns (ok, result) where result contains progress per item and whether fully_completed.
+    """
     import json as _j
     db = SessionLocal()
     try:
         contract = db.query(PAContract).filter_by(id=contract_id).first()
         if not contract:
-            return False, "Contract not found."
+            return False, {"error": "Contract not found."}
         if contract.status != "awarded":
-            return False, "This contract is not in an awarded state."
+            return False, {"error": "This contract is not in an awarded state."}
         if contract.winner_player_id != player_id:
-            return False, "You did not win this contract."
+            return False, {"error": "You did not win this contract."}
 
         now = datetime.utcnow()
         if contract.fulfill_deadline and now > contract.fulfill_deadline:
-            return False, "Fulfillment deadline has passed."
+            return False, {"error": "Fulfillment deadline has passed."}
 
-        required_items = _j.loads(contract.required_items or "{}")
-
-        # Check regular inventory
-        from inventory import get_player_inventory, remove_item, transfer_item
-        inv = get_player_inventory(player_id)
-        for item_slug, qty_needed in required_items.items():
-            if inv.get(item_slug, 0) < qty_needed:
-                return False, f"Insufficient {item_slug} in your inventory (need {qty_needed:g}, have {inv.get(item_slug,0):g})."
-
-        # Transfer items to government
-        for item_slug, qty_needed in required_items.items():
-            ok = transfer_item(player_id, GOVERNMENT_PLAYER_ID, item_slug, qty_needed)
-            if not ok:
-                return False, f"Failed to transfer {item_slug} to government."
-
-        # Pay player (tax-free — direct credit, bypass federal loot tax)
-        from reserve_banks import credit_usd, debit_usd
-        credit_usd(player_id, contract.payment_usd)
-        debit_usd(GOVERNMENT_PLAYER_ID, contract.payment_usd)
-
-        # Return security deposit
         bid = db.query(PAContractBid).filter_by(
             contract_id=contract_id, player_id=player_id
         ).first()
-        if bid and not bid.deposit_returned:
-            credit_usd(player_id, bid.deposit_paid_usd)
-            debit_usd(GOVERNMENT_PLAYER_ID, bid.deposit_paid_usd)
-            bid.deposit_returned = True
+        if not bid or bid.status != "won":
+            return False, {"error": "No active winning bid found."}
+
+        required_items = _j.loads(contract.required_items or "{}")
+        fulfilled_so_far = _j.loads(bid.fulfilled_items or "{}")
+
+        from inventory import get_player_inventory, transfer_item
+        inv = get_player_inventory(player_id)
+
+        shipped_now: Dict[str, float] = {}
+        for item_slug, qty_total in required_items.items():
+            already = fulfilled_so_far.get(item_slug, 0.0)
+            still_needed = qty_total - already
+            if still_needed <= 0:
+                continue
+            available = inv.get(item_slug, 0.0)
+            can_ship = min(available, still_needed)
+            if can_ship > 0:
+                ok = transfer_item(player_id, GOVERNMENT_PLAYER_ID, item_slug, can_ship)
+                if ok:
+                    fulfilled_so_far[item_slug] = already + can_ship
+                    shipped_now[item_slug] = can_ship
+
+        bid.fulfilled_items = _j.dumps(fulfilled_so_far)
+
+        # Check if fully complete
+        fully_complete = all(
+            fulfilled_so_far.get(slug, 0.0) >= qty
+            for slug, qty in required_items.items()
+        )
+
+        if fully_complete:
+            from reserve_banks import credit_usd, debit_usd
+            credit_usd(player_id, contract.payment_usd)
+            debit_usd(GOVERNMENT_PLAYER_ID, contract.payment_usd)
+
+            if bid and not bid.deposit_returned:
+                credit_usd(player_id, bid.deposit_paid_usd)
+                debit_usd(GOVERNMENT_PLAYER_ID, bid.deposit_paid_usd)
+                bid.deposit_returned = True
+
             bid.status = "fulfilled"
+            contract.status = "fulfilled"
+            db.commit()
 
-        contract.status = "fulfilled"
-        db.commit()
-
-        # Award trophies
-        if contract.trophy_reward and contract.trophy_reward > 0:
-            try:
-                from events import _award_event_trophies, SessionLocal as _ES, PlayerRank
-
-                class _SyntheticEv:
-                    id = contract.id
-                    title = contract.title
-                    task_metric = None
-
-                _tdb = _ES()
+            # Award trophies
+            if contract.trophy_reward and contract.trophy_reward > 0:
                 try:
-                    _award_event_trophies(_tdb, _SyntheticEv(), player_id,
-                                         contract.trophy_reward, now)
-                    _tdb.commit()
-                finally:
-                    _tdb.close()
-            except Exception as _te:
-                print(f"[PA] trophy award error: {_te}")
+                    from events import _award_event_trophies, SessionLocal as _ES
 
-        # Ledger entries
-        try:
-            from stats_ux import log_transaction
-            log_transaction(player_id, "pa_contract_payment", "money", contract.payment_usd,
-                            f"Gov contract fulfilled (tax-free): {contract.title}",
-                            reference_id=f"pa-contract-{contract_id}")
-        except Exception:
-            pass
-        try:
-            from govt_ledger import log_gov_event
-            log_gov_event("pa_contract_payment", "out", contract.payment_usd, "USD",
-                          counterparty=f"player:{player_id}",
-                          description=f"PA contract fulfilled: {contract.title} (#{contract_id})")
-        except Exception:
-            pass
+                    class _SyntheticEv:
+                        id = contract.id
+                        title = contract.title
+                        task_metric = None
 
-        dep_back = bid.deposit_paid_usd if bid else 0
-        _fire_pa_push(player_id, "🎉 Contract Fulfilled!",
-                      f"'{contract.title}' — received ${contract.payment_usd:,.0f} "
-                      f"(tax-free) + {contract.trophy_reward} trophies + "
-                      f"${dep_back:,.0f} security deposit returned.")
-        return True, f"Contract fulfilled! ${contract.payment_usd:,.0f} credited + {contract.trophy_reward} trophies."
+                    _tdb = _ES()
+                    try:
+                        _award_event_trophies(_tdb, _SyntheticEv(), player_id,
+                                             contract.trophy_reward, now)
+                        _tdb.commit()
+                    finally:
+                        _tdb.close()
+                except Exception as _te:
+                    print(f"[PA] trophy award error: {_te}")
+
+            try:
+                from stats_ux import log_transaction
+                log_transaction(player_id, "pa_contract_payment", "money", contract.payment_usd,
+                                f"Gov contract fulfilled (tax-free): {contract.title}",
+                                reference_id=f"pa-contract-{contract_id}")
+            except Exception:
+                pass
+            try:
+                from govt_ledger import log_gov_event
+                log_gov_event("pa_contract_payment", "out", contract.payment_usd, "USD",
+                              counterparty=f"player:{player_id}",
+                              description=f"PA contract fulfilled: {contract.title} (#{contract_id})")
+            except Exception:
+                pass
+
+            dep_back = bid.deposit_paid_usd if bid else 0
+            _fire_pa_push(player_id, "🎉 Contract Fully Fulfilled!",
+                          f"'{contract.title}' — received ${contract.payment_usd:,.0f} "
+                          f"(tax-free) + {contract.trophy_reward} trophies + "
+                          f"${dep_back:,.0f} security deposit returned.")
+            return True, {
+                "fully_completed": True,
+                "shipped_now": shipped_now,
+                "fulfilled": fulfilled_so_far,
+                "payment_usd": contract.payment_usd,
+                "trophies": contract.trophy_reward,
+                "message": f"Contract fully fulfilled! ${contract.payment_usd:,.0f} credited + {contract.trophy_reward} trophies.",
+            }
+        else:
+            db.commit()
+            progress = {
+                slug: {"shipped": fulfilled_so_far.get(slug, 0.0), "required": qty}
+                for slug, qty in required_items.items()
+            }
+            shipped_total = sum(shipped_now.values())
+            if shipped_total == 0:
+                msg = "Nothing new to ship — check your inventory for the required items."
+            else:
+                msg = f"Shipped {shipped_total:g} units. Contract progress updated."
+            return True, {
+                "fully_completed": False,
+                "shipped_now": shipped_now,
+                "fulfilled": fulfilled_so_far,
+                "progress": progress,
+                "message": msg,
+            }
     except Exception as e:
         db.rollback()
-        return False, str(e)
+        return False, {"error": str(e)}
     finally:
         db.close()
 
@@ -988,7 +1033,7 @@ def get_player_bids(player_id: int, limit: int = 20) -> List[dict]:
 
 
 def get_won_contract(player_id: int) -> Optional[dict]:
-    """Return the player's currently active awarded (won, not fulfilled) contract."""
+    """Return the player's currently active awarded (won, not fulfilled) contract with progress."""
     import json as _j
     db = SessionLocal()
     try:
@@ -1003,6 +1048,7 @@ def get_won_contract(player_id: int) -> Optional[dict]:
         d = _contract_to_dict(contract)
         d["deposit_paid_usd"] = bid.deposit_paid_usd
         d["bid_id"] = bid.id
+        d["fulfilled_items"] = _j.loads(bid.fulfilled_items or "{}")
         return d
     finally:
         db.close()
@@ -1422,8 +1468,10 @@ async def api_contract_fulfill(contract_id: int, request: Request):
     pid = _player_id(request)
     if not pid:
         return JSONResponse({"error": "Not logged in."}, status_code=401)
-    ok, msg = fulfill_contract(pid, contract_id)
-    return JSONResponse({"ok": ok, "message": msg}, status_code=200 if ok else 400)
+    ok, result = fulfill_contract(pid, contract_id)
+    if ok:
+        return JSONResponse({"ok": True, "result": result})
+    return JSONResponse({"ok": False, "error": result.get("error", "Unknown error")}, status_code=400)
 
 
 @router.get("/contracts/mine")

@@ -146,36 +146,64 @@ def _contracts_section(player_id: int, player_inv: dict) -> str:
     # ── Panel B: Active Won Contract ─────────────────────────────────────
     if won:
         req = won["required_items"]
+        fulfilled_so_far = won.get("fulfilled_items", {})
         deadline = won.get("fulfill_deadline", "")[:16] if won.get("fulfill_deadline") else "—"
+
         def _won_row(it, qty):
-            c_ok = "#4ade80" if player_inv.get(it, 0) >= qty else "#f87171"
-            return (f"<tr><td style='padding:3px 10px;'>{_label(it)}</td>"
-                    f"<td style='padding:3px 10px;text-align:right;'>"
-                    f"<b style='color:{c_ok};'>{player_inv.get(it,0):g}</b>"
-                    f" / {qty:g} needed</td></tr>")
+            shipped = fulfilled_so_far.get(it, 0.0)
+            pct = min(100.0, (shipped / qty * 100)) if qty > 0 else 100.0
+            bar_color = "#4ade80" if pct >= 100 else "#fbbf24"
+            have = player_inv.get(it, 0.0)
+            have_label_color = "#4ade80" if have > 0 else "#94a3b8"
+            return (
+                f"<tr>"
+                f"<td style='padding:4px 10px;'>{_label(it)}</td>"
+                f"<td style='padding:4px 10px;text-align:right;'>"
+                f"<b style='color:{bar_color};'>{shipped:g}</b> / {qty:g} shipped</td>"
+                f"<td style='padding:4px 10px;min-width:120px;'>"
+                f"<div style='background:#1a1a1a;height:8px;border-radius:4px;overflow:hidden;'>"
+                f"<div style='background:{bar_color};width:{pct:.0f}%;height:100%;'></div></div></td>"
+                f"<td style='padding:4px 10px;text-align:right;color:{have_label_color};'>"
+                f"{have:g} in inv</td>"
+                f"</tr>"
+            )
         req_rows = "".join(_won_row(it, qty) for it, qty in req.items())
-        can_ship = all(player_inv.get(it, 0) >= qty for it, qty in req.items())
-        ship_btn = (
-            f"<button onclick=\"paFulfill({won['id']})\" "
-            f"style='padding:8px 20px;cursor:pointer;background:#1a4a1a;color:#4ade80;"
-            f"border:2px solid #4ade80;font-size:1rem;margin-top:12px;'>"
-            f"📦 Declare Ready — Ship to Government</button>"
-        ) if can_ship else (
-            "<p style='color:#f87171;margin-top:10px;'>⚠ You don't have all required items yet. "
-            "Gather them and return to ship.</p>"
+
+        has_any_to_ship = any(
+            player_inv.get(it, 0.0) > 0 and fulfilled_so_far.get(it, 0.0) < qty
+            for it, qty in req.items()
         )
+        fully_done = all(fulfilled_so_far.get(it, 0.0) >= qty for it, qty in req.items())
+
+        if fully_done:
+            ship_btn = "<p style='color:#4ade80;margin-top:10px;font-size:1.1em;'>✅ All items shipped — awaiting government processing.</p>"
+        elif has_any_to_ship:
+            ship_btn = (
+                f"<button onclick=\"paFulfill({won['id']})\" "
+                f"style='padding:8px 20px;cursor:pointer;background:#1a4a1a;color:#4ade80;"
+                f"border:2px solid #4ade80;font-size:1rem;margin-top:12px;'>"
+                f"📦 Ship What I Have</button>"
+                f"<p style='color:#94a3b8;font-size:0.85em;margin-top:4px;'>"
+                f"Ships as much as possible from your inventory. Click again as you produce more.</p>"
+            )
+        else:
+            ship_btn = (
+                "<p style='color:#f87171;margin-top:10px;'>⚠ None of the required items are in your inventory yet. "
+                "Produce or purchase them and return here to ship.</p>"
+            )
+
         won_html = f"""
         <div style="border:2px solid #4ade80;padding:14px;background:#0a1a0a;">
           <b style="color:#4ade80;font-size:1.1em;">🏆 Won Contract: {won['title']}</b>
           <p style="color:#94a3b8;margin:4px 0;">{won.get('description') or ''}</p>
           <p style="margin:6px 0;">
             Deadline: <b style="color:#fbbf24;">{deadline} UTC</b> &nbsp;•&nbsp;
-            Payment on delivery: <b style="color:#4ade80;">${won['payment_usd']:,.0f}</b> (tax-free) &nbsp;•&nbsp;
+            Payment on completion: <b style="color:#4ade80;">${won['payment_usd']:,.0f}</b> (tax-free) &nbsp;•&nbsp;
             Trophies: <b style="color:#fbbf24;">{won['trophy_reward']}</b> &nbsp;•&nbsp;
-            Deposit returned: <b>${won.get('deposit_paid_usd',0):,.0f}</b>
+            Deposit back: <b>${won.get('deposit_paid_usd',0):,.0f}</b>
           </p>
-          <p style="margin:4px 0;">Required items <span style="color:#94a3b8;font-size:0.85em;">(your inventory / needed)</span>:</p>
-          <table style="border-collapse:collapse;">{req_rows}</table>
+          <p style="margin:4px 0;">Contract fulfillment progress:</p>
+          <table style="border-collapse:collapse;width:100%;">{req_rows}</table>
           {ship_btn}
         </div>"""
     else:
@@ -536,11 +564,11 @@ def port_authority_dashboard(session_token: Optional[str] = Cookie(None)):
     }}
 
     async function paFulfill(contractId){{
-      if(!confirm('Ship all required items to the government? This cannot be undone.')) return;
       const r = await fetch('/api/port-authority/contracts/'+contractId+'/fulfill', {{method:'POST'}});
       const j = await r.json();
-      _show(j.message || j.error || '');
-      if(j.ok) setTimeout(()=>location.reload(), 1200);
+      const result = j.result || j;
+      _show(result.message || j.message || j.error || '');
+      if(j.ok) setTimeout(()=>location.reload(), 800);
     }}
 
     async function paSetImmigration(){{

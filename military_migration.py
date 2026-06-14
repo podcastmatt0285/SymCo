@@ -121,7 +121,8 @@ def run_migration():
                 deposit_paid_usd FLOAT DEFAULT 0.0,
                 status VARCHAR DEFAULT 'pending',
                 submitted_at TIMESTAMP DEFAULT NOW(),
-                deposit_returned BOOLEAN DEFAULT FALSE
+                deposit_returned BOOLEAN DEFAULT FALSE,
+                fulfilled_items TEXT DEFAULT '{}'
             )""",
             # Drop the old procurement_submissions table if it exists
             "DROP TABLE IF EXISTS procurement_submissions",
