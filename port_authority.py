@@ -1612,9 +1612,13 @@ router = APIRouter(prefix="/api/port-authority", tags=["port-authority"])
 
 def _player_id(request: Request) -> Optional[int]:
     from auth import get_player_from_session, get_db
-    db = next(get_db())
-    player = get_player_from_session(request, db)
-    return player.id if player else None
+    session_token = request.cookies.get("session_token")
+    db = get_db()
+    try:
+        player = get_player_from_session(db, session_token)
+        return player.id if player else None
+    finally:
+        db.close()
 
 
 @router.post("/create")
