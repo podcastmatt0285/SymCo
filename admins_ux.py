@@ -6740,171 +6740,83 @@ def admin_pa_contracts(
     else:
         table_html = "<p style='color:#94a3b8;'>No contracts created yet.</p>"
 
-    now_str = datetime.utcnow().strftime("%Y-%m-%dT%H:%M")
     msg_html = f"<div style='padding:8px;margin-bottom:12px;background:#14532d;color:#4ade80;border:1px solid #166534;'>{msg}</div>" if msg else ""
     err_html = f"<div style='padding:8px;margin-bottom:12px;background:#450a0a;color:#f87171;border:1px solid #7f1d1d;'>{err}</div>" if err else ""
+
+    # Hand-authored contract library (defined in code, posted on demand)
+    try:
+        from port_authority import get_contract_library
+        library = get_contract_library()
+    except Exception as e:
+        library = []
+        err_html += f"<div style='padding:8px;margin-bottom:12px;background:#450a0a;color:#f87171;'>Library load error: {e}</div>"
+
+    if library:
+        lib_cards = []
+        for d in library:
+            req = d.get("required_items", {})
+            items_str = ", ".join(f"{q:,g} × {slug}" for slug, q in req.items())
+            lib_cards.append(f"""
+            <div style="border:1px solid #333;background:#0d0d0d;padding:14px;margin-bottom:12px;">
+              <b style="color:#fbbf24;font-size:1.05em;">{d.get('title','(untitled)')}</b>
+              <p style="color:#94a3b8;margin:4px 0;">{d.get('description','') or ''}</p>
+              <div style="display:flex;gap:18px;flex-wrap:wrap;color:#cbd5e1;font-size:0.9em;margin:6px 0;">
+                <span>💰 ${float(d.get('payment_usd',0)):,.0f}</span>
+                <span>🔒 ${float(d.get('security_deposit_usd',0)):,.0f} deposit</span>
+                <span>🏆 {d.get('trophy_reward',500)} trophies</span>
+                <span>⏱ {d.get('fulfillment_days',14)}d fulfillment</span>
+                <span>📊 {d.get('selection_method','cheapest')}</span>
+              </div>
+              <p style="color:#94a3b8;font-size:0.85em;margin:4px 0;">Items: {items_str}</p>
+              <form method="post" action="/admin/pa-contracts/post/{d.get('key','')}" style="margin-top:8px;">
+                <button type="submit"
+                  onclick="return confirm('Post this contract to all PA owners now?')"
+                  style="padding:8px 18px;background:#7f1d1d;color:#fca5a5;border:2px solid #ef4444;cursor:pointer;">
+                  📋 Post to Players Now
+                </button>
+              </form>
+            </div>""")
+        library_html = "".join(lib_cards)
+    else:
+        library_html = ("<p style='color:#94a3b8;'>No contract definitions yet. "
+                        "Contracts are authored individually in code "
+                        "(<code>CONTRACT_LIBRARY</code> in <code>port_authority.py</code>) "
+                        "and appear here with a Post button once added.</p>")
 
     body = f"""
     <div style="max-width:1000px;margin:0 auto;padding:20px;color:#F5F5DC;">
       {msg_html}{err_html}
       <h1 style="color:#ef4444;">📋 Port Authority — Government Contracts</h1>
       <p style="color:#94a3b8;">
-        Create large-scale procurement contracts for Port Authority owners to bid on.
-        Contracts are tax-free for winners. Bid window = 5 days from open date.
-        On forfeiture the contract automatically re-issues.
+        Contracts are hand-authored in code and posted here on demand — no free-form entry.
+        Each is tax-free for the winner, has a 5-day bid window, and auto-re-issues on forfeiture.
       </p>
 
-      <h2 style="color:#ef4444;margin-top:24px;">All Contracts</h2>
-      {table_html}
+      <h2 style="color:#ef4444;margin-top:24px;">Contract Library — Ready to Post</h2>
+      {library_html}
 
-      <h2 style="color:#ef4444;margin-top:32px;">Create New Contract</h2>
-      <form method="post" action="/admin/pa-contracts/create" style="display:flex;flex-direction:column;gap:14px;max-width:620px;">
-        <label>
-          Title<br>
-          <input name="title" type="text" required placeholder="e.g. Federal Government: Feeding the Homeless"
-            style="width:100%;padding:8px;background:#111;border:1px solid #333;color:#F5F5DC;margin-top:4px;">
-        </label>
-        <label>
-          Description<br>
-          <textarea name="description" rows="3" placeholder="Describe the contract and its purpose..."
-            style="width:100%;padding:8px;background:#111;border:1px solid #333;color:#F5F5DC;margin-top:4px;"></textarea>
-        </label>
-        <label>
-          Required Items (JSON)<br>
-          <small style="color:#94a3b8;">Format: {{"burger": 100000, "bread": 1000000, "apple": 500000}}</small><br>
-          <textarea name="required_items" rows="5" required
-            placeholder='{{"burger": 100000, "soda": 50000, "bread": 1000000}}'
-            style="width:100%;padding:8px;background:#111;border:1px solid #333;color:#F5F5DC;font-family:monospace;font-size:0.85rem;margin-top:4px;"></textarea>
-        </label>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <label>
-            Total Payment USD (inflated price)<br>
-            <input name="payment_usd" type="number" min="0" step="1000" required
-              placeholder="e.g. 50000000"
-              style="width:100%;padding:8px;background:#111;border:1px solid #333;color:#F5F5DC;margin-top:4px;">
-          </label>
-          <label>
-            Security Deposit USD<br>
-            <input name="security_deposit_usd" type="number" min="0" step="1000" required
-              placeholder="e.g. 5000000"
-              style="width:100%;padding:8px;background:#111;border:1px solid #333;color:#F5F5DC;margin-top:4px;">
-          </label>
-          <label>
-            Trophy Reward<br>
-            <input name="trophy_reward" type="number" min="0" value="500"
-              style="width:100%;padding:8px;background:#111;border:1px solid #333;color:#F5F5DC;margin-top:4px;">
-          </label>
-          <label>
-            Fulfillment Days (after bid closes)<br>
-            <input name="fulfillment_days" type="number" min="1" value="14"
-              style="width:100%;padding:8px;background:#111;border:1px solid #333;color:#F5F5DC;margin-top:4px;">
-          </label>
-        </div>
-        <label>
-          Bid Selection Method<br>
-          <select name="selection_method"
-            style="padding:8px;background:#111;border:1px solid #333;color:#F5F5DC;margin-top:4px;">
-            <option value="cheapest">Cheapest wins — lowest bid price wins</option>
-            <option value="best_volume">Best volume wins — highest volume multiplier wins</option>
-          </select>
-        </label>
-        <label>
-          Bid Opens At (UTC)<br>
-          <input name="bid_opens_at" type="datetime-local" value="{now_str}"
-            style="padding:8px;background:#111;border:1px solid #333;color:#F5F5DC;margin-top:4px;">
-        </label>
-        <button type="submit"
-          style="padding:10px 24px;background:#7f1d1d;color:#fca5a5;border:2px solid #ef4444;
-                 font-size:1rem;cursor:pointer;align-self:flex-start;">
-          📋 Post Government Contract
-        </button>
-      </form>
+      <h2 style="color:#ef4444;margin-top:32px;">All Contracts</h2>
+      {table_html}
     </div>
     """
     return HTMLResponse(admin_shell("PA Contracts", body, admin.business_name,
                                    "/admin/pa-contracts", player_id=admin.id))
 
 
-@router.post("/admin/pa-contracts/create")
-def admin_pa_contract_create(
-    session_token:        Optional[str] = Cookie(None),
-    title:                str           = Form(...),
-    description:          Optional[str] = Form(None),
-    required_items:       str           = Form(...),
-    payment_usd:          float         = Form(...),
-    security_deposit_usd: float         = Form(...),
-    trophy_reward:        int           = Form(500),
-    fulfillment_days:     int           = Form(14),
-    selection_method:     str           = Form("cheapest"),
-    bid_opens_at:         Optional[str] = Form(None),
+@router.post("/admin/pa-contracts/post/{key}")
+def admin_pa_contract_post(
+    key:           str,
+    session_token: Optional[str] = Cookie(None),
 ):
+    """Post a hand-authored contract from CONTRACT_LIBRARY to all PA owners."""
     admin = require_admin(session_token)
     if isinstance(admin, RedirectResponse): return admin
-    import json as _j
     try:
-        # Validate required_items JSON
-        try:
-            req_parsed = _j.loads(required_items.strip())
-            if not isinstance(req_parsed, dict) or not req_parsed:
-                raise ValueError("Must be a non-empty JSON object")
-        except Exception as je:
-            return RedirectResponse(
-                f"/admin/pa-contracts?err={urllib.parse.quote(f'required_items JSON error: {je}')}",
-                status_code=303)
-
-        from datetime import datetime as _dt, timedelta as _td
-        now = _dt.utcnow()
-        opens = _dt.fromisoformat(bid_opens_at) if bid_opens_at and bid_opens_at.strip() else now
-        closes = opens + _td(days=5)
-
-        from port_authority import PAContract, SessionLocal as _PS
-        db = _PS()
-        try:
-            contract = PAContract(
-                title=title.strip(),
-                description=(description.strip() if description else None),
-                required_items=_j.dumps(req_parsed),
-                payment_usd=float(payment_usd),
-                security_deposit_usd=float(security_deposit_usd),
-                trophy_reward=int(trophy_reward),
-                fulfillment_days=int(fulfillment_days),
-                selection_method=selection_method,
-                bid_opens_at=opens,
-                bid_closes_at=closes,
-                status="bidding",
-                created_by=admin.id,
-            )
-            db.add(contract)
-            db.commit()
-            db.refresh(contract)
-            cid = contract.id
-        finally:
-            db.close()
-
-        # Notify all PA owners
-        try:
-            from port_authority import PortAuthorityInstance, SessionLocal as _PS2
-            from push_ux import send_push_notification
-            _db2 = _PS2()
-            try:
-                owners = _db2.query(PortAuthorityInstance).all()
-                for pa in owners:
-                    send_push_notification(
-                        pa.owner_id,
-                        "📋 New Government Contract Available",
-                        f"'{title.strip()}' — ${payment_usd:,.0f} + {trophy_reward} trophies. "
-                        f"Bidding closes in 5 days.",
-                        url="/port-authority",
-                        notif_type="institutions",
-                        tag=f"pa-contract-{cid}",
-                    )
-            finally:
-                _db2.close()
-        except Exception as ne:
-            print(f"[Admin] PA contract push error: {ne}")
-
-        msg = urllib.parse.quote(f"Contract '{title.strip()}' created (ID {cid}). PA owners notified.")
-        return RedirectResponse(f"/admin/pa-contracts?msg={msg}", status_code=303)
+        from port_authority import post_library_contract
+        ok, msg = post_library_contract(key, admin.id)
+        key_param = "msg" if ok else "err"
+        return RedirectResponse(
+            f"/admin/pa-contracts?{key_param}={urllib.parse.quote(msg)}", status_code=303)
     except Exception as e:
         return RedirectResponse(
             f"/admin/pa-contracts?err={urllib.parse.quote(str(e)[:200])}",

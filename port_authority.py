@@ -1150,6 +1150,130 @@ def admin_cancel_contract(contract_id: int) -> Tuple[bool, str]:
         db.close()
 
 
+# ======================================================================
+# CONTRACT LIBRARY  —  hand-authored contracts, added one at a time
+# ======================================================================
+#
+# Contracts are NOT created from a blank admin form. Each one is authored
+# here in code as a fully-specified Python definition, then posted to
+# players (when ready) from the admin PA Contracts page.
+#
+# To add a contract: append one dict to CONTRACT_LIBRARY below. Schema:
+#
+#   {
+#       "key":            "feed_the_homeless",      # unique stable slug
+#       "title":          "Federal Government: Feeding the Homeless",
+#       "description":    "Short flavor text shown to players.",
+#       "required_items": {"burger": 100000, "bread": 1000000},  # slug -> qty
+#       "payment_usd":            50_000_000,       # tax-free payout on full fulfillment
+#       "security_deposit_usd":    5_000_000,       # refundable bid deposit
+#       "trophy_reward":   500,
+#       "fulfillment_days": 14,                     # days to fulfill after bid window closes
+#       "selection_method": "cheapest",             # "cheapest" | "best_volume"
+#   }
+#
+# Item slugs are validated against the live item catalog at post time, so a
+# typo is caught before the contract goes live (no silent broken contracts).
+#
+CONTRACT_LIBRARY: List[dict] = [
+    # Authored contracts go here — one dict per contract, added on request.
+]
+
+
+def get_contract_library() -> List[dict]:
+    """Return the hand-authored contract definitions for the admin page."""
+    return CONTRACT_LIBRARY
+
+
+def _valid_item_slugs() -> set:
+    """Live item catalog used to validate contract item slugs at post time."""
+    try:
+        from admins import get_all_item_types
+        return set(get_all_item_types())
+    except Exception:
+        return set()
+
+
+def post_library_contract(key: str, admin_id: int,
+                          bid_opens_at: Optional[datetime] = None) -> Tuple[bool, str]:
+    """Create a live PAContract from a CONTRACT_LIBRARY definition and notify PA owners.
+
+    Validates every required-item slug against the live catalog first.
+    """
+    import json as _j
+
+    definition = next((c for c in CONTRACT_LIBRARY if c.get("key") == key), None)
+    if not definition:
+        return False, f"No contract definition found for key '{key}'."
+
+    req = definition.get("required_items") or {}
+    if not isinstance(req, dict) or not req:
+        return False, "Contract definition has no required_items."
+
+    # Validate slugs against the live catalog (skip if catalog unavailable)
+    catalog = _valid_item_slugs()
+    if catalog:
+        bad = [slug for slug in req if slug not in catalog]
+        if bad:
+            return False, f"Unknown item slug(s) in '{key}': {', '.join(bad)}"
+
+    now = datetime.utcnow()
+    opens = bid_opens_at or now
+    closes = opens + timedelta(days=5)
+
+    db = SessionLocal()
+    try:
+        contract = PAContract(
+            title=definition["title"].strip(),
+            description=(definition.get("description") or "").strip() or None,
+            required_items=_j.dumps(req),
+            payment_usd=float(definition["payment_usd"]),
+            security_deposit_usd=float(definition["security_deposit_usd"]),
+            trophy_reward=int(definition.get("trophy_reward", 500)),
+            fulfillment_days=int(definition.get("fulfillment_days", 14)),
+            selection_method=definition.get("selection_method", "cheapest"),
+            bid_opens_at=opens,
+            bid_closes_at=closes,
+            status="bidding",
+            created_by=admin_id,
+        )
+        db.add(contract)
+        db.commit()
+        db.refresh(contract)
+        cid = contract.id
+        title = contract.title
+        payment = contract.payment_usd
+        trophies = contract.trophy_reward
+    except Exception as e:
+        db.rollback()
+        return False, str(e)
+    finally:
+        db.close()
+
+    # Notify all PA owners
+    try:
+        from push_ux import send_push_notification
+        _db2 = SessionLocal()
+        try:
+            owners = _db2.query(PortAuthorityInstance).all()
+            for pa in owners:
+                send_push_notification(
+                    pa.owner_id,
+                    "📋 New Government Contract Available",
+                    f"'{title}' — ${payment:,.0f} + {trophies} trophies. "
+                    f"Bidding closes in 5 days.",
+                    url="/port-authority",
+                    notif_type="institutions",
+                    tag=f"pa-contract-{cid}",
+                )
+        finally:
+            _db2.close()
+    except Exception as ne:
+        print(f"[PortAuthority] contract post push error: {ne}")
+
+    return True, f"Contract '{title}' posted (ID {cid}). PA owners notified."
+
+
 def set_immigration_policy(player_id: int, volume: float, wealth: float) -> Tuple[bool, str]:
     """Update immigration policy for a player's Port Authority.
 
