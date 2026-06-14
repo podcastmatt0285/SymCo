@@ -109,7 +109,7 @@ def _contracts_section(player_id: int, player_inv: dict, fmt_usd=None) -> str:
                         f"<input id='bid-vol-{cid}' type='number' min='1' step='0.01' value='1.0' "
                         f"style='padding:5px;width:140px;'></label>"
                     )
-                    bid_param = f"bidVol: parseFloat(document.getElementById('bid-vol-{cid}').value)"
+                    bid_param = f"null, parseFloat(document.getElementById('bid-vol-{cid}').value)"
                 else:
                     bid_input = (
                         f"<label style='display:flex;flex-direction:column;gap:3px;'>"
@@ -122,7 +122,7 @@ def _contracts_section(player_id: int, player_inv: dict, fmt_usd=None) -> str:
                         f"placeholder='Enter your total price' "
                         f"style='padding:5px;width:200px;'></label>"
                     )
-                    bid_param = f"bidPrice: parseFloat(document.getElementById('bid-price-{cid}').value||'0')"
+                    bid_param = f"parseFloat(document.getElementById('bid-price-{cid}').value||'0')"
                 bid_html = f"""
                 <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
                   {bid_input}
@@ -597,6 +597,9 @@ def port_authority_dashboard(session_token: Optional[str] = Cookie(None)):
     }}
 
     async function paSubmitBid(contractId, bidPrice, bidVol){{
+      if(bidPrice !== null && bidPrice !== undefined && !(bidVol > 0) && !(bidPrice > 0)){{
+        _show('Enter a bid price greater than 0.'); return;
+      }}
       const body = {{bid_price_usd: bidPrice || 0, bid_volume_multiplier: bidVol || 1.0}};
       const r = await fetch('/api/port-authority/contracts/'+contractId+'/bid', {{
         method:'POST', headers:{{'Content-Type':'application/json'}}, body:JSON.stringify(body)
