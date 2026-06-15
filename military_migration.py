@@ -84,8 +84,26 @@ def run_migration():
         # Idempotent schema migrations — run every boot
         schema_ddl = [
             "ALTER TABLE port_authority_instances ADD COLUMN IF NOT EXISTS special_plot_id INTEGER",
-            "ALTER TABLE port_authority_instances ADD COLUMN IF NOT EXISTS immigration_volume FLOAT DEFAULT 1.0",
-            "ALTER TABLE port_authority_instances ADD COLUMN IF NOT EXISTS immigration_wealth FLOAT DEFAULT 1.0",
+            "ALTER TABLE port_authority_instances DROP COLUMN IF EXISTS immigration_volume",
+            "ALTER TABLE port_authority_instances DROP COLUMN IF EXISTS immigration_wealth",
+            """CREATE TABLE IF NOT EXISTS immigration_policies (
+                id SERIAL PRIMARY KEY,
+                pa_id INTEGER NOT NULL,
+                player_id INTEGER NOT NULL UNIQUE,
+                s_quantity_affluence  FLOAT DEFAULT 0.0,
+                s_labor_consumers     FLOAT DEFAULT 0.0,
+                s_skilled_unskilled   FLOAT DEFAULT 0.0,
+                s_young_mature        FLOAT DEFAULT 0.0,
+                s_assimilated_diverse FLOAT DEFAULT 0.0,
+                s_selective_open      FLOAT DEFAULT 0.0,
+                s_urban_rural         FLOAT DEFAULT 0.0,
+                s_inland_coastal      FLOAT DEFAULT 0.0,
+                s_farmer_urbanworker  FLOAT DEFAULT 0.0,
+                s_conserve_intensive  FLOAT DEFAULT 0.0,
+                committed_at   TIMESTAMP,
+                expires_at     TIMESTAMP,
+                cooldown_until TIMESTAMP
+            )""",
             # Mission table redesign (new columns alongside old ones for zero-downtime)
             "ALTER TABLE port_authority_missions ADD COLUMN IF NOT EXISTS mission_subtype VARCHAR",
             "ALTER TABLE port_authority_missions ADD COLUMN IF NOT EXISTS target_player_id INTEGER",

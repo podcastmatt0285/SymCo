@@ -58,6 +58,226 @@ def _readiness_rows(breakdown: dict) -> str:
     return "".join(rows)
 
 
+_SLIDER_DEFS = [
+    ("s_quantity_affluence",  "Many Immigrants",    "Wealthy Immigrants",
+     "demand, elasticity"),
+    ("s_labor_consumers",     "Labor Force",        "Consumers",
+     "production, demand"),
+    ("s_skilled_unskilled",   "Skilled Workers",    "Unskilled Workers",
+     "production, input costs"),
+    ("s_young_mature",        "Young / Trendy",     "Mature / Families",
+     "demand, elasticity"),
+    ("s_assimilated_diverse", "Assimilated",        "Diverse / Cosmopolitan",
+     "elasticity, demand"),
+    ("s_selective_open",      "Selective Entry",    "Open Borders",
+     "elasticity, demand"),
+    ("s_urban_rural",         "Urban Settlers",     "Rural Settlers",
+     "demand, land yield"),
+    ("s_inland_coastal",      "Inland Communities", "Coastal Communities",
+     "production, input costs"),
+    ("s_farmer_urbanworker",  "Tenant Farmers",     "Urban Workers",
+     "land yield, production"),
+    ("s_conserve_intensive",  "Conservationist",    "Intensive Land Use",
+     "input costs, land yield"),
+]
+
+# Mirror of port_authority._SLIDER_COEFFS for client-side preview (serialised to JS)
+_COEFFS_JS = {
+    "s_quantity_affluence":  [-1, -1,  0,  0,  0],
+    "s_labor_consumers":     [ 1,  0, -1,  0,  0],
+    "s_skilled_unskilled":   [ 0,  0, -1, -1,  0],
+    "s_young_mature":        [-1, -1,  0,  0,  0],
+    "s_assimilated_diverse": [ 1,  1,  0,  0,  0],
+    "s_selective_open":      [ 1, -1,  0,  0,  0],
+    "s_urban_rural":         [-1,  0,  0,  0,  1],
+    "s_inland_coastal":      [ 0,  0, -1, -1,  0],
+    "s_farmer_urbanworker":  [ 0,  0,  1,  0, -1],
+    "s_conserve_intensive":  [ 0,  0,  0,  1,  1],
+}
+
+
+def _build_immigration_panel(status: dict) -> str:
+    """Render the full immigration policy panel HTML."""
+    import json as _json
+    active    = status.get("active", False)
+    cooldown  = status.get("cooldown", False)
+    sliders   = status.get("sliders", {})
+    df        = status.get("decay_factor", 0.0)
+    expires   = status.get("expires_at")
+    cd_until  = status.get("cooldown_until")
+
+    # Status header
+    if active:
+        pct = int(df * 100)
+        status_html = (
+            f"<div style='background:#1a2a1a;border:1px solid #4ade80;padding:10px;margin-bottom:14px;'>"
+            f"<span style='color:#4ade80;font-weight:bold;'>● Policy Active</span>"
+            f"<span style='color:#94a3b8;margin-left:12px;'>expires {expires[:10] if expires else '?'}</span>"
+            f"<div style='margin-top:6px;background:#0f1f0f;height:6px;border-radius:3px;'>"
+            f"<div style='background:#4ade80;height:6px;border-radius:3px;width:{pct}%;transition:width 1s;'></div>"
+            f"</div><small style='color:#94a3b8;'>Sliders locked — decaying to neutral over 3 days.</small>"
+            f"</div>"
+        )
+        disabled = "disabled"
+    elif cooldown:
+        status_html = (
+            f"<div style='background:#2a1a1a;border:1px solid #f87171;padding:10px;margin-bottom:14px;'>"
+            f"<span style='color:#f87171;font-weight:bold;'>⏳ Cooldown</span>"
+            f"<span style='color:#94a3b8;margin-left:12px;'>available after {cd_until[:10] if cd_until else '?'}</span>"
+            f"</div>"
+        )
+        disabled = "disabled"
+    else:
+        status_html = (
+            f"<div style='background:#1a1a2a;border:1px solid #B08D57;padding:10px;margin-bottom:14px;'>"
+            f"<span style='color:#B08D57;'>No active policy — configure sliders below and commit.</span>"
+            f"<br><small style='color:#94a3b8;'>Active for 3 days, then 7-day cooldown before reuse.</small>"
+            f"</div>"
+        )
+        disabled = ""
+
+    # Slider rows — values are committed_value × decay_factor for visual drift
+    slider_rows = ""
+    for field, left_label, right_label, affects in _SLIDER_DEFS:
+        raw_val = sliders.get(field, 0.0)
+        display_val = raw_val * df if active else raw_val
+        int_val = int(round(display_val * 100))
+        pct_pos = int((display_val + 1) / 2 * 100)
+        slider_rows += (
+            f"<div style='margin-bottom:14px;'>"
+            f"<div style='display:flex;justify-content:space-between;font-size:0.85em;color:#94a3b8;margin-bottom:3px;'>"
+            f"<span>← {left_label}</span>"
+            f"<span style='color:#fbbf24;' id='lbl_{field}'>{display_val:+.2f}</span>"
+            f"<span>{right_label} →</span></div>"
+            f"<input type='range' min='-100' max='100' step='1' value='{int_val}' "
+            f"id='{field}' {disabled} "
+            f"oninput=\"document.getElementById('lbl_{field}').textContent=(this.value/100).toFixed(2).replace(/^(?!-)/, '+');paUpdatePreview();\""
+            f" style='width:100%;accent-color:#B08D57;'>"
+            f"<small style='color:#555;'>affects: {affects}</small>"
+            f"</div>"
+        )
+
+    commit_btn = "" if (active or cooldown) else (
+        "<button onclick='paCommitImmigration()' "
+        "style='margin-top:12px;padding:8px 20px;cursor:pointer;background:#8B4513;"
+        "color:#F5F5DC;border:1px solid #B08D57;font-size:1em;'>"
+        "⚓ Commit Policy (3-day lock)</button>"
+    )
+
+    # Radar SVG placeholder — JS will draw it
+    radar_html = (
+        "<div id='imm-radar' style='margin-top:16px;text-align:center;min-height:200px;'>"
+        "<button onclick='paPreviewScore()' "
+        "style='padding:6px 14px;cursor:pointer;background:#1a2533;color:#B08D57;"
+        "border:1px solid #B08D57;'>▶ Preview Score</button>"
+        "<div id='imm-radar-svg' style='margin-top:10px;'></div>"
+        "</div>"
+    )
+
+    coeffs_json = _json.dumps(_COEFFS_JS)
+    return f"""
+<div style="border:1px solid #2D1810;padding:16px;">
+  {status_html}
+  {slider_rows}
+  {commit_btn}
+  {radar_html}
+  <script>
+  const _IMM_COEFFS = {coeffs_json};
+  const _IMM_FIELDS = {_json.dumps([d[0] for d in _SLIDER_DEFS])};
+  const _IMM_DIM_NAMES = ['Retail Demand','Customer Loyalty','Production Output','Input Efficiency','Land Yield'];
+  const _INTENSITY = 0.046;
+
+  function _immSliderValues() {{
+    const vals = {{}};
+    for(const f of _IMM_FIELDS) {{
+      const el = document.getElementById(f);
+      vals[f] = el ? parseFloat(el.value)/100 : 0;
+    }}
+    return vals;
+  }}
+
+  function _computeImmScore(vals, decayFactor=1.0) {{
+    const totals=[0,0,0,0,0], counts=[0,0,0,0,0];
+    for(const [field, coeffs] of Object.entries(_IMM_COEFFS)) {{
+      const v = (vals[field]||0) * decayFactor;
+      for(let i=0;i<5;i++) {{ if(coeffs[i]!==0) {{ totals[i]+=v*coeffs[i]; counts[i]++; }} }}
+    }}
+    return totals.map((t,i)=>counts[i]?1+(t/counts[i])*_INTENSITY:1.0);
+  }}
+
+  function paUpdatePreview() {{
+    const svg = document.getElementById('imm-radar-svg');
+    if(svg && svg.children.length > 0) paPreviewScore();
+  }}
+
+  function paPreviewScore() {{
+    const vals = _immSliderValues();
+    const scores = _computeImmScore(vals);
+    // Invert elasticity and input_cost for display (lower = better for player)
+    const display = [scores[0], 2-scores[1], scores[2], 2-scores[3], scores[4]];
+    _drawRadar(display);
+  }}
+
+  function _drawRadar(scores) {{
+    const cx=160, cy=160, R=110, n=5;
+    const neutral=1.0, minV=0.9, maxV=1.1;
+    function pt(i,r){{
+      const a=(2*Math.PI*i/n)-Math.PI/2;
+      return [cx+r*Math.cos(a), cy+r*Math.sin(a)];
+    }}
+    function scoreToR(s){{
+      const norm=(s-minV)/(maxV-minV);
+      return 30+Math.max(0,Math.min(1,norm))*R;
+    }}
+    const neutralR=scoreToR(neutral);
+    // Background polygon grid
+    let grid='';
+    for(let ring=0;ring<=4;ring++){{
+      const rr=30+ring*(R/4);
+      const pts=Array.from({{length:n}},(_,i)=>pt(i,rr).join(',')).join(' ');
+      grid+=`<polygon points="${{pts}}" fill="none" stroke="#2D1810" stroke-width="1"/>`;
+    }}
+    // Neutral baseline
+    const npts=Array.from({{length:n}},(_,i)=>pt(i,neutralR).join(',')).join(' ');
+    grid+=`<polygon points="${{npts}}" fill="none" stroke="#555" stroke-width="1" stroke-dasharray="4"/>`;
+    // Axes
+    let axes='',labels='';
+    for(let i=0;i<n;i++){{
+      const [x2,y2]=pt(i,R+18);
+      const [lx,ly]=pt(i,R+32);
+      axes+=`<line x1="${{cx}}" y1="${{cy}}" x2="${{x2}}" y2="${{y2}}" stroke="#444" stroke-width="1"/>`;
+      labels+=`<text x="${{lx}}" y="${{ly}}" fill="#94a3b8" font-size="10" text-anchor="middle"
+        dominant-baseline="middle">${{_IMM_DIM_NAMES[i]}}</text>`;
+    }}
+    // Score polygon
+    const spts=scores.map((s,i)=>pt(i,scoreToR(s)).join(',')).join(' ');
+    const poly=`<polygon points="${{spts}}" fill="rgba(176,141,87,0.25)" stroke="#B08D57" stroke-width="2"/>`;
+    // Score dots
+    let dots='';
+    scores.forEach((s,i)=>{{
+      const [x,y]=pt(i,scoreToR(s));
+      const color=s>=1?'#4ade80':'#f87171';
+      dots+=`<circle cx="${{x}}" cy="${{y}}" r="4" fill="${{color}}"/>`;
+    }});
+    document.getElementById('imm-radar-svg').innerHTML=
+      `<svg width="320" height="320" viewBox="0 0 320 320">${{grid}}${{axes}}${{labels}}${{poly}}${{dots}}</svg>`;
+  }}
+
+  async function paCommitImmigration() {{
+    const vals = _immSliderValues();
+    const body = {{}};
+    for(const f of _IMM_FIELDS) body[f] = vals[f];
+    const r = await fetch('/api/port-authority/immigration/commit', {{
+      method:'POST', headers:{{'Content-Type':'application/json'}}, body:JSON.stringify(body)
+    }});
+    const j = await r.json();
+    _show(j.message || j.error || '');
+    if(j.ok) setTimeout(()=>location.reload(), 800);
+  }}
+  </script>
+</div>"""
+
+
 def _contracts_section(player_id: int, player_inv: dict, fmt_usd=None) -> str:
     """Render the three government contracts panels.
 
@@ -366,10 +586,10 @@ def port_authority_dashboard(session_token: Optional[str] = Cookie(None)):
         return HTMLResponse(_shell("Port Authority", body, 0.0, player.id))
 
     # ── Dashboard ────────────────────────────────────────────────────────────
+    from port_authority import get_immigration_status
+    imm_status = get_immigration_status(player.id)
     inv = pa["inventory"]
     daily = pa["daily_maintenance_usd"]
-    imm_vol = pa.get("immigration_volume", 1.0)
-    imm_wlth = pa.get("immigration_wealth", 1.0)
 
     # PA inventory table
     if inv:
@@ -489,32 +709,10 @@ def port_authority_dashboard(session_token: Optional[str] = Cookie(None)):
       {contracts_html}
 
       <!-- ── Immigration Policy ─────────────────────────────────────── -->
-      <h3 style="color:#B08D57;margin-top:22px;">🌍 Immigration Policy</h3>
-      <div style="border:1px solid #2D1810;padding:12px;">
-        <p style="color:#94a3b8;margin:0 0 10px;">
-          Controls retail demand across the economy.
-          Volume = foot traffic (0–3×). Wealth = spending power &amp; price tolerance (0.5–2×).
-        </p>
-        <div style="display:flex;gap:24px;flex-wrap:wrap;">
-          <label style="flex:1;min-width:200px;">
-            Volume <span id="vol-val">{imm_vol:.2f}</span>×
-            <input type="range" min="0" max="3" step="0.05" value="{imm_vol}"
-              oninput="document.getElementById('vol-val').textContent=parseFloat(this.value).toFixed(2)"
-              id="imm-vol" style="width:100%;margin-top:4px;">
-            <small style="color:#94a3b8;">0 = no immigration, 3 = triple retail demand</small>
-          </label>
-          <label style="flex:1;min-width:200px;">
-            Wealth <span id="wlth-val">{imm_wlth:.2f}</span>×
-            <input type="range" min="0.5" max="2" step="0.05" value="{imm_wlth}"
-              oninput="document.getElementById('wlth-val').textContent=parseFloat(this.value).toFixed(2)"
-              id="imm-wlth" style="width:100%;margin-top:4px;">
-            <small style="color:#94a3b8;">0.5 = poor / price-sensitive, 2 = affluent / pays premium</small>
-          </label>
-        </div>
-        <button onclick="paSetImmigration()" style="margin-top:10px;padding:6px 16px;cursor:pointer;background:#8B4513;color:#F5F5DC;border:1px solid #B08D57;">
-          Apply Immigration Policy
-        </button>
-      </div>
+      <h2 style="color:#B08D57;margin-top:28px;border-top:1px solid #2D1810;padding-top:16px;">
+        🌍 Immigration Policy
+      </h2>
+      {_build_immigration_panel(imm_status)}
 
       <!-- ── Inventory ──────────────────────────────────────────────── -->
       <h3 style="color:#B08D57;margin-top:22px;">Inventory</h3>
@@ -615,17 +813,6 @@ def port_authority_dashboard(session_token: Optional[str] = Cookie(None)):
       const result = j.result || j;
       _show(result.message || j.message || j.error || '');
       if(j.ok) setTimeout(()=>location.reload(), 800);
-    }}
-
-    async function paSetImmigration(){{
-      const volume = parseFloat(document.getElementById('imm-vol').value);
-      const wealth = parseFloat(document.getElementById('imm-wlth').value);
-      const r = await fetch('/api/port-authority/immigration', {{
-        method:'POST', headers:{{'Content-Type':'application/json'}},
-        body: JSON.stringify({{volume, wealth}})
-      }});
-      const j = await r.json();
-      _show(j.message || j.error || '');
     }}
 
     document.getElementById('msubtype').addEventListener('change', function(){{

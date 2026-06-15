@@ -367,18 +367,18 @@ def _seed_port_authority_entries():
         ),
         (
             "Immigration Policy",
-            "The Port Authority gives you control over immigration policy — a lever that adjusts retail "
-            "supply and demand across the entire economy.\n\n"
-            "VOLUME (0–3×): Scales base_sale_chance for all retail businesses. "
-            "Setting volume to 2.0 doubles how often items sell. Setting it to 0.5 halves retail throughput.\n\n"
-            "WEALTH (0.5–2×): Scales customer purchasing power and price sensitivity. "
-            "Wealthy immigrants (2×) are less price-sensitive — effective elasticity halves, so "
-            "retailers can charge higher margins. Poor immigrants (0.5×) become twice as price-sensitive, "
-            "compressing margins economy-wide.\n\n"
-            "Practical effects:\n"
-            "• Open immigration + wealthy arrivals = booming retail, high prices, strong margins.\n"
-            "• Closed immigration or poor arrivals = sluggish retail, price compression.\n"
-            "Changes take effect within 60 seconds (cached). Multiple PA owners' policies are averaged.",
+            "The Port Authority lets you set immigration policy using 10 tradeoff sliders — each pits "
+            "two advantages against each other. The sliders collectively shift five economic dimensions:\n\n"
+            "• Retail Demand — how often items sell at your retail businesses\n"
+            "• Customer Loyalty (elasticity) — how price-sensitive your customers are\n"
+            "• Production Output — throughput multiplier for manufacturing and extraction\n"
+            "• Input Efficiency — cost of raw materials and production inputs\n"
+            "• Land Yield — output from farms, ranches, and land-based operations\n\n"
+            "Each dimension can shift up to ±4.6% depending on how you position the sliders. "
+            "Use 'Preview Score' to see a radar chart before committing.\n\n"
+            "TIMING: Once committed, the policy is active for 3 days, then sliders decay back to "
+            "neutral over that window. After expiry there is a 7-day cooldown before you can commit again.\n\n"
+            "The policy only affects your own businesses — it is not global.",
         ),
     ]
 

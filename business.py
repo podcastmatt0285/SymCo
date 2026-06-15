@@ -531,14 +531,13 @@ def process_business_tick(db):
                     current_p = price_entry.price if price_entry else mkt_p
 
                     try:
-                        from supplydemand import get_immigration_modifiers as _imm
-                        _imm_vol, _imm_wlth = _imm()
-                        # Wealthier immigrants are less price-sensitive → lower effective elasticity
-                        eff_elasticity = rule.get("elasticity", 1.0) / max(0.1, _imm_wlth)
+                        from port_authority import get_player_immigration_mults as _imm
+                        _mults = _imm(player.id)
+                        eff_elasticity = rule.get("elasticity", 1.0) * _mults.get("elasticity", 1.0)
+                        base_chance    = rule.get("base_sale_chance", 0.05) * _mults.get("demand", 1.0)
                         multiplier = SupplyDemandEngine.get_sales_multiplier(
                             current_p, mkt_p, eff_elasticity
                         )
-                        base_chance = rule.get("base_sale_chance", 0.05) * _imm_vol
                         chance = SupplyDemandEngine.calculate_chance_per_tick(
                             base_chance, multiplier
                         )

@@ -165,9 +165,6 @@ class PortAuthorityInstance(Base):
     last_maintenance_tick = Column(Integer, default=0)
     # The Institution (special plot) this Port Authority is built on.
     special_plot_id       = Column(Integer, index=True, nullable=True)
-    # Immigration policy multipliers
-    immigration_volume    = Column(Float, default=1.0)   # 0.0–3.0, multiplier on retail sales volume
-    immigration_wealth    = Column(Float, default=1.0)   # 0.5–2.0, multiplier on price/elasticity
 
 
 class PortAuthorityInventory(Base):
@@ -246,6 +243,98 @@ class BlockadeInstance(Base):
     created_at        = Column(DateTime, default=datetime.utcnow)
     expires_at        = Column(DateTime, nullable=False)
     lifted            = Column(Boolean, default=False)
+
+
+class ImmigrationPolicy(Base):
+    """Per-player immigration slider policy with 3-day decay and 7-day cooldown."""
+    __tablename__ = "immigration_policies"
+
+    id           = Column(Integer, primary_key=True)
+    pa_id        = Column(Integer, index=True, nullable=False)
+    player_id    = Column(Integer, index=True, nullable=False, unique=True)
+    # Slider values: -1.0 (full left) to +1.0 (full right), 0.0 = neutral
+    s_quantity_affluence  = Column(Float, default=0.0)   # −=many  +=wealthy
+    s_labor_consumers     = Column(Float, default=0.0)   # −=labor +=consumers
+    s_skilled_unskilled   = Column(Float, default=0.0)   # −=skilled +=unskilled
+    s_young_mature        = Column(Float, default=0.0)   # −=young +=mature
+    s_assimilated_diverse = Column(Float, default=0.0)   # −=assimilated +=diverse
+    s_selective_open      = Column(Float, default=0.0)   # −=selective +=open
+    s_urban_rural         = Column(Float, default=0.0)   # −=urban +=rural
+    s_inland_coastal      = Column(Float, default=0.0)   # −=inland +=coastal
+    s_farmer_urbanworker  = Column(Float, default=0.0)   # −=farmer +=urban worker
+    s_conserve_intensive  = Column(Float, default=0.0)   # −=conserve +=intensive
+    # Timing
+    committed_at   = Column(DateTime, nullable=True)   # when policy was committed
+    expires_at     = Column(DateTime, nullable=True)   # committed_at + 3 days
+    cooldown_until = Column(DateTime, nullable=True)   # expires_at + 7 days (10d from commit)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Immigration score computation (pure, no DB calls)
+# ─────────────────────────────────────────────────────────────────────────────
+
+_SLIDER_FIELDS = [
+    "s_quantity_affluence", "s_labor_consumers", "s_skilled_unskilled",
+    "s_young_mature", "s_assimilated_diverse", "s_selective_open",
+    "s_urban_rural", "s_inland_coastal", "s_farmer_urbanworker", "s_conserve_intensive",
+]
+
+# Coefficient table: each slider contributes its value × coeff to each dimension.
+# demand/production/land_yield: >1.0 is a buff. elasticity/input_cost: >1.0 is a debuff.
+_SLIDER_COEFFS = {
+    #                           demand  elasticity  production  input_cost  land_yield
+    "s_quantity_affluence":  (  -1,     -1,          0,          0,          0  ),
+    "s_labor_consumers":     (  +1,      0,         -1,          0,          0  ),
+    "s_skilled_unskilled":   (   0,      0,         -1,         -1,          0  ),
+    "s_young_mature":        (  -1,     -1,          0,          0,          0  ),
+    "s_assimilated_diverse": (  +1,     +1,          0,          0,          0  ),
+    "s_selective_open":      (  +1,     -1,          0,          0,          0  ),
+    "s_urban_rural":         (  -1,      0,          0,          0,         +1  ),
+    "s_inland_coastal":      (   0,      0,         -1,         -1,          0  ),
+    "s_farmer_urbanworker":  (   0,      0,         +1,          0,         -1  ),
+    "s_conserve_intensive":  (   0,      0,          0,         +1,         +1  ),
+}
+_DIM_IDX = {"demand": 0, "elasticity": 1, "production": 2, "input_cost": 3, "land_yield": 4}
+_INTENSITY = 0.046   # 4.6% max shift per dimension
+
+
+def compute_immigration_score(sliders: dict, decay_factor: float = 1.0) -> dict:
+    """Pure function: compute output dimension multipliers from slider values + decay.
+
+    sliders: {field_name: float, ...} for all 10 slider columns
+    decay_factor: 1.0 at commit, 0.0 at expiry
+
+    Returns dict with keys: demand, elasticity, production, input_cost, land_yield.
+    All values are multipliers (1.0 = no effect).
+    """
+    totals = [0.0, 0.0, 0.0, 0.0, 0.0]
+    counts = [0,   0,   0,   0,   0  ]
+    for field, coeffs in _SLIDER_COEFFS.items():
+        v = sliders.get(field, 0.0) * decay_factor
+        for i, c in enumerate(coeffs):
+            if c != 0:
+                totals[i] += v * c
+                counts[i] += 1
+
+    dims = {}
+    for name, idx in _DIM_IDX.items():
+        avg = totals[idx] / counts[idx] if counts[idx] else 0.0
+        dims[name] = round(1.0 + avg * _INTENSITY, 6)
+    return dims
+
+
+def get_decay_factor(committed_at, expires_at) -> float:
+    """Linear decay from 1.0 at commit to 0.0 at expiry."""
+    if committed_at is None or expires_at is None:
+        return 0.0
+    now = datetime.utcnow()
+    if now >= expires_at:
+        return 0.0
+    total = (expires_at - committed_at).total_seconds()
+    if total <= 0:
+        return 0.0
+    elapsed = (now - committed_at).total_seconds()
+    return max(0.0, 1.0 - elapsed / total)
 
 
 def init_db():
@@ -405,8 +494,6 @@ def get_port_authority(player_id: int) -> Optional[dict]:
             "army_ready":            army_ready,
             "army_breakdown":        army_bd,
             "daily_maintenance_usd": daily_cost,
-            "immigration_volume":    pa.immigration_volume if pa.immigration_volume is not None else 1.0,
-            "immigration_wealth":    pa.immigration_wealth if pa.immigration_wealth is not None else 1.0,
         }
     finally:
         db.close()
@@ -1343,23 +1430,49 @@ def post_library_contract(key: str, admin_id: int,
     return True, f"Contract '{title}' posted (ID {cid}). PA owners notified."
 
 
-def set_immigration_policy(player_id: int, volume: float, wealth: float) -> Tuple[bool, str]:
-    """Update immigration policy for a player's Port Authority.
+def commit_immigration_policy(player_id: int, sliders: dict) -> Tuple[bool, str]:
+    """Commit an immigration slider policy for this player's PA.
 
-    volume: 0.0–3.0 multiplier on retail base_sale_chance
-    wealth: 0.5–2.0 multiplier on effective price/elasticity
+    sliders: {field: float} for all 10 s_* columns, values clamped to [-1.0, 1.0].
+    Requires cooldown_until IS NULL or in the past.
+    Sets expires_at = now+3d, cooldown_until = now+10d.
     """
-    volume = max(0.0, min(3.0, float(volume)))
-    wealth = max(0.5, min(2.0, float(wealth)))
     db = SessionLocal()
     try:
         pa = db.query(PortAuthorityInstance).filter_by(owner_id=player_id).first()
         if not pa:
             return False, "You do not own a Port Authority."
-        pa.immigration_volume = volume
-        pa.immigration_wealth = wealth
+        now = datetime.utcnow()
+        # Check cooldown
+        existing = db.query(ImmigrationPolicy).filter_by(player_id=player_id).first()
+        if existing and existing.cooldown_until and existing.cooldown_until > now:
+            delta = existing.cooldown_until - now
+            days = delta.days
+            hrs  = delta.seconds // 3600
+            return False, f"Immigration cooldown active — available in {days}d {hrs}h."
+        # Validate and clamp slider values
+        clean = {}
+        for field in _SLIDER_FIELDS:
+            val = float(sliders.get(field, 0.0))
+            clean[field] = max(-1.0, min(1.0, val))
+        expires   = now + timedelta(days=3)
+        cooldown  = now + timedelta(days=10)
+        if existing:
+            for f, v in clean.items():
+                setattr(existing, f, v)
+            existing.committed_at   = now
+            existing.expires_at     = expires
+            existing.cooldown_until = cooldown
+        else:
+            existing = ImmigrationPolicy(
+                pa_id=pa.id, player_id=player_id,
+                committed_at=now, expires_at=expires, cooldown_until=cooldown,
+                **clean,
+            )
+            db.add(existing)
         db.commit()
-        return True, f"Immigration policy updated: volume={volume:.2f}, wealth={wealth:.2f}."
+        _imm_player_cache.pop(player_id, None)
+        return True, "Immigration policy committed — active for 3 days, then 7-day cooldown."
     except Exception as e:
         db.rollback()
         return False, str(e)
@@ -1399,33 +1512,71 @@ def get_active_blockades_by(player_id: int) -> list:
         db.close()
 
 
-# Module-level cache for immigration modifiers
-_imm_cache: tuple = (1.0, 1.0)
-_imm_cache_ts: float = 0.0
+# Per-player cache: {player_id: (mults_dict, timestamp)}
+_imm_player_cache: Dict[int, tuple] = {}
+_IMM_CACHE_TTL = 30.0   # seconds
 
 
-def get_immigration_modifiers() -> tuple:
-    """Return (volume_multiplier, wealth_multiplier) averaged across all active PAs.
+def get_player_immigration_mults(player_id: int) -> dict:
+    """Return immigration dimension multipliers for *player_id*.
 
-    Called by supplydemand integration to adjust retail base_sale_chance and price.
-    Cached for 60 seconds.
+    If no active policy (or expired), returns all-1.0 dict (no effect).
+    Cached per-player for 30 seconds.
     """
     import time
-    global _imm_cache, _imm_cache_ts
-    now = time.time()
-    if now - _imm_cache_ts < 60:
-        return _imm_cache
+    now_ts = time.time()
+    cached = _imm_player_cache.get(player_id)
+    if cached and now_ts - cached[1] < _IMM_CACHE_TTL:
+        return cached[0]
+
+    neutral = {"demand": 1.0, "elasticity": 1.0, "production": 1.0,
+               "input_cost": 1.0, "land_yield": 1.0}
     db = SessionLocal()
     try:
-        pas = db.query(PortAuthorityInstance).all()
-        if not pas:
-            _imm_cache = (1.0, 1.0)
+        pol = db.query(ImmigrationPolicy).filter_by(player_id=player_id).first()
+        if not pol or not pol.expires_at:
+            result = neutral
         else:
-            avg_vol = sum(pa.immigration_volume or 1.0 for pa in pas) / len(pas)
-            avg_wlth = sum(pa.immigration_wealth or 1.0 for pa in pas) / len(pas)
-            _imm_cache = (avg_vol, avg_wlth)
-        _imm_cache_ts = now
-        return _imm_cache
+            df = get_decay_factor(pol.committed_at, pol.expires_at)
+            if df <= 0.0:
+                result = neutral
+            else:
+                sliders = {f: getattr(pol, f, 0.0) for f in _SLIDER_FIELDS}
+                result = compute_immigration_score(sliders, df)
+        _imm_player_cache[player_id] = (result, now_ts)
+        return result
+    finally:
+        db.close()
+
+
+def get_immigration_status(player_id: int) -> dict:
+    """Return full immigration status dict for the UI (sliders, decay, cooldown, mults)."""
+    db = SessionLocal()
+    try:
+        pol = db.query(ImmigrationPolicy).filter_by(player_id=player_id).first()
+        now = datetime.utcnow()
+        if not pol:
+            return {
+                "active": False, "cooldown": False,
+                "sliders": {f: 0.0 for f in _SLIDER_FIELDS},
+                "decay_factor": 0.0, "mults": None,
+                "expires_at": None, "cooldown_until": None,
+            }
+        df = get_decay_factor(pol.committed_at, pol.expires_at) if pol.expires_at else 0.0
+        in_cooldown = bool(pol.cooldown_until and pol.cooldown_until > now)
+        active = df > 0.0
+        sliders = {f: getattr(pol, f, 0.0) for f in _SLIDER_FIELDS}
+        mults = compute_immigration_score(sliders, df) if active else None
+        return {
+            "active": active,
+            "cooldown": in_cooldown and not active,
+            "sliders": sliders,
+            "decay_factor": round(df, 4),
+            "mults": mults,
+            "expires_at":     pol.expires_at.isoformat() if pol.expires_at else None,
+            "cooldown_until": pol.cooldown_until.isoformat() if pol.cooldown_until else None,
+            "committed_at":   pol.committed_at.isoformat() if pol.committed_at else None,
+        }
     finally:
         db.close()
 
@@ -1721,16 +1872,22 @@ async def api_my_bids(request: Request):
     })
 
 
-@router.post("/immigration")
-async def api_immigration(request: Request):
+@router.post("/immigration/commit")
+async def api_immigration_commit(request: Request):
     pid = _player_id(request)
     if not pid:
         return JSONResponse({"error": "Not logged in."}, status_code=401)
-    body   = await request.json()
-    volume = float(body.get("volume", 1.0))
-    wealth = float(body.get("wealth", 1.0))
-    ok, msg = set_immigration_policy(pid, volume, wealth)
+    body = await request.json()
+    ok, msg = commit_immigration_policy(pid, body)
     return JSONResponse({"ok": ok, "message": msg}, status_code=200 if ok else 400)
+
+
+@router.get("/immigration/status")
+async def api_immigration_status(request: Request):
+    pid = _player_id(request)
+    if not pid:
+        return JSONResponse({"error": "Not logged in."}, status_code=401)
+    return JSONResponse(get_immigration_status(pid))
 
 
 @router.get("/missions")
