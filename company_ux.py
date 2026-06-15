@@ -780,7 +780,7 @@ financial leaderboard.</p>
 <ul>
   <li>Genre: Economic simulation / multiplayer strategy</li>
   <li>Platform: Web (PWA), Android (TWA)</li>
-  <li>Availability: Open access at <strong>wadsworth.cc</strong></li>
+  <li>Availability: Open access at <strong>wadsworth.notifly.cc</strong></li>
   <li>Player count: Persistent multiplayer, open world</li>
   <li>Tick-driven real-time simulation engine</li>
 </ul>

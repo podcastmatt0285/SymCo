@@ -657,7 +657,7 @@ async def robots_txt():
         "Disallow: /notifications\n"
         "Disallow: /wallet\n"
         "\n"
-        "Sitemap: https://wadsworth.cc/sitemap.xml\n"
+        "Sitemap: https://wadsworth.notifly.cc/sitemap.xml\n"
     )
     return PlainTextResponse(content, headers={"Cache-Control": "public, max-age=86400"})
 
@@ -665,7 +665,7 @@ async def robots_txt():
 async def sitemap_xml():
     from fastapi.responses import Response
     from datetime import datetime as _dt
-    base = "https://wadsworth.cc"
+    base = "https://wadsworth.notifly.cc"
     lastmod = _dt.utcnow().strftime("%Y-%m-%d")
 
     # Only genuinely public, content-rich pages belong in the sitemap.
