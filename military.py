@@ -295,6 +295,20 @@ class SecurityBan(Base):
     expires_at = Column(DateTime, index=True)
 
 
+class WatchlistTarget(Base):
+    """A future blockade target the player is 'eyeing' — up to 8 saved per player."""
+    __tablename__ = "military_watchlist"
+
+    id          = Column(Integer, primary_key=True)
+    owner_id    = Column(Integer, index=True, nullable=False)
+    target_id   = Column(Integer, nullable=False)
+    target_name = Column(String, nullable=True)   # cached display name
+    created_at  = Column(DateTime, default=datetime.utcnow)
+
+
+WATCHLIST_MAX = 8
+
+
 def init_db():
     Base.metadata.create_all(bind=engine)
 
@@ -1116,6 +1130,80 @@ def search_targets(query: str, viewer_id: int) -> List[dict]:
     return [r for r in results if r["id"] not in hidden]
 
 
+def _player_name(player_id: int) -> Optional[str]:
+    """Resolve a player's display name, or None if no such player."""
+    try:
+        from auth import get_db as _auth_db, Player
+        db = _auth_db()
+        try:
+            p = db.query(Player).filter_by(id=player_id).first()
+            return p.username if p else None
+        finally:
+            db.close()
+    except Exception:
+        return None
+
+
+def get_watchlist(owner_id: int) -> List[dict]:
+    """Return the player's saved future targets, newest first."""
+    db = SessionLocal()
+    try:
+        rows = db.query(WatchlistTarget).filter_by(owner_id=owner_id).order_by(
+            WatchlistTarget.created_at.desc()).all()
+        return [{"id": r.target_id, "name": r.target_name or f"Player #{r.target_id}"}
+                for r in rows]
+    finally:
+        db.close()
+
+
+def add_watchlist(owner_id: int, target_id: int) -> Tuple[bool, str]:
+    """Save a future target (up to WATCHLIST_MAX). Idempotent on duplicates."""
+    try:
+        target_id = int(target_id)
+    except (TypeError, ValueError):
+        return False, "Invalid target."
+    if not target_id or target_id == owner_id:
+        return False, "You cannot watch yourself."
+    name = _player_name(target_id)
+    if not name:
+        return False, "No such player."
+    db = SessionLocal()
+    try:
+        if db.query(WatchlistTarget).filter_by(owner_id=owner_id, target_id=target_id).first():
+            return True, f"{name} is already on your watchlist."
+        if db.query(WatchlistTarget).filter_by(owner_id=owner_id).count() >= WATCHLIST_MAX:
+            return False, f"Watchlist full ({WATCHLIST_MAX} max). Remove one first."
+        db.add(WatchlistTarget(owner_id=owner_id, target_id=target_id, target_name=name))
+        db.commit()
+        return True, f"Added {name} to your watchlist."
+    except Exception as e:
+        db.rollback()
+        return False, f"Could not add target: {e}"
+    finally:
+        db.close()
+
+
+def remove_watchlist(owner_id: int, target_id: int) -> Tuple[bool, str]:
+    """Drop a saved future target."""
+    try:
+        target_id = int(target_id)
+    except (TypeError, ValueError):
+        return False, "Invalid target."
+    db = SessionLocal()
+    try:
+        row = db.query(WatchlistTarget).filter_by(owner_id=owner_id, target_id=target_id).first()
+        if not row:
+            return True, "Not on your watchlist."
+        db.delete(row)
+        db.commit()
+        return True, "Removed from watchlist."
+    except Exception as e:
+        db.rollback()
+        return False, f"Could not remove target: {e}"
+    finally:
+        db.close()
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Tick — scheduled lifecycle
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1386,6 +1474,7 @@ def get_military_status(player_id: int) -> dict:
             "blockades": blockades,
             "go_dark": go_dark_list,
             "battles": battles,
+            "watchlist": get_watchlist(player_id),
         }
     finally:
         db.close()
@@ -1464,6 +1553,26 @@ async def api_go_dark(request: Request):
         return JSONResponse({"error": "Not logged in."}, status_code=401)
     body = await request.json()
     ok, msg = go_dark(pid, body.get("hidden_from", 0), body.get("drones", 0))
+    return JSONResponse({"ok": ok, "message": msg}, status_code=200 if ok else 400)
+
+
+@router.post("/watchlist/add")
+async def api_watchlist_add(request: Request):
+    pid = _pid(request)
+    if not pid:
+        return JSONResponse({"error": "Not logged in."}, status_code=401)
+    body = await request.json()
+    ok, msg = add_watchlist(pid, body.get("target_id", 0))
+    return JSONResponse({"ok": ok, "message": msg}, status_code=200 if ok else 400)
+
+
+@router.post("/watchlist/remove")
+async def api_watchlist_remove(request: Request):
+    pid = _pid(request)
+    if not pid:
+        return JSONResponse({"error": "Not logged in."}, status_code=401)
+    body = await request.json()
+    ok, msg = remove_watchlist(pid, body.get("target_id", 0))
     return JSONResponse({"ok": ok, "message": msg}, status_code=200 if ok else 400)
 
 

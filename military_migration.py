@@ -142,6 +142,15 @@ def run_migration():
             )""",
             # Drop the old procurement_submissions table if it exists
             "DROP TABLE IF EXISTS procurement_submissions",
+            # Watchlist of future blockade targets (up to 8 per player)
+            """CREATE TABLE IF NOT EXISTS military_watchlist (
+                id SERIAL PRIMARY KEY,
+                owner_id INTEGER NOT NULL,
+                target_id INTEGER NOT NULL,
+                target_name VARCHAR,
+                created_at TIMESTAMP DEFAULT NOW()
+            )""",
+            "CREATE INDEX IF NOT EXISTS ix_military_watchlist_owner ON military_watchlist (owner_id)",
         ]
         for ddl in schema_ddl:
             try:

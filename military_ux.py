@@ -40,6 +40,7 @@ def build_warfare_panels(player_id: int, fmt_usd: Callable = None) -> str:
     blockades = st["blockades"]
     go_dark = st["go_dark"]
     battles = st["battles"]
+    watchlist = st.get("watchlist", [])
 
     # ── Force composition ────────────────────────────────────────────────────
     if branches:
@@ -150,15 +151,39 @@ def build_warfare_panels(player_id: int, fmt_usd: Callable = None) -> str:
         f"{b['expires_at'][:16].replace('T', ' ')} UTC</li>" for b in by_me
     ) or "<li style='color:#94a3b8;'>None.</li>"
 
+    # Saved future targets (rendered server-side; tap one to load it as the target).
+    if watchlist:
+        watch_rows = "".join(
+            "<div style='display:flex;justify-content:space-between;align-items:center;"
+            "gap:8px;padding:3px 0;border-bottom:1px solid #2D1810;'>"
+            f"<span style='color:#F5F5DC;cursor:pointer;' "
+            f"onclick=\"milSetBlockTarget({w['id']}, &#39;{w['name'].replace(chr(39), '')}&#39;)\">"
+            f"🎯 {html.escape(w['name'])} <span style='color:#94a3b8;'>(#{w['id']})</span></span>"
+            f"<span style='cursor:pointer;color:#f87171;' title='Remove' "
+            f"onclick='milRemoveWatch({w['id']})'>✕</span></div>"
+            for w in watchlist
+        )
+    else:
+        watch_rows = ("<div style='color:#94a3b8;'>No saved targets yet — search below "
+                      "and tap ➕ to start a list of players you're eyeing.</div>")
+
     blockade_html = (
         f"{break_html}"
         f"<div style='border:1px solid #2D1810;padding:10px;'>"
         f"<div style='color:#B08D57;'>Deploy a blockade (you defend; target must beat you in 72h):</div>"
-        f"<input type='number' id='mil-block-target' placeholder='Target player ID' "
-        f"style='padding:6px;margin:6px 0;width:200px;'>"
+        f"<input type='text' id='mil-block-search' placeholder='Search players by name…' "
+        f"oninput='milBlockSearch()' autocomplete='off' style='padding:6px;margin:6px 0;width:100%;'>"
+        f"<div id='mil-block-results' style='font-size:0.9em;'></div>"
+        f"<div id='mil-block-selected' style='color:#94a3b8;margin:6px 0;'>No target selected.</div>"
         f"<div style='color:#94a3b8;font-size:0.85em;'>Uses the force quantities selected above.</div>"
         f"<button onclick='milDeployBlockade()' style='margin-top:6px;padding:6px 14px;cursor:pointer;'>"
         f"🚫 Deploy Blockade</button></div>"
+        # Watchlist of future targets
+        f"<div style='border:1px solid #2D1810;padding:10px;margin-top:8px;'>"
+        f"<b style='color:#B08D57;'>🎯 Future targets "
+        f"<span style='color:#94a3b8;font-weight:normal;'>"
+        f"({len(watchlist)}/{military.WATCHLIST_MAX}) — players you're eyeing</span></b>"
+        f"<div id='mil-watchlist' style='margin-top:6px;'>{watch_rows}</div></div>"
         f"<div style='margin-top:8px;'><b style='color:#B08D57;'>Your active blockades:</b>"
         f"<ul style='margin:4px 0;'>{by_me_html}</ul></div>"
     )
@@ -273,11 +298,50 @@ def build_warfare_panels(player_id: int, fmt_usd: Callable = None) -> str:
         var j = await r.json(); _milMsg(j.message||j.error||'');
         if(j.ok) setTimeout(function(){{location.reload();}}, 900);
       }}
+      // ── Blockade target: live name search + watchlist ──────────────────────
+      var _milBlockTarget = 0;
+      var _milBlockTimer = null;
+      function milBlockSearch(){{
+        clearTimeout(_milBlockTimer);
+        _milBlockTimer = setTimeout(_milBlockSearchNow, 180);
+      }}
+      async function _milBlockSearchNow(){{
+        var q = document.getElementById('mil-block-search').value;
+        if(!q){{ document.getElementById('mil-block-results').innerHTML=''; return; }}
+        var r = await fetch('/api/military/search?q='+encodeURIComponent(q));
+        var j = await r.json();
+        var html = (j.results||[]).map(function(p){{
+          var nm = (p.name||('Player #'+p.id)).replace(/\\'/g,'');
+          return '<div style="padding:3px 0;display:flex;gap:10px;align-items:center;">'+
+            '<span style="color:#B08D57;cursor:pointer;" onclick="milSetBlockTarget('+p.id+',\\''+nm+'\\')">🎯 '+
+            nm+' (#'+p.id+')</span>'+
+            '<span style="color:#94a3b8;cursor:pointer;" title="Add to watchlist" onclick="milAddWatch('+p.id+')">➕</span></div>';
+        }}).join('');
+        document.getElementById('mil-block-results').innerHTML = html || '<span style="color:#94a3b8;">No players.</span>';
+      }}
+      function milSetBlockTarget(id, name){{
+        _milBlockTarget = id;
+        document.getElementById('mil-block-selected').innerHTML =
+          '🎯 Target: <b style="color:#F5F5DC;">'+name+'</b> (#'+id+')';
+        document.getElementById('mil-block-results').innerHTML='';
+        var sb = document.getElementById('mil-block-search'); if(sb) sb.value = name;
+      }}
+      async function milAddWatch(id){{
+        var r = await fetch('/api/military/watchlist/add', {{method:'POST',headers:{{'Content-Type':'application/json'}},
+          body: JSON.stringify({{target_id:id}})}});
+        var j = await r.json(); _milMsg(j.message||j.error||'');
+        if(j.ok) setTimeout(function(){{location.reload();}}, 700);
+      }}
+      async function milRemoveWatch(id){{
+        var r = await fetch('/api/military/watchlist/remove', {{method:'POST',headers:{{'Content-Type':'application/json'}},
+          body: JSON.stringify({{target_id:id}})}});
+        var j = await r.json(); _milMsg(j.message||j.error||'');
+        if(j.ok) setTimeout(function(){{location.reload();}}, 500);
+      }}
       async function milDeployBlockade(){{
-        var t = parseInt(document.getElementById('mil-block-target').value||'0');
-        if(!t){{ _milMsg('Enter a target player ID.'); return; }}
+        if(!_milBlockTarget){{ _milMsg('Search for a player and tap 🎯 to select a target first.'); return; }}
         var r = await fetch('/api/military/blockade/deploy', {{method:'POST',headers:{{'Content-Type':'application/json'}},
-          body: JSON.stringify({{target_id:t, force:_milForce()}})}});
+          body: JSON.stringify({{target_id:_milBlockTarget, force:_milForce()}})}});
         var j = await r.json(); _milMsg(j.message||j.error||'');
         if(j.ok) setTimeout(function(){{location.reload();}}, 900);
       }}
