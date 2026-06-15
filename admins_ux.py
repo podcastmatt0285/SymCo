@@ -5211,7 +5211,7 @@ def admin_military(session_token: Optional[str] = Cookie(None),
       <p style="margin-top:16px;"><a href="/admin">← Back to admin</a></p>
     </div>
     """
-    return HTMLResponse(_admin_shell("Procurement Events", body) if "_admin_shell" in globals() else body)
+    return HTMLResponse(admin_shell("Procurement Events", body, active_nav="/admin/military"))
 
 
 @router.post("/admin/military/create")

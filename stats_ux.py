@@ -1363,6 +1363,9 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         "special_plot_startup_fee": "🏛️",
         "business_purchase": "🏭",
         "coin_mint": "🪙", "mint": "🪙",
+        # Port Authority — Branch Warfare
+        "pa_unit_destroyed": "⚰️", "pa_loot_gained": "💼", "pa_loot_lost": "⚠️",
+        "pa_loot_returned": "↩️", "pa_loot_recovered": "✅",
     }
     TYPE_BADGE_COLORS = {
         # Market
@@ -1414,6 +1417,9 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         "special_plot_startup_fee": "#8b5cf6",
         "business_purchase": "#7c3aed",
         "coin_mint": "#fbbf24", "mint": "#fbbf24",
+        # Port Authority — Branch Warfare
+        "pa_unit_destroyed": "#ef4444", "pa_loot_gained": "#22c55e", "pa_loot_lost": "#ef4444",
+        "pa_loot_returned": "#f59e0b", "pa_loot_recovered": "#10b981",
     }
 
     # Maps filter-chip key → type-prefix tuples matching actual log_transaction() call sites.
@@ -1456,7 +1462,9 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         # Institutions / Mint coinage
         "institutions":    ("special_plot_", "business_purchase", "coin_mint"),
         # Port Authority
-        "port_authority":  ("pa_contract", "pa_maintenance", "pa_procurement", "pa_loss"),
+        "port_authority":  ("pa_contract", "pa_maintenance", "pa_procurement", "pa_loss",
+                            "pa_unit_destroyed", "pa_loot_gained", "pa_loot_lost",
+                            "pa_loot_returned", "pa_loot_recovered"),
     }
     # Build a flat JSON map of type → category list for JS
     type_to_tabs: Dict[str, List[str]] = {}

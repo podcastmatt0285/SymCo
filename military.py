@@ -902,6 +902,13 @@ def _finalize_campaign(db, camp: MilitaryCampaign, wiped: bool):
     if taken < 0:
         _ledger(camp.attacker_id, "trophy_penalty", "tasks", 0.0,
                 f"Campaign wipe penalty ({-taken} trophies)", _ref, "trophy", float(taken))
+        try:
+            from govt_ledger import log_gov_event
+            log_gov_event("pa_wipe_penalty", "in", float(-taken), "trophies",
+                          counterparty=f"player:{camp.attacker_id}",
+                          description=f"Campaign wipe trophy penalty — {_ref}")
+        except Exception:
+            pass
     share = (-taken) // max(1, len(targets)) if taken < 0 else 0
     for did in targets:
         if share > 0:
@@ -1153,6 +1160,13 @@ def _expire_blockades(now: datetime):
                 _ledger(b.deployer_id, "trophy_award", "tasks", 0.0,
                         f"Blockade tribute from #{b.target_id} ({-taken} trophies)",
                         _ref, "trophy", float(-taken))
+                try:
+                    from govt_ledger import log_gov_event
+                    log_gov_event("pa_blockade_tribute", "transfer", float(-taken), "trophies",
+                                  counterparty=f"player:{b.target_id}→{b.deployer_id}",
+                                  description=f"Blockade tribute — {_ref}")
+                except Exception:
+                    pass
             _notify(b.target_id, "🚫 Blockade expired",
                     f"You failed to lift player #{b.deployer_id}'s blockade in time — "
                     f"a trophy tribute was paid.")
