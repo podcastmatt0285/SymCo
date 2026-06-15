@@ -644,7 +644,7 @@ def admin_dashboard(
                 <button type="submit" style="background:#0f2027;border:1px solid #38bdf8;color:#7dd3fc;border-radius:6px;padding:8px 20px;cursor:pointer;font-size:0.82rem;font-weight:600;">🧹 Run DB Maintenance</button>
             </form>
         </div>
-        <p style="color:#475569;font-size:0.7rem;margin-top:6px;">Purges completed/cancelled orders (older than 14 days, so in-game order history is preserved), dismissed notifications, redeemed vouchers, concluded polls &amp; applications, and orphaned swap legs — then VACUUMs the affected tables. <b>Preview</b> counts what would go without deleting anything.</p>
+        <p style="color:#475569;font-size:0.7rem;margin-top:6px;">Purges completed/cancelled orders (older than 14 days, so in-game order history is preserved), dismissed notifications, redeemed vouchers, concluded polls &amp; applications, orphaned swap legs, collapsed economic milestones, and concluded land auctions — then VACUUMs the affected tables. <b>Preview</b> counts what would go without deleting anything.</p>
     </div>
 
     <div class="card">

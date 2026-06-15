@@ -2854,6 +2854,10 @@ def run_db_maintenance(admin_id: int, dry_run: bool = False) -> dict:
         history.
       * Notifications are only removed once the player has dismissed/seen them;
         vouchers only once redeemed; estate listings only once sold.
+      * economic_milestones is collapsed to its single highest level (the land
+        tick reads MAX(threshold_level), so lower rows are dead weight); concluded
+        government_auctions (is_active = FALSE) are pruned past the grace window,
+        as the buy path only ever touches active auctions.
 
     NEVER TOUCHED: active/partial orders, trades/transaction_logs/
     government_ledger/admin_logs (audit trails), *_price_history (charts),
@@ -2914,6 +2918,23 @@ def run_db_maintenance(admin_id: int, dry_run: bool = False) -> dict:
          "poll_id IN (SELECT id FROM county_polls WHERE status IN ('passed','failed','cancelled')) "
          "OR poll_id NOT IN (SELECT id FROM county_polls)", False),
         ("county_polls",      "county_polls",      "status IN ('passed','failed','cancelled')", False),
+
+        # ── Land/economy expansion bloat (the biggest tables in the DB) ───────
+        # These grow without bound as total economy cash inflates: every
+        # expansion tick mints a land plot + auction + milestone row. A 129-
+        # player game accumulated 1.4M milestone rows and 543K finished auctions.
+        #
+        # economic_milestones: only the HIGHEST level matters — the land tick now
+        # reads MAX(threshold_level), so every lower row is dead weight. Keep just
+        # the max row (its level is the source of truth) and drop the rest.
+        ("economic_milestones", "economic_milestones",
+         "threshold_level < (SELECT MAX(threshold_level) FROM economic_milestones)", False),
+        # government_auctions: concluded auctions (is_active = FALSE) are pure
+        # history — the buy path only ever touches active auctions, and land_sales
+        # records actual sales separately. Grace-windowed on end_time so anything
+        # recently concluded stays visible.
+        ("government_auctions", "government_auctions",
+         "is_active = FALSE AND end_time < :cutoff", False),
     ]
 
     db = get_db()
@@ -2922,10 +2943,10 @@ def run_db_maintenance(admin_id: int, dry_run: bool = False) -> dict:
     try:
         for label, table, where, uses_grace in OPS:
             clause = where
-            params = {}
             if uses_grace:
                 clause = f"({where}) AND created_at < :cutoff"
-                params = {"cutoff": cutoff}
+            # Bind the cutoff whenever the (possibly custom) clause references it.
+            params = {"cutoff": cutoff} if ":cutoff" in clause else {}
             verb = "SELECT COUNT(*)" if dry_run else "DELETE"
             target = f"FROM {table} WHERE {clause}"
             # SAVEPOINT per statement: a failure (e.g. table absent on this

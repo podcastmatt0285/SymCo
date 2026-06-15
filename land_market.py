@@ -27,7 +27,7 @@ def _fire_land_push(player_id: int, tag: str, title: str, body: str) -> None:
         except Exception as e:
             print(f"[LandMarket] Push error for player {player_id}: {e}")
     threading.Thread(target=_send, daemon=True).start()
-from sqlalchemy import Column, String, Float, DateTime, Integer, Boolean
+from sqlalchemy import Column, String, Float, DateTime, Integer, Boolean, func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from stats_ux import log_transaction
@@ -749,19 +749,15 @@ def check_economic_triggers() -> int:
     if current_milestone == 0:
         return 0
     
-    # Check which milestones have already been triggered
+    # Check the highest milestone already triggered. Milestones are created
+    # strictly in sequence (levels 1..N), so the MAX level is all we need —
+    # the untriggered levels are exactly max_level+1 .. current_milestone.
+    # (This used to load the entire economic_milestones table into memory every
+    # tick; at 1M+ rows that load was the main source of progressive slowdown.)
     db = get_db()
     try:
-        triggered_milestones = db.query(EconomicMilestone).all()
-        triggered_levels = {m.threshold_level for m in triggered_milestones}
-        
-        # Find milestones that need to be created
-        new_plots_needed = 0
-        for level in range(1, current_milestone + 1):
-            if level not in triggered_levels:
-                new_plots_needed += 1
-        
-        return new_plots_needed
+        max_level = db.query(func.max(EconomicMilestone.threshold_level)).scalar() or 0
+        return max(0, current_milestone - max_level)
     finally:
         db.close()
 
@@ -1156,17 +1152,17 @@ def tick(current_tick: int, now: datetime):
             total_cash = _total_economy_cash_usd()
             current_milestone = int(total_cash / ECONOMIC_THRESHOLD)
             
-            # Find which milestones need creation
+            # Find which milestones need creation. Levels are sequential, so the
+            # untriggered ones are exactly max_level+1 .. current_milestone — no
+            # need to load the whole milestone table to compute the gap.
             db = get_db()
             try:
-                triggered_milestones = db.query(EconomicMilestone).all()
-                triggered_levels = {m.threshold_level for m in triggered_milestones}
-                
-                for level in range(1, current_milestone + 1):
-                    if level not in triggered_levels:
-                        auction = create_government_auction()
-                        if auction:
-                            record_economic_milestone(level, auction.land_plot_id)
+                max_level = db.query(func.max(EconomicMilestone.threshold_level)).scalar() or 0
+
+                for level in range(max_level + 1, current_milestone + 1):
+                    auction = create_government_auction()
+                    if auction:
+                        record_economic_milestone(level, auction.land_plot_id)
             finally:
                 db.close()
     
