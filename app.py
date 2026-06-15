@@ -637,16 +637,25 @@ async def robots_txt():
         "Allow: /\n"
         "Disallow: /admin\n"
         "Disallow: /api\n"
+        "Disallow: /settings\n"
+        "Disallow: /notifications\n"
+        "Disallow: /wallet\n"
         "\n"
         "User-agent: Bingbot\n"
         "Allow: /\n"
         "Disallow: /admin\n"
         "Disallow: /api\n"
+        "Disallow: /settings\n"
+        "Disallow: /notifications\n"
+        "Disallow: /wallet\n"
         "\n"
         "User-agent: ClaudeBot\n"
         "Allow: /\n"
         "Disallow: /admin\n"
         "Disallow: /api\n"
+        "Disallow: /settings\n"
+        "Disallow: /notifications\n"
+        "Disallow: /wallet\n"
         "\n"
         "Sitemap: https://wadsworth.cc/sitemap.xml\n"
     )
@@ -655,36 +664,45 @@ async def robots_txt():
 @app.get("/sitemap.xml", include_in_schema=False)
 async def sitemap_xml():
     from fastapi.responses import Response
+    from datetime import datetime as _dt
     base = "https://wadsworth.cc"
-    urls = [
-        "/",
-        "/stats",
-        "/brokerage",
-        "/banks",
-        "/executives",
-        "/cities",
-        "/counties",
-        "/crypto",
-        "/memecoins",
-        "/exchange",
-        "/estate",
-        "/estate/deceased",
-        "/notifications",
-        "/events/land-grant",
-        "/banks/indices",
-        "/banks/indices/unloggedin",
-        "/founding",
-        "/wiki",
-        "/wallet",
-        "/reserve-banks",
-        "/privacy-policy",
-        "/sitemap",
-        "/company/whitepaper",
-        "/company/careers",
-        "/company/press-kit",
+    lastmod = _dt.utcnow().strftime("%Y-%m-%d")
+
+    # Only genuinely public, content-rich pages belong in the sitemap.
+    # Login-gated pages serve an identical "Login Required" stub (duplicate /
+    # soft-404 content), private pages redirect to /login, and a few legacy
+    # paths have no route at all — none of those should be submitted to Search
+    # Console. Each entry: (path, changefreq, priority).
+    pages = [
+        ("/",                          "daily",   "1.0"),
+        ("/login",                     "monthly", "0.9"),
+        ("/wiki",                      "weekly",  "0.8"),
+        ("/founding",                  "monthly", "0.7"),
+        ("/banks/indices/unloggedin",  "daily",   "0.7"),
+        ("/company/whitepaper",        "monthly", "0.6"),
+        ("/company/careers",           "monthly", "0.5"),
+        ("/company/press-kit",         "monthly", "0.5"),
+        ("/sitemap",                   "monthly", "0.4"),
+        ("/privacy-policy",            "yearly",  "0.3"),
     ]
+
+    # Enrich with the public per-index detail pages — each is a distinct,
+    # crawlable market page with unique content.
+    try:
+        from banks.indices import INDICES
+        for code in INDICES.keys():
+            pages.append((f"/banks/indices/{code}/unloggedin", "daily", "0.6"))
+    except Exception:
+        pass
+
     items = "\n".join(
-        f"  <url><loc>{base}{path}</loc></url>" for path in urls
+        f"  <url>\n"
+        f"    <loc>{base}{path}</loc>\n"
+        f"    <lastmod>{lastmod}</lastmod>\n"
+        f"    <changefreq>{freq}</changefreq>\n"
+        f"    <priority>{prio}</priority>\n"
+        f"  </url>"
+        for path, freq, prio in pages
     )
     xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
