@@ -374,8 +374,19 @@ def _page(title, subtitle, back_href, back_label, active_nav, body_html, player_
         loader = _nl()
     except Exception:
         loader = ""
+    _desc = (subtitle or title).replace('"', '&quot;')
+    _canon = f"https://wadsworth.notifly.cc{active_nav}" if active_nav else ""
+    _canon_tag = f'<link rel="canonical" href="{_canon}">' if _canon else ""
     return f"""{_leather_head(player_id)}
 <title>{title} — Wadsworth</title>
+<meta name="description" content="{_desc}">
+{_canon_tag}
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Wadsworth Tycoon">
+<meta property="og:title" content="{title} — Wadsworth">
+<meta property="og:description" content="{_desc}">
+<meta property="og:url" content="{_canon}">
+<meta property="og:image" content="https://wadsworth.notifly.cc/static/icons/apple-touch-icon.png">
 </head>
 <body>
 <div class="ledger">

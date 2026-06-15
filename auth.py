@@ -968,7 +968,18 @@ def login_page(session_token: Optional[str] = Cookie(None)):
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Login · Wadsworth</title>
+    <title>Wadsworth Economic Tycoon Simulator — Free Player-Driven Economy Game</title>
+    <meta name="description" content="Play Wadsworth: a living, player-driven economy game. Own land, build factories, take your company public, trade shares, mine crypto, and govern cities. Free to play in your browser.">
+    <link rel="canonical" href="https://wadsworth.notifly.cc/login">
+    <meta property="og:type"        content="website">
+    <meta property="og:site_name"   content="Wadsworth Tycoon">
+    <meta property="og:title"       content="Wadsworth Economic Tycoon Simulator">
+    <meta property="og:description" content="A living, player-driven economy: own land, run factories, IPO your company, trade shares, mine crypto, govern cities. Free to play.">
+    <meta property="og:image"       content="https://wadsworth.notifly.cc/static/icons/apple-touch-icon.png">
+    <meta property="og:url"         content="https://wadsworth.notifly.cc/login">
+    <meta name="twitter:card"       content="summary">
+    <meta name="twitter:title"      content="Wadsworth Economic Tycoon Simulator">
+    <meta name="twitter:description" content="Own land, build factories, take your company public, mine crypto, govern cities. Free to play.">
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#020617">
     <meta name="mobile-web-app-capable" content="yes">
@@ -2429,8 +2440,10 @@ def founding_page():
     <meta property="og:type"        content="website">
     <meta property="og:title"       content="🎖️ Become a Founding Tester — Wadsworth Tycoon">
     <meta property="og:description" content="A living, player-driven economy: own land, run factories, IPO your company, short rivals, mine crypto, govern cities. Free to play. Join the Android closed beta — permanent badge, 150 trophies, 30 days Pro free. {_available} Pro slots left.">
-    <meta property="og:image"       content="/static/icons/apple-touch-icon.png">
-    <meta property="og:url"         content="/founding">
+    <meta property="og:site_name"   content="Wadsworth Tycoon">
+    <meta property="og:image"       content="https://wadsworth.notifly.cc/static/icons/apple-touch-icon.png">
+    <meta property="og:url"         content="https://wadsworth.notifly.cc/founding">
+    <link rel="canonical"           href="https://wadsworth.notifly.cc/founding">
     <meta name="twitter:card"       content="summary">
     <meta name="twitter:title"      content="🎖️ Become a Founding Tester — Wadsworth Tycoon">
     <meta name="twitter:description" content="Own land, build factories, take your company public, mine crypto, govern cities. Free to play. Android closed beta: badge · 150 trophies · 30 days Pro free. {_available} slots left.">

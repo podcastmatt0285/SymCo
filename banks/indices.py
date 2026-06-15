@@ -1222,17 +1222,27 @@ def _shell(title, body, balance=0.0, player_id=None):
         return f"<html><body>{body}</body></html>"
 
 
-def _guest_shell(title: str, body: str) -> str:
+def _guest_shell(title: str, body: str, description: str = "", canonical_path: str = "") -> str:
     """Minimal HTML shell for unauthenticated visitors — no game nav."""
     from skin_utils import skin_links
     from ux import _nav_loader_html as _nav_loader
     skin_tags = skin_links(None)
+    _desc = (description or f"{title} on Wadsworth — live, player-driven market index levels and performance.").replace('"', '&quot;')
+    _canon = f"https://wadsworth.notifly.cc{canonical_path}" if canonical_path else ""
+    _canon_tag = f'<link rel="canonical" href="{_canon}">' if _canon else ""
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{title} · Wadsworth</title>
+<meta name="description" content="{_desc}">
+{_canon_tag}
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Wadsworth Tycoon">
+<meta property="og:title" content="{title} · Wadsworth">
+<meta property="og:description" content="{_desc}">
+<meta property="og:image" content="https://wadsworth.notifly.cc/static/icons/apple-touch-icon.png">
 {skin_tags}
 <style>
 body {{ max-width:1200px; margin:0 auto; padding:20px 20px 80px; }}
@@ -1489,7 +1499,9 @@ def indices_landing_unloggedin():
     <div class="idx-grid">{cards_html}</div>
     """
 
-    return _guest_shell("Market Indices", body)
+    return _guest_shell("Market Indices", body,
+                        description="Live Wadsworth market indices — blue-chip, crypto, real-estate, and sentiment gauges from a fully player-driven economy.",
+                        canonical_path="/banks/indices/unloggedin")
 
 
 @router.get("/banks/indices/{code}", response_class=HTMLResponse)
@@ -2484,7 +2496,9 @@ def index_detail_unloggedin(code: str):
     </script>
     """
 
-    return _guest_shell(meta["name"], body)
+    return _guest_shell(meta["name"], body,
+                        description=meta.get("desc", "") or f'{meta["name"]} — live index level and performance on Wadsworth.',
+                        canonical_path=f"/banks/indices/{code}/unloggedin")
 
 
 def _build_heatmap(code: str, breakdown: list[dict],

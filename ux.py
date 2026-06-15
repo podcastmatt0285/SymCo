@@ -81,6 +81,8 @@ def privacy_policy(session_token: Optional[str] = Cookie(None)):
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Privacy Policy — Wadsworth</title>
+<meta name="description" content="Wadsworth Economic Tycoon Simulator privacy policy — what data we collect, how it is used, and your rights.">
+<link rel="canonical" href="https://wadsworth.notifly.cc/privacy-policy">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&display=swap" rel="stylesheet">

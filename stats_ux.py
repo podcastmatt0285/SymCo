@@ -3529,7 +3529,7 @@ def _wiki_debuff(key: str, val: float) -> str:
     return f'<span class="debuff">{lbl} {v}</span>'
 
 
-def wiki_shell(title: str, body: str, player_name: str = "", active: str = "", player_id: int = None) -> str:
+def wiki_shell(title: str, body: str, player_name: str = "", active: str = "", player_id: int = None, description: str = "") -> str:
     """Beautiful wiki wrapper — 10/30/60 pastel orange/yellow/blue palette.
 
     Injects the player's chosen skin so [data-skin="..."] rules (e.g. kawaii)
@@ -3646,10 +3646,17 @@ a{color:#90c4f0;text-decoration:none;}a:hover{color:#f5d76e;}
 @media(max-width:768px){.whero-title{font-size:1.9rem;}.wg,.wg-lg{grid-template-columns:1fr;}.wm{padding:20px 16px;}}
 """
 
+    _wdesc = (description or "WikiWads — the in-game encyclopedia for Wadsworth Economic Tycoon Simulator.").replace('"', '&quot;')
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{title} · Wadsworth Wiki</title>
+<meta name="description" content="{_wdesc}">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Wadsworth Tycoon">
+<meta property="og:title" content="{title} · Wadsworth Wiki">
+<meta property="og:description" content="{_wdesc}">
+<meta property="og:image" content="https://wadsworth.notifly.cc/static/icons/apple-touch-icon.png">
 {_skin_links(player_id)}
 <style>{css}</style>
 </head>
@@ -6120,6 +6127,7 @@ table{width:100%;}
         player_name=player_name,
         active="",
         player_id=player_id,
+        description=page_desc,
     ))
 
 
