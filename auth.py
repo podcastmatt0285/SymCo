@@ -2372,17 +2372,17 @@ def founding_page():
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Founding Operative · Wadsworth Tycoon</title>
-    <meta name="description" content="Join the Wadsworth Economic Tycoon Simulator as a Founding Tester. The app is FREE — download it, earn 150 trophies, get a permanent badge, and claim 30 days of Wadsworth Pro FREE.">
+    <meta name="description" content="Build a business empire in a living, player-driven economy — own land, run factories, take your company public, mine crypto, and govern cities. Free to play. Join the Wadsworth Android closed beta as a Founding Tester: permanent badge, 150 trophies, and 30 days of Pro free.">
 
     <!-- Open Graph / Reddit / Discord rich preview -->
     <meta property="og:type"        content="website">
-    <meta property="og:title"       content="🎖️ Founding Operative — Wadsworth Tycoon">
-    <meta property="og:description" content="Wadsworth Android is FREE. Join the closed beta, earn 150 trophies, get a permanent Founding Tester badge + {_available} Pro bonus slots remaining.">
+    <meta property="og:title"       content="🎖️ Become a Founding Tester — Wadsworth Tycoon">
+    <meta property="og:description" content="A living, player-driven economy: own land, run factories, IPO your company, short rivals, mine crypto, govern cities. Free to play. Join the Android closed beta — permanent badge, 150 trophies, 30 days Pro free. {_available} Pro slots left.">
     <meta property="og:image"       content="/static/icons/apple-touch-icon.png">
     <meta property="og:url"         content="/founding">
     <meta name="twitter:card"       content="summary">
-    <meta name="twitter:title"      content="🎖️ Founding Operative — Wadsworth Tycoon">
-    <meta name="twitter:description" content="Wadsworth Android is FREE to download. 150 trophies · exclusive badge · 30 days of Pro FREE. {_available} Pro slots left.">
+    <meta name="twitter:title"      content="🎖️ Become a Founding Tester — Wadsworth Tycoon">
+    <meta name="twitter:description" content="Own land, build factories, take your company public, mine crypto, govern cities. Free to play. Android closed beta: badge · 150 trophies · 30 days Pro free. {_available} slots left.">
 
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#020617">
@@ -2555,6 +2555,33 @@ def founding_page():
             padding-top:20px; border-top:1px solid rgba(255,255,255,.04);
         }}
         .fo-footer a{{ color:#38bdf8; text-decoration:none; }}
+
+        /* ── Game feature showcase ── */
+        .fo-section-heading{{
+            font-family:'Cinzel',serif; font-size:0.72rem; font-weight:700;
+            letter-spacing:0.3em; text-transform:uppercase;
+            color:rgba(202,138,4,.82); text-align:center; margin:0 0 4px;
+        }}
+        .fo-showcase{{ margin:30px 0 0; }}
+        .fo-showcase-grid{{
+            display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px;
+        }}
+        .fo-feat{{
+            background:rgba(30,41,59,.5); border:1px solid rgba(176,141,87,.18);
+            border-radius:12px; padding:14px; text-align:left;
+        }}
+        .fo-feat-icon{{ font-size:1.35rem; line-height:1; margin-bottom:8px; display:block; }}
+        .fo-feat-title{{ font-size:0.82rem; font-weight:700; color:#e5c88a; margin-bottom:4px; }}
+        .fo-feat-sub{{ font-size:0.715rem; color:#94a3b8; line-height:1.5; }}
+        @media(max-width:380px){{ .fo-showcase-grid{{ grid-template-columns:1fr; }} }}
+
+        /* secondary browser CTA */
+        .fo-browser-cta{{
+            margin-top:16px; text-align:center; font-size:0.8rem;
+            color:#94a3b8; line-height:1.5;
+        }}
+        .fo-browser-cta a{{ color:#38bdf8; font-weight:700; text-decoration:none; }}
+        .fo-browser-cta a:hover{{ text-decoration:underline; }}
     </style>
 </head>
 <body>
@@ -2569,7 +2596,7 @@ def founding_page():
         <svg class="fo-gear g2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.92c.04-.34.07-.69.07-1.08s-.03-.74-.07-1.08l2.32-1.81c.21-.16.27-.45.13-.68l-2.2-3.81c-.13-.23-.42-.31-.65-.23l-2.74 1.1c-.57-.44-1.18-.81-1.86-1.08L14 2.42A.517.517 0 0 0 13.5 2h-4.4a.517.517 0 0 0-.5.42l-.41 2.42c-.68.27-1.3.64-1.87 1.08l-2.73-1.1c-.24-.08-.52 0-.65.23L.74 8.86c-.14.23-.08.52.13.68l2.32 1.81C3.15 11.69 3.12 12 3.12 12s.03.69.07 1.08L.87 14.89c-.21.16-.27.45-.13.68l2.2 3.81c.13.23.41.31.65.23l2.73-1.1c.57.44 1.19.81 1.87 1.08l.41 2.42c.07.23.28.42.5.42H13.5c.23 0 .44-.19.5-.42l.41-2.42c.68-.27 1.29-.64 1.86-1.08l2.74 1.1c.23.08.52 0 .65-.23l2.2-3.81c.14-.23.08-.52-.13-.68l-2.3-1.81z"/></svg>
 
         <div class="fo-inner">
-            <div class="fo-kicker">Limited Program</div>
+            <div class="fo-kicker">Android Closed Beta · Founding Testers</div>
             <h1 class="fo-title">Founding<br>Operative</h1>
 
             <div class="fo-divider">
@@ -2579,12 +2606,30 @@ def founding_page():
             </div>
 
             <p class="fo-subtitle">
-                Be among the first to build your empire on Android.
-                The app is <strong style="color:#e5c88a;font-style:normal;">FREE to download</strong> —
-                join the closed beta, earn a permanent Founding Tester badge,
-                and claim <strong style="color:#c4b5fd;font-style:normal;">{SUB_TRIAL_DAYS} days of Wadsworth Pro FREE</strong>.
+                Build a business empire in a <strong style="color:#e5c88a;font-style:normal;">living, player-driven economy</strong> —
+                claim land, run factories, take your company public, short your rivals, mine crypto, and govern cities.
+                <strong style="color:#e5c88a;font-style:normal;">Free to play.</strong>
+                It's now in Android closed testing, and we're hand-picking <strong style="color:#c4b5fd;font-style:normal;">Founding Testers</strong>.
             </p>
 
+            <!-- ── Game feature showcase: sell what you actually DO ── -->
+            <div class="fo-showcase">
+                <div class="fo-section-heading">What You'll Command</div>
+                <div class="fo-showcase-grid">
+                    <div class="fo-feat"><span class="fo-feat-icon">📈</span><div class="fo-feat-title">Player-Driven Markets</div><div class="fo-feat-sub">Trade on a live order book where every price is set by real rivals — not bots.</div></div>
+                    <div class="fo-feat"><span class="fo-feat-icon">🏭</span><div class="fo-feat-title">138+ Businesses</div><div class="fo-feat-sub">Claim land and run production lines that keep earning while you're offline.</div></div>
+                    <div class="fo-feat"><span class="fo-feat-icon">🏛️</span><div class="fo-feat-title">Take It Public</div><div class="fo-feat-sub">IPO your company, issue shares, buy back stock — or short the competition.</div></div>
+                    <div class="fo-feat"><span class="fo-feat-icon">🏦</span><div class="fo-feat-title">Banks, Bonds &amp; Forex</div><div class="fo-feat-sub">16 currencies, fixed-income bonds, and dividend-paying ETFs.</div></div>
+                    <div class="fo-feat"><span class="fo-feat-icon">⛏️</span><div class="fo-feat-title">Crypto &amp; Meme Coins</div><div class="fo-feat-sub">Launch county tokens, mine them, and pump your own meme coins.</div></div>
+                    <div class="fo-feat"><span class="fo-feat-icon">🗳️</span><div class="fo-feat-title">Cities &amp; Governance</div><div class="fo-feat-sub">Found cities, win mayoral elections, and vote on the economy's laws.</div></div>
+                    <div class="fo-feat"><span class="fo-feat-icon">⚔️</span><div class="fo-feat-title">Wage Economic War</div><div class="fo-feat-sub">Build a military through the Port Authority and raid rival treasuries.</div></div>
+                    <div class="fo-feat"><span class="fo-feat-icon">📊</span><div class="fo-feat-title">19 Live Indices</div><div class="fo-feat-sub">The WBC-50, a Greed &amp; Fear gauge, and real-time candlestick charts.</div></div>
+                </div>
+            </div>
+
+            <div class="fo-showcase" style="margin-top:34px;">
+                <div class="fo-section-heading">Founding Tester Rewards</div>
+            </div>
             <div class="fo-rewards">
                 <div class="fo-reward-pill">
                     <span class="fo-reward-icon">🎖️</span>
@@ -2627,6 +2672,11 @@ def founding_page():
 
             <div class="fo-cta">
                 {_cta_html}
+            </div>
+
+            <div class="fo-browser-cta">
+                Not on Android, or want a peek first?
+                <a href="/login">▶ Play free in your browser</a> — no download, start in 30 seconds.
             </div>
         </div>
 
