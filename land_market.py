@@ -138,6 +138,18 @@ LAND_BANK_ID = -1  # Special owner ID for land bank
 GOVERNMENT_ID = 0  # Government owner ID
 LAND_BANK_MAX_SLOTS = 1000  # Maximum plots the land bank can hold
 
+# Safety cap: never create more than this many plots in a single expansion
+# cycle, even if the economy jumps many milestone levels at once. Without it,
+# a hyperinflated economy makes the expansion loop iterate over hundreds of
+# thousands of levels per tick (each a wasted DB call once the land bank fills).
+MAX_PLOTS_PER_CYCLE = 2500
+
+# Throttle for the automatic post-expansion DB maintenance pass. Cleanup is
+# heavy (deletes + VACUUM across several tables), so run it at most this often
+# rather than after every single expansion cycle.
+_AUTO_CLEANUP_INTERVAL = timedelta(hours=1)
+_last_auto_cleanup = None  # set to a datetime after each automatic run
+
 # Base prices by terrain
 TERRAIN_BASE_PRICES = {
     "prairie": 150000,
@@ -1126,6 +1138,27 @@ def initialize():
     print("[LandMarket] Module initialized")
 
 
+def _run_auto_cleanup():
+    """
+    Run the admin DB-maintenance pass automatically after a land-expansion
+    cycle, throttled to _AUTO_CLEANUP_INTERVAL so the heavy delete+VACUUM work
+    doesn't fire on every cycle. Collapses the milestone table, prunes concluded
+    auctions, and clears other terminal rows — the same routine as the admin
+    dashboard button. Failures are swallowed: cleanup must never break a tick.
+    """
+    global _last_auto_cleanup
+    now = datetime.utcnow()
+    if _last_auto_cleanup is not None and (now - _last_auto_cleanup) < _AUTO_CLEANUP_INTERVAL:
+        return
+    _last_auto_cleanup = now
+    try:
+        from admins import run_db_maintenance  # lazy: avoid circular import
+        result = run_db_maintenance(admin_id=GOVERNMENT_ID, dry_run=False)
+        print(f"[LandMarket] Auto-cleanup removed {result.get('total', 0):,} stale rows")
+    except Exception as e:
+        print(f"[LandMarket] Auto-cleanup skipped (non-fatal): {e}")
+
+
 def tick(current_tick: int, now: datetime):
     """
     Land market tick handler.
@@ -1146,25 +1179,38 @@ def tick(current_tick: int, now: datetime):
                 plots_needed = 0
 
         if plots_needed > 0:
-            print(f"[LandMarket] Economy expanded! Creating {plots_needed} new auction(s)")
+            print(f"[LandMarket] Economy expanded! Creating up to {min(plots_needed, MAX_PLOTS_PER_CYCLE)} new auction(s)")
 
             # Get current milestone level
             total_cash = _total_economy_cash_usd()
             current_milestone = int(total_cash / ECONOMIC_THRESHOLD)
-            
+
             # Find which milestones need creation. Levels are sequential, so the
             # untriggered ones are exactly max_level+1 .. current_milestone — no
             # need to load the whole milestone table to compute the gap.
+            created = 0
             db = get_db()
             try:
                 max_level = db.query(func.max(EconomicMilestone.threshold_level)).scalar() or 0
 
-                for level in range(max_level + 1, current_milestone + 1):
+                # Cap the batch (MAX_PLOTS_PER_CYCLE) so a huge backlog can't make
+                # this loop spin over hundreds of thousands of levels in one tick.
+                end_level = min(current_milestone, max_level + MAX_PLOTS_PER_CYCLE)
+                for level in range(max_level + 1, end_level + 1):
                     auction = create_government_auction()
-                    if auction:
-                        record_economic_milestone(level, auction.land_plot_id)
+                    if not auction:
+                        # create_government_auction returns None once the land
+                        # bank is full — no point iterating the rest of the range.
+                        break
+                    record_economic_milestone(level, auction.land_plot_id)
+                    created += 1
             finally:
                 db.close()
+
+            # After an expansion cycle, run the cleanup pass (throttled) so the
+            # milestone/auction rows we just minted don't accumulate unbounded.
+            if created > 0:
+                _run_auto_cleanup()
     
     # Re-auction plots from land bank every 30 minutes (1800 ticks)
     if current_tick % 140 == 0:
