@@ -12,7 +12,11 @@ from typing import Callable
 
 
 def _label(slug: str) -> str:
-    return slug.replace("_", " ").title()
+    try:
+        from military import item_name
+        return item_name(slug)
+    except Exception:
+        return slug.replace("_", " ").title()
 
 
 def _fmt_items(d: dict) -> str:

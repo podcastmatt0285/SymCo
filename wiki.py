@@ -321,6 +321,26 @@ def _seed_institution_entries():
         db.close()
 
 
+def _build_unit_roster_text() -> str:
+    """Generate the per-asset attack/defense roster from military.ASSET_STATS."""
+    try:
+        import military as _mil
+    except Exception:
+        return "Unit roster unavailable."
+    lines = ["Every military asset has its own ATTACK and DEFENSE value. A Branch's strength is the "
+             "sum of its assets' values, so composition matters — field your best platforms.\n"]
+    for br_key, cats in _mil.BRANCHES.items():
+        lines.append(f"\n{_mil.BRANCH_LABELS[br_key].upper()}")
+        rows = []
+        for cat in cats:
+            for slug in sorted(_mil.CATEGORY_SETS[cat]):
+                a, d = _mil.unit_attack(slug), _mil.unit_defense(slug)
+                rows.append((a, d, _mil.item_name(slug)))
+        for a, d, name in sorted(rows, key=lambda r: (-r[0], -r[1])):
+            lines.append(f"• {name} — ATK {a} / DEF {d}")
+    return "\n".join(lines)
+
+
 def _seed_port_authority_entries():
     _PA_ENTRIES = [
         (
@@ -403,6 +423,10 @@ def _seed_port_authority_entries():
             "TIMING: Once committed, the policy is active for 3 days, then sliders decay back to "
             "neutral over that window. After expiry there is a 7-day cooldown before you can commit again.\n\n"
             "The policy only affects your own businesses — it is not global.",
+        ),
+        (
+            "Branch Unit Roster",
+            _build_unit_roster_text(),
         ),
     ]
 

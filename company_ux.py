@@ -413,7 +413,7 @@ SITEMAP_ENTRIES = [
     ("/districts/create",            "Create District",        "Found a new district on your land — set type, name, and membership rules"),
     ("/district-market",             "District Market",        "Order book for district-specific goods and specialty commodities"),
     ("/special-plots",               "Institutions",           "Subscriber-only mega-facilities — build a Mint to strike metal-backed coinage currencies"),
-    ("/port-authority",              "Port Authority",         "Deposit weapons and deploy Fleet or Army forces on global missions for loot or defense"),
+    ("/port-authority",              "Port Authority",         "Raise Navy/Army/Air Force/Intelligence Branches for dice-based warfare — procurement raids, blockades, espionage — plus federal contracts and immigration policy"),
     # ── Markets & Finance ─────────────────────────────────────────────────────
     ("/market",                      "Commodity Market",       "Continuous double-auction order book for all raw and finished goods"),
     ("/brokerage/trading",           "Brokerage (WPE)",        "Wadsworth Public Exchange — trade company shares, ETFs, and IPOs"),

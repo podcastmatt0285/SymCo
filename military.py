@@ -73,17 +73,64 @@ BRANCHES: Dict[str, List[str]] = {
 BRANCH_LABELS = {"navy": "Navy", "army": "Army",
                  "air_force": "Air Force", "intelligence": "Intelligence"}
 
-# category → (ATTACK, DEFENSE)
+# category → (ATTACK, DEFENSE) — fallback band/default for any slug missing from
+# ASSET_STATS below (e.g. a newly added weapon).
 UNIT_STATS: Dict[str, Tuple[int, int]] = {
-    "carriers":         (20, 20),
-    "submarines":       (17, 16),
-    "destroyers":       (14, 13),
-    "fighter_jets":     (13, 9),
-    "helicopters":      (10, 8),
-    "tanks":            (9, 12),
-    "armored_vehicles": (6, 10),
+    "carriers":         (23, 23),
+    "submarines":       (20, 15),
+    "destroyers":       (15, 15),
+    "fighter_jets":     (15, 8),
+    "helicopters":      (9, 7),
+    "tanks":            (10, 12),
+    "armored_vehicles": (6, 9),
     "drones":           (5, 4),
-    "rifles":           (2, 2),
+    "rifles":           (3, 2),
+}
+
+# Per-asset ATTACK / DEFENSE. These individual values sum into Branch strength,
+# so composition matters (an F-22 outclasses an F-16; a Ford-class carrier
+# outclasses INS Vikrant). Hand-authored; scale follows the design example
+# (rifle ~2-4, tank ~10, carrier ~25). Strike platforms skew attack-high,
+# armour/capital ships skew defense-high.
+ASSET_STATS: Dict[str, Tuple[int, int]] = {
+    # NAVY — Carriers
+    "ford_class_carrier": (26, 26), "fujian_carrier": (24, 23),
+    "queen_elizabeth_carrier": (23, 24), "charles_degaulle_carrier": (23, 23),
+    "ins_vikrant_carrier": (21, 22),
+    # NAVY — Submarines (strike-heavy, lower defense)
+    "virginia_class_sub": (22, 16), "yasen_class_sub": (21, 14), "astute_class_sub": (21, 15),
+    "barracuda_class_sub": (20, 15), "arihant_class_sub": (19, 14), "type093_sub": (18, 13),
+    # NAVY — Destroyers / frigates / corvette
+    "arleigh_burke_destroyer": (18, 17), "type055_destroyer": (18, 17),
+    "atago_class_destroyer": (17, 16), "type045_destroyer": (16, 16), "kdx3_destroyer": (16, 15),
+    "visakhapatnam_destroyer": (15, 15), "gorshkov_frigate": (14, 14), "milgem_frigate": (12, 12),
+    "al_riyadh_frigate": (12, 12), "baynunah_corvette": (9, 9),
+    # AIR FORCE — Fighter jets (high attack, low defense)
+    "f22_raptor": (20, 9), "f35_lightning": (19, 9), "su57_felon": (18, 8), "j20_chengdu": (18, 8),
+    "f15_eagle": (17, 8), "rafale": (16, 8), "eurofighter_typhoon": (16, 8), "su35_flanker": (16, 7),
+    "j16_flanker": (15, 7), "f16_falcon": (14, 7), "kf21_boramae": (14, 7), "tai_tfx": (13, 7),
+    "mig29_fulcrum": (12, 6), "hal_tejas": (11, 6),
+    # AIR FORCE — Helicopters
+    "ah64_apache": (12, 9), "ka52_alligator": (11, 8), "z10_thunderbolt": (10, 8),
+    "mi24_hind": (9, 8), "t129_atak": (9, 7), "uh60_blackhawk": (6, 7),
+    "airbus_h225m": (5, 7), "hal_dhruv": (5, 6),
+    # ARMY — Tanks (defense-heavy)
+    "m1a2_abrams": (12, 14), "leopard_2a7": (12, 14), "t14_armata": (12, 13),
+    "challenger_3": (11, 14), "k2_black_panther": (11, 13), "amx_leclerc": (11, 12),
+    "type_99a": (11, 12), "t90m_proryv": (10, 12), "altay_tank": (10, 11),
+    "type10_tank": (10, 11), "arjun_mk2": (9, 11), "ee_t1_osorio": (8, 10),
+    # ARMY — Armored vehicles (IFV/APC)
+    "puma_ifv": (8, 11), "m2_bradley": (7, 10), "bmp3_ifv": (7, 9), "boxer_apc": (6, 10),
+    "stryker_apc": (5, 9), "btr82_apc": (5, 8),
+    # ARMY — Rifles (lowest)
+    "m249_saw": (4, 3), "mpt_76": (3, 3), "hk416": (3, 3), "sig_sg550": (3, 3),
+    "m4_carbine": (3, 2), "hk_g36": (3, 2), "famas_f1": (3, 2), "l85a2": (3, 2),
+    "qbz_95": (3, 2), "ak_74m": (3, 2), "k2_rifle": (3, 2), "howa_type89": (3, 2),
+    "caracal_car816": (3, 2), "ak_47": (2, 2), "vektor_r4": (2, 2), "fx05_xiuhcoatl": (2, 2),
+    "imbel_md97": (2, 2), "insas_rifle": (2, 2),
+    # INTELLIGENCE — Drones (cheap, low both; also the go-dark currency)
+    "mq9_reaper": (6, 5), "bayraktar_tb2": (5, 4), "wing_loong_2": (5, 4),
+    "switchblade_600": (4, 3), "lancet_3": (4, 3),
 }
 
 # Reverse maps, built once at import.
@@ -106,13 +153,33 @@ def branch_of(slug: str) -> Optional[str]:
 
 
 def unit_attack(slug: str) -> int:
+    if slug in ASSET_STATS:
+        return ASSET_STATS[slug][0]
     cat = CATEGORY_OF.get(slug)
     return UNIT_STATS[cat][0] if cat else 0
 
 
 def unit_defense(slug: str) -> int:
+    if slug in ASSET_STATS:
+        return ASSET_STATS[slug][1]
     cat = CATEGORY_OF.get(slug)
     return UNIT_STATS[cat][1] if cat else 0
+
+
+# Display names pulled from district_items.json (e.g. "Gerald R. Ford-class
+# Carrier"), cached at import; falls back to a slug-title.
+_ITEM_NAMES: Dict[str, str] = {}
+try:
+    with open("district_items.json", "r") as _f:
+        for _slug, _info in json.load(_f).items():
+            if isinstance(_info, dict) and _info.get("name"):
+                _ITEM_NAMES[_slug] = _info["name"]
+except Exception as _e:
+    print(f"[Military] item name load skipped: {_e}")
+
+
+def item_name(slug: str) -> str:
+    return _ITEM_NAMES.get(slug) or slug.replace("_", " ").title()
 
 
 # Tunables
@@ -344,7 +411,7 @@ def assemble_force(force_qty: Dict[str, float], allowed_branches: List[str],
         branch = BRANCH_OF_CATEGORY.get(cat)
         if allowed_branches and branch not in allowed_branches:
             continue
-        stat = UNIT_STATS[cat][0 if role == "attacker" else 1]
+        stat = unit_attack(slug) if role == "attacker" else unit_defense(slug)
         n = int(qty)
         for _ in range(n):
             expanded.append((stat, slug, cat, branch))
@@ -472,12 +539,10 @@ def available_home_force(player_id: int) -> Dict[str, float]:
 
 
 def force_power(force_qty: Dict[str, float], role: str = "attacker") -> int:
-    idx = 0 if role == "attacker" else 1
     total = 0
     for slug, qty in force_qty.items():
-        cat = CATEGORY_OF.get(slug)
-        if cat:
-            total += UNIT_STATS[cat][idx] * int(qty)
+        stat = unit_attack(slug) if role == "attacker" else unit_defense(slug)
+        total += stat * int(qty)
     return total
 
 
@@ -576,10 +641,23 @@ def _apply_loot(attacker_id: int, defender_id: int, fraction: float,
 # Battle execution (campaigns + blockade breaks)
 # ─────────────────────────────────────────────────────────────────────────────
 
+def _ledger(player_id: int, ttype: str, category: str, amount: float, desc: str,
+            ref: str = None, item_type: str = None, qty: float = 0.0):
+    """Record a transaction in the player's ledger. Never raises."""
+    if not player_id or player_id <= 0:
+        return
+    try:
+        from stats_ux import log_transaction
+        log_transaction(player_id, ttype, category, amount, description=desc,
+                        reference_id=ref, item_type=item_type, quantity=qty)
+    except Exception as e:
+        print(f"[Military] ledger error: {e}")
+
+
 def _summary_text(kind: str, attacker_id: int, defender_id: int, res: dict,
                   loot: Dict[str, float]) -> str:
     def _fmt(d):
-        return ", ".join(f"{v}× {k.replace('_', ' ')}" for k, v in d.items()) or "none"
+        return ", ".join(f"{v}× {item_name(k)}" for k, v in d.items()) or "none"
     lines = [
         f"{kind.title()} battle vs player #{defender_id} — winner: {res['winner'].upper()}",
         f"Rounds fought: {res['rounds']}",
@@ -625,15 +703,22 @@ def _run_battle(db, attacker_id: int, defender_id: int, attacker_force: Dict[str
     else:
         res = resolve_battle(att_units, def_units, seed=battle.id)
 
-    # Apply unit deaths to both depots permanently.
+    # Apply unit deaths to both depots permanently + log to the ledger.
     att_pa = _pa_for(db, attacker_id)
     def_pa = _pa_for(db, defender_id)
+    _ref = f"battle-{battle.id}"
     if att_pa:
         for slug, qty in res["attacker_losses"].items():
             _pa_remove_item(db, att_pa.id, slug, qty)
+            _ledger(attacker_id, "pa_unit_destroyed", "resource", 0.0,
+                    f"Lost {int(qty)}× {item_name(slug)} in battle vs #{defender_id}",
+                    _ref, slug, -float(qty))
     if def_pa:
         for slug, qty in res["defender_losses"].items():
             _pa_remove_item(db, def_pa.id, slug, qty)
+            _ledger(defender_id, "pa_unit_destroyed", "resource", 0.0,
+                    f"Lost {int(qty)}× {item_name(slug)} defending vs #{attacker_id}",
+                    _ref, slug, -float(qty))
 
     # Loot (procurement only, on attacker win with surviving power).
     loot: Dict[str, float] = {}
@@ -642,6 +727,13 @@ def _run_battle(db, attacker_id: int, defender_id: int, attacker_force: Dict[str
         orig = camp.original_attack_power if camp else 0
         ratio = (res["attacker_survivors_power"] / orig) if orig > 0 else 0.0
         loot = _apply_loot(attacker_id, defender_id, loot_fraction, min(1.0, ratio))
+        for slug, qty in loot.items():
+            _ledger(attacker_id, "pa_loot_gained", "resource", 0.0,
+                    f"Looted {int(qty)}× {item_name(slug)} from #{defender_id}",
+                    _ref, slug, float(qty))
+            _ledger(defender_id, "pa_loot_lost", "resource", 0.0,
+                    f"Lost {int(qty)}× {item_name(slug)} to #{attacker_id}",
+                    _ref, slug, -float(qty))
 
     battle.resolved_at = datetime.utcnow()
     battle.winner = res["winner"]
@@ -784,6 +876,7 @@ def _finalize_campaign(db, camp: MilitaryCampaign, wiped: bool):
         return
     # Wiped: return all loot to defenders + steep trophy penalty split among them.
     from inventory import remove_item, add_item
+    _ref = f"campaign-{camp.id}"
     total = json.loads(camp.total_loot_json or "{}")
     for did_str, items in total.items():
         did = int(did_str)
@@ -791,6 +884,12 @@ def _finalize_campaign(db, camp: MilitaryCampaign, wiped: bool):
             qty = int(qty)
             if qty > 0 and remove_item(camp.attacker_id, slug, qty):
                 add_item(did, slug, qty)
+                _ledger(camp.attacker_id, "pa_loot_returned", "resource", 0.0,
+                        f"Returned {qty}× {item_name(slug)} to #{did} (forces wiped)",
+                        _ref, slug, -float(qty))
+                _ledger(did, "pa_loot_recovered", "resource", 0.0,
+                        f"Recovered {qty}× {item_name(slug)} (attacker #{camp.attacker_id} wiped)",
+                        _ref, slug, float(qty))
     targets = [int(t) for t in json.loads(camp.targets_json or "[]")]
     penalty = 0
     try:
@@ -800,10 +899,16 @@ def _finalize_campaign(db, camp: MilitaryCampaign, wiped: bool):
         penalty = WIPE_TROPHY_PENALTY
     available = get_trophies(camp.attacker_id)
     taken = adjust_trophies(camp.attacker_id, -penalty)   # negative; clamped at 0
+    if taken < 0:
+        _ledger(camp.attacker_id, "trophy_penalty", "tasks", 0.0,
+                f"Campaign wipe penalty ({-taken} trophies)", _ref, "trophy", float(taken))
     share = (-taken) // max(1, len(targets)) if taken < 0 else 0
     for did in targets:
         if share > 0:
             adjust_trophies(did, share)
+            _ledger(did, "trophy_award", "tasks", 0.0,
+                    f"Wiped attacker #{camp.attacker_id} — {share} trophies",
+                    _ref, "trophy", float(share))
     if available < penalty:
         # Insufficient trophies → 60-day security ban.
         db.add(SecurityBan(player_id=camp.attacker_id, reason="campaign_wipe",
@@ -1041,6 +1146,13 @@ def _expire_blockades(now: datetime):
             taken = adjust_trophies(b.target_id, -BLOCKADE_TRIBUTE)
             if taken < 0:
                 adjust_trophies(b.deployer_id, -taken)
+                _ref = f"blockade-{b.id}"
+                _ledger(b.target_id, "trophy_penalty", "tasks", 0.0,
+                        f"Blockade tribute to #{b.deployer_id} ({-taken} trophies)",
+                        _ref, "trophy", float(taken))
+                _ledger(b.deployer_id, "trophy_award", "tasks", 0.0,
+                        f"Blockade tribute from #{b.target_id} ({-taken} trophies)",
+                        _ref, "trophy", float(-taken))
             _notify(b.target_id, "🚫 Blockade expired",
                     f"You failed to lift player #{b.deployer_id}'s blockade in time — "
                     f"a trophy tribute was paid.")
