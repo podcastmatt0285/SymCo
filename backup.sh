@@ -69,10 +69,21 @@ fi
 if git diff --cached --quiet; then
     echo "  No changes since last backup — nothing to commit."
 else
-    git commit -m "data backup $(date -u '+%Y-%m-%d %H:%M UTC')"
-    # Rebase again in case remote moved between our pull and now, then push
-    git pull --rebase --autostash && git push
-    echo "  Backup committed and pushed."
+    LABEL="data backup $(date -u '+%Y-%m-%d %H:%M UTC')"
+    LAST_MSG="$(git log -1 --pretty=%s 2>/dev/null || true)"
+    if [[ "$LAST_MSG" == data\ backup* ]]; then
+        # Previous commit was also a backup: amend it so the old dump blob is
+        # replaced rather than accumulated. One backup blob in history, always.
+        git commit --amend -m "$LABEL"
+        git pull --rebase --autostash
+        git push --force
+        echo "  Backup amended and force-pushed (old dump blob replaced, not accumulated)."
+    else
+        # Last commit was a source change: start a fresh backup commit.
+        git commit -m "$LABEL"
+        git pull --rebase --autostash && git push
+        echo "  Backup committed and pushed."
+    fi
 fi
 
 echo "=== Done ==="
