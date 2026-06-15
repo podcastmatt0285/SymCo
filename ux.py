@@ -50,6 +50,12 @@ def _cached(key: str, ttl_seconds: float, producer):
     return value
 
 
+def invalidate_gov_cache():
+    """Drop the global /government dashboard cache so sold/created estate
+    listings and auctions disappear/appear on the very next page load."""
+    _TTL_CACHE.pop("gov_dashboard_data", None)
+
+
 # ==========================
 # PRIVACY POLICY
 # ==========================
@@ -3242,7 +3248,7 @@ def government_dashboard(
         return out
 
     try:
-        _d = _cached("gov_dashboard_data", 90, _fetch_all)
+        _d = _cached("gov_dashboard_data", 30, _fetch_all)
         gov_usd_reserve     = _d["gov_usd_reserve"]
         gov_currencies      = _d["gov_currencies"]
         gov_bonds           = _d["gov_bonds"]
@@ -3896,6 +3902,7 @@ def buy_gov_estate_listing_route(
     if isinstance(player, RedirectResponse): return player
     from estate import buy_gov_estate_listing
     ok, msg = buy_gov_estate_listing(listing_id, quantity, player.id)
+    invalidate_gov_cache()
     param = "success" if ok else "error"
     from urllib.parse import quote_plus
     safe_msg = quote_plus(str(msg)[:200])
@@ -16221,6 +16228,7 @@ async def buy_auction_endpoint(auction_id: int = Form(...), session_token: Optio
     
     from land_market import buy_auction_land
     if buy_auction_land(player.id, auction_id):
+        invalidate_gov_cache()
         from market_ws import push_market_snapshot_now
         asyncio.create_task(push_market_snapshot_now())
         return RedirectResponse(url="/land-market?success=auction_bought", status_code=303)

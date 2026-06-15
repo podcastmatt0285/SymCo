@@ -1373,6 +1373,12 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
 
         db.commit()
 
+        try:
+            from ux import invalidate_gov_cache
+            invalidate_gov_cache()
+        except Exception:
+            pass
+
         print(f"[Estate] Estate liquidation complete for {deceased.business_name}")
         print(f"[Estate]   Liquidated: ${liquidation_value:,.2f}")
         print(f"[Estate]   Debts Paid: ${debt_payment:,.2f}")
@@ -1511,7 +1517,7 @@ def buy_gov_estate_listing(listing_id: int, qty: float, buyer_id: int):
                              GovernmentEstateListing.sold == False)
                      .with_for_update().first())
         if not listing:
-            return False, "Listing not found or already sold"
+            return False, "That listing was just purchased by someone else — the page has been refreshed."
         if qty <= 0 or qty > listing.quantity + 1e-9:
             return False, f"Invalid quantity (max {listing.quantity:.2f})"
         qty = min(qty, listing.quantity)
