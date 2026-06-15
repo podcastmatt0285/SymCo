@@ -583,6 +583,7 @@ def admin_dashboard(
         <a href="/admin/updates" class="link-card"><div class="lc-icon">📢</div><div class="lc-title">Post Update</div><div class="lc-desc">Updates channel</div></a>
         <a href="/admin/players" class="link-card"><div class="lc-icon">👥</div><div class="lc-title">Players</div><div class="lc-desc">View &amp; edit all</div></a>
         <a href="/admin/events" class="link-card"><div class="lc-icon">📅</div><div class="lc-title">Events</div><div class="lc-desc">Manage game events &amp; beta</div></a>
+        <a href="/admin/military" class="link-card"><div class="lc-icon">⚔️</div><div class="lc-title">Procurement Events</div><div class="lc-desc">Branch warfare events</div></a>
         <a href="/admin/cities" class="link-card"><div class="lc-icon">🏙️</div><div class="lc-title">Cities &amp; Counties</div><div class="lc-desc">Manage memberships</div></a>
         <a href="/admin/chat" class="link-card"><div class="lc-icon">💬</div><div class="lc-title">Chat Rooms</div><div class="lc-desc">Monitor chat</div></a>
         <a href="/admin/p2p" class="link-card"><div class="lc-icon">📋</div><div class="lc-title">P2P Contracts</div><div class="lc-desc">View activity</div></a>
@@ -5147,6 +5148,108 @@ def admin_careers_mark_reviewed(sub_id: int, session_token: Optional[str] = Cook
 # ==========================
 # EVENTS MANAGEMENT
 # ==========================
+
+@router.get("/admin/military", response_class=HTMLResponse)
+def admin_military(session_token: Optional[str] = Cookie(None),
+                   msg: Optional[str] = Query(None),
+                   err: Optional[str] = Query(None)):
+    admin = require_admin(session_token)
+    if isinstance(admin, RedirectResponse):
+        return admin
+    def _esc(s):
+        return (str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
+    flash = ""
+    if msg:
+        flash = f'<div class="flash flash-success">{_esc(msg)}</div>'
+    elif err:
+        flash = f'<div class="flash flash-error">{_esc(err)}</div>'
+    try:
+        from military import admin_list_events, BRANCH_LABELS
+        events = admin_list_events()
+        branch_keys = list(BRANCH_LABELS.items())
+    except Exception as e:
+        return HTMLResponse(f"<p>Military module error: {e}</p>")
+
+    checks = "".join(
+        f'<label style="margin-right:14px;"><input type="checkbox" name="branches" value="{k}" checked> {v}</label>'
+        for k, v in branch_keys
+    )
+
+    def _cancel_btn(e):
+        if e['status'] not in ('open', 'running'):
+            return '—'
+        return ('<form method="post" action="/admin/military/cancel" style="display:inline;">'
+                f'<input type="hidden" name="event_id" value="{e["id"]}">'
+                '<button type="submit">Close</button></form>')
+    rows = "".join(
+        f"<tr><td>{e['id']}</td><td>{_esc(e['title'])}</td><td>{e['status']}</td>"
+        f"<td>{', '.join(e['branches'])}</td><td>{int(e['loot_fraction']*100)}%</td>"
+        f"<td>{e['battle_hours']}h</td><td>{e['trophy_penalty']}</td>"
+        f"<td>{_cancel_btn(e)}</td></tr>"
+        for e in events
+    ) or '<tr><td colspan="8">No events yet.</td></tr>'
+
+    body = f"""
+    <div style="max-width:900px;margin:0 auto;padding:20px;">
+      <h1>⚔️ Procurement Events</h1>
+      {flash}
+      <form method="post" action="/admin/military/create" style="border:1px solid #ccc;padding:16px;border-radius:8px;">
+        <p><label>Title <input type="text" name="title" value="Procurement Event" style="width:280px;"></label></p>
+        <p>Allowed Branches:<br>{checks}</p>
+        <p><label>Max branch strength (0 = uncapped) <input type="number" name="max_branch_strength" value="0" style="width:100px;"></label></p>
+        <p><label>Loot fraction (0–1) <input type="number" step="0.01" name="loot_fraction" value="0.10" style="width:100px;"></label></p>
+        <p><label>Wipe trophy penalty <input type="number" name="trophy_penalty" value="200" style="width:100px;"></label></p>
+        <p><label>Hours between battles <input type="number" name="battle_hours" value="168" style="width:100px;"></label> <span style="color:#888;">(168 = 1 week)</span></p>
+        <p><label><input type="checkbox" name="activate_now" value="1" checked> Activate immediately</label></p>
+        <button type="submit">Create Procurement Event</button>
+      </form>
+      <h2 style="margin-top:24px;">Existing Events</h2>
+      <table border="1" cellpadding="6" style="border-collapse:collapse;width:100%;">
+        <tr><th>ID</th><th>Title</th><th>Status</th><th>Branches</th><th>Loot</th><th>Battle</th><th>Penalty</th><th></th></tr>
+        {rows}
+      </table>
+      <p style="margin-top:16px;"><a href="/admin">← Back to admin</a></p>
+    </div>
+    """
+    return HTMLResponse(_admin_shell("Procurement Events", body) if "_admin_shell" in globals() else body)
+
+
+@router.post("/admin/military/create")
+def admin_military_create(
+    session_token:       Optional[str] = Cookie(None),
+    title:               str           = Form("Procurement Event"),
+    branches:            list          = Form(default=[]),
+    max_branch_strength: int           = Form(0),
+    loot_fraction:       float         = Form(0.10),
+    trophy_penalty:      int           = Form(200),
+    battle_hours:        int           = Form(168),
+    activate_now:        Optional[str] = Form(None),
+):
+    admin = require_admin(session_token)
+    if isinstance(admin, RedirectResponse):
+        return admin
+    import urllib.parse
+    from military import create_military_event
+    ok, m = create_military_event(
+        getattr(admin, "id", None), title, branches, max_branch_strength,
+        loot_fraction, trophy_penalty, battle_hours, activate=(activate_now == "1"),
+    )
+    key = "msg" if ok else "err"
+    return RedirectResponse(f"/admin/military?{key}={urllib.parse.quote(m)}", status_code=303)
+
+
+@router.post("/admin/military/cancel")
+def admin_military_cancel(session_token: Optional[str] = Cookie(None),
+                          event_id: int = Form(...)):
+    admin = require_admin(session_token)
+    if isinstance(admin, RedirectResponse):
+        return admin
+    import urllib.parse
+    from military import admin_cancel_event
+    ok, m = admin_cancel_event(event_id)
+    key = "msg" if ok else "err"
+    return RedirectResponse(f"/admin/military?{key}={urllib.parse.quote(m)}", status_code=303)
+
 
 @router.get("/admin/events", response_class=HTMLResponse)
 def admin_events(session_token: Optional[str] = Cookie(None),

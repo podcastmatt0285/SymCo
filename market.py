@@ -187,6 +187,20 @@ def create_order(
     except Exception as _e:
         print(f"[Market] Shutdown check error: {_e}")
 
+    # 1c. Blockade check — a player under an active Port Authority blockade
+    #     cannot place market orders until the blockade is lifted/expires.
+    if player_id > 0:
+        try:
+            from military import is_player_blockaded
+            if is_player_blockaded(player_id):
+                _push_market(player_id, "Order Rejected — Blockaded",
+                             "Your commerce is blockaded by a rival Port Authority. "
+                             "Break the blockade from your Port Authority to resume trading.")
+                db.close()
+                return None
+        except Exception as _be:
+            print(f"[Market] Blockade check error: {_be}")
+
     # 2. Cash Validation: Prevent buy orders if player is broke
     # Only applies to real players (player_id > 0). Banks, NPCs, and city entities
     # manage their own reserves and are trusted to have sufficient funds.

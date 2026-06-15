@@ -91,27 +91,6 @@ ALL_PA_ITEMS = (
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Fleet / Army deployment thresholds
-# Each entry: (item_category_set, minimum_total_quantity_needed)
-# ─────────────────────────────────────────────────────────────────────────────
-
-FLEET_THRESHOLDS: Dict[str, Tuple[frozenset, int]] = {
-    "carriers":     (CARRIERS,     1),
-    "submarines":   (SUBMARINES,   2),
-    "destroyers":   (DESTROYERS,   4),
-    "fighter_jets": (FIGHTER_JETS, 12),
-}
-
-ARMY_THRESHOLDS: Dict[str, Tuple[frozenset, int]] = {
-    "tanks":             (TANKS,             10),
-    "helicopters":       (HELICOPTERS,        5),
-    "rifles":            (RIFLES,           100),
-    "fighter_jets":      (FIGHTER_JETS,       6),
-    "armored_vehicles":  (ARMORED_VEHICLES,   8),
-    "drones":            (DRONES,             4),
-}
-
-# ─────────────────────────────────────────────────────────────────────────────
 # Maintenance costs (USD per item per game-day)
 # 1 game-day = MAINTENANCE_INTERVAL ticks (86 400 ticks @ 1 tick/second)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -129,9 +108,6 @@ MAINTENANCE_DAILY: Dict[str, float] = {
 }
 
 MAINTENANCE_INTERVAL = 86_400  # ticks between automatic maintenance charges
-
-# On failure: this fraction of PA inventory is destroyed (random items)
-LOSS_FRACTION = 0.10
 
 # Daily maintenance: a small share flows to the federal government ledger.
 PA_MAINTENANCE_TAX_RATE = 0.10
@@ -177,22 +153,6 @@ class PortAuthorityInventory(Base):
     quantity  = Column(Float, default=0.0)
 
 
-class PortAuthorityMission(Base):
-    __tablename__ = "port_authority_missions"
-
-    id               = Column(Integer, primary_key=True)
-    pa_id            = Column(Integer, index=True, nullable=False)
-    mission_subtype  = Column(String, nullable=False)   # "procurement" | "blockade"
-    target_player_id = Column(Integer, nullable=True)
-    target_item_type = Column(String, nullable=True)
-    target_quantity  = Column(Integer, default=1)
-    items_acquired   = Column(Text, nullable=True)      # JSON: {item_type: qty} on success
-    items_lost       = Column(Text, nullable=True)      # JSON: {item_type: qty} on failure
-    outcome          = Column(String, nullable=True)    # "success" | "failure"
-    created_at       = Column(DateTime, default=datetime.utcnow)
-    resolved_at      = Column(DateTime, nullable=True)
-
-
 class PAContract(Base):
     """Government procurement contract — admin-created, bid by PA owners."""
     __tablename__ = "pa_contracts"
@@ -231,18 +191,6 @@ class PAContractBid(Base):
     deposit_returned      = Column(Boolean, default=False)
     # Progressive fulfillment: {item_slug: qty_shipped_so_far}
     fulfilled_items       = Column(Text, default="{}")
-
-
-class BlockadeInstance(Base):
-    __tablename__ = "blockade_instances"
-
-    id                = Column(Integer, primary_key=True)
-    blocker_player_id = Column(Integer, index=True, nullable=False)
-    target_player_id  = Column(Integer, index=True, nullable=False)
-    item_type         = Column(String, nullable=False)
-    created_at        = Column(DateTime, default=datetime.utcnow)
-    expires_at        = Column(DateTime, nullable=False)
-    lifted            = Column(Boolean, default=False)
 
 
 class ImmigrationPolicy(Base):
@@ -354,18 +302,6 @@ def _category_total(inventory: Dict[str, float], category: frozenset) -> float:
     return sum(qty for item, qty in inventory.items() if item in category)
 
 
-def _check_thresholds(inventory: Dict[str, float], thresholds: Dict) -> Tuple[bool, Dict]:
-    """Return (ready, {slot: (have, need)}) for each threshold slot."""
-    breakdown = {}
-    ready = True
-    for slot, (cat, minimum) in thresholds.items():
-        have = _category_total(inventory, cat)
-        breakdown[slot] = {"have": have, "need": minimum, "met": have >= minimum}
-        if have < minimum:
-            ready = False
-    return ready, breakdown
-
-
 def _pa_add_item(db, pa_id: int, item_type: str, quantity: float):
     stmt = (
         pg_insert(PortAuthorityInventory.__table__)
@@ -472,15 +408,13 @@ def create_port_authority(player_id: int) -> Tuple[bool, str]:
 
 
 def get_port_authority(player_id: int) -> Optional[dict]:
-    """Return PA info + inventory + fleet/army readiness for *player_id*."""
+    """Return PA info + command inventory for *player_id*."""
     db = SessionLocal()
     try:
         pa = db.query(PortAuthorityInstance).filter_by(owner_id=player_id).first()
         if not pa:
             return None
         inventory = _get_pa_inventory(db, pa.id)
-        fleet_ready, fleet_bd = _check_thresholds(inventory, FLEET_THRESHOLDS)
-        army_ready, army_bd   = _check_thresholds(inventory, ARMY_THRESHOLDS)
         daily_cost = sum(MAINTENANCE_DAILY.get(it, 0) * qty for it, qty in inventory.items())
         return {
             "id":                    pa.id,
@@ -489,10 +423,6 @@ def get_port_authority(player_id: int) -> Optional[dict]:
             "created_at":            pa.created_at.isoformat() if pa.created_at else None,
             "last_maintenance_tick": pa.last_maintenance_tick,
             "inventory":             inventory,
-            "fleet_ready":           fleet_ready,
-            "fleet_breakdown":       fleet_bd,
-            "army_ready":            army_ready,
-            "army_breakdown":        army_bd,
             "daily_maintenance_usd": daily_cost,
         }
     finally:
@@ -547,177 +477,6 @@ def withdraw_weapon(player_id: int, item_type: str, quantity: float) -> Tuple[bo
     except Exception as e:
         db.rollback()
         return False, str(e)
-    finally:
-        db.close()
-
-
-def deploy_mission(
-    player_id: int,
-    mission_subtype: str,       # "procurement" | "blockade"
-    target_player_id: int,
-    target_item_type: str,
-    target_quantity: int = 1,
-) -> Tuple[bool, dict]:
-    """
-    Launch a procurement or blockade mission.  Returns (ok, result_dict).
-
-    Either fleet or army readiness is sufficient to deploy.
-
-    procurement:
-      success → steal target_quantity of target_item_type from target's PA inventory
-      failure → lose 10% of own PA inventory
-
-    blockade:
-      success → create a 24-hour blockade on target's item transfers
-      failure → lose 10% of own PA inventory
-
-    Outcome is a pure 50/50 coin-flip.
-    """
-    import json
-
-    if mission_subtype not in ("procurement", "blockade"):
-        return False, {"error": "mission_subtype must be 'procurement' or 'blockade'"}
-
-    db = SessionLocal()
-    try:
-        pa = db.query(PortAuthorityInstance).filter_by(owner_id=player_id).first()
-        if not pa:
-            return False, {"error": "You do not own a Port Authority."}
-
-        inventory = _get_pa_inventory(db, pa.id)
-
-        # Check fleet OR army readiness — either qualifies the player to deploy
-        fleet_ready, fleet_bd = _check_thresholds(inventory, FLEET_THRESHOLDS)
-        army_ready, army_bd   = _check_thresholds(inventory, ARMY_THRESHOLDS)
-        if not fleet_ready and not army_ready:
-            return False, {
-                "error": "Neither fleet nor army is ready for deployment.",
-                "fleet_breakdown": fleet_bd,
-                "army_breakdown":  army_bd,
-            }
-
-        # ── Pure RNG resolution ──────────────────────────────────────────────
-        success = random.random() < 0.5
-
-        items_acquired_summary: Dict[str, float] = {}
-        items_lost_summary: Dict[str, float] = {}
-
-        if not success:
-            # CDO executive reduces loss severity
-            effective_loss_fraction = LOSS_FRACTION
-            try:
-                from executive import get_player_job_bonus
-                from database import SessionLocal as _ES
-                _edb = _ES()
-                try:
-                    _mil_bonus = get_player_job_bonus(_edb, player_id, "military")
-                finally:
-                    _edb.close()
-                effective_loss_fraction = max(0.01, LOSS_FRACTION * (1.0 - _mil_bonus))
-            except Exception:
-                pass
-            # Destroy effective_loss_fraction of each PA item
-            for item_type, qty in list(inventory.items()):
-                loss = max(1, int(qty * effective_loss_fraction))
-                loss = min(loss, int(qty))
-                if loss > 0:
-                    _pa_remove_item(db, pa.id, item_type, float(loss))
-                    items_lost_summary[item_type] = float(loss)
-
-        if success and mission_subtype == "procurement":
-            # Find target's PA and steal target_item_type
-            target_pa = db.query(PortAuthorityInstance).filter_by(owner_id=target_player_id).first()
-            if target_pa:
-                target_inv = _get_pa_inventory(db, target_pa.id)
-                qty_available = min(target_quantity, target_inv.get(target_item_type, 0))
-                if qty_available > 0:
-                    _pa_remove_item(db, target_pa.id, target_item_type, float(qty_available))
-                    _pa_add_item(db, pa.id, target_item_type, float(qty_available))
-                    items_acquired_summary[target_item_type] = float(qty_available)
-                    # Notify target
-                    _fire_pa_push(
-                        target_player_id,
-                        "Port Authority: Procurement Alert",
-                        f"Your {target_item_type} inventory was raided — {qty_available} units acquired.",
-                    )
-                    # Log transactions for both players
-                    try:
-                        from stats_ux import log_transaction
-                        log_transaction(
-                            player_id, "pa_procurement_acquired", "resource", 0.0,
-                            f"Acquired {qty_available:g} × {target_item_type} via procurement from player {target_player_id}",
-                            item_type=target_item_type, quantity=qty_available,
-                        )
-                        log_transaction(
-                            target_player_id, "pa_procurement_lost", "resource", 0.0,
-                            f"Lost {qty_available:g} × {target_item_type} to procurement by player {player_id}",
-                            item_type=target_item_type, quantity=qty_available,
-                        )
-                    except Exception:
-                        pass
-
-        if success and mission_subtype == "blockade":
-            blockade = BlockadeInstance(
-                blocker_player_id=player_id,
-                target_player_id=target_player_id,
-                item_type=target_item_type,
-                expires_at=datetime.utcnow() + timedelta(hours=24),
-            )
-            db.add(blockade)
-            _fire_pa_push(
-                target_player_id,
-                "Port Authority: Blockade Imposed",
-                f"A blockade on your {target_item_type} transfers is now active for 24 hours.",
-            )
-
-        mission = PortAuthorityMission(
-            pa_id=pa.id,
-            mission_subtype=mission_subtype,
-            target_player_id=target_player_id,
-            target_item_type=target_item_type,
-            target_quantity=target_quantity,
-            items_acquired=json.dumps(items_acquired_summary) if items_acquired_summary else None,
-            items_lost=json.dumps(items_lost_summary) if items_lost_summary else None,
-            outcome="success" if success else "failure",
-            resolved_at=datetime.utcnow(),
-        )
-        db.add(mission)
-        db.commit()
-
-        # Log losses to player ledger
-        try:
-            from stats_ux import log_transaction
-            for it, qty in items_lost_summary.items():
-                log_transaction(player_id, "pa_loss", "resource", 0.0,
-                                f"Lost {qty:g} × {it} in failed {mission_subtype} mission",
-                                item_type=it, quantity=qty)
-        except Exception:
-            pass
-
-        outcome = "success" if success else "failure"
-        if outcome == "success" and mission_subtype == "procurement" and items_acquired_summary:
-            total_acq = sum(items_acquired_summary.values())
-            body = f"Procurement succeeded — acquired {total_acq:g} × {target_item_type}."
-        elif outcome == "success" and mission_subtype == "blockade":
-            body = f"Blockade on {target_item_type} imposed for 24 hours."
-        elif outcome == "success":
-            body = f"{mission_subtype.capitalize()} mission succeeded."
-        else:
-            lost = sum(items_lost_summary.values())
-            body = f"{mission_subtype.capitalize()} mission failed — lost {lost:g} units of materiel."
-        _fire_pa_push(player_id, f"Port Authority: {mission_subtype.capitalize()} {outcome}", body)
-
-        return True, {
-            "outcome":          outcome,
-            "mission_subtype":  mission_subtype,
-            "target_player_id": target_player_id,
-            "target_item_type": target_item_type,
-            "items_acquired":   items_acquired_summary,
-            "items_lost":       items_lost_summary,
-        }
-    except Exception as e:
-        db.rollback()
-        return False, {"error": str(e)}
     finally:
         db.close()
 
@@ -1484,43 +1243,6 @@ def commit_immigration_policy(player_id: int, sliders: dict) -> Tuple[bool, str]
         db.close()
 
 
-def get_active_blockades_against(player_id: int) -> list:
-    """Return active blockades targeting this player."""
-    db = SessionLocal()
-    try:
-        now = datetime.utcnow()
-        rows = db.query(BlockadeInstance).filter(
-            BlockadeInstance.target_player_id == player_id,
-            BlockadeInstance.expires_at > now,
-            BlockadeInstance.lifted == False,
-        ).all()
-        return [{"id": r.id, "blocker_player_id": r.blocker_player_id,
-                 "item_type": r.item_type, "expires_at": r.expires_at.isoformat()} for r in rows]
-    finally:
-        db.close()
-
-
-def get_active_blockades_by(player_id: int) -> list:
-    """Return active blockades placed by this player."""
-    db = SessionLocal()
-    try:
-        now = datetime.utcnow()
-        rows = db.query(BlockadeInstance).filter(
-            BlockadeInstance.blocker_player_id == player_id,
-            BlockadeInstance.expires_at > now,
-            BlockadeInstance.lifted == False,
-        ).all()
-        return [{"id": r.id, "target_player_id": r.target_player_id,
-                 "item_type": r.item_type, "expires_at": r.expires_at.isoformat()} for r in rows]
-    finally:
-        db.close()
-
-
-# Per-player cache: {player_id: (mults_dict, timestamp)}
-_imm_player_cache: Dict[int, tuple] = {}
-_IMM_CACHE_TTL = 30.0   # seconds
-
-
 def get_player_immigration_mults(player_id: int) -> dict:
     """Return immigration dimension multipliers for *player_id*.
 
@@ -1585,22 +1307,6 @@ def get_immigration_status(player_id: int) -> dict:
         db.close()
 
 
-def is_item_blockaded(player_id: int, item_type: str) -> bool:
-    """Check if player has an active blockade on this item type."""
-    db = SessionLocal()
-    try:
-        now = datetime.utcnow()
-        row = db.query(BlockadeInstance).filter(
-            BlockadeInstance.target_player_id == player_id,
-            BlockadeInstance.item_type == item_type,
-            BlockadeInstance.expires_at > now,
-            BlockadeInstance.lifted == False,
-        ).first()
-        return row is not None
-    finally:
-        db.close()
-
-
 def admin_get_all_port_authorities(limit: int = 200) -> List[dict]:
     """Admin view: every Port Authority with owner, inventory size and daily upkeep."""
     db = SessionLocal()
@@ -1610,8 +1316,6 @@ def admin_get_all_port_authorities(limit: int = 200) -> List[dict]:
         for pa in pas:
             inv = _get_pa_inventory(db, pa.id)
             daily_cost = sum(MAINTENANCE_DAILY.get(it, 0.0) * qty for it, qty in inv.items())
-            fleet_ready, _ = _check_thresholds(inv, FLEET_THRESHOLDS)
-            army_ready, _  = _check_thresholds(inv, ARMY_THRESHOLDS)
             out.append({
                 "id":                pa.id,
                 "owner_id":          pa.owner_id,
@@ -1619,52 +1323,12 @@ def admin_get_all_port_authorities(limit: int = 200) -> List[dict]:
                 "inventory_types":   len(inv),
                 "total_units":       sum(inv.values()),
                 "daily_maintenance": daily_cost,
-                "fleet_ready":       fleet_ready,
-                "army_ready":        army_ready,
                 "created_at":        pa.created_at.isoformat() if pa.created_at else None,
             })
         return out
     finally:
         db.close()
 
-
-def get_missions(player_id: int, limit: int = 20) -> List[dict]:
-    """Return recent missions for *player_id*'s Port Authority."""
-    db = SessionLocal()
-    try:
-        pa = db.query(PortAuthorityInstance).filter_by(owner_id=player_id).first()
-        if not pa:
-            return []
-        rows = (
-            db.query(PortAuthorityMission)
-            .filter_by(pa_id=pa.id)
-            .order_by(PortAuthorityMission.created_at.desc())
-            .limit(limit)
-            .all()
-        )
-        import json
-        return [
-            {
-                "id":               r.id,
-                "mission_subtype":  r.mission_subtype,
-                "target_player_id": r.target_player_id,
-                "target_item_type": r.target_item_type,
-                "target_quantity":  r.target_quantity,
-                "items_acquired":   json.loads(r.items_acquired) if r.items_acquired else {},
-                "items_lost":       json.loads(r.items_lost) if r.items_lost else {},
-                "outcome":          r.outcome,
-                "created_at":       r.created_at.isoformat() if r.created_at else None,
-                "resolved_at":      r.resolved_at.isoformat() if r.resolved_at else None,
-            }
-            for r in rows
-        ]
-    finally:
-        db.close()
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Tick — maintenance deduction
-# ─────────────────────────────────────────────────────────────────────────────
 
 def _process_contract_bids(now: datetime):
     """Close any contracts whose bid window has ended."""
@@ -1820,20 +1484,6 @@ async def api_withdraw(request: Request):
     return JSONResponse({"ok": ok, "message": msg}, status_code=200 if ok else 400)
 
 
-@router.post("/deploy")
-async def api_deploy(request: Request):
-    pid = _player_id(request)
-    if not pid:
-        return JSONResponse({"error": "Not logged in."}, status_code=401)
-    body             = await request.json()
-    mission_subtype  = body.get("mission_subtype", "")
-    target_player_id = body.get("target_player_id")
-    target_item_type = body.get("target_item_type", "")
-    target_quantity  = int(body.get("target_quantity", 1))
-    ok, result = deploy_mission(pid, mission_subtype, target_player_id, target_item_type, target_quantity)
-    return JSONResponse({"ok": ok, **result}, status_code=200 if ok else 400)
-
-
 @router.get("/contracts")
 async def api_contracts_list(request: Request):
     pid = _player_id(request)
@@ -1892,14 +1542,6 @@ async def api_immigration_status(request: Request):
     if not pid:
         return JSONResponse({"error": "Not logged in."}, status_code=401)
     return JSONResponse(get_immigration_status(pid))
-
-
-@router.get("/missions")
-async def api_missions(request: Request):
-    pid = _player_id(request)
-    if not pid:
-        return JSONResponse({"error": "Not logged in."}, status_code=401)
-    return JSONResponse({"missions": get_missions(pid)})
 
 
 # Run table creation when module is imported

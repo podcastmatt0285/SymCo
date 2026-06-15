@@ -524,7 +524,15 @@ def process_business_tick(db):
                 paused_product_keys = set(json.loads(biz.paused_products or "[]"))
 
             # ===== RETAIL PROCESSING =====
-            if has_retail:
+            # A player under an active Port Authority blockade cannot make retail sales.
+            _blockaded = False
+            if has_retail and player.id > 0:
+                try:
+                    from military import is_player_blockaded
+                    _blockaded = is_player_blockaded(player.id)
+                except Exception:
+                    _blockaded = False
+            if has_retail and not _blockaded:
                 for item, rule in config.get("products", {}).items():
                     if item in paused_product_keys:
                         continue

@@ -104,12 +104,10 @@ def run_migration():
                 expires_at     TIMESTAMP,
                 cooldown_until TIMESTAMP
             )""",
-            # Mission table redesign (new columns alongside old ones for zero-downtime)
-            "ALTER TABLE port_authority_missions ADD COLUMN IF NOT EXISTS mission_subtype VARCHAR",
-            "ALTER TABLE port_authority_missions ADD COLUMN IF NOT EXISTS target_player_id INTEGER",
-            "ALTER TABLE port_authority_missions ADD COLUMN IF NOT EXISTS target_item_type VARCHAR",
-            "ALTER TABLE port_authority_missions ADD COLUMN IF NOT EXISTS target_quantity INTEGER DEFAULT 1",
-            "ALTER TABLE port_authority_missions ADD COLUMN IF NOT EXISTS items_acquired TEXT",
+            # Branch Warfare rework — the RNG mission/blockade system is gone,
+            # replaced by the military_* tables (created by military.init_db()).
+            "DROP TABLE IF EXISTS port_authority_missions",
+            "DROP TABLE IF EXISTS blockade_instances",
             # PA contract tables
             """CREATE TABLE IF NOT EXISTS pa_contracts (
                 id SERIAL PRIMARY KEY,

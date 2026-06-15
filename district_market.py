@@ -228,6 +228,19 @@ def create_order(
     except Exception as _e:
         print(f"[DistrictMarket] Shutdown check error: {_e}")
 
+    # Blockade check — players under an active Port Authority blockade cannot trade.
+    if player_id > 0:
+        try:
+            from military import is_player_blockaded
+            if is_player_blockaded(player_id):
+                _push_district(player_id, "Order Rejected — Blockaded",
+                               "Your commerce is blockaded by a rival Port Authority. "
+                               "Break the blockade from your Port Authority to resume trading.")
+                db.close()
+                return None
+        except Exception as _be:
+            print(f"[DistrictMarket] Blockade check error: {_be}")
+
     # Cash validation for buy orders
     if order_type == OrderType.BUY:
         from auth import Player

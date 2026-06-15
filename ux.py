@@ -478,7 +478,10 @@ def _nav_loader_html() -> str:
             "Tip: WSC is the Wadsworth stablecoin — reserve banks back it with bonds to hold the peg.",
             "Tip: Port Authority immigration policy adjusts retail demand, production output, and land yield — commit sliders for a 3-day boost.",
             "Tip: Immigration sliders decay back to neutral over 3 days — commit them early to maximise the full effect window.",
-            "Tip: The immigration radar chart previews your score across 5 economic dimensions before you lock in."
+            "Tip: The immigration radar chart previews your score across 5 economic dimensions before you lock in.",
+            "Tip: Port Authority battles are decided by dice, not coin flips — bigger, better Branches genuinely win.",
+            "Tip: A blockade freezes a rival's retail, market and district trading for up to 72 hours — break it from your own Port Authority.",
+            "Tip: Spend Intelligence drones to 'go dark' and vanish from a rival's target search during Procurement Events."
           ];
           var overlay = document.getElementById('nav-loader');
           var bar     = document.getElementById('nl-bar');

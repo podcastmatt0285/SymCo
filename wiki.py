@@ -344,16 +344,20 @@ def _seed_port_authority_entries():
             "contract payouts. The CDO's 'military' effect stacks with all other exec bonuses.",
         ),
         (
-            "Fleet & Army Composition",
-            "Each force type unlocks once you hold enough of the right platforms in your Port Authority.\n\n"
-            "FLEET (enables naval missions):\n"
-            "• Carriers — 1+\n• Submarines — 2+\n• Destroyers/frigates — 4+\n• Fighter jets — 12+\n\n"
-            "ARMY (enables land missions):\n"
-            "• Tanks — 10+\n• Helicopters — 5+\n• Rifles — 100+\n• Fighter jets — 6+\n"
-            "• Armored vehicles (IFVs/APCs) — 8+\n• Drones — 4+\n\n"
-            "Meeting either threshold lets you launch that class of mission. Fighter jets count toward "
-            "both Fleet and Army. Mission outcomes are always 50/50 — more assets don't improve odds, "
-            "they only unlock eligibility.",
+            "Branches & Battle System",
+            "Move units into Port Authority command to form four Branches:\n"
+            "• NAVY — carriers, submarines, destroyers\n"
+            "• ARMY — tanks, armored vehicles, rifles\n"
+            "• AIR FORCE — fighter jets, helicopters\n"
+            "• INTELLIGENCE — drones (also used to 'go dark')\n\n"
+            "Every unit type has an ATTACK and a DEFENSE value (carriers 20/20 are strongest, "
+            "rifles 2/2 weakest). Battles are fought one unit at a time: each side fields its "
+            "strongest unit, the attacker rolls one d20 per ATTACK point and the defender one per "
+            "DEFENSE point, and the higher single die wins the exchange (attacker wins ties). The "
+            "loser's unit takes damage equal to the difference (minimum 1) — and because a unit's "
+            "stat IS its health, it rolls fewer dice as it weakens, then dies and is permanently "
+            "deleted. The next strongest unit steps in until one side is destroyed. Bigger, better "
+            "forces genuinely win — there is no coin flip.",
         ),
         (
             "Port Authority Upkeep & Taxes",
@@ -362,8 +366,28 @@ def _seed_port_authority_entries():
             "fighter jets $50k, helicopters $40k, tanks $30k, armored vehicles $15k, drones $8k, rifles $10.\n\n"
             "• If you can't afford upkeep, one random item is destroyed as a penalty and you receive a push alert.\n"
             "• A federal upkeep tax is recorded in the government ledger each maintenance cycle.\n"
-            "• Procurement contract payments, mission results, and inventory losses all appear in your transaction ledger.\n\n"
-            "Tip: withdraw platforms you aren't actively deploying to cut the daily drag.",
+            "• Procurement contract payments, loot, and battle losses all appear in your transaction ledger.\n\n"
+            "Tip: withdraw units you aren't fielding to cut the daily drag — but remember only units in "
+            "command can fight or defend.",
+        ),
+        (
+            "Procurement, Blockades & Espionage",
+            "PROCUREMENT EVENTS (admin-run): pick exactly 3 rival targets and commit a force. You fight "
+            "one battle per week, advancing automatically down your target list. Win a battle and you "
+            "loot a slice of that defender's inventory — the slice scales with your SURVIVING attack "
+            "power (e.g. if your force drops from 1000 to 900 attack power you take 90% of the available "
+            "loot). If your entire force is destroyed before you complete all 3 battles, every item you "
+            "looted is returned to your victims and you pay a steep trophy penalty split among them; if "
+            "you can't cover it, you're banned from raising a security force for 60 days.\n\n"
+            "BLOCKADES (anytime): deploy a defending force to blockade a rival. While active (up to 72 "
+            "hours) the target cannot trade on retail, the market, or district markets. The blockaded "
+            "player must defeat your committed force from their own Port Authority to lift it; if they "
+            "fail before it expires, they pay you a light trophy tribute. The deployer DEFENDS.\n\n"
+            "ESPIONAGE (go dark): spend Intelligence units (drones) to vanish from a specific rival's "
+            "target search for up to 7 days, so they can't pick you in a Procurement Event. The drones "
+            "are consumed when you go dark.\n\n"
+            "Only units kept 'at home' (not committed to one of your own campaigns or blockades) defend "
+            "you when attacked — so don't commit everything.",
         ),
         (
             "Immigration Policy",
