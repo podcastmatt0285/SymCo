@@ -1012,20 +1012,43 @@ try:
 except ModuleNotFoundError:
     pass
 
+# Register these three routers INDEPENDENTLY. They were previously grouped in
+# one try/except, which meant a single import failure (e.g. a transient DB
+# error during port_authority's import-time init_db) silently skipped the
+# remaining include_router() calls — 404-ing every endpoint on the others.
+# Each gets its own guard now, and failures log a real traceback.
 try:
     from port_authority import router as port_authority_router
     app.include_router(port_authority_router)
-    from port_authority_ux import router as port_authority_ux_router
-    app.include_router(port_authority_ux_router)
-    from military import router as military_router
-    app.include_router(military_router)
-    print("Port Authority routes registered")
+    print("Port Authority API routes registered")
 except ModuleNotFoundError:
     pass
-except Exception as _pb_err:
-    # Billing is non-critical — never let a billing/init failure crash startup
-    # (which would take the whole game down, tick loop included).
-    print(f"[PlayBilling] disabled — init failed: {_pb_err}")
+except Exception as _pa_err:
+    import traceback
+    print(f"[PortAuthority] API routes FAILED to register: {_pa_err}")
+    traceback.print_exc()
+
+try:
+    from port_authority_ux import router as port_authority_ux_router
+    app.include_router(port_authority_ux_router)
+    print("Port Authority UX routes registered")
+except ModuleNotFoundError:
+    pass
+except Exception as _pax_err:
+    import traceback
+    print(f"[PortAuthority] UX routes FAILED to register: {_pax_err}")
+    traceback.print_exc()
+
+try:
+    from military import router as military_router
+    app.include_router(military_router)
+    print("Military (Branch Warfare) routes registered")
+except ModuleNotFoundError:
+    pass
+except Exception as _mil_err:
+    import traceback
+    print(f"[Military] routes FAILED to register: {_mil_err}")
+    traceback.print_exc()
 
 if __name__ == "__main__":
     import uvicorn

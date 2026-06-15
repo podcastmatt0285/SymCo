@@ -1544,5 +1544,11 @@ async def api_immigration_status(request: Request):
     return JSONResponse(get_immigration_status(pid))
 
 
-# Run table creation when module is imported
-init_db()
+# Run table creation when module is imported. Guard it: a transient DB
+# error at import time must NOT prevent the router from being imported and
+# registered (otherwise every /api/port-authority route 404s). Tables are
+# also ensured by the startup migration, so deferring here is safe.
+try:
+    init_db()
+except Exception as _pa_initdb_err:
+    print(f"[PortAuthority] init_db deferred: {_pa_initdb_err}")
