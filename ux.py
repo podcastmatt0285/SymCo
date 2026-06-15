@@ -424,6 +424,29 @@ def _nav_loader_html() -> str:
         <style>
           @keyframes nl-pulse-anim { 0%,100%{opacity:.3} 50%{opacity:.7} }
           .nl-pulse { animation: nl-pulse-anim 2s ease-in-out infinite; }
+
+          /* ════════════════════════════════════════════════════════════
+             MOBILE-FIRST OVERFLOW GUARDRAILS  (global — every page ships
+             this via the nav loader). Stops pages from requiring landscape
+             on narrow phones. Engages only <=640px and deliberately leaves
+             already-responsive auto-fit / auto-fill grids and per-page
+             media queries untouched, so it cannot regress working layouts.
+             ════════════════════════════════════════════════════════════ */
+          @media (max-width: 640px) {
+            /* clip (not hidden) keeps position:sticky headers working */
+            html, body { overflow-x: clip; max-width: 100%; }
+            body { overflow-wrap: break-word; }
+            /* Collapse fixed / multi-column INLINE grids to a single column.
+               Responsive auto-fit / auto-fill grids are preserved. */
+            [style*="grid-template-columns"]:not([style*="auto-fit"]):not([style*="auto-fill"]) {
+              grid-template-columns: 1fr !important;
+            }
+            /* Wide tables scroll inside their own box instead of the page. */
+            table { display: block; width: 100%; max-width: 100%;
+                    overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            /* Media / embeds / preformatted text never exceed the viewport. */
+            img, svg, video, canvas, iframe, pre { max-width: 100% !important; }
+          }
         </style>
         <script>
         (function() {
