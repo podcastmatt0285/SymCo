@@ -633,6 +633,262 @@ def validate_session_ws(session_token: str):
 # ==========================
 router = APIRouter()
 
+
+def count_players_active_today() -> int:
+    """Public-facing 'active today' count for landing pages: real players whose
+    last_login falls within the past 24h, plus the always-on automated firms that
+    keep the markets liquid. Presented to visitors as a single player count."""
+    try:
+        cutoff = datetime.utcnow() - timedelta(hours=24)
+        db = get_db()
+        try:
+            real = db.query(Player).filter(
+                (Player.is_npc.is_(False)) | (Player.is_npc.is_(None)),
+                Player.last_login >= cutoff,
+            ).count()
+            others = db.query(Player).filter(Player.is_npc.is_(True)).count()
+            return int(real + others)
+        finally:
+            db.close()
+    except Exception:
+        return 0
+
+
+def _leaderboard_section_html() -> str:
+    """Build the live top-50 leaderboard section (net worth, sortable client-side).
+    Shared by the /login and /founding pages so the two never drift. Returns the
+    full `<div class="lb-section">…</div>` markup, or "" if data is unavailable."""
+    try:
+        from stats_ux import PlayerStats, get_db as _stats_db
+        _sdb = _stats_db()
+        _top = (
+            _sdb.query(PlayerStats, Player)
+            .join(Player, Player.id == PlayerStats.player_id)
+            .filter(Player.is_npc.isnot(True), PlayerStats.player_id > 0)
+            .order_by(PlayerStats.total_net_worth.desc())
+            .limit(50)
+            .all()
+        )
+        _sdb.close()
+        # Trophy / level data (separate DB)
+        try:
+            from events import PlayerRank, SessionLocal as _ESL
+            _edb = _ESL()
+            _rank_rows = _edb.query(PlayerRank).all()
+            _edb.close()
+            _tmap = {r.player_id: (r.trophies or 0, r.level or 1) for r in _rank_rows}
+        except Exception:
+            _tmap = {}
+
+        def _money(v):
+            return f"${v or 0:,.0f}"
+
+        _lb_rows = ""
+        for _rank, (_s, _p) in enumerate(_top, 1):
+            _troph, _lvl = _tmap.get(_p.id, (0, 1))
+            if _rank == 1:
+                _rank_cell = '<span class="lb-badge lb-gold">1st</span>'
+            elif _rank == 2:
+                _rank_cell = '<span class="lb-badge lb-silver">2nd</span>'
+            elif _rank == 3:
+                _rank_cell = '<span class="lb-badge lb-bronze">3rd</span>'
+            else:
+                _rank_cell = str(_rank)
+            _name = (_p.business_name or "—").replace("<", "&lt;").replace(">", "&gt;")
+            _lb_rows += (
+                f'<tr data-nw="{_s.total_net_worth or 0:.2f}" data-cash="{_s.cash_balance or 0:.2f}" '
+                f'data-land="{_s.land_value or 0:.2f}" data-inv="{_s.inventory_value or 0:.2f}" '
+                f'data-shares="{_s.share_value or 0:.2f}" data-biz="{_s.business_value or 0:.2f}" '
+                f'data-trophies="{_troph:.0f}">'
+                f'<td class="lb-rank">{_rank_cell}</td>'
+                f'<td class="lb-name">{_name}</td>'
+                f'<td data-col="nw">{_money(_s.total_net_worth)}</td>'
+                f'<td data-col="cash">{_money(_s.cash_balance)}</td>'
+                f'<td data-col="land">{_money(_s.land_value)}</td>'
+                f'<td data-col="inv">{_money(_s.inventory_value)}</td>'
+                f'<td data-col="shares">{_money(_s.share_value)}</td>'
+                f'<td data-col="biz">{_money(_s.business_value)}'
+                f'<span style="color:#64748b;"> · {_s.businesses_owned or 0}</span></td>'
+                f'<td data-col="trophies"><span class="lb-trophy">{_troph:,}</span> '
+                f'<span style="color:#64748b;">&#9733;</span>'
+                f'<span class="lb-level">Lv {_lvl}</span></td>'
+                f'</tr>'
+            )
+
+        if not _lb_rows:
+            return ""
+        _section = f'''
+                <div class="lb-section">
+                    <div class="lb-heading">🏆 Live Leaderboard</div>
+                    <div class="lb-sub">The top {len(_top)} tycoons in the Wadsworth economy. Tap a category to re-rank.</div>
+                    <div class="lb-tabs">
+                        <span class="lb-tab active" data-metric="nw"       onclick="lbSort('nw',this)">Net Worth</span>
+                        <span class="lb-tab"        data-metric="cash"     onclick="lbSort('cash',this)">Cash</span>
+                        <span class="lb-tab"        data-metric="land"     onclick="lbSort('land',this)">Land</span>
+                        <span class="lb-tab"        data-metric="inv"      onclick="lbSort('inv',this)">Inventory</span>
+                        <span class="lb-tab"        data-metric="shares"   onclick="lbSort('shares',this)">Shares</span>
+                        <span class="lb-tab"        data-metric="biz"      onclick="lbSort('biz',this)">Businesses</span>
+                        <span class="lb-tab"        data-metric="trophies" onclick="lbSort('trophies',this)">&#9733; Trophies</span>
+                    </div>
+                    <div class="lb-table-wrap">
+                        <table class="lb-table" id="lb-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Tycoon</th>
+                                    <th data-col="nw" class="lb-col-active">Net Worth</th>
+                                    <th data-col="cash">Cash</th>
+                                    <th data-col="land">Land</th>
+                                    <th data-col="inv">Inventory</th>
+                                    <th data-col="shares">Shares</th>
+                                    <th data-col="biz">Businesses</th>
+                                    <th data-col="trophies">&#9733; Trophies</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lb-body">{_lb_rows}</tbody>
+                        </table>
+                    </div>
+                </div>'''
+        # Mark the Net Worth column cells active on initial render
+        return _section.replace('<td data-col="nw">', '<td data-col="nw" class="lb-col-active">')
+    except Exception:
+        return ""
+
+
+# Shared leaderboard CSS + JS (used verbatim by /login and /founding). Plain
+# strings with literal braces — inserted by string concatenation on /login and by
+# f-string value-substitution on /founding (braces are not re-parsed either way).
+LEADERBOARD_CSS = """
+        /* ── Live leaderboard (inside hero card) ── */
+        .lb-section {
+            margin-top: 36px;
+            border-top: 1px solid rgba(176,141,87,0.18);
+            padding-top: 28px;
+            text-align: left;
+        }
+        .lb-heading {
+            font-family: 'Cinzel', serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            color: #e5c88a;
+            text-align: center;
+            margin-bottom: 6px;
+        }
+        .lb-sub {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.78rem;
+            margin-bottom: 18px;
+        }
+        .lb-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+        .lb-tab {
+            padding: 6px 12px;
+            font-size: 0.74rem;
+            font-weight: 600;
+            color: #94a3b8;
+            background: rgba(30,41,59,0.55);
+            border: 1px solid rgba(176,141,87,0.18);
+            border-radius: 999px;
+            cursor: pointer;
+            transition: color .15s, background .15s, border-color .15s;
+            user-select: none;
+        }
+        .lb-tab:hover { color: #e5c88a; border-color: rgba(176,141,87,0.4); }
+        .lb-tab.active {
+            color: #0b1220;
+            background: linear-gradient(90deg, #e5c88a, #B08D57);
+            border-color: #e5c88a;
+        }
+        .lb-table-wrap {
+            overflow-x: auto;
+            border-radius: 10px;
+            border: 1px solid rgba(176,141,87,0.14);
+        }
+        .lb-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.78rem;
+            white-space: nowrap;
+        }
+        .lb-table th, .lb-table td {
+            padding: 8px 12px;
+            text-align: right;
+            border-bottom: 1px solid rgba(176,141,87,0.10);
+        }
+        .lb-table th:nth-child(1), .lb-table td:nth-child(1),
+        .lb-table th:nth-child(2), .lb-table td:nth-child(2) {
+            text-align: left;
+        }
+        .lb-table thead th {
+            color: #c8a96a;
+            font-weight: 700;
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: rgba(26,15,10,0.6);
+            position: sticky;
+            top: 0;
+        }
+        .lb-table tbody tr:hover { background: rgba(176,141,87,0.06); }
+        .lb-col-active { background: rgba(176,141,87,0.10); color: #f1e3c4; }
+        .lb-table thead th.lb-col-active { color: #f5d98a; }
+        .lb-rank { color: #94a3b8; font-weight: 700; }
+        .lb-name { color: #e5e7eb; font-weight: 600; }
+        .lb-badge {
+            font-size: 0.64rem;
+            font-weight: 700;
+            padding: 1px 6px;
+            border-radius: 4px;
+            color: #0b1220;
+        }
+        .lb-gold   { background: linear-gradient(90deg,#fde68a,#f59e0b); }
+        .lb-silver { background: linear-gradient(90deg,#e2e8f0,#94a3b8); }
+        .lb-bronze { background: linear-gradient(90deg,#fdba74,#c2742c); color: #fff; }
+        .lb-trophy { color: #fbbf24; font-weight: 600; }
+        .lb-level {
+            background: #1e293b; color: #a78bfa;
+            border: 1px solid #4c3d8f; border-radius: 3px;
+            padding: 1px 5px; font-size: 0.62rem; font-weight: 700; margin-left: 4px;
+        }
+"""
+
+LEADERBOARD_JS = """
+        // Client-side leaderboard re-ranking (no server round-trip; works logged-out)
+        function lbSort(metric, btn) {
+            var tbody = document.getElementById('lb-body');
+            if (!tbody) return;
+            var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr'));
+            rows.sort(function (a, b) {
+                return parseFloat(b.dataset[metric] || 0) - parseFloat(a.dataset[metric] || 0);
+            });
+            rows.forEach(function (r, i) {
+                tbody.appendChild(r);
+                var rk = r.querySelector('.lb-rank');
+                if (rk) {
+                    if (i === 0)      rk.innerHTML = '<span class="lb-badge lb-gold">1st</span>';
+                    else if (i === 1) rk.innerHTML = '<span class="lb-badge lb-silver">2nd</span>';
+                    else if (i === 2) rk.innerHTML = '<span class="lb-badge lb-bronze">3rd</span>';
+                    else              rk.textContent = (i + 1);
+                }
+            });
+            document.querySelectorAll('.lb-tab').forEach(function (t) { t.classList.remove('active'); });
+            if (btn) btn.classList.add('active');
+            var tbl = document.getElementById('lb-table');
+            if (tbl) {
+                tbl.querySelectorAll('.lb-col-active').forEach(function (c) { c.classList.remove('lb-col-active'); });
+                tbl.querySelectorAll('[data-col="' + metric + '"]').forEach(function (c) { c.classList.add('lb-col-active'); });
+            }
+        }
+"""
+
+
 @router.get("/login", response_class=HTMLResponse)
 def login_page(session_token: Optional[str] = Cookie(None)):
     """Login/Register splash screen."""
@@ -703,102 +959,8 @@ def login_page(session_token: Optional[str] = Cookie(None)):
     except Exception:
         pass
 
-    # ── Live leaderboard (read-only preview, same data as /stats/leaderboard) ──
-    _leaderboard_section = ""
-    try:
-        from stats_ux import PlayerStats, get_db as _stats_db
-        _sdb = _stats_db()
-        _top = (
-            _sdb.query(PlayerStats, Player)
-            .join(Player, Player.id == PlayerStats.player_id)
-            .filter(Player.is_npc.isnot(True), PlayerStats.player_id > 0)
-            .order_by(PlayerStats.total_net_worth.desc())
-            .limit(50)
-            .all()
-        )
-        _sdb.close()
-        # Trophy / level data (separate DB)
-        try:
-            from events import PlayerRank, SessionLocal as _ESL
-            _edb = _ESL()
-            _rank_rows = _edb.query(PlayerRank).all()
-            _edb.close()
-            _tmap = {r.player_id: (r.trophies or 0, r.level or 1) for r in _rank_rows}
-        except Exception:
-            _tmap = {}
-
-        def _money(v):
-            return f"${v or 0:,.0f}"
-
-        _lb_rows = ""
-        for _rank, (_s, _p) in enumerate(_top, 1):
-            _troph, _lvl = _tmap.get(_p.id, (0, 1))
-            if _rank == 1:
-                _rank_cell = '<span class="lb-badge lb-gold">1st</span>'
-            elif _rank == 2:
-                _rank_cell = '<span class="lb-badge lb-silver">2nd</span>'
-            elif _rank == 3:
-                _rank_cell = '<span class="lb-badge lb-bronze">3rd</span>'
-            else:
-                _rank_cell = str(_rank)
-            _name = (_p.business_name or "—").replace("<", "&lt;").replace(">", "&gt;")
-            _lb_rows += (
-                f'<tr data-nw="{_s.total_net_worth or 0:.2f}" data-cash="{_s.cash_balance or 0:.2f}" '
-                f'data-land="{_s.land_value or 0:.2f}" data-inv="{_s.inventory_value or 0:.2f}" '
-                f'data-shares="{_s.share_value or 0:.2f}" data-biz="{_s.business_value or 0:.2f}" '
-                f'data-trophies="{_troph:.0f}">'
-                f'<td class="lb-rank">{_rank_cell}</td>'
-                f'<td class="lb-name">{_name}</td>'
-                f'<td data-col="nw">{_money(_s.total_net_worth)}</td>'
-                f'<td data-col="cash">{_money(_s.cash_balance)}</td>'
-                f'<td data-col="land">{_money(_s.land_value)}</td>'
-                f'<td data-col="inv">{_money(_s.inventory_value)}</td>'
-                f'<td data-col="shares">{_money(_s.share_value)}</td>'
-                f'<td data-col="biz">{_money(_s.business_value)}'
-                f'<span style="color:#64748b;"> · {_s.businesses_owned or 0}</span></td>'
-                f'<td data-col="trophies"><span class="lb-trophy">{_troph:,}</span> '
-                f'<span style="color:#64748b;">&#9733;</span>'
-                f'<span class="lb-level">Lv {_lvl}</span></td>'
-                f'</tr>'
-            )
-
-        if _lb_rows:
-            _leaderboard_section = f'''
-                <div class="lb-section">
-                    <div class="lb-heading">🏆 Live Leaderboard</div>
-                    <div class="lb-sub">The top {len(_top)} tycoons in the Wadsworth economy. Tap a category to re-rank.</div>
-                    <div class="lb-tabs">
-                        <span class="lb-tab active" data-metric="nw"       onclick="lbSort('nw',this)">Net Worth</span>
-                        <span class="lb-tab"        data-metric="cash"     onclick="lbSort('cash',this)">Cash</span>
-                        <span class="lb-tab"        data-metric="land"     onclick="lbSort('land',this)">Land</span>
-                        <span class="lb-tab"        data-metric="inv"      onclick="lbSort('inv',this)">Inventory</span>
-                        <span class="lb-tab"        data-metric="shares"   onclick="lbSort('shares',this)">Shares</span>
-                        <span class="lb-tab"        data-metric="biz"      onclick="lbSort('biz',this)">Businesses</span>
-                        <span class="lb-tab"        data-metric="trophies" onclick="lbSort('trophies',this)">&#9733; Trophies</span>
-                    </div>
-                    <div class="lb-table-wrap">
-                        <table class="lb-table" id="lb-table">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Tycoon</th>
-                                    <th data-col="nw" class="lb-col-active">Net Worth</th>
-                                    <th data-col="cash">Cash</th>
-                                    <th data-col="land">Land</th>
-                                    <th data-col="inv">Inventory</th>
-                                    <th data-col="shares">Shares</th>
-                                    <th data-col="biz">Businesses</th>
-                                    <th data-col="trophies">&#9733; Trophies</th>
-                                </tr>
-                            </thead>
-                            <tbody id="lb-body">{_lb_rows}</tbody>
-                        </table>
-                    </div>
-                </div>'''
-            # Mark the Net Worth column cells active on initial render
-            _leaderboard_section = _leaderboard_section.replace('<td data-col="nw">', '<td data-col="nw" class="lb-col-active">')
-    except Exception:
-        pass
+    # ── Live leaderboard (read-only preview, shared with /founding) ──
+    _leaderboard_section = _leaderboard_section_html()
 
     return ("""
 <!DOCTYPE html>
@@ -1212,105 +1374,7 @@ def login_page(session_token: Optional[str] = Cookie(None)):
         .faq-answer strong { color: #cbd5e1; }
         .faq-answer a { color: #38bdf8; }
 
-        /* ── Live leaderboard (inside hero card) ── */
-        .lb-section {
-            margin-top: 36px;
-            border-top: 1px solid rgba(176,141,87,0.18);
-            padding-top: 28px;
-            text-align: left;
-        }
-        .lb-heading {
-            font-family: 'Cinzel', serif;
-            font-size: 1.05rem;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-            color: #e5c88a;
-            text-align: center;
-            margin-bottom: 6px;
-        }
-        .lb-sub {
-            text-align: center;
-            color: #94a3b8;
-            font-size: 0.78rem;
-            margin-bottom: 18px;
-        }
-        .lb-tabs {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            justify-content: center;
-            margin-bottom: 16px;
-        }
-        .lb-tab {
-            padding: 6px 12px;
-            font-size: 0.74rem;
-            font-weight: 600;
-            color: #94a3b8;
-            background: rgba(30,41,59,0.55);
-            border: 1px solid rgba(176,141,87,0.18);
-            border-radius: 999px;
-            cursor: pointer;
-            transition: color .15s, background .15s, border-color .15s;
-            user-select: none;
-        }
-        .lb-tab:hover { color: #e5c88a; border-color: rgba(176,141,87,0.4); }
-        .lb-tab.active {
-            color: #0b1220;
-            background: linear-gradient(90deg, #e5c88a, #B08D57);
-            border-color: #e5c88a;
-        }
-        .lb-table-wrap {
-            overflow-x: auto;
-            border-radius: 10px;
-            border: 1px solid rgba(176,141,87,0.14);
-        }
-        .lb-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.78rem;
-            white-space: nowrap;
-        }
-        .lb-table th, .lb-table td {
-            padding: 8px 12px;
-            text-align: right;
-            border-bottom: 1px solid rgba(176,141,87,0.10);
-        }
-        .lb-table th:nth-child(1), .lb-table td:nth-child(1),
-        .lb-table th:nth-child(2), .lb-table td:nth-child(2) {
-            text-align: left;
-        }
-        .lb-table thead th {
-            color: #c8a96a;
-            font-weight: 700;
-            font-size: 0.68rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            background: rgba(26,15,10,0.6);
-            position: sticky;
-            top: 0;
-        }
-        .lb-table tbody tr:hover { background: rgba(176,141,87,0.06); }
-        .lb-col-active { background: rgba(176,141,87,0.10); color: #f1e3c4; }
-        .lb-table thead th.lb-col-active { color: #f5d98a; }
-        .lb-rank { color: #94a3b8; font-weight: 700; }
-        .lb-name { color: #e5e7eb; font-weight: 600; }
-        .lb-badge {
-            font-size: 0.64rem;
-            font-weight: 700;
-            padding: 1px 6px;
-            border-radius: 4px;
-            color: #0b1220;
-        }
-        .lb-gold   { background: linear-gradient(90deg,#fde68a,#f59e0b); }
-        .lb-silver { background: linear-gradient(90deg,#e2e8f0,#94a3b8); }
-        .lb-bronze { background: linear-gradient(90deg,#fdba74,#c2742c); color: #fff; }
-        .lb-trophy { color: #fbbf24; font-weight: 600; }
-        .lb-level {
-            background: #1e293b; color: #a78bfa;
-            border: 1px solid #4c3d8f; border-radius: 3px;
-            padding: 1px 5px; font-size: 0.62rem; font-weight: 700; margin-left: 4px;
-        }
-
+""" + LEADERBOARD_CSS + """
         /* ── Indices card support ── */
         .card {
             background: #0f172a;
@@ -1853,33 +1917,7 @@ def login_page(session_token: Optional[str] = Cookie(None)):
             document.getElementById(tab + '-form').classList.add('active');
         }
 
-        // Client-side leaderboard re-ranking (no server round-trip; works logged-out)
-        function lbSort(metric, btn) {
-            var tbody = document.getElementById('lb-body');
-            if (!tbody) return;
-            var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr'));
-            rows.sort(function (a, b) {
-                return parseFloat(b.dataset[metric] || 0) - parseFloat(a.dataset[metric] || 0);
-            });
-            rows.forEach(function (r, i) {
-                tbody.appendChild(r);
-                var rk = r.querySelector('.lb-rank');
-                if (rk) {
-                    if (i === 0)      rk.innerHTML = '<span class="lb-badge lb-gold">1st</span>';
-                    else if (i === 1) rk.innerHTML = '<span class="lb-badge lb-silver">2nd</span>';
-                    else if (i === 2) rk.innerHTML = '<span class="lb-badge lb-bronze">3rd</span>';
-                    else              rk.textContent = (i + 1);
-                }
-            });
-            document.querySelectorAll('.lb-tab').forEach(function (t) { t.classList.remove('active'); });
-            if (btn) btn.classList.add('active');
-            var tbl = document.getElementById('lb-table');
-            if (tbl) {
-                tbl.querySelectorAll('.lb-col-active').forEach(function (c) { c.classList.remove('lb-col-active'); });
-                tbl.querySelectorAll('[data-col="' + metric + '"]').forEach(function (c) { c.classList.add('lb-col-active'); });
-            }
-        }
-
+""" + LEADERBOARD_JS + """
         (function () {
             const lines = [
                 "Price is what you pay. Value is what you build.",
@@ -2315,6 +2353,18 @@ def founding_page():
         FOUNDING_OPERATIVE_TROPHIES, POCKET_EMPIRE_TROPHIES, ACTIVE_DUTY_TROPHIES,
         SUB_TRIAL_DAYS, get_available_count, get_total_count,
     )
+
+    # Social proof: live leaderboard (shared with /login) + "active today" count.
+    _lb_section = _leaderboard_section_html()
+    _active_today = count_players_active_today()
+    if _active_today > 0:
+        _livestat_html = (
+            f'<div class="fo-livestat">🟢 <strong>{_active_today:,}</strong>'
+            f' tycoons are building in the economy right now</div>'
+        )
+    else:
+        _livestat_html = ""
+
     try:
         _available = get_available_count()
         _total     = get_total_count()
@@ -2582,6 +2632,15 @@ def founding_page():
         }}
         .fo-browser-cta a{{ color:#38bdf8; font-weight:700; text-decoration:none; }}
         .fo-browser-cta a:hover{{ text-decoration:underline; }}
+
+        /* live "active today" social-proof strip */
+        .fo-livestat{{
+            margin:22px 0 0; text-align:center; font-size:0.82rem; color:#d1d5db;
+            background:rgba(16,185,129,.08); border:1px solid rgba(16,185,129,.22);
+            border-radius:999px; padding:9px 14px;
+        }}
+        .fo-livestat strong{{ color:#6ee7b7; font-weight:800; }}
+    {LEADERBOARD_CSS}
     </style>
 </head>
 <body>
@@ -2618,11 +2677,20 @@ def founding_page():
                 <div class="fo-showcase-grid">
                     <div class="fo-feat"><span class="fo-feat-icon">📈</span><div class="fo-feat-title">Player-Driven Markets</div><div class="fo-feat-sub">Trade on a live order book where every price is set by real rivals — not bots.</div></div>
                     <div class="fo-feat"><span class="fo-feat-icon">🏭</span><div class="fo-feat-title">138+ Businesses</div><div class="fo-feat-sub">Claim land and run production lines that keep earning while you're offline.</div></div>
-                    <div class="fo-feat"><span class="fo-feat-icon">🏛️</span><div class="fo-feat-title">Take It Public</div><div class="fo-feat-sub">IPO your company, issue shares, buy back stock — or short the competition.</div></div>
-                    <div class="fo-feat"><span class="fo-feat-icon">🏦</span><div class="fo-feat-title">Banks, Bonds &amp; Forex</div><div class="fo-feat-sub">16 currencies, fixed-income bonds, and dividend-paying ETFs.</div></div>
-                    <div class="fo-feat"><span class="fo-feat-icon">⛏️</span><div class="fo-feat-title">Crypto &amp; Meme Coins</div><div class="fo-feat-sub">Launch county tokens, mine them, and pump your own meme coins.</div></div>
-                    <div class="fo-feat"><span class="fo-feat-icon">🗳️</span><div class="fo-feat-title">Cities &amp; Governance</div><div class="fo-feat-sub">Found cities, win mayoral elections, and vote on the economy's laws.</div></div>
-                    <div class="fo-feat"><span class="fo-feat-icon">⚔️</span><div class="fo-feat-title">Wage Economic War</div><div class="fo-feat-sub">Build a military through the Port Authority and raid rival treasuries.</div></div>
+                    <div class="fo-feat"><span class="fo-feat-icon">🏛️</span><div class="fo-feat-title">Take It Public</div><div class="fo-feat-sub">IPO your company, issue shares, trigger buybacks &amp; stock splits.</div></div>
+                    <div class="fo-feat"><span class="fo-feat-icon">📉</span><div class="fo-feat-title">Short, Lend &amp; Margin</div><div class="fo-feat-sub">Short your rivals, lend out shares &amp; commodities, and trade on margin.</div></div>
+                    <div class="fo-feat"><span class="fo-feat-icon">🏦</span><div class="fo-feat-title">Banks, Bonds &amp; Forex</div><div class="fo-feat-sub">16 currencies, a forex market, and fixed-income bonds with live yields.</div></div>
+                    <div class="fo-feat"><span class="fo-feat-icon">🪙</span><div class="fo-feat-title">Crypto, Mining &amp; Meme Coins</div><div class="fo-feat-sub">Found a county, mine its Layer-1 token, and launch your own meme coins.</div></div>
+                    <div class="fo-feat"><span class="fo-feat-icon">💵</span><div class="fo-feat-title">Stablecoin &amp; Yield Farming</div><div class="fo-feat-sub">Mint the WSC stablecoin, farm yield, and claim faucets &amp; airdrops.</div></div>
+                    <div class="fo-feat"><span class="fo-feat-icon">🥇</span><div class="fo-feat-title">Mint Precious Metals</div><div class="fo-feat-sub">Strike gold &amp; silver coinage and circulate it as real legal tender.</div></div>
+                    <div class="fo-feat"><span class="fo-feat-icon">🏙️</span><div class="fo-feat-title">Found Cities &amp; Counties</div><div class="fo-feat-sub">Win mayoral elections, sit in parliament, and run public works.</div></div>
+                    <div class="fo-feat"><span class="fo-feat-icon">🏗️</span><div class="fo-feat-title">Build Districts</div><div class="fo-feat-sub">Merge plots into casinos, seaports, aerospace hubs &amp; military bases.</div></div>
+                    <div class="fo-feat"><span class="fo-feat-icon">⚔️</span><div class="fo-feat-title">Wage Economic War</div><div class="fo-feat-sub">Command Port Authority fleets &amp; armies, run blockades, raid treasuries.</div></div>
+                    <div class="fo-feat"><span class="fo-feat-icon">🤝</span><div class="fo-feat-title">Direct Deals &amp; Contracts</div><div class="fo-feat-sub">Strike recurring P2P supply contracts and trusted multi-party swaps.</div></div>
+                    <div class="fo-feat"><span class="fo-feat-icon">👔</span><div class="fo-feat-title">Hire Your C-Suite</div><div class="fo-feat-sub">Recruit executives with unique abilities — manage pensions &amp; poaching.</div></div>
+                    <div class="fo-feat"><span class="fo-feat-icon">⚰️</span><div class="fo-feat-title">Build a Dynasty</div><div class="fo-feat-sub">Name heirs and pass on your empire through estates &amp; inheritance.</div></div>
+                    <div class="fo-feat"><span class="fo-feat-icon">🏆</span><div class="fo-feat-title">Compete for Trophies</div><div class="fo-feat-sub">50 levels, timed events, land-grant tournaments, and leaderboards.</div></div>
+                    <div class="fo-feat"><span class="fo-feat-icon">💬</span><div class="fo-feat-title">Chat, DMs &amp; Alliances</div><div class="fo-feat-sub">Real-time chat rooms, private messages, and recruit for your city.</div></div>
                     <div class="fo-feat"><span class="fo-feat-icon">📊</span><div class="fo-feat-title">19 Live Indices</div><div class="fo-feat-sub">The WBC-50, a Greed &amp; Fear gauge, and real-time candlestick charts.</div></div>
                 </div>
             </div>
@@ -2670,6 +2738,8 @@ def founding_page():
 
             {_slots_html}
 
+            {_livestat_html}
+
             <div class="fo-cta">
                 {_cta_html}
             </div>
@@ -2678,6 +2748,8 @@ def founding_page():
                 Not on Android, or want a peek first?
                 <a href="/login">▶ Play free in your browser</a> — no download, start in 30 seconds.
             </div>
+
+            {_lb_section}
         </div>
 
         <!-- steps -->
@@ -2763,6 +2835,7 @@ def founding_page():
   </div>
 </div>
 <script>
+{LEADERBOARD_JS}
 (function(){{
   var ov=document.getElementById('nav-loader');
   var bar=document.getElementById('nl-bar-page');
