@@ -868,16 +868,26 @@ def _player_pro_panel(pid, detail):
     # Port Authority (military institution) panel
     pa_html = ""
     try:
-        from port_authority import get_port_authority
+        from port_authority import get_port_authority, get_immigration_status
         _pa = get_port_authority(pid)
         if _pa:
             _units = sum(_pa["inventory"].values())
+            # Immigration policy summary
+            _imm = get_immigration_status(pid)
+            if _imm["active"]:
+                _df = int(_imm["decay_factor"] * 100)
+                _imm_note = f"<span style='color:#4ade80;'>Active {_df}% strength</span>"
+            elif _imm["cooldown"]:
+                _imm_note = f"<span style='color:#f87171;'>Cooldown until {(_imm['cooldown_until'] or '')[:10]}</span>"
+            else:
+                _imm_note = "<span style='color:#94a3b8;'>No policy</span>"
             pa_html = f"""
             <div style="margin-top:10px;border-top:1px solid #1e293b;padding-top:8px;">
               <div style="color:#fb923c;font-size:0.75rem;font-weight:600;margin-bottom:4px;">
                 ⚓ {_pa['name']} · {len(_pa['inventory'])} types / {_units:g} units
                 · upkeep ${_pa['daily_maintenance_usd']:,.0f}/day
-                · Fleet {'✓' if _pa['fleet_ready'] else '✗'} · Army {'✓' if _pa['army_ready'] else '✗'}</div>
+                · Fleet {'✓' if _pa['fleet_ready'] else '✗'} · Army {'✓' if _pa['army_ready'] else '✗'}
+                · Immigration: {_imm_note}</div>
             </div>"""
     except Exception:
         pass

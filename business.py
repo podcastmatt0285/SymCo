@@ -487,6 +487,19 @@ def process_business_tick(db):
             except Exception:
                 pass
 
+            # Immigration policy multipliers — fetched once per business owner
+            _imm_mults = {"demand": 1.0, "elasticity": 1.0,
+                          "production": 1.0, "input_cost": 1.0, "land_yield": 1.0}
+            try:
+                from port_authority import get_player_immigration_mults as _get_imm
+                _imm_mults = _get_imm(biz.owner_id)
+            except Exception:
+                pass
+            _imm_prod_mult = _imm_mults.get("production", 1.0)
+            # Land-based businesses additionally benefit from land_yield mult
+            _imm_land_mult = _imm_mults.get("land_yield", 1.0) if biz.land_plot_id else 1.0
+            _imm_input_cost = _imm_mults.get("input_cost", 1.0)
+
             if wage_cost > 0:
                 wage_cost *= _city_wage_mult
                 # NPCs always assumed to have funds — skip the per-business DB check.
@@ -531,10 +544,8 @@ def process_business_tick(db):
                     current_p = price_entry.price if price_entry else mkt_p
 
                     try:
-                        from port_authority import get_player_immigration_mults as _imm
-                        _mults = _imm(player.id)
-                        eff_elasticity = rule.get("elasticity", 1.0) * _mults.get("elasticity", 1.0)
-                        base_chance    = rule.get("base_sale_chance", 0.05) * _mults.get("demand", 1.0)
+                        eff_elasticity = rule.get("elasticity", 1.0) * _imm_mults.get("elasticity", 1.0)
+                        base_chance    = rule.get("base_sale_chance", 0.05) * _imm_mults.get("demand", 1.0)
                         multiplier = SupplyDemandEngine.get_sales_multiplier(
                             current_p, mkt_p, eff_elasticity
                         )
@@ -562,7 +573,7 @@ def process_business_tick(db):
                 # 1 are unaffected by savings below 50% — a known integer-rounding
                 # limitation of discrete inventory items.
                 effective_inputs = [
-                    {**req, "quantity": max(1, round(req["quantity"] * _city_input_mult))}
+                    {**req, "quantity": max(1, round(req["quantity"] * _city_input_mult * _imm_input_cost))}
                     for req in line.get("inputs", [])
                 ]
                 for req in effective_inputs:
@@ -617,6 +628,7 @@ def process_business_tick(db):
                     effective_output_qty = max(1, round(
                         line["output_qty"] * _city_output_mult * _ev_prod_factor
                         * _item_crisis_f * _exec_prod_mult
+                        * _imm_prod_mult * _imm_land_mult
                     ))
 
                     # ── Mint hook: convert consumed metals into coinage currency ─────

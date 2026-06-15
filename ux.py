@@ -475,7 +475,10 @@ def _nav_loader_html() -> str:
             "Tip: Cities can petition to form a county — once enough cities sign on, a new county is born with its own government.",
             "Tip: County crypto mining: deposit energy into the mining pool and earn block rewards in the county's coin.",
             "Tip: Launch your own meme-coin by burning native tokens — supply burned at launch sets the float.",
-            "Tip: WSC is the Wadsworth stablecoin — reserve banks back it with bonds to hold the peg."
+            "Tip: WSC is the Wadsworth stablecoin — reserve banks back it with bonds to hold the peg.",
+            "Tip: Port Authority immigration policy adjusts retail demand, production output, and land yield — commit sliders for a 3-day boost.",
+            "Tip: Immigration sliders decay back to neutral over 3 days — commit them early to maximise the full effect window.",
+            "Tip: The immigration radar chart previews your score across 5 economic dimensions before you lock in."
           ];
           var overlay = document.getElementById('nav-loader');
           var bar     = document.getElementById('nl-bar');

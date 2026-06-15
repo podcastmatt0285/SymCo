@@ -1472,6 +1472,10 @@ def commit_immigration_policy(player_id: int, sliders: dict) -> Tuple[bool, str]
             db.add(existing)
         db.commit()
         _imm_player_cache.pop(player_id, None)
+        _fire_pa_push(player_id,
+                      "Immigration Policy Active",
+                      "Your immigration policy is now in effect for 3 days.",
+                      "/port-authority")
         return True, "Immigration policy committed — active for 3 days, then 7-day cooldown."
     except Exception as e:
         db.rollback()
