@@ -218,7 +218,7 @@ def contacts_page(
         # Verify the viewer actually has this contact accepted (or is viewing their own)
         rel = get_contact_row(player.id, view)
         if rel and rel.status == "accepted":
-            card_html = build_contact_card_html(view, disp, fmt_usd)
+            card_html = build_contact_card_html(view, disp, fmt_usd, viewer_id=player.id)
             view_name = _name(view)
             html += f'''
             <div>
