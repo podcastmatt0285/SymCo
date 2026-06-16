@@ -390,19 +390,41 @@ def build_contact_card_html(subject_id: int, disp: dict, fmt_usd_fn) -> str:
     except Exception:
         pass
 
+    # ── Bluesky (only when the subject has linked + opted into P2P display) ──
+    _avatar_content = name[0].upper() if name else "?"
+    _bsky_badge = ""
+    try:
+        import bluesky
+        _bsky = bluesky.get_public_link(subject_id)
+        if _bsky:
+            if _bsky.get("avatar_url"):
+                _avatar_content = (f'<img src="{_bsky["avatar_url"]}" alt="" '
+                                   f'style="width:100%;height:100%;border-radius:50%;object-fit:cover;">')
+            _bsky_badge = (
+                f'<a href="https://bsky.app/profile/{_bsky["handle"]}" target="_blank" '
+                f'rel="noopener noreferrer" title="Bluesky" '
+                f'style="display:inline-flex;align-items:center;gap:4px;'
+                f'background:#082f49;border:1px solid #0ea5e9;border-radius:10px;'
+                f'padding:2px 8px;font-size:0.72rem;font-weight:700;color:#38bdf8;'
+                f'text-decoration:none;">🦋 @{_bsky["handle"]}</a>'
+            )
+    except Exception:
+        pass
+
     parts.append(f'''
     <div style="display:flex; align-items:center; gap:14px; padding-bottom:16px;
                 border-bottom:1px solid #1e293b; margin-bottom:16px;">
         <div style="width:52px; height:52px; background:#0f172a; border:2px solid #334155;
                     border-radius:50%; display:flex; align-items:center; justify-content:center;
-                    font-size:1.5rem; font-weight:bold; color:#38bdf8; flex-shrink:0;">
-            {name[0].upper() if name else "?"}
+                    font-size:1.5rem; font-weight:bold; color:#38bdf8; flex-shrink:0; overflow:hidden;">
+            {_avatar_content}
         </div>
         <div>
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                 <span style="font-size:1.15rem; font-weight:bold; color:#e5e7eb;">{name}</span>
                 {_level_badge}
                 {_founding_badge}
+                {_bsky_badge}
             </div>
             <div style="font-size:0.75rem; color:#64748b;">Player ID #{subject_id}</div>
         </div>
