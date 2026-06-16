@@ -421,7 +421,7 @@ def register_module(name: str, module):
 
 def load_modules():
     """Attempt to load all game modules."""
-    module_names = ['auth', 'inventory', 'wma', 'business', 'market', 'land', 'land_restoration', 'land_market', 'banks', 'districts', 'special_plots', 'district_market', 'cities', 'city_projects', 'counties', 'memecoins', 'wallet', 'city_wallet', 'stats_ux', 'executive', 'estate', 'p2p', 'chat', 'admins', 'dm', 'corporate_actions', 'reserve_banks', 'trusted_trade', 'contacts', 'soundtrack', 'wcpr', 'npc', 'events', 'govt_ledger', 'beta', 'market_ws', 'player_feed_ws', 'port_authority', 'military']
+    module_names = ['auth', 'inventory', 'wma', 'business', 'market', 'land', 'land_restoration', 'land_market', 'banks', 'districts', 'special_plots', 'district_market', 'cities', 'city_projects', 'counties', 'memecoins', 'wallet', 'city_wallet', 'stats_ux', 'executive', 'estate', 'p2p', 'chat', 'admins', 'dm', 'corporate_actions', 'reserve_banks', 'trusted_trade', 'contacts', 'soundtrack', 'wcpr', 'npc', 'events', 'govt_ledger', 'beta', 'market_ws', 'player_feed_ws', 'port_authority', 'military', 'bluesky']
     for name in module_names:
         try:
             mod = __import__(name)
@@ -956,6 +956,13 @@ try:
     from settings_ux import router as settings_router
     app.include_router(settings_router)
     print("Settings routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
+    from bluesky import router as bluesky_router
+    app.include_router(bluesky_router)
+    print("Bluesky routes registered")
 except ModuleNotFoundError:
     pass
 

@@ -55,6 +55,25 @@ def get_current_tick():
     return app_mod.current_tick
 
 
+def _bsky_avatar(player_id, size=20):
+    """Inline Bluesky avatar for an opted-in player, else "". Degrades to "" if the
+    bluesky module is unavailable so p2p never breaks on the optional feature."""
+    try:
+        import bluesky
+        return bluesky.avatar_img(player_id, size=size)
+    except Exception:
+        return ""
+
+
+def _bsky_handle(player_id):
+    """Inline @handle link for an opted-in player, else ""."""
+    try:
+        import bluesky
+        return bluesky.handle_link(player_id)
+    except Exception:
+        return ""
+
+
 # ==========================
 # P2P DASHBOARD (ENTRY FEE GATE)
 # ==========================
@@ -276,7 +295,7 @@ def dm_inbox(session_token: Optional[str] = Cookie(None)):
         <a href="/p2p/dms/{c["other_id"]}" style="display:block;text-decoration:none;padding:10px 12px;border-bottom:1px solid #1e293b;color:#e5e7eb;">
             <div style="display:flex;justify-content:space-between;align-items:center;">
                 <div>
-                    <span style="font-weight:bold;color:#38bdf8;">{c["other_name"]}</span>{unread_badge}
+                    {_bsky_avatar(c["other_id"])}<span style="font-weight:bold;color:#38bdf8;">{c["other_name"]}</span>{_bsky_handle(c["other_id"])}{unread_badge}
                     <div style="color:#94a3b8;font-size:0.8rem;margin-top:2px;">{who}{preview}</div>
                 </div>
                 <span style="color:#475569;font-size:0.7rem;white-space:nowrap;margin-left:8px;">{ts}</span>
@@ -333,7 +352,7 @@ def dm_new(session_token: Optional[str] = Cookie(None), q: str = ""):
             for p in players:
                 results_html += f'''
                 <a href="/p2p/dms/{p.id}" style="display:block;text-decoration:none;padding:10px 12px;border-bottom:1px solid #1e293b;color:#e5e7eb;">
-                    <span style="font-weight:bold;color:#38bdf8;">#{p.id}: {p.business_name}</span>
+                    {_bsky_avatar(p.id)}<span style="font-weight:bold;color:#38bdf8;">#{p.id}: {p.business_name}</span>{_bsky_handle(p.id)}
                 </a>
                 '''
         else:
@@ -417,7 +436,7 @@ def dm_thread(other_id: int, session_token: Optional[str] = Cookie(None), msg: O
         f"DM: {other_name}",
         f"""
         <a href="/p2p/dms" style="color: #38bdf8;">&lt;- Inbox</a>
-        <h1 style="font-size:1.1rem;">DM with {other_name}</h1>
+        <h1 style="font-size:1.1rem;">{_bsky_avatar(other_id, size=24)}DM with {other_name}{_bsky_handle(other_id)}</h1>
         {flash}
 
         <div class="card" style="padding:12px;max-height:60vh;overflow-y:auto;display:flex;flex-direction:column;" id="msg-container">
@@ -727,7 +746,7 @@ def _render_trading_market(player, current_tick, disp=None):
             <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
                 <div style="flex: 1; min-width: 200px;">
                     <h4 style="margin: 0;">Contract #{contract.id} {mode_badge}</h4>
-                    <p style="color: #64748b; font-size: 0.85rem; margin: 4px 0;">Listed by: {lister_name}</p>
+                    <p style="color: #64748b; font-size: 0.85rem; margin: 4px 0;">Listed by: {_bsky_avatar(contract.lister_id)}{lister_name}{_bsky_handle(contract.lister_id)}</p>
                     <div style="margin: 8px 0;">
                         <span style="color: #64748b; font-size: 0.8rem;">Items per delivery:</span><br>
                         {items_html}
@@ -877,7 +896,7 @@ def _render_my_contracts(player, current_tick, disp=None):
             html += f'''
             <div class="card" style="border-color: #22c55e;">
                 <h4>Contract #{contract.id} <span class="badge" style="background: #22c55e; color: #020617;">ACTIVE - BUYER</span></h4>
-                <p style="font-size: 0.85rem;"><span style="color: #64748b;">Holder:</span> {holder_name} | <span style="color: #64748b;">Items:</span> {items_html}</p>
+                <p style="font-size: 0.85rem;"><span style="color: #64748b;">Holder:</span> {_bsky_avatar(contract.holder_id)}{holder_name}{_bsky_handle(contract.holder_id)} | <span style="color: #64748b;">Items:</span> {items_html}</p>
                 <p style="font-size: 0.85rem;">
                     Deliveries: {contract.deliveries_completed}/{contract.total_deliveries} |
                     Next in: {mins_until_next:.0f} min |
@@ -907,7 +926,7 @@ def _render_my_contracts(player, current_tick, disp=None):
             html += f'''
             <div class="card" style="border-color: #c084fc;">
                 <h4>Contract #{contract.id} <span class="badge" style="background: #c084fc; color: #020617;">ACTIVE - HOLDER</span></h4>
-                <p style="font-size: 0.85rem;"><span style="color: #64748b;">Buyer:</span> {buyer_name} | <span style="color: #64748b;">Items:</span> {items_html}</p>
+                <p style="font-size: 0.85rem;"><span style="color: #64748b;">Buyer:</span> {_bsky_avatar(contract.buyer_id)}{buyer_name}{_bsky_handle(contract.buyer_id)} | <span style="color: #64748b;">Items:</span> {items_html}</p>
                 <p style="font-size: 0.85rem;">
                     Deliveries: {contract.deliveries_completed}/{contract.total_deliveries} |
                     Next due in: {mins_until_next:.0f} min |

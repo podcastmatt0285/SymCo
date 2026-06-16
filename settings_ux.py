@@ -3291,7 +3291,104 @@ def _subscription_section(player) -> str:
     """
 
 
-def _account_tab(player) -> str:
+def _bluesky_section(player, error: bool = False) -> str:
+    """Bluesky / atproto account linking + P2P visibility, for the Account tab."""
+    try:
+        import bluesky
+        link = bluesky.get_link(player.id)
+    except Exception:
+        link = None
+
+    intro = """
+    <h3 style="margin:0 0 6px;color:#38bdf8;">🦋 Bluesky</h3>
+    <p style="color:#64748b;font-size:0.82rem;margin:0 0 12px;">
+        Link your Bluesky / atproto account. Linking alone reveals nothing &mdash; you choose
+        whether your handle and profile picture appear across the P2P system.
+    </p>"""
+
+    err_html = (
+        '<div style="background:#3f1d1d;border:1px solid #ef4444;border-radius:8px;'
+        'padding:10px 14px;margin-bottom:12px;color:#fca5a5;font-size:0.8rem;">'
+        'Could not verify that account. Check the handle and App Password and try again.'
+        '</div>' if error else ""
+    )
+
+    if not link:
+        return f"""{intro}{err_html}
+    <div style="background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:18px 20px;max-width:600px;">
+        <form action="/api/settings/bluesky/link" method="post">
+            <div style="margin-bottom:10px;">
+                <label style="display:block;color:#64748b;font-size:0.75rem;margin-bottom:4px;">Handle</label>
+                <input type="text" name="handle" placeholder="alice.bsky.social" required
+                       style="width:100%;max-width:300px;padding:8px 10px;background:#020617;border:1px solid #1e293b;color:#e5e7eb;border-radius:4px;font-family:inherit;font-size:16px;">
+            </div>
+            <div style="margin-bottom:8px;">
+                <label style="display:block;color:#64748b;font-size:0.75rem;margin-bottom:4px;">App Password</label>
+                <input type="password" name="app_password" placeholder="xxxx-xxxx-xxxx-xxxx" required
+                       style="width:100%;max-width:300px;padding:8px 10px;background:#020617;border:1px solid #1e293b;color:#e5e7eb;border-radius:4px;font-family:inherit;font-size:16px;">
+            </div>
+            <p style="color:#f59e0b;font-size:0.74rem;margin:8px 0 12px;line-height:1.5;">
+                Use a Bluesky <strong>App Password</strong> (Settings &rarr; Privacy and Security &rarr;
+                App Passwords), <strong>not</strong> your main password. It verifies ownership once and is never stored.
+            </p>
+            <button type="submit"
+                    style="background:#38bdf8;color:#04222e;border:none;border-radius:6px;padding:8px 18px;
+                           font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;">Link Account</button>
+        </form>
+    </div>"""
+
+    # Linked view
+    handle = link["handle"]
+    if link.get("avatar_url"):
+        avatar_html = (f'<img src="{link["avatar_url"]}" alt="" '
+                       f'style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0;">')
+    else:
+        letter = (handle or "?")[0].upper()
+        avatar_html = (f'<div style="width:48px;height:48px;border-radius:50%;background:#1e293b;'
+                       f'display:flex;align-items:center;justify-content:center;color:#38bdf8;'
+                       f'font-size:1.3rem;font-weight:bold;flex-shrink:0;">{letter}</div>')
+    shown = bool(link.get("show_on_p2p"))
+    linked_at = link.get("linked_at")
+    linked_when = linked_at.strftime("%b %d, %Y") if linked_at else ""
+    status = ('<span style="color:#22c55e;">visible in P2P</span>' if shown
+              else '<span style="color:#64748b;">hidden</span>')
+    knob_left = "22px" if shown else "2px"
+    knob_bg = "#38bdf8" if shown else "#1e293b"
+    knob_border = "#38bdf8" if shown else "#334155"
+
+    return f"""{intro}
+    <div style="background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:18px 20px;max-width:600px;">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+            {avatar_html}
+            <div>
+                <a href="https://bsky.app/profile/{handle}" target="_blank" rel="noopener noreferrer"
+                   style="color:#38bdf8;font-weight:700;font-size:0.95rem;text-decoration:none;">@{handle}</a>
+                <p style="color:#64748b;font-size:0.75rem;margin:2px 0 0;">Linked {linked_when} &middot; currently {status}</p>
+            </div>
+        </div>
+        <form action="/api/settings/bluesky/display" method="post">
+            <label style="display:flex;align-items:center;gap:12px;padding:10px 0;cursor:pointer;border-top:1px solid #1e293b;">
+                <div style="position:relative;flex-shrink:0;width:44px;height:24px;">
+                    <input type="checkbox" name="show" {"checked" if shown else ""}
+                           style="position:absolute;opacity:0;width:0;height:0;" onchange="this.form.submit()">
+                    <div style="position:absolute;inset:0;border-radius:12px;background:{knob_bg};border:1px solid {knob_border};transition:background .2s;">
+                        <div style="position:absolute;top:2px;left:{knob_left};width:18px;height:18px;border-radius:50%;background:white;transition:left .2s;"></div>
+                    </div>
+                </div>
+                <span style="font-size:0.85rem;color:#f1f5f9;">Show my handle &amp; profile picture across the P2P system</span>
+            </label>
+        </form>
+        <form action="/api/settings/bluesky/unlink" method="post" style="margin-top:12px;"
+              onsubmit="return confirm('Unlink your Bluesky account?');">
+            <button type="submit"
+                    style="background:#1e293b;border:1px solid #ef4444;color:#fca5a5;border-radius:6px;
+                           padding:7px 16px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:inherit;">
+                Unlink Account</button>
+        </form>
+    </div>"""
+
+
+def _account_tab(player, bsky_err: bool = False) -> str:
     try:
         from corporate_actions import is_player_bankrupt
         _bankrupt = is_player_bankrupt(player.id)
@@ -3343,6 +3440,10 @@ def _account_tab(player) -> str:
 <div style="max-width:600px;">
 
     {_subscription_section(player)}
+
+    <hr style="border:none;border-top:1px solid #1e293b;margin:28px 0;">
+
+    {_bluesky_section(player, error=bsky_err)}
 
     <hr style="border:none;border-top:1px solid #1e293b;margin:28px 0;">
 
@@ -3409,6 +3510,7 @@ def settings_page(
     session_token: Optional[str] = Cookie(None),
     tab: str = Query("audio"),
     from_tutorial: int = Query(0),
+    bsky_err: int = Query(0),
 ):
     player = _require_auth(session_token)
     if isinstance(player, RedirectResponse):
@@ -3430,7 +3532,7 @@ def settings_page(
     elif tab == "skins":
         content = _skins_tab(player)
     elif tab == "account":
-        content = _account_tab(player)
+        content = _account_tab(player, bsky_err=bool(bsky_err))
     else:
         content = '<p style="color:#64748b;">Coming soon.</p>'
 
