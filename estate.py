@@ -555,8 +555,20 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
                 )
                 db.add(listing)
 
-                # Transfer items to government (player 0)
-                item.player_id = GOVERNMENT_PLAYER_ID
+                # Transfer items to the government (player 0). The inventory table has a
+                # UNIQUE (player_id, item_type) constraint, so if the government already
+                # holds this item_type we must MERGE quantities into the existing row
+                # rather than reassign this row onto player 0 (which collides and rolls
+                # back the entire liquidation). Otherwise reassign the row directly.
+                gov_item = db.query(InventoryItem).filter(
+                    InventoryItem.player_id == GOVERNMENT_PLAYER_ID,
+                    InventoryItem.item_type == item.item_type,
+                ).first()
+                if gov_item and gov_item.id != item.id:
+                    gov_item.quantity += item.quantity
+                    db.delete(item)
+                else:
+                    item.player_id = GOVERNMENT_PLAYER_ID
                 print(f"[Estate] Seized {item.quantity:.0f} {item.item_type} (${value:,.2f})")
         except Exception as e:
             print(f"[Estate] Inventory liquidation error: {e}")
