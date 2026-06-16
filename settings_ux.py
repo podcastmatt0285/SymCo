@@ -3118,13 +3118,14 @@ _PRO_PERKS_LIVE = [
      "Sacrifice land (Fibonacci scaling — empty plots OK) to forge an Institution, then build a Mint that strikes precious-metal coinage. Manage them on the Institutions page."),
     ("🪙", "Metal coinage legal tender",
      "Six mint-issued currencies — AU24, AU22 (gold), AG999, AG925 (silver), PT9995, PT950 (platinum) — pegged live to metal market prices. Subscribers can set one as their legal tender."),
+    ("🖼️", "Profile picture",
+     "Show your linked Bluesky profile picture across the P2P system — contact card, contracts, chat, and DMs. Link your account in the Bluesky section below."),
 ]
 _PRO_PERKS_SOON = [
     ("💱", "Forex Trading Floor",     "A subscriber-only currency-exchange dashboard."),
     ("🔌", "Player API",              "Read access, plus buy/sell writes limited to the commodity & district markets."),
     ("🎖️", "Supporter badge",         "Shown on the leaderboard and your P2P contact card."),
     ("🤝", "Extra P2P capacity",      "More contacts than the standard 46-contact cap."),
-    ("🖼️", "Permanent profile picture","Displayed on your P2P contact card."),
     ("🏆", "Higher trophy multiplier","Earn more trophies on event completions."),
     ("📣", "P2P banner ads & tickers","Post banner ads in chatrooms and scrolling tickers."),
     ("🛍️", "Trophies Store",          "A subscriber-only store to spend your trophies."),
@@ -3338,47 +3339,66 @@ def _bluesky_section(player, error: bool = False) -> str:
     </div>"""
 
     # Linked view
+    import html as _html
+    try:
+        from skin_utils import is_pro as _is_pro
+        is_pro_user = _is_pro(player)
+    except Exception:
+        is_pro_user = False
+
     handle = link["handle"]
-    if link.get("avatar_url"):
-        avatar_html = (f'<img src="{link["avatar_url"]}" alt="" '
+    handle_e = _html.escape(handle or "", quote=True)
+    avatar_url = link.get("avatar_url")
+    if avatar_url:
+        avatar_html = (f'<img src="{_html.escape(avatar_url, quote=True)}" alt="" '
                        f'style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0;">')
     else:
         letter = (handle or "?")[0].upper()
         avatar_html = (f'<div style="width:48px;height:48px;border-radius:50%;background:#1e293b;'
                        f'display:flex;align-items:center;justify-content:center;color:#38bdf8;'
                        f'font-size:1.3rem;font-weight:bold;flex-shrink:0;">{letter}</div>')
-    shown = bool(link.get("show_on_p2p"))
+    show_handle = bool(link.get("show_on_p2p"))
+    show_avatar = bool(link.get("show_avatar")) and is_pro_user
     linked_at = link.get("linked_at")
     linked_when = linked_at.strftime("%b %d, %Y") if linked_at else ""
-    status = ('<span style="color:#22c55e;">visible in P2P</span>' if shown
-              else '<span style="color:#64748b;">hidden</span>')
-    knob_left = "22px" if shown else "2px"
-    knob_bg = "#38bdf8" if shown else "#1e293b"
-    knob_border = "#38bdf8" if shown else "#334155"
+
+    def _toggle(name, checked, label, sub="", disabled=False):
+        on = checked and not disabled
+        kl = "22px" if on else "2px"
+        kb = "#38bdf8" if on else "#1e293b"
+        kbd = "#38bdf8" if on else "#334155"
+        op = "opacity:0.55;" if disabled else ""
+        cur = "default" if disabled else "pointer"
+        return f"""
+            <label style="display:flex;align-items:center;gap:12px;padding:12px 0;cursor:{cur};border-top:1px solid #1e293b;{op}">
+                <div style="position:relative;flex-shrink:0;width:44px;height:24px;">
+                    <input type="checkbox" name="{name}" {"checked" if on else ""} {"disabled" if disabled else ""}
+                           style="position:absolute;opacity:0;width:0;height:0;" onchange="this.form.submit()">
+                    <div style="position:absolute;inset:0;border-radius:12px;background:{kb};border:1px solid {kbd};transition:background .2s;">
+                        <div style="position:absolute;top:2px;left:{kl};width:18px;height:18px;border-radius:50%;background:white;transition:left .2s;"></div>
+                    </div>
+                </div>
+                <span style="font-size:0.85rem;color:#f1f5f9;">{label}{sub}</span>
+            </label>"""
+
+    avatar_sub = ("" if is_pro_user else
+                  ' <span style="color:#fbbf24;font-size:0.72rem;">🔒 Wadsworth Pro required</span>')
 
     return f"""{intro}
     <div style="background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:18px 20px;max-width:600px;">
-        <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;">
             {avatar_html}
             <div>
-                <a href="https://bsky.app/profile/{handle}" target="_blank" rel="noopener noreferrer"
-                   style="color:#38bdf8;font-weight:700;font-size:0.95rem;text-decoration:none;">@{handle}</a>
-                <p style="color:#64748b;font-size:0.75rem;margin:2px 0 0;">Linked {linked_when} &middot; currently {status}</p>
+                <a href="https://bsky.app/profile/{handle_e}" target="_blank" rel="noopener noreferrer"
+                   style="color:#38bdf8;font-weight:700;font-size:0.95rem;text-decoration:none;">@{handle_e}</a>
+                <p style="color:#64748b;font-size:0.75rem;margin:2px 0 0;">Linked {linked_when}</p>
             </div>
         </div>
         <form action="/api/settings/bluesky/display" method="post">
-            <label style="display:flex;align-items:center;gap:12px;padding:10px 0;cursor:pointer;border-top:1px solid #1e293b;">
-                <div style="position:relative;flex-shrink:0;width:44px;height:24px;">
-                    <input type="checkbox" name="show" {"checked" if shown else ""}
-                           style="position:absolute;opacity:0;width:0;height:0;" onchange="this.form.submit()">
-                    <div style="position:absolute;inset:0;border-radius:12px;background:{knob_bg};border:1px solid {knob_border};transition:background .2s;">
-                        <div style="position:absolute;top:2px;left:{knob_left};width:18px;height:18px;border-radius:50%;background:white;transition:left .2s;"></div>
-                    </div>
-                </div>
-                <span style="font-size:0.85rem;color:#f1f5f9;">Show my handle &amp; profile picture across the P2P system</span>
-            </label>
+            {_toggle("show_handle", show_handle, "Show my handle across the P2P system")}
+            {_toggle("show_avatar", show_avatar, "Show my profile picture across the P2P system", sub=avatar_sub, disabled=not is_pro_user)}
         </form>
-        <form action="/api/settings/bluesky/unlink" method="post" style="margin-top:12px;"
+        <form action="/api/settings/bluesky/unlink" method="post" style="margin-top:14px;"
               onsubmit="return confirm('Unlink your Bluesky account?');">
             <button type="submit"
                     style="background:#1e293b;border:1px solid #ef4444;color:#fca5a5;border-radius:6px;
