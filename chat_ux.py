@@ -58,6 +58,19 @@ def validate_session_ws(session_token):
         return None
 
 
+def _bsky_fields(player_id: int):
+    """Return (handle, avatar_url) for an opted-in linked Bluesky account, else
+    (None, None). Degrades gracefully if the bluesky module is unavailable."""
+    try:
+        import bluesky
+        link = bluesky.get_public_link(player_id)
+        if link:
+            return link.get("handle"), link.get("avatar_url")
+    except Exception:
+        pass
+    return None, None
+
+
 def get_player_profile(player_id: int) -> Optional[dict]:
     """Build a player profile dict for the bio modal."""
     try:
@@ -80,6 +93,11 @@ def get_player_profile(player_id: int) -> Optional[dict]:
 
         # Online status
         profile["online"] = player_id in manager.connections
+
+        # Linked Bluesky identity (only when the player has opted into P2P display)
+        _bh, _ba = _bsky_fields(player_id)
+        profile["bluesky_handle"] = _bh
+        profile["bluesky_avatar_url"] = _ba
 
         return profile
     except Exception:
@@ -976,7 +994,8 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
             `;
         }} else {{
             div.className = 'chat-msg';
-            const avatar = avatarCache[data.sender_id];
+            // Prefer the player's linked Bluesky avatar (if opted in), else their chat avatar.
+            const avatar = data.bluesky_avatar_url || avatarCache[data.sender_id];
             let avatarHtml;
             if (avatar) {{
                 avatarHtml = `<img class="msg-avatar" src="${{avatar}}" data-pid="${{data.sender_id}}" onclick="openProfile(${{data.sender_id}})">`;
@@ -986,11 +1005,14 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
                 avatarHtml = `<div class="msg-avatar-letter" style="color: hsl(${{hue}},60%,65%);" data-pid="${{data.sender_id}}" onclick="openProfile(${{data.sender_id}})">${{letter}}</div>`;
             }}
             const nameColor = data.sender_id === PLAYER_ID ? '#22c55e' : (ADMIN_IDS.includes(data.sender_id) ? '#f59e0b' : '#38bdf8');
+            const bskyHandleHtml = data.bluesky_handle
+                ? ` <a href="https://bsky.app/profile/${{data.bluesky_handle}}" target="_blank" rel="noopener noreferrer" style="color:#38bdf8;font-size:0.72rem;text-decoration:none;font-weight:normal;">@${{data.bluesky_handle}}</a>`
+                : '';
             div.innerHTML = `
                 ${{avatarHtml}}
                 <div class="msg-body">
                     <div class="msg-header">
-                        <span class="msg-name" style="color: ${{nameColor}}" onclick="openProfile(${{data.sender_id}})">${{escapeHtml(data.sender_name)}}</span>
+                        <span class="msg-name" style="color: ${{nameColor}}" onclick="openProfile(${{data.sender_id}})">${{escapeHtml(data.sender_name)}}</span>${{bskyHandleHtml}}
                         <span class="msg-time">${{timeStr}}</span>
                     </div>
                     <div class="msg-text">${{formatMessageContent(filteredContent)}}</div>
@@ -1053,7 +1075,8 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
             document.getElementById('profile-content').innerHTML = '<p style="color: #ef4444;">Player not found.</p>';
             return;
         }}
-        const avatar = avatarCache[p.id];
+        // Prefer the player's linked Bluesky avatar (if opted in), else their chat avatar.
+        const avatar = p.bluesky_avatar_url || avatarCache[p.id];
         let avatarHtml;
         if (avatar) {{
             avatarHtml = `<img class="profile-avatar" src="${{avatar}}">`;
@@ -1062,6 +1085,9 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
             const hue = (p.id * 137) % 360;
             avatarHtml = `<div class="profile-letter" style="color: hsl(${{hue}},60%,65%);">${{letter}}</div>`;
         }}
+        const bskyRow = p.bluesky_handle
+            ? `<div class="profile-stat"><span class="label">Bluesky</span><span class="value"><a href="https://bsky.app/profile/${{p.bluesky_handle}}" target="_blank" rel="noopener noreferrer" style="color:#38bdf8;text-decoration:none;">🦋 @${{p.bluesky_handle}}</a></span></div>`
+            : '';
         const onlineDot = p.online
             ? '<span style="color: #22c55e; font-size: 0.75rem;">● Online now</span>'
             : '<span style="color: #64748b; font-size: 0.75rem;">○ Offline</span>';
@@ -1079,6 +1105,7 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
             <div style="margin-bottom: 12px;">${{onlineDot}}</div>
             <div style="text-align: left;">
                 <div class="profile-stat"><span class="label">Player ID</span><span class="value">#${{p.id}}</span></div>
+                ${{bskyRow}}
                 ${{cityRow}}
                 <div class="profile-stat"><span class="label">Joined</span><span class="value">${{escapeHtml(p.joined)}}</span></div>
                 <div class="profile-stat"><span class="label">Last Active</span><span class="value">${{escapeHtml(p.last_seen)}}</span></div>
@@ -1730,6 +1757,10 @@ async def chat_websocket(websocket: WebSocket):
                         manager.avatar_cache[sid] = get_avatar(sid)
                     if manager.avatar_cache.get(sid):
                         msg["avatar"] = manager.avatar_cache[sid]
+                    _bh, _ba = _bsky_fields(sid)
+                    if _bh:
+                        msg["bluesky_handle"] = _bh
+                        msg["bluesky_avatar_url"] = _ba
 
                 await manager.send_to_user(player_id, {
                     "type": "history",
@@ -1804,6 +1835,10 @@ async def chat_websocket(websocket: WebSocket):
                 if saved:
                     saved["type"] = "message"
                     saved["avatar"] = manager.avatar_cache.get(player_id)
+                    _bh, _ba = _bsky_fields(player_id)
+                    if _bh:
+                        saved["bluesky_handle"] = _bh
+                        saved["bluesky_avatar_url"] = _ba
                     await manager.broadcast_to_room(room_id, saved)
 
                 manager.clear_typing(room_id, player_id)
