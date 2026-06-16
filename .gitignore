@@ -12,6 +12,8 @@ android/twa-project/
 
 # Runtime state files
 widget_devices.json
+# Generated, skin-themed player snapshot OG cards (regenerated on demand, one per player)
+static/cache/
 nohup.out
 Task
 cloudflared.log
