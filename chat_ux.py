@@ -63,12 +63,10 @@ def _bsky_fields(player_id: int):
     (None, None). Degrades gracefully if the bluesky module is unavailable."""
     try:
         import bluesky
-        link = bluesky.get_public_link(player_id)
-        if link:
-            return link.get("handle"), link.get("avatar_url")
+        # handle is available to all opted-in players; avatar is Pro-gated.
+        return bluesky.public_handle(player_id), bluesky.public_avatar(player_id)
     except Exception:
-        pass
-    return None, None
+        return None, None
 
 
 def get_player_profile(player_id: int) -> Optional[dict]:
@@ -998,7 +996,7 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
             const avatar = data.bluesky_avatar_url || avatarCache[data.sender_id];
             let avatarHtml;
             if (avatar) {{
-                avatarHtml = `<img class="msg-avatar" src="${{avatar}}" data-pid="${{data.sender_id}}" onclick="openProfile(${{data.sender_id}})">`;
+                avatarHtml = `<img class="msg-avatar" src="${{escapeHtml(avatar)}}" data-pid="${{data.sender_id}}" onclick="openProfile(${{data.sender_id}})">`;
             }} else {{
                 const letter = (data.sender_name || '?')[0].toUpperCase();
                 const hue = (data.sender_id * 137) % 360;
@@ -1006,7 +1004,7 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
             }}
             const nameColor = data.sender_id === PLAYER_ID ? '#22c55e' : (ADMIN_IDS.includes(data.sender_id) ? '#f59e0b' : '#38bdf8');
             const bskyHandleHtml = data.bluesky_handle
-                ? ` <a href="https://bsky.app/profile/${{data.bluesky_handle}}" target="_blank" rel="noopener noreferrer" style="color:#38bdf8;font-size:0.72rem;text-decoration:none;font-weight:normal;">@${{data.bluesky_handle}}</a>`
+                ? ` <a href="https://bsky.app/profile/${{escapeHtml(data.bluesky_handle)}}" target="_blank" rel="noopener noreferrer" style="color:#38bdf8;font-size:0.72rem;text-decoration:none;font-weight:normal;">@${{escapeHtml(data.bluesky_handle)}}</a>`
                 : '';
             div.innerHTML = `
                 ${{avatarHtml}}
@@ -1079,14 +1077,14 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
         const avatar = p.bluesky_avatar_url || avatarCache[p.id];
         let avatarHtml;
         if (avatar) {{
-            avatarHtml = `<img class="profile-avatar" src="${{avatar}}">`;
+            avatarHtml = `<img class="profile-avatar" src="${{escapeHtml(avatar)}}">`;
         }} else {{
             const letter = (p.name || '?')[0].toUpperCase();
             const hue = (p.id * 137) % 360;
             avatarHtml = `<div class="profile-letter" style="color: hsl(${{hue}},60%,65%);">${{letter}}</div>`;
         }}
         const bskyRow = p.bluesky_handle
-            ? `<div class="profile-stat"><span class="label">Bluesky</span><span class="value"><a href="https://bsky.app/profile/${{p.bluesky_handle}}" target="_blank" rel="noopener noreferrer" style="color:#38bdf8;text-decoration:none;">🦋 @${{p.bluesky_handle}}</a></span></div>`
+            ? `<div class="profile-stat"><span class="label">Bluesky</span><span class="value"><a href="https://bsky.app/profile/${{escapeHtml(p.bluesky_handle)}}" target="_blank" rel="noopener noreferrer" style="color:#38bdf8;text-decoration:none;">🦋 @${{escapeHtml(p.bluesky_handle)}}</a></span></div>`
             : '';
         const onlineDot = p.online
             ? '<span style="color: #22c55e; font-size: 0.75rem;">● Online now</span>'

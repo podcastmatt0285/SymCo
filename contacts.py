@@ -394,19 +394,21 @@ def build_contact_card_html(subject_id: int, disp: dict, fmt_usd_fn) -> str:
     _avatar_content = name[0].upper() if name else "?"
     _bsky_badge = ""
     try:
-        import bluesky
-        _bsky = bluesky.get_public_link(subject_id)
-        if _bsky:
-            if _bsky.get("avatar_url"):
-                _avatar_content = (f'<img src="{_bsky["avatar_url"]}" alt="" '
-                                   f'style="width:100%;height:100%;border-radius:50%;object-fit:cover;">')
+        import bluesky, html as _html
+        _ba = bluesky.public_avatar(subject_id)          # Pro-gated profile picture
+        _bh = bluesky.public_handle(subject_id)          # handle (available to all)
+        if _ba:
+            _avatar_content = (f'<img src="{_html.escape(_ba, quote=True)}" alt="" '
+                               f'style="width:100%;height:100%;border-radius:50%;object-fit:cover;">')
+        if _bh:
+            _bhe = _html.escape(_bh, quote=True)
             _bsky_badge = (
-                f'<a href="https://bsky.app/profile/{_bsky["handle"]}" target="_blank" '
+                f'<a href="https://bsky.app/profile/{_bhe}" target="_blank" '
                 f'rel="noopener noreferrer" title="Bluesky" '
                 f'style="display:inline-flex;align-items:center;gap:4px;'
                 f'background:#082f49;border:1px solid #0ea5e9;border-radius:10px;'
                 f'padding:2px 8px;font-size:0.72rem;font-weight:700;color:#38bdf8;'
-                f'text-decoration:none;">🦋 @{_bsky["handle"]}</a>'
+                f'text-decoration:none;">🦋 @{_bhe}</a>'
             )
     except Exception:
         pass

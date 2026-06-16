@@ -21,6 +21,7 @@ Design:
 from typing import Optional
 from datetime import datetime, timedelta
 import time
+import html
 
 import requests
 from fastapi import APIRouter, Cookie, Form
@@ -57,6 +58,9 @@ def _ensure_table():
                 linked_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 refreshed_at  TIMESTAMPTZ
             )""",
+        # show_on_p2p == "show my handle" (available to all). show_avatar gates the
+        # profile picture separately and is additionally Pro-gated at render time.
+        "ALTER TABLE bluesky_links ADD COLUMN IF NOT EXISTS show_avatar BOOLEAN NOT NULL DEFAULT FALSE",
     ])
 
 
@@ -89,8 +93,10 @@ def get_link(player_id: int) -> Optional[dict]:
     db = get_db()
     try:
         row = db.execute(text(
-            "SELECT player_id, did, handle, avatar_url, show_on_p2p, linked_at "
-            "FROM bluesky_links WHERE player_id = :pid"
+            "SELECT b.player_id, b.did, b.handle, b.avatar_url, b.show_on_p2p, "
+            "       b.show_avatar, b.linked_at, COALESCE(p.subscriber, FALSE) AS subscriber "
+            "FROM bluesky_links b LEFT JOIN players p ON p.id = b.player_id "
+            "WHERE b.player_id = :pid"
         ), {"pid": player_id}).mappings().first()
     finally:
         db.close()
@@ -100,12 +106,34 @@ def get_link(player_id: int) -> Optional[dict]:
     return link
 
 
-def get_public_link(player_id: int) -> Optional[dict]:
-    """Link record only if the player has opted into showing it. Used by all p2p
-    identity rendering so the opt-in is enforced in one place."""
+def _is_pro_pid(player_id: int, link: Optional[dict] = None) -> bool:
+    """True if the player has Wadsworth Pro (subscriber or admin). Uses the cached
+    subscriber flag from get_link to avoid an extra query per render."""
+    link = link if link is not None else get_link(player_id)
+    if link and link.get("subscriber"):
+        return True
+    try:
+        from admins import is_admin
+        return bool(is_admin(player_id))
+    except Exception:
+        return False
+
+
+def public_handle(player_id: int) -> Optional[str]:
+    """The player's handle iff they opted into showing it (available to everyone)."""
     link = get_link(player_id)
     if link and link.get("show_on_p2p"):
-        return link
+        return link.get("handle")
+    return None
+
+
+def public_avatar(player_id: int) -> Optional[str]:
+    """The player's avatar URL iff they opted in AND are Pro (profile picture is a
+    Pro-gated perk). Gating is enforced here so every render site agrees."""
+    link = get_link(player_id)
+    if (link and link.get("show_avatar") and link.get("avatar_url")
+            and _is_pro_pid(player_id, link)):
+        return link.get("avatar_url")
     return None
 
 
@@ -131,14 +159,17 @@ def upsert_link(player_id: int, did: str, handle: str, avatar_url: Optional[str]
     _invalidate(player_id)
 
 
-def set_show_on_p2p(player_id: int, show: bool):
+def set_visibility(player_id: int, show_handle: bool, show_avatar: bool):
+    """Update both visibility switches. show_handle is available to everyone;
+    show_avatar should only be set True for Pro players (callers enforce that)."""
     from auth import get_db
     from sqlalchemy import text
     db = get_db()
     try:
         db.execute(
-            text("UPDATE bluesky_links SET show_on_p2p = :v WHERE player_id = :pid"),
-            {"v": bool(show), "pid": player_id},
+            text("UPDATE bluesky_links SET show_on_p2p = :h, show_avatar = :a "
+                 "WHERE player_id = :pid"),
+            {"h": bool(show_handle), "a": bool(show_avatar), "pid": player_id},
         )
         db.commit()
     finally:
@@ -227,28 +258,30 @@ def verify_link(method: str, **kwargs) -> Optional[dict]:
 # ==========================
 
 def avatar_img(player_id: int, size: int = 20, margin: bool = True) -> str:
-    """Small inline avatar <img> for an opted-in player, else "". Hotlinks the bsky CDN."""
-    link = get_public_link(player_id)
-    if not link or not link.get("avatar_url"):
+    """Small inline avatar <img> for an opted-in Pro player, else "". Hotlinks the
+    bsky CDN. URL is escaped defensively before injection into the attribute."""
+    url = public_avatar(player_id)
+    if not url:
         return ""
     mr = "margin-right:5px;" if margin else ""
     return (
-        f'<img src="{link["avatar_url"]}" alt="" '
+        f'<img src="{html.escape(url, quote=True)}" alt="" '
         f'style="width:{size}px;height:{size}px;border-radius:50%;object-fit:cover;'
         f'vertical-align:middle;{mr}">'
     )
 
 
 def handle_link(player_id: int, prefix: str = " ") -> str:
-    """`@handle` link to the player's Bluesky profile for an opted-in player, else ""."""
-    link = get_public_link(player_id)
-    if not link:
+    """`@handle` link to the player's Bluesky profile for an opted-in player, else "".
+    Handle is escaped defensively before injection into the href + text."""
+    handle = public_handle(player_id)
+    if not handle:
         return ""
-    handle = link["handle"]
+    h = html.escape(handle, quote=True)
     return (
-        f'{prefix}<a href="https://bsky.app/profile/{handle}" target="_blank" '
+        f'{prefix}<a href="https://bsky.app/profile/{h}" target="_blank" '
         f'rel="noopener noreferrer" style="color:#38bdf8;font-size:0.78rem;'
-        f'text-decoration:none;font-weight:normal;">@{handle}</a>'
+        f'text-decoration:none;font-weight:normal;">@{h}</a>'
     )
 
 
@@ -294,12 +327,22 @@ def bluesky_link(
 @router.post("/api/settings/bluesky/display")
 def bluesky_display(
     session_token: Optional[str] = Cookie(None),
-    show: Optional[str] = Form(None),
+    show_handle: Optional[str] = Form(None),
+    show_avatar: Optional[str] = Form(None),
 ):
     player = _require_auth(session_token)
     if not player:
         return RedirectResponse(url="/login", status_code=303)
-    set_show_on_p2p(player.id, show is not None)
+    # Profile picture is a Pro-gated perk: only honor show_avatar for Pro players.
+    want_avatar = show_avatar is not None
+    if want_avatar:
+        try:
+            from skin_utils import is_pro
+            if not is_pro(player):
+                want_avatar = False
+        except Exception:
+            want_avatar = False
+    set_visibility(player.id, show_handle is not None, want_avatar)
     return _redirect_account()
 
 
@@ -333,11 +376,11 @@ def tick(current_tick: int, now: datetime):
         ), {"cutoff": cutoff}).mappings().all()
         for r in rows:
             profile = fetch_profile(r["did"])
-            if profile:
+            if profile and profile.get("handle"):
                 db.execute(text(
                     "UPDATE bluesky_links SET handle = :h, avatar_url = :a, refreshed_at = NOW() "
                     "WHERE player_id = :pid"
-                ), {"h": profile.get("handle") or "", "a": profile.get("avatar"), "pid": r["player_id"]})
+                ), {"h": profile["handle"], "a": profile.get("avatar"), "pid": r["player_id"]})
             else:
                 db.execute(text(
                     "UPDATE bluesky_links SET refreshed_at = NOW() WHERE player_id = :pid"
