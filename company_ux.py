@@ -407,6 +407,7 @@ SITEMAP_ENTRIES = [
     ("/",                            "Dashboard",              "Your wealth, holdings, and live game alerts at a glance"),
     ("/chat",                        "Global Chat",            "Live community chat — tag items, businesses, and players with # @ $ %"),
     ("/world-map",                   "World Map",              "Explore the entire game map: cities, counties, districts, and land parcels"),
+    ("/me/snapshot",                 "My Snapshot",            "Your public, shareable profile card — rendered in your skin; post it to Bluesky or copy the link"),
     ("/events",                      "Events & Tasks",         "Active server-wide events, daily tasks, and the Founding Tester beta program"),
     ("/events/land-grant",           "Land Grant Events",      "Government-issued land grant events — claim free parcels during active grant windows"),
     ("/government",                  "Government",             "Federal treasury, sovereign bonds, fiscal policy rates, and the full city/county directory"),

@@ -1733,12 +1733,12 @@ def login_page(session_token: Optional[str] = Cookie(None)):
                         &bull; <a href="/company/press-kit"><strong>Press Kit</strong></a> — brand assets, downloadable logos for all skins, official game description<br>
                         &bull; <a href="/company/careers"><strong>Careers</strong></a> — freelance and paid positions<br>
                         &bull; <a href="/privacy-policy"><strong>Privacy Policy</strong></a> — data collection and usage<br><br>
-                        After logging in, <strong>WikiWads</strong> (in-game knowledge base) covers every mechanic in detail. For bugs or feature requests, use the GitHub Issues link in the footer.</div>
+                        After logging in, <strong>WikiWads</strong> (in-game knowledge base) covers every mechanic in detail. For bugs, feature requests, or to reach the developer, message the official Bluesky account <a href="https://bsky.app/profile/wadsworthtycoon.bsky.social" target="_blank" rel="noopener noreferrer">@wadsworthtycoon.bsky.social</a>.</div>
                     </details>
 
                     <details class="faq-item">
                         <summary>How often is the game updated? <span class="faq-icon">+</span></summary>
-                        <div class="faq-answer">Frequently. Small fixes and balance tweaks deploy every few days. Major new features — new index types, business categories, weapons systems, district types, financial instruments, economic events — ship roughly monthly. The game is actively developed and player feedback directly shapes the roadmap. Feature ideas and bug reports are always welcome via the GitHub link in the page footer.</div>
+                        <div class="faq-answer">Frequently. Small fixes and balance tweaks deploy every few days. Major new features — new index types, business categories, weapons systems, district types, financial instruments, economic events — ship roughly monthly. The game is actively developed and player feedback directly shapes the roadmap. Feature ideas and bug reports are always welcome — message the official Bluesky account <a href="https://bsky.app/profile/wadsworthtycoon.bsky.social" target="_blank" rel="noopener noreferrer">@wadsworthtycoon.bsky.social</a>.</div>
                     </details>
 
                 </div><!-- /faq-section -->
@@ -1861,12 +1861,12 @@ def login_page(session_token: Optional[str] = Cookie(None)):
 
                     <details class="faq-item">
                         <summary>How often is the game updated? <span class="faq-icon">+</span></summary>
-                        <div class="faq-answer">Frequently. Small fixes and balance tweaks deploy every few days. Major new features — new index types, new business categories, expanded weapons and military systems, new district types, economic events — ship roughly monthly. The game is actively developed and player feedback directly shapes the roadmap. Feature ideas and bug reports are welcome at the GitHub issues link in the page footer.</div>
+                        <div class="faq-answer">Frequently. Small fixes and balance tweaks deploy every few days. Major new features — new index types, new business categories, expanded weapons and military systems, new district types, economic events — ship roughly monthly. The game is actively developed and player feedback directly shapes the roadmap. Feature ideas and bug reports are welcome — message the official Bluesky account <a href="https://bsky.app/profile/wadsworthtycoon.bsky.social" target="_blank" rel="noopener noreferrer">@wadsworthtycoon.bsky.social</a>.</div>
                     </details>
 
                     <details class="faq-item">
                         <summary>Where can I get help? <span class="faq-icon">+</span></summary>
-                        <div class="faq-answer">The in-game <strong>Wiki</strong> covers most mechanics in detail with guides for beginners, the market, land, districts, ETFs, crypto, and more — accessible from the main menu after signing in. The in-game <strong>chat</strong> is the fastest way to reach experienced players. For bugs or feature requests, file an issue on <a href="https://github.com/podcastmatt0285/symco/issues">GitHub</a>. You can also reach the developer directly through the contact info in the footer.</div>
+                        <div class="faq-answer">The in-game <strong>Wiki</strong> covers most mechanics in detail with guides for beginners, the market, land, districts, ETFs, crypto, and more — accessible from the main menu after signing in. The in-game <strong>chat</strong> is the fastest way to reach experienced players. For bugs or feature requests, or to reach the developer directly, message the official Bluesky account <a href="https://bsky.app/profile/wadsworthtycoon.bsky.social" target="_blank" rel="noopener noreferrer">@wadsworthtycoon.bsky.social</a> (also linked in the footer).</div>
                     </details>
 
                 </div><!-- /faq-section -->
@@ -1916,6 +1916,7 @@ def login_page(session_token: Optional[str] = Cookie(None)):
             <a href="/company/careers"    style="color:#64748b;text-decoration:underline;">Careers</a>
             <a href="/company/press-kit"  style="color:#64748b;text-decoration:underline;">Press Kit</a>
             <a href="/privacy-policy"     style="color:#64748b;text-decoration:underline;">Privacy Policy</a>
+            <a href="https://bsky.app/profile/wadsworthtycoon.bsky.social" target="_blank" rel="noopener noreferrer" style="color:#64748b;text-decoration:underline;">🦋 Bluesky</a>
         </div>
         <span style="color:#334155;">&copy; 2026 Wadsworth Notifly. All rights reserved.</span>
     </footer>

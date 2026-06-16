@@ -3384,6 +3384,17 @@ def _bluesky_section(player, error: bool = False) -> str:
     avatar_sub = ("" if is_pro_user else
                   ' <span style="color:#fbbf24;font-size:0.72rem;">🔒 Wadsworth Pro required</span>')
 
+    public_profile_on = bool(link.get("public_profile"))
+    try:
+        from profiles_ux import SITE_BASE as _SITE_BASE
+    except Exception:
+        _SITE_BASE = ""
+    prof_url = f"{_SITE_BASE}/player/{player.id}"
+    public_profile_note = (
+        f'✅ Live — anyone with the link can view: <span style="color:#38bdf8;">{prof_url}</span>'
+        if public_profile_on else
+        "🙈 Private. Enable to publish a shareable snapshot page that renders in your skin.")
+
     return f"""{intro}
     <div style="background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:18px 20px;max-width:600px;">
         <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;">
@@ -3398,6 +3409,21 @@ def _bluesky_section(player, error: bool = False) -> str:
             {_toggle("show_handle", show_handle, "Show my handle across the P2P system")}
             {_toggle("show_avatar", show_avatar, "Show my profile picture across the P2P system", sub=avatar_sub, disabled=not is_pro_user)}
         </form>
+        <form action="/api/settings/profile/toggle" method="post">
+            {_toggle("public_profile", public_profile_on, "Publish a public, shareable snapshot page")}
+        </form>
+        <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+            <a href="/player/{player.id}" target="_blank" rel="noopener noreferrer"
+               style="background:#082f49;border:1px solid #0ea5e9;color:#38bdf8;border-radius:6px;
+                      padding:7px 14px;font-size:0.8rem;font-weight:700;text-decoration:none;">
+                {"Open my snapshot ↗" if public_profile_on else "Preview my snapshot ↗"}</a>
+            <button type="button"
+                    onclick="navigator.clipboard&&navigator.clipboard.writeText('{prof_url}');this.textContent='✓ Copied';"
+                    style="background:#1e293b;border:1px solid #334155;color:#94a3b8;border-radius:6px;
+                           padding:7px 14px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:inherit;">
+                🔗 Copy snapshot link</button>
+        </div>
+        <p style="color:#64748b;font-size:0.75rem;margin:8px 0 0;">{public_profile_note}</p>
         <form action="/api/settings/bluesky/unlink" method="post" style="margin-top:14px;"
               onsubmit="return confirm('Unlink your Bluesky account?');">
             <button type="submit"

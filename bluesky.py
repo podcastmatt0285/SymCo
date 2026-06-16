@@ -61,6 +61,9 @@ def _ensure_table():
         # show_on_p2p == "show my handle" (available to all). show_avatar gates the
         # profile picture separately and is additionally Pro-gated at render time.
         "ALTER TABLE bluesky_links ADD COLUMN IF NOT EXISTS show_avatar BOOLEAN NOT NULL DEFAULT FALSE",
+        # public_profile == the player opted into a public, shareable /player/{id}
+        # snapshot page. Default OFF — linking alone exposes nothing publicly.
+        "ALTER TABLE bluesky_links ADD COLUMN IF NOT EXISTS public_profile BOOLEAN NOT NULL DEFAULT FALSE",
     ])
 
 
@@ -94,7 +97,8 @@ def get_link(player_id: int) -> Optional[dict]:
     try:
         row = db.execute(text(
             "SELECT b.player_id, b.did, b.handle, b.avatar_url, b.show_on_p2p, "
-            "       b.show_avatar, b.linked_at, COALESCE(p.subscriber, FALSE) AS subscriber "
+            "       b.show_avatar, b.public_profile, b.linked_at, "
+            "       COALESCE(p.subscriber, FALSE) AS subscriber "
             "FROM bluesky_links b LEFT JOIN players p ON p.id = b.player_id "
             "WHERE b.player_id = :pid"
         ), {"pid": player_id}).mappings().first()
@@ -135,6 +139,28 @@ def public_avatar(player_id: int) -> Optional[str]:
             and _is_pro_pid(player_id, link)):
         return link.get("avatar_url")
     return None
+
+
+def is_public_profile(player_id: int) -> bool:
+    """True iff the player has linked Bluesky AND opted into a public snapshot page."""
+    link = get_link(player_id)
+    return bool(link and link.get("public_profile"))
+
+
+def set_public_profile(player_id: int, on: bool):
+    """Toggle the public snapshot page. No-op if the player has no link."""
+    from auth import get_db
+    from sqlalchemy import text
+    db = get_db()
+    try:
+        db.execute(
+            text("UPDATE bluesky_links SET public_profile = :v WHERE player_id = :pid"),
+            {"v": bool(on), "pid": player_id},
+        )
+        db.commit()
+    finally:
+        db.close()
+    _invalidate(player_id)
 
 
 def upsert_link(player_id: int, did: str, handle: str, avatar_url: Optional[str]):
