@@ -211,18 +211,17 @@ def calculate_player_stats(player_id: int) -> dict:
         # converted to USD so the total is currency-agnostic
         total_cash_usd = player.cash_balance or 0.0
         try:
-            from reserve_banks import PlayerCurrencyBalance, StateReserveBank, get_db as get_rb_db
+            from reserve_banks import PlayerCurrencyBalance, get_db as get_rb_db, _get_usd_rate
             rb_db = get_rb_db()
             try:
                 for row in rb_db.query(PlayerCurrencyBalance).filter(
                     PlayerCurrencyBalance.player_id == player_id,
                     PlayerCurrencyBalance.currency_code != "USD",
                 ).all():
-                    bank = rb_db.query(StateReserveBank).filter(
-                        StateReserveBank.currency_code == row.currency_code
-                    ).first()
-                    if bank and bank.usd_per_unit:
-                        total_cash_usd += row.balance * bank.usd_per_unit
+                    # _get_usd_rate prices metal coinage via the live peg (no bank row needed)
+                    rate = _get_usd_rate(rb_db, row.currency_code)
+                    if rate:
+                        total_cash_usd += row.balance * rate
             finally:
                 rb_db.close()
         except Exception:
