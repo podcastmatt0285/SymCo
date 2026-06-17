@@ -882,8 +882,18 @@ def _resolve_referenced_players(querying_id: int, messages: list) -> list:
             if pid == querying_id or pid in found:
                 continue
             nm = (bname or "").strip().lower()
-            # length guard avoids matching ultra-short/common names inside other words
-            if len(nm) >= 4 and nm in text_blob:
+            if not nm:
+                continue
+            # Emoji/symbol names (e.g. "🌻") are 1-2 code points but distinctive, so match them
+            # as a substring regardless of length. Long (>=4) alphanumeric names also match as a
+            # plain substring. Short alphanumeric names need word boundaries so they don't match
+            # inside longer words (e.g. "jo" should not hit "john").
+            has_symbol = any(not (c.isalnum() or c.isspace()) for c in nm)
+            if len(nm) >= 4 or has_symbol:
+                matched = nm in text_blob
+            else:
+                matched = re.search(r"(?<!\w)" + re.escape(nm) + r"(?!\w)", text_blob) is not None
+            if matched:
                 found.append(pid)
             if len(found) >= 6:
                 break
