@@ -3120,10 +3120,11 @@ _PRO_PERKS_LIVE = [
      "Six mint-issued currencies — AU24, AU22 (gold), AG999, AG925 (silver), PT9995, PT950 (platinum) — pegged live to metal market prices. Subscribers can set one as their legal tender."),
     ("🖼️", "Profile picture",
      "Show your linked Bluesky profile picture across the P2P system — contact card, contracts, chat, and DMs. Link your account in the Bluesky section below."),
+    ("🤖", "Financial Advisor",
+     "A private AI advisor that knows the Wadsworth game, your own empire, and your rivals' standings. Open the Financial Advisor card on your dashboard and bring your own free Google Gemini API key."),
 ]
 _PRO_PERKS_SOON = [
     ("💱", "Forex Trading Floor",     "A subscriber-only currency-exchange dashboard."),
-    ("🔌", "Player API",              "Read access, plus buy/sell writes limited to the commodity & district markets."),
     ("🎖️", "Supporter badge",         "Shown on the leaderboard and your P2P contact card."),
     ("🤝", "Extra P2P capacity",      "More contacts than the standard 46-contact cap."),
     ("🏆", "Higher trophy multiplier","Earn more trophies on event completions."),
