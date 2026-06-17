@@ -926,6 +926,157 @@ def _market_snapshot() -> str:
     return snapshot
 
 
+def _compact(n: float) -> str:
+    """Abbreviate large money values (1.73Qa, 4.2B, 56.3K)."""
+    try:
+        n = float(n or 0)
+    except Exception:
+        return "0"
+    for div, suf in ((1e18, "Qi"), (1e15, "Qa"), (1e12, "T"), (1e9, "B"), (1e6, "M"), (1e3, "K")):
+        if abs(n) >= div:
+            return f"${n/div:,.2f}{suf}"
+    return f"${n:,.0f}"
+
+
+_WORLD_CACHE: dict = {}
+_WORLD_TTL = 60
+
+
+def _world_snapshot() -> str:
+    """Game-wide non-price public state a player can see: active events & market effects, the
+    wealth leaderboard, the cities directory, and county governance. Cached briefly; each
+    section independently guarded."""
+    import time as _t
+    c = _WORLD_CACHE
+    if c.get("v") is not None and (_t.time() - c.get("t", 0)) < _WORLD_TTL:
+        return c["v"]
+
+    lines: List[str] = []
+
+    # Active events + market-moving effects
+    try:
+        import events as _ev
+        active = _ev.get_active_events() or []
+        if active:
+            lines.append("ACTIVE EVENTS & TASKS:")
+            for e in active[:12]:
+                end = e.ends_at.strftime("%b %d") if getattr(e, "ends_at", None) else "ongoing"
+                lines.append(f"  [{getattr(e,'event_type','event')}] {getattr(e,'title','?')} "
+                             f"— ends {end}")
+        else:
+            lines.append("ACTIVE EVENTS & TASKS: none right now.")
+        # Economy-moving effect modifiers
+        try:
+            pf = _ev.get_active_market_price_factor()
+            if pf and abs(pf - 1.0) > 1e-9:
+                lines.append(f"  ⚠ Market price factor in effect: ×{pf:.2f} (event-driven).")
+        except Exception:
+            pass
+        try:
+            if _ev.get_active_market_shutdown():
+                lines.append("  ⚠ MARKET SHUTDOWN active — trading is currently halted by an event.")
+        except Exception:
+            pass
+        try:
+            crises = _ev.get_active_item_crisis_summary() or []
+            parts = []
+            for x in crises[:12]:
+                nm = x.get("item_name") or x.get("item_type", "?")
+                if x.get("boost_pct"):
+                    parts.append(f"{nm} +{x['boost_pct']}% (boom)")
+                elif x.get("drop_pct"):
+                    parts.append(f"{nm} -{x['drop_pct']}% (crisis)")
+            if parts:
+                lines.append("  Item booms/crises affecting production: " + ", ".join(parts))
+        except Exception:
+            pass
+        try:
+            upcoming = _ev.get_upcoming_events(3) or []
+            if upcoming:
+                lines.append("  Upcoming: " + ", ".join(
+                    f"{getattr(u,'title','?')} ({u.starts_at.strftime('%b %d')})"
+                    if getattr(u, "starts_at", None) else getattr(u, "title", "?")
+                    for u in upcoming))
+        except Exception:
+            pass
+    except Exception:
+        pass
+
+    # Wealth leaderboard (top players)
+    try:
+        from stats_ux import PlayerStats, get_db as _sdb
+        from auth import Player
+        sdb = _sdb()
+        try:
+            q = (sdb.query(PlayerStats, Player)
+                 .join(Player, Player.id == PlayerStats.player_id)
+                 .filter(PlayerStats.player_id > 0))
+            try:
+                q = q.filter(Player.is_npc.isnot(True))
+            except Exception:
+                pass
+            top = q.order_by(PlayerStats.total_net_worth.desc()).limit(10).all()
+        finally:
+            sdb.close()
+        if top:
+            lines.append("")
+            lines.append("WEALTH LEADERBOARD (top 10 by net worth):")
+            for i, (ps, pl) in enumerate(top, 1):
+                lines.append(f"  {i}. {pl.business_name} — {_compact(ps.total_net_worth)}")
+    except Exception:
+        pass
+
+    # Cities directory
+    try:
+        from cities import City, get_db as _cdb, get_city_members
+        cdb = _cdb()
+        try:
+            cities = cdb.query(City).all()
+        finally:
+            cdb.close()
+        if cities:
+            lines.append("")
+            lines.append(f"CITIES ({len(cities)}):")
+            from auth import Player, get_db as _adb
+            adb = _adb()
+            try:
+                for ct in cities[:15]:
+                    try:
+                        mayor = adb.query(Player).filter(Player.id == ct.mayor_id).first()
+                        mname = mayor.business_name if mayor else f"#{ct.mayor_id}"
+                    except Exception:
+                        mname = f"#{ct.mayor_id}"
+                    try:
+                        members = len(get_city_members(ct.id))
+                    except Exception:
+                        members = "?"
+                    lines.append(f"  {ct.name} — mayor {mname} · {members} members · "
+                                 f"join fee {_compact(ct.application_fee)}")
+            finally:
+                adb.close()
+    except Exception:
+        pass
+
+    # County governance (crypto prices are in the market snapshot; this is the civic side)
+    try:
+        from counties import get_all_counties
+        cos = get_all_counties() or []
+        if cos:
+            lines.append("")
+            lines.append(f"COUNTIES ({len(cos)}):")
+            for c2 in cos[:15]:
+                lines.append(f"  {c2.get('name','?')} — token {c2.get('crypto_symbol','?')} · "
+                             f"{c2.get('city_count',0)}/{c2.get('max_cities','?')} cities · "
+                             f"treasury {_compact(c2.get('treasury_balance',0))} · "
+                             f"mining pool {c2.get('mining_energy',0):,.0f}")
+    except Exception:
+        pass
+
+    snapshot = "\n".join(lines) if lines else ""
+    c["t"], c["v"] = _t.time(), snapshot
+    return snapshot
+
+
 # ==========================
 # GEMINI CALL
 # ==========================
@@ -1135,11 +1286,14 @@ def advisor_chat(
     own = _build_player_context(player.id)
     others = _other_players_block(player.id, messages)
     market = _market_snapshot()
+    world = _world_snapshot()
     context = own
     if others:
         context += f"\n\n# OTHER PLAYERS REFERENCED\n\n{others}"
     if market:
         context += f"\n\n# MARKET & ECONOMY (game-wide, public)\n\n{market}"
+    if world:
+        context += f"\n\n# WORLD: EVENTS, LEADERBOARD, CITIES & COUNTIES (public)\n\n{world}"
     system = system_prompt(context)
 
     ok, reply = _call_gemini(cred["api_key"], system, messages)
