@@ -66,6 +66,13 @@ def _ensure_table():
                 UNIQUE (player_id, credential_name)
             )""",
         "CREATE INDEX IF NOT EXISTS idx_advisor_cred_player ON advisor_credentials (player_id)",
+        # Per-player privacy preference. share_account_data == "the advisor may see my own
+        # game/financial data". Defaults TRUE (on); a player can switch it off so the advisor
+        # answers from game knowledge only, without their personal numbers.
+        """CREATE TABLE IF NOT EXISTS advisor_settings (
+                player_id          INTEGER PRIMARY KEY,
+                share_account_data BOOLEAN NOT NULL DEFAULT TRUE
+            )""",
     ])
 
 
@@ -265,6 +272,38 @@ def delete_credential(player_id: int, cred_id: int):
     try:
         db.execute(text("DELETE FROM advisor_credentials WHERE id = :cid AND player_id = :pid"),
                    {"cid": cred_id, "pid": player_id})
+        db.commit()
+    finally:
+        db.close()
+
+
+# ==========================
+# PRIVACY PREFERENCE (share own account data with the advisor — default ON)
+# ==========================
+
+def get_share_account_data(player_id: int) -> bool:
+    """True (default) if the advisor may see this player's own game/financial data."""
+    from auth import get_db
+    from sqlalchemy import text
+    db = get_db()
+    try:
+        row = db.execute(text(
+            "SELECT share_account_data FROM advisor_settings WHERE player_id = :pid"
+        ), {"pid": player_id}).first()
+    finally:
+        db.close()
+    return True if row is None else bool(row[0])
+
+
+def set_share_account_data(player_id: int, on: bool):
+    from auth import get_db
+    from sqlalchemy import text
+    db = get_db()
+    try:
+        db.execute(text(
+            "INSERT INTO advisor_settings (player_id, share_account_data) VALUES (:pid, :v) "
+            "ON CONFLICT (player_id) DO UPDATE SET share_account_data = EXCLUDED.share_account_data"
+        ), {"pid": player_id, "v": bool(on)})
         db.commit()
     finally:
         db.close()
@@ -723,6 +762,23 @@ def advisor_cred_delete(
     return _redirect_account()
 
 
+@router.post("/api/advisor/privacy")
+def advisor_privacy(
+    session_token: Optional[str] = Cookie(None),
+    share_account_data: Optional[str] = Form(None),
+):
+    """Toggle whether the advisor may see the player's own account data. Gated to Pro (the
+    whole feature is), so only subscribers/admins can change it. Checkbox submits its name
+    only when checked, so absence == off."""
+    player = _player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    if not _is_pro(player):
+        return _redirect_account()
+    set_share_account_data(player.id, share_account_data is not None)
+    return _redirect_account()
+
+
 # ==========================
 # CHAT ENDPOINT (stateless — nothing persisted)
 # ==========================
@@ -760,9 +816,17 @@ def advisor_chat(
     if not isinstance(messages, list):
         return JSONResponse({"ok": False, "error": "Malformed request."}, status_code=400)
 
-    # Build the private, per-player system prompt. The model sees ONLY this.
+    # Build the private, per-player system prompt. The model sees ONLY this. If the player has
+    # opted out of sharing their account data, send a neutral placeholder instead of their
+    # numbers so the advisor answers from game knowledge only.
     from advisor_knowledge import system_prompt
-    context = _build_player_context(player.id)
+    if get_share_account_data(player.id):
+        context = _build_player_context(player.id)
+    else:
+        context = ("(The player has chosen NOT to share their personal account data. You do "
+                   "not have their balances, holdings, or stats. Give general Wadsworth game "
+                   "guidance and, where personalized numbers would help, suggest they enable "
+                   "account-data sharing in Settings - Account - Financial Advisor.)")
     system = system_prompt(context)
 
     ok, reply = _call_gemini(cred["api_key"], system, messages)
@@ -831,10 +895,50 @@ def _settings_section_html(player) -> str:
         creds_block = ('<p style="color:#64748b;font-size:0.8rem;margin:10px 0 0;">'
                        'No API keys yet. Add one below to start chatting.</p>')
 
+    # Privacy toggle — account-data sharing (default ON; Pro can switch off).
+    share_on = get_share_account_data(player.id)
+    kl = "22px" if share_on else "2px"
+    kb = "#34d399" if share_on else "#1e293b"
+    kbd = "#34d399" if share_on else "#334155"
+    privacy_note = (
+        "On — the advisor can see your own balances, holdings, taxes and stats to give "
+        "personalized answers."
+        if share_on else
+        "Off — the advisor answers from game knowledge only and cannot see your personal "
+        "numbers.")
+    privacy_block = f"""
+        <form action="/api/advisor/privacy" method="post" style="margin-top:14px;border-top:1px solid #1e293b;padding-top:12px;">
+            <label style="display:flex;align-items:center;gap:12px;cursor:pointer;">
+                <div style="position:relative;flex-shrink:0;width:44px;height:24px;">
+                    <input type="checkbox" name="share_account_data" {"checked" if share_on else ""}
+                           style="position:absolute;opacity:0;width:0;height:0;" onchange="this.form.submit()">
+                    <div style="position:absolute;inset:0;border-radius:12px;background:{kb};border:1px solid {kbd};transition:background .2s;">
+                        <div style="position:absolute;top:2px;left:{kl};width:18px;height:18px;border-radius:50%;background:white;transition:left .2s;"></div>
+                    </div>
+                </div>
+                <span style="font-size:0.85rem;color:#f1f5f9;">Let the advisor see my account data</span>
+            </label>
+            <p style="color:#64748b;font-size:0.74rem;margin:6px 0 0;">{privacy_note} Your data is sent only to your own AI provider for that one reply, and is never stored on our server.</p>
+        </form>"""
+
     return f"""{intro}
     <div style="background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:18px 20px;max-width:600px;">
+        <p style="color:#94a3b8;font-size:0.8rem;margin:0 0 8px;line-height:1.55;">
+            Ask it things like <em>"how is my land tax calculated?"</em>, <em>"what should I build on my
+            prairie plot?"</em>, or <em>"is my portfolio too concentrated?"</em> It gives in-game guidance
+            only (it can't trade or move money for you), and it knows nothing about other players.
+        </p>
         {creds_block}
-        <form action="/api/advisor/credentials/add" method="post" style="margin-top:14px;border-top:1px solid #1e293b;padding-top:14px;">
+        {privacy_block}
+        <div style="margin-top:14px;border-top:1px solid #1e293b;padding-top:14px;">
+            <p style="color:#e5e7eb;font-size:0.82rem;font-weight:600;margin:0 0 6px;">Add a free Google Gemini key</p>
+            <ol style="color:#94a3b8;font-size:0.78rem;line-height:1.7;margin:0 0 12px;padding-left:18px;">
+                <li>Go to <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style="color:#38bdf8;">Google AI Studio → API keys</a> (free; many players use a fresh Google account just for this).</li>
+                <li>Click <strong>Create API key</strong> and copy the key (it starts with <code>AIza…</code>).</li>
+                <li>Paste it below, give it a name, and Save. Gemini's free tier is plenty for normal chatting; any cost is billed to <em>your</em> Google account, not ours.</li>
+            </ol>
+        </div>
+        <form action="/api/advisor/credentials/add" method="post">
             <div style="margin-bottom:10px;">
                 <label style="display:block;color:#64748b;font-size:0.75rem;margin-bottom:4px;">Key name</label>
                 <input type="text" name="credential_name" placeholder="My Gemini key" required maxlength="60"
@@ -846,10 +950,8 @@ def _settings_section_html(player) -> str:
                        style="width:100%;max-width:300px;padding:8px 10px;background:#020617;border:1px solid #1e293b;color:#e5e7eb;border-radius:4px;font-family:inherit;font-size:16px;">
             </div>
             <p style="color:#64748b;font-size:0.74rem;margin:8px 0 12px;line-height:1.5;">
-                Get a free key at <a href="https://aistudio.google.com/app/apikey" target="_blank"
-                rel="noopener noreferrer" style="color:#38bdf8;">Google AI Studio</a> — many players make a
-                fresh Google account just for this. Your key is encrypted at rest and used only for your
-                advisor chats.
+                Your key is encrypted at rest, shown only as ••••last-4, and used only for your advisor chats.
+                You can save several keys and switch between them anytime.
             </p>
             <button type="submit"
                     style="background:#34d399;color:#04261a;border:none;border-radius:6px;padding:8px 18px;
@@ -891,25 +993,40 @@ def advisor_page(session_token: Optional[str] = Cookie(None)):
         <a href="/settings?tab=account" style="color:#38bdf8;">&larr; Settings</a>
         <h1 style="margin:8px 0 4px 0;">🤖 Financial Advisor</h1>
         <div class="card" style="max-width:640px;margin-top:16px;padding:30px;">
-            <p style="color:#e5e7eb;font-weight:600;margin-top:0;">One quick step: add a Gemini API key.</p>
+            <p style="color:#94a3b8;font-size:0.9rem;margin-top:0;line-height:1.6;">
+                Your Financial Advisor is a private AI that understands the Wadsworth game and (if you
+                allow it) your own account, so it can answer strategy questions with your real numbers.
+                It uses your own free Google Gemini key, so it's free to run and the conversation stays
+                between you and Google — we never store it.
+            </p>
+            <p style="color:#e5e7eb;font-weight:600;margin:18px 0 6px;">One quick step: add a free Gemini API key.</p>
             <ol style="color:#94a3b8;font-size:0.9rem;line-height:1.7;">
-                <li>Open <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style="color:#38bdf8;">Google AI Studio</a> and create a free API key (a fresh Google account works great).</li>
-                <li>Paste it into <a href="/settings?tab=account" style="color:#38bdf8;">Settings → Account → Financial Advisor</a>.</li>
-                <li>Come back here and start chatting.</li>
+                <li>Open <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style="color:#38bdf8;">Google AI Studio → API keys</a> (free — many players make a fresh Google account just for this).</li>
+                <li>Click <strong>Create API key</strong> and copy it (it starts with <code>AIza…</code>). The free tier is plenty for normal chatting.</li>
+                <li>Paste it into <a href="/settings?tab=account" style="color:#38bdf8;">Settings → Account → Financial Advisor</a>, then come back here.</li>
             </ol>
-            <p style="color:#64748b;font-size:0.8rem;">Your key is encrypted, never shared, and your conversations are never stored on our server.</p>
+            <p style="color:#64748b;font-size:0.8rem;">Your key is encrypted, shown only as ••••last-4, used only for your advisor chats, and never shared.</p>
             <a href="/settings?tab=account" class="btn-blue" style="display:inline-block;margin-top:8px;padding:9px 20px;">Add my key</a>
         </div>"""
         return HTMLResponse(shell("Financial Advisor", body, player.cash_balance, player.id))
 
     import html as _html
     powered = _html.escape(active_name or "your key", quote=True)
+    share_on = get_share_account_data(player.id)
+    data_status = ("🔓 sees your account data" if share_on
+                   else "🙈 not using your account data")
     body = f"""
     <a href="/settings?tab=account" style="color:#38bdf8;">&larr; Settings</a>
     <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;">
         <h1 style="margin:8px 0 4px 0;">🤖 Financial Advisor</h1>
-        <span style="color:#64748b;font-size:0.78rem;">Powered by: {powered} · Gemini · chats are never saved on our server</span>
+        <span style="color:#64748b;font-size:0.78rem;">Powered by: {powered} · Gemini · {data_status} · chats are never saved on our server</span>
     </div>
+    <p style="max-width:760px;color:#94a3b8;font-size:0.82rem;margin:4px 0 12px;line-height:1.5;">
+        I give in-game guidance about Wadsworth and your own empire — taxes, what to build, how a
+        mechanic works, how your portfolio looks. I can't trade or move money for you, and I can't see
+        any other player. Toggle whether I see your account data in
+        <a href="/settings?tab=account" style="color:#38bdf8;">Settings → Account</a>.
+    </p>
     <div class="card" style="max-width:760px;padding:0;overflow:hidden;">
         <div id="adv-log" style="height:52vh;min-height:320px;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px;"></div>
         <div style="border-top:1px solid var(--border,#1e293b);padding:12px;display:flex;gap:8px;align-items:flex-end;">
