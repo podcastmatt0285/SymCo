@@ -184,32 +184,46 @@ _COIN_META: dict = {
     if code in COIN_CURRENCY_CODES
 }
 
+# Seed USD-per-unit for each coin (DEFAULT_BANKS position 5) — used as the fallback peg whenever
+# the live metal market isn't fully quoting the coin's backing metals, so coinage is always
+# priced and selectable. Format: (code, name, sym, flag, init_yield, usd_rate, min_y, max_y)
+_COIN_SEED_RATE: dict = {
+    code: usd_rate
+    for (code, name, sym, flag, _iy, usd_rate, _miny, _maxy) in DEFAULT_BANKS
+    if code in COIN_CURRENCY_CODES
+}
+
 
 def coin_display(currency_code: str) -> dict:
     """(name, symbol, flag) for a coin currency, for UI labelling without a bank row."""
     return _COIN_META.get(currency_code, {"name": currency_code, "symbol": currency_code, "flag": "🪙"})
 
 
-def get_live_coin_usd_per_unit(currency_code: str, fallback: float = 0.0) -> float:
+def get_live_coin_usd_per_unit(currency_code: str, fallback: float = None) -> float:
     """Single source of truth for a coin's USD value: Σ (alloy_fraction × live metal price).
 
-    Both the mint (credit_mint_coinage) and every display path must value coin
-    currencies through THIS function so the per-unit value never diverges between
-    the Mint, market, bank, and forex pages. Returns `fallback` if the currency is
-    not a metal coin or live pricing is unavailable.
+    Every path (mint, display, forex, switch dropdown, net worth) values coins through
+    THIS function so the per-unit value never diverges. If ANY backing metal lacks a live
+    market price the live peg is INVALID (a partial sum would be garbage), so we fall back
+    to the coin's seed rate — never 0 — keeping coinage priced and selectable even when the
+    metal market isn't quoting. Returns `fallback` (or 0.0) for non-coin currencies.
     """
     composition = COIN_METAL_COMPOSITIONS.get(currency_code)
     if not composition:
-        return fallback
+        return fallback if fallback is not None else 0.0
+    seed = _COIN_SEED_RATE.get(currency_code, 0.0)
+    fb = fallback if fallback is not None else seed
     try:
         import market as _mkt
-        value = sum(
-            fraction * (_mkt.get_market_price(metal) or 0.0)
-            for metal, fraction in composition.items()
-        )
-        return value if value > 0 else fallback
+        total = 0.0
+        for metal, fraction in composition.items():
+            p = _mkt.get_market_price(metal)
+            if not p or p <= 0:
+                return fb   # incomplete metal pricing → fall back to the seed peg
+            total += fraction * p
+        return total if total > 0 else fb
     except Exception:
-        return fallback
+        return fb
 
 # How long a player must wait between legal-tender switches (days).
 TENDER_SWITCH_COOLDOWN_DAYS = 7
