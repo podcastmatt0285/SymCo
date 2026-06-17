@@ -173,10 +173,11 @@ _PAGE_CSS = """
          font-family:var(--font-body,system-ui,-apple-system,Segoe UI,Roboto,sans-serif);}
     a{color:var(--accent,#38bdf8);}
     .snap-wrap{max-width:760px;margin:0 auto;padding:0 14px 60px;}
-    .snap-hero{margin:0 -14px 0;height:140px;
+    .snap-hero{margin:0 -14px 0;height:170px;
         background:linear-gradient(120deg,var(--accent,#38bdf8),var(--accent-2,#6366f1));
+        background-size:cover;background-position:center;
         display:flex;align-items:center;justify-content:center;position:relative;}
-    .snap-hero img{height:54px;opacity:.96;filter:drop-shadow(0 2px 6px rgba(0,0,0,.35));}
+    .snap-hero img{height:84px;opacity:.97;filter:drop-shadow(0 2px 8px rgba(0,0,0,.45));}
     .snap-hero .snap-tag{position:absolute;bottom:8px;right:14px;font-size:.72rem;
         letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.85);font-weight:700;}
     .snap-card{background:var(--bg-card,#0f172a);border:1px solid var(--border,#1e293b);
@@ -233,8 +234,23 @@ def render_snapshot(player_id: int, info: dict, *, owner: bool,
             f'</div><p class="snap-note">{state}</p>'
         )
 
+    # Use the player's Bluesky banner as the hero background when available (one-time
+    # lazy backfill for existing links); a dark overlay keeps the logo legible.
+    hero_style = ""
+    try:
+        import bluesky
+        banner = bluesky.public_banner(player_id, fetch_if_missing=True)
+    except Exception:
+        banner = None
+    if banner:
+        b = html.escape(banner, quote=True)
+        hero_style = (
+            " style=\"background-image:linear-gradient(rgba(2,6,23,.30),rgba(2,6,23,.55)),"
+            f"url('{b}');\""
+        )
+
     return (
-        '<div class="snap-hero">'
+        f'<div class="snap-hero"{hero_style}>'
         f'<img src="{html.escape(logo, quote=True)}" alt="Wadsworth">'
         '<span class="snap-tag">Player Snapshot</span>'
         '</div>'

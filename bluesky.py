@@ -64,6 +64,9 @@ def _ensure_table():
         # public_profile == the player opted into a public, shareable /player/{id}
         # snapshot page. Default OFF — linking alone exposes nothing publicly.
         "ALTER TABLE bluesky_links ADD COLUMN IF NOT EXISTS public_profile BOOLEAN NOT NULL DEFAULT FALSE",
+        # banner_url == the player's Bluesky profile banner (used as the snapshot hero).
+        # Empty string means "checked, none"; NULL means "not yet fetched".
+        "ALTER TABLE bluesky_links ADD COLUMN IF NOT EXISTS banner_url TEXT",
     ])
 
 
@@ -96,7 +99,7 @@ def get_link(player_id: int) -> Optional[dict]:
     db = get_db()
     try:
         row = db.execute(text(
-            "SELECT b.player_id, b.did, b.handle, b.avatar_url, b.show_on_p2p, "
+            "SELECT b.player_id, b.did, b.handle, b.avatar_url, b.banner_url, b.show_on_p2p, "
             "       b.show_avatar, b.public_profile, b.linked_at, "
             "       COALESCE(p.subscriber, FALSE) AS subscriber "
             "FROM bluesky_links b LEFT JOIN players p ON p.id = b.player_id "
@@ -163,7 +166,40 @@ def set_public_profile(player_id: int, on: bool):
     _invalidate(player_id)
 
 
-def upsert_link(player_id: int, did: str, handle: str, avatar_url: Optional[str]):
+def public_banner(player_id: int, fetch_if_missing: bool = False) -> Optional[str]:
+    """The player's Bluesky banner URL for a linked account, or None. Not Pro-gated —
+    the snapshot page that uses it is itself opt-in. When fetch_if_missing is set and the
+    banner has never been fetched (NULL), do a one-time lazy backfill so existing links
+    get a banner without waiting for the refresh tick. '' is stored to mean "no banner"
+    so we don't refetch every render."""
+    link = get_link(player_id)
+    if not link:
+        return None
+    url = link.get("banner_url")
+    if url:
+        return url
+    if url is None and fetch_if_missing and link.get("did"):
+        profile = fetch_profile(link["did"]) or {}
+        _store_banner(player_id, profile.get("banner") or "")
+        return profile.get("banner") or None
+    return None
+
+
+def _store_banner(player_id: int, banner_url: str):
+    from auth import get_db
+    from sqlalchemy import text
+    db = get_db()
+    try:
+        db.execute(text("UPDATE bluesky_links SET banner_url = :b WHERE player_id = :pid"),
+                   {"b": banner_url, "pid": player_id})
+        db.commit()
+    finally:
+        db.close()
+    _invalidate(player_id)
+
+
+def upsert_link(player_id: int, did: str, handle: str, avatar_url: Optional[str],
+                banner_url: Optional[str] = None):
     """Create or update a player's link, preserving the existing show_on_p2p preference
     on re-link. New links default to hidden (show_on_p2p stays FALSE)."""
     from auth import get_db
@@ -171,14 +207,16 @@ def upsert_link(player_id: int, did: str, handle: str, avatar_url: Optional[str]
     db = get_db()
     try:
         db.execute(text("""
-            INSERT INTO bluesky_links (player_id, did, handle, avatar_url, refreshed_at)
-            VALUES (:pid, :did, :handle, :avatar, NOW())
+            INSERT INTO bluesky_links (player_id, did, handle, avatar_url, banner_url, refreshed_at)
+            VALUES (:pid, :did, :handle, :avatar, :banner, NOW())
             ON CONFLICT (player_id) DO UPDATE SET
                 did          = EXCLUDED.did,
                 handle       = EXCLUDED.handle,
                 avatar_url   = EXCLUDED.avatar_url,
+                banner_url   = EXCLUDED.banner_url,
                 refreshed_at = NOW()
-        """), {"pid": player_id, "did": did, "handle": handle, "avatar": avatar_url})
+        """), {"pid": player_id, "did": did, "handle": handle, "avatar": avatar_url,
+               "banner": banner_url})
         db.commit()
     finally:
         db.close()
@@ -264,6 +302,7 @@ def fetch_profile(actor: str) -> Optional[dict]:
             "handle": data.get("handle"),
             "displayName": data.get("displayName"),
             "avatar": data.get("avatar"),  # cdn.bsky.app URL or None
+            "banner": data.get("banner"),  # cdn.bsky.app banner URL or None
         }
     except Exception as e:
         print(f"[Bluesky] Profile fetch failed: {e}")
@@ -346,7 +385,8 @@ def bluesky_link(
         return _redirect_account("&bsky_err=1")
     profile = fetch_profile(verified["did"]) or {}
     handle_final = profile.get("handle") or verified["handle"]
-    upsert_link(player.id, verified["did"], handle_final, profile.get("avatar"))
+    upsert_link(player.id, verified["did"], handle_final, profile.get("avatar"),
+                banner_url=(profile.get("banner") or ""))
     return _redirect_account()
 
 
@@ -404,9 +444,10 @@ def tick(current_tick: int, now: datetime):
             profile = fetch_profile(r["did"])
             if profile and profile.get("handle"):
                 db.execute(text(
-                    "UPDATE bluesky_links SET handle = :h, avatar_url = :a, refreshed_at = NOW() "
-                    "WHERE player_id = :pid"
-                ), {"h": profile["handle"], "a": profile.get("avatar"), "pid": r["player_id"]})
+                    "UPDATE bluesky_links SET handle = :h, avatar_url = :a, banner_url = :b, "
+                    "refreshed_at = NOW() WHERE player_id = :pid"
+                ), {"h": profile["handle"], "a": profile.get("avatar"),
+                    "b": (profile.get("banner") or ""), "pid": r["player_id"]})
             else:
                 db.execute(text(
                     "UPDATE bluesky_links SET refreshed_at = NOW() WHERE player_id = :pid"
