@@ -236,20 +236,25 @@ def add_credential(player_id: int, name: str, api_key: str) -> tuple[bool, str]:
     db = get_db()
     try:
         # First credential becomes active automatically.
-        existing = db.execute(text(
-            "SELECT COUNT(*) FROM advisor_credentials WHERE player_id = :pid"
-        ), {"pid": player_id}).scalar() or 0
-        make_active = existing == 0
+        existing_names = {r[0] for r in db.execute(text(
+            "SELECT credential_name FROM advisor_credentials WHERE player_id = :pid"
+        ), {"pid": player_id}).all()}
+        make_active = len(existing_names) == 0
+        # Never silently overwrite a different saved key: if the name is taken, auto-suffix so
+        # both keys persist (e.g. "My key", "My key (2)").
+        if name in existing_names:
+            base = name
+            i = 2
+            while f"{base} ({i})" in existing_names and i < 99:
+                i += 1
+            name = f"{base} ({i})"[:60]
         if make_active:
             db.execute(text("UPDATE advisor_credentials SET is_active = FALSE WHERE player_id = :pid"),
                        {"pid": player_id})
         db.execute(text(
             "INSERT INTO advisor_credentials "
             "(player_id, credential_name, provider, api_key_enc, key_last4, is_active) "
-            "VALUES (:pid, :name, :prov, :enc, :last4, :active) "
-            "ON CONFLICT (player_id, credential_name) DO UPDATE SET "
-            "  api_key_enc = EXCLUDED.api_key_enc, key_last4 = EXCLUDED.key_last4, "
-            "  provider = EXCLUDED.provider"
+            "VALUES (:pid, :name, :prov, :enc, :last4, :active)"
         ), {"pid": player_id, "name": name, "prov": provider,
             "enc": _encrypt(api_key), "last4": api_key[-4:], "active": make_active})
         db.commit()
@@ -1107,12 +1112,8 @@ def advisor_page(session_token: Optional[str] = Cookie(None)):
     <p style="max-width:760px;color:#94a3b8;font-size:0.82rem;margin:4px 0 12px;line-height:1.5;">
         I give in-game guidance about Wadsworth, your own empire, and your rivals — taxes, what to build,
         how a mechanic works, and how you stack up against other players (name a player and I'll size them
-        up). I can't trade or move money for you. Manage your keys and privacy below.
+        up). I can't trade or move money for you. Manage your keys and privacy below the chat.
     </p>
-    <details style="max-width:760px;margin-bottom:12px;">
-        <summary style="cursor:pointer;color:#34d399;font-size:0.85rem;font-weight:600;">⚙️ Manage keys & privacy</summary>
-        <div style="margin-top:10px;">{_management_panel_html(player)}</div>
-    </details>
     <div class="card" style="max-width:760px;padding:0;overflow:hidden;">
         <div id="adv-log" style="height:52vh;min-height:320px;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px;"></div>
         <div style="border-top:1px solid var(--border,#1e293b);padding:12px;display:flex;gap:8px;align-items:flex-end;">
@@ -1136,6 +1137,9 @@ def advisor_page(session_token: Optional[str] = Cookie(None)):
         Educational, in-game guidance only — not real-world financial advice. Conversations live only in your
         browser; download them to continue later, even on another device.
     </p>
+
+    <h2 style="max-width:760px;margin:22px 0 8px;font-size:1.05rem;color:#34d399;">⚙️ Your keys &amp; privacy</h2>
+    {_management_panel_html(player)}
 
     <script>
     (function() {{
