@@ -401,6 +401,48 @@ def _build_player_context(player_id: int) -> str:
     except Exception:
         pass
 
+    # Subscription detail (Pro renewal/expiry) + skin
+    try:
+        from play_billing import get_player_subscription
+        sub = get_player_subscription(player_id)
+        if sub:
+            exp = sub.get("expiry_time")
+            exps = exp.strftime("%b %d, %Y") if exp else "—"
+            lines.append(f"Subscription: {sub.get('sub_state','?')} (product {sub.get('product_id','?')}, "
+                         f"through {exps})")
+        elif not is_pro:
+            lines.append("Subscription: none (free player)")
+    except Exception:
+        pass
+    try:
+        from auth import Player, get_db as _adb2
+        db2 = _adb2()
+        try:
+            pp = db2.query(Player).filter(Player.id == player_id).first()
+            skin = getattr(pp, "skin", None) if pp else None
+        finally:
+            db2.close()
+        if skin and skin != "default":
+            lines.append(f"Skin: {skin}")
+    except Exception:
+        pass
+
+    # Bluesky / public snapshot status
+    try:
+        import bluesky as _bsky
+        link = _bsky.get_link(player_id)
+        if link:
+            pub = "public" if link.get("public_profile") else "private"
+            h = link.get("handle") or "?"
+            lines.append(f"Bluesky: linked as @{h}; handle shown on P2P: "
+                         f"{'yes' if link.get('show_on_p2p') else 'no'}; "
+                         f"public snapshot page: {pub}")
+        else:
+            lines.append("Bluesky: not linked (can link in Settings → Account to enable a "
+                         "shareable public snapshot page).")
+    except Exception:
+        pass
+
     # Net worth & leaderboard
     try:
         from stats_ux import PlayerStats, get_db as _sdb
@@ -1110,8 +1152,14 @@ def _world_snapshot() -> str:
                         members = len(get_city_members(ct.id))
                     except Exception:
                         members = "?"
-                    lines.append(f"  {ct.name} — mayor {mname} · {members} members · "
-                                 f"join fee {_compact(ct.application_fee)}")
+                    try:
+                        from city_projects import get_city_sales_tax_rate
+                        stax = f"{get_city_sales_tax_rate(ct.id)*100:.2f}% sales tax"
+                    except Exception:
+                        stax = "sales tax —"
+                    cur = getattr(ct, "currency_type", None) or "USD"
+                    lines.append(f"  {ct.name} — mayor {mname} · {members} members · {stax} · "
+                                 f"legal tender {cur} · join fee {_compact(ct.application_fee)}")
             finally:
                 adb.close()
     except Exception:
@@ -1121,14 +1169,111 @@ def _world_snapshot() -> str:
     try:
         from counties import get_all_counties
         cos = get_all_counties() or []
+        # Merge in the per-county exchange fee (not exposed by get_all_counties).
+        fee_map = {}
+        try:
+            from counties import County, get_db as _ccdb
+            ccdb = _ccdb()
+            try:
+                for cid, fee in ccdb.query(County.id, County.transaction_fee_percent).all():
+                    fee_map[cid] = fee
+            finally:
+                ccdb.close()
+        except Exception:
+            pass
         if cos:
             lines.append("")
             lines.append(f"COUNTIES ({len(cos)}):")
             for c2 in cos[:15]:
+                fee = fee_map.get(c2.get("id"))
+                feetxt = f"{fee*100:.1f}% exchange fee" if fee is not None else "exchange fee 2%"
                 lines.append(f"  {c2.get('name','?')} — token {c2.get('crypto_symbol','?')} · "
                              f"{c2.get('city_count',0)}/{c2.get('max_cities','?')} cities · "
-                             f"treasury {_compact(c2.get('treasury_balance',0))} · "
+                             f"{feetxt} · treasury {_compact(c2.get('treasury_balance',0))} · "
                              f"mining pool {c2.get('mining_energy',0):,.0f}")
+    except Exception:
+        pass
+
+    # Open P2P contract market (LISTED contracts anyone can bid on)
+    try:
+        from p2p import Contract, ContractItem, ContractStatus, get_db as _pdb
+        pdb = _pdb()
+        try:
+            listed = (pdb.query(Contract)
+                      .filter(Contract.status == ContractStatus.LISTED)
+                      .order_by(Contract.listed_at.desc()).limit(15).all())
+            rows = []
+            for ct in listed:
+                items = pdb.query(ContractItem).filter(
+                    ContractItem.contract_id == ct.id).all()
+                idesc = ", ".join(
+                    f"{it.item_type.replace('_',' ')}×{it.quantity_per_delivery:,.0f}"
+                    for it in items) or "—"
+                mode = "price-bid" if ct.contract_mode == "price_bid" else "quantity-bid"
+                price = ct.price_per_delivery or ct.minimum_bid or 0
+                rows.append(f"  #{ct.id} [{mode}] {idesc} · "
+                            f"{ct.total_deliveries or 1} delivery(s) @ {_compact(price)} "
+                            f"per {getattr(ct,'delivery_interval','cycle')}")
+        finally:
+            pdb.close()
+        if rows:
+            lines.append("")
+            lines.append(f"OPEN P2P CONTRACTS ({len(rows)} listed on the trading market):")
+            lines.extend(rows)
+    except Exception:
+        pass
+
+    # Executive marketplace (execs available to hire)
+    try:
+        from executive import get_marketplace_executives, get_db as _edb, EXECUTIVE_JOBS
+        edb = _edb()
+        try:
+            free = get_marketplace_executives(edb) or []
+            rows = []
+            for e in free[:20]:
+                title = EXECUTIVE_JOBS.get(e.job, {}).get("title", e.job.replace("_", " ").title())
+                rows.append(f"  {e.first_name} {e.last_name} — {title} · Lv{e.level} · "
+                            f"wage ${e.wage:,.0f}/{e.pay_cycle} · {e.marketplace_reason or 'available'}")
+        finally:
+            edb.close()
+        if rows:
+            lines.append("")
+            lines.append(f"EXECUTIVE MARKETPLACE ({len(rows)} available to hire; hiring cost scales "
+                         "with your net worth):")
+            lines.extend(rows)
+    except Exception:
+        pass
+
+    # Port Authority government contracts (open for bidding)
+    try:
+        from port_authority import get_open_contracts
+        pacs = get_open_contracts() or []
+        if pacs:
+            lines.append("")
+            lines.append(f"PORT AUTHORITY CONTRACTS ({len(pacs)} open for bidding):")
+            for pc in pacs[:10]:
+                items = pc.get("required_items") or {}
+                idesc = ", ".join(f"{k.replace('_',' ')}×{v:,.0f}" for k, v in list(items.items())[:6]) or "—"
+                close = pc.get("bid_closes_at", "")[:10]
+                lines.append(f"  {pc.get('title','?')}: needs {idesc} · "
+                             f"pays {_compact(pc.get('payment_usd',0))} + {pc.get('trophy_reward',0)} trophies "
+                             f"· deposit {_compact(pc.get('security_deposit_usd',0))} · bids close {close}")
+    except Exception:
+        pass
+
+    # WikiWads article index (so the advisor can point players to real in-game articles)
+    try:
+        import wiki as _wiki
+        entries = _wiki.list_entries() or []
+        if entries:
+            by_cat = {}
+            for e in entries:
+                by_cat.setdefault(e.get("category", "reference"), []).append(e.get("title", "?"))
+            lines.append("")
+            lines.append("WIKIWADS ARTICLES (in-game encyclopedia — point players here to learn more):")
+            for cat in sorted(by_cat):
+                titles = by_cat[cat][:12]
+                lines.append(f"  {cat}: " + "; ".join(titles))
     except Exception:
         pass
 
@@ -1155,7 +1300,14 @@ def _call_gemini(api_key: str, system: str, messages: List[dict]) -> tuple[bool,
     payload = {
         "system_instruction": {"parts": [{"text": system}]},
         "contents": contents,
-        "generationConfig": {"temperature": 0.6, "maxOutputTokens": 1024},
+        # gemini-2.5-flash is a "thinking" model: thinking tokens count against
+        # maxOutputTokens, so a small cap truncates the visible reply mid-sentence. Disable
+        # thinking (thinkingBudget=0) for complete, snappy advisor answers and give ample room.
+        "generationConfig": {
+            "temperature": 0.6,
+            "maxOutputTokens": 2048,
+            "thinkingConfig": {"thinkingBudget": 0},
+        },
     }
     try:
         resp = requests.post(
@@ -1184,11 +1336,13 @@ def _call_gemini(api_key: str, system: str, messages: List[dict]) -> tuple[bool,
         # Safety blocks / empty finish
         parts = (cand.get("content") or {}).get("parts") or []
         reply = "".join(p.get("text", "") for p in parts).strip()
+        fr = cand.get("finishReason") or ""
         if not reply:
-            fr = cand.get("finishReason") or ""
             if fr == "SAFETY":
                 return True, "I can't help with that one. Try rephrasing your question about your Wadsworth strategy."
             return True, "I didn't have a response for that — try rephrasing your question."
+        if fr == "MAX_TOKENS":
+            reply += "\n\n…(reply was long and got cut off — ask me to continue.)"
         return True, reply
     except Exception as e:
         return False, f"Could not parse the AI response: {e}"
