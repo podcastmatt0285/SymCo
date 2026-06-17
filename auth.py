@@ -1692,13 +1692,20 @@ def login_page(session_token: Optional[str] = Cookie(None)):
                         &bull; 3 exclusive cosmetic skins — <strong>Kawaii Night</strong>, <strong>Soul Vinyl Dark</strong>, and <strong>Soul Vinyl Light</strong><br>
                         &bull; <strong>City perk</strong> — a free city with mayoralship, or perks for your existing city<br>
                         &bull; <strong>Institutions</strong> — sacrifice land to forge a <strong>Mint</strong> that strikes precious-metal coinage, or a <strong>Port Authority</strong> — a sovereign military command that earns tax-free government contracts, controls immigration policy, and wages Branch warfare to loot and blockade rivals<br>
-                        &bull; <strong>Metal coinage legal tender</strong> — six gold/silver/platinum currencies pegged live to metal prices; subscribers can set one as their legal tender<br><br>
+                        &bull; <strong>Metal coinage legal tender</strong> — six gold/silver/platinum currencies pegged live to metal prices; subscribers can set one as their legal tender<br>
+                        &bull; <strong>Financial Advisor</strong> — a private AI that knows the game, reads your own books, and sizes up your rivals' standings; runs on your own free Google Gemini key<br><br>
                         <strong>On the roadmap</strong> (planned supporter perks, not yet live):<br>
                         &bull; <strong>Forex Trading Floor</strong> — a currency-exchange dashboard<br>
-                        &bull; <strong>Player API</strong> — read access plus buy/sell writes on the commodity &amp; district markets<br>
                         &bull; <strong>Supporter badge</strong> on the leaderboard and your profile<br>
                         &bull; Extra <strong>P2P contact capacity</strong>, a permanent <strong>profile picture</strong>, a higher <strong>trophy multiplier</strong>, a <strong>Trophies Store</strong>, and more<br><br>
                         You can see the current status of every perk — what's active versus coming soon — any time under <strong>Settings → Account</strong>. Anyone can buy sovereign bonds, including the metal-coinage banks; all markets, production, land, stocks, and trading are fully available for free, forever.</div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>What is the Financial Advisor? <span class="faq-icon">+</span></summary>
+                        <div class="faq-answer">The <strong>Financial Advisor</strong> is a Wadsworth Pro feature — a private AI chat that understands the whole game (taxes, the 16-currency system, bonds, stocks, districts, crypto, executives and more), reads <strong>your own books</strong>, and can <strong>size up your rivals</strong>. Ask it things like "how is my land tax calculated?", "what should I build on my prairie plot?", or "why is that player so profitable and how do I compete?" — name a player and it pulls their standing into the analysis. It gives in-game guidance only: it can't trade or move money for you.<br><br>
+                        <strong>It runs on your own free Google Gemini key</strong>, so it costs us nothing and your conversations are <strong>never stored on our server</strong> (download a chat to continue it later, even on another device). Your key is encrypted at rest and shown only as ••••last-4. Open it from the <strong>Financial Advisor</strong> card on your dashboard, then add a free key from <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer">Google AI Studio</a>.<br><br>
+                        <strong>Privacy:</strong> by default any player is "scannable" — a rival's advisor can surface your books when they ask about you (this game is competitive). <strong>Subscribers can shield their books</strong> from other players' advisors on the advisor page; shielded players only ever expose public leaderboard standings. You always see your own data.</div>
                     </details>
 
                     <details class="faq-item">
