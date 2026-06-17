@@ -294,6 +294,20 @@ def delete_credential(player_id: int, cred_id: int):
         db.close()
 
 
+def delete_all_credentials(player_id: int) -> int:
+    """Remove every saved key for a player (self-serve reset). Returns the count removed."""
+    from auth import get_db
+    from sqlalchemy import text
+    db = get_db()
+    try:
+        n = db.execute(text("DELETE FROM advisor_credentials WHERE player_id = :pid"),
+                       {"pid": player_id}).rowcount
+        db.commit()
+    finally:
+        db.close()
+    return n or 0
+
+
 # ==========================
 # PRIVACY PREFERENCE (scannable by other players' advisor — default ON, subscriber opt-out)
 # ==========================
@@ -885,6 +899,16 @@ def advisor_cred_delete(
     return _redirect_advisor()
 
 
+@router.post("/api/advisor/credentials/wipe")
+def advisor_cred_wipe(session_token: Optional[str] = Cookie(None)):
+    """Self-serve reset: remove ALL of the player's saved keys."""
+    player = _player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    delete_all_credentials(player.id)
+    return _redirect_advisor()
+
+
 @router.post("/api/advisor/privacy")
 def advisor_privacy(
     session_token: Optional[str] = Cookie(None),
@@ -1029,10 +1053,24 @@ def _management_panel_html(player) -> str:
             <p style="color:#64748b;font-size:0.74rem;margin:6px 0 0;">{shield_note}</p>
         </form>"""
 
+    # Self-serve diagnostics + reset, so players can recover from a confusing state.
+    wipe_block = ""
+    if creds:
+        wipe_block = f"""
+        <div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+            <span style="color:#64748b;font-size:0.74rem;">{len(creds)} key{'s' if len(creds)!=1 else ''} saved on your account.</span>
+            <form action="/api/advisor/credentials/wipe" method="post" style="display:inline;"
+                  onsubmit="return confirm('Delete ALL {len(creds)} saved API key(s)? This cannot be undone — you can re-add keys afterward.');">
+                <button type="submit" style="background:#1a0505;border:1px solid #ef4444;color:#fca5a5;
+                    border-radius:6px;padding:4px 12px;font-size:0.72rem;cursor:pointer;font-family:inherit;">🗑 Wipe all keys</button>
+            </form>
+        </div>"""
+
     return f"""
     <div style="background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:18px 20px;max-width:600px;">
         <p style="color:#e5e7eb;font-size:0.82rem;font-weight:600;margin:0 0 6px;">Your Gemini API keys</p>
         {creds_block}
+        {wipe_block}
         {shield_block}
         <div style="margin-top:14px;border-top:1px solid #1e293b;padding-top:14px;">
             <p style="color:#e5e7eb;font-size:0.82rem;font-weight:600;margin:0 0 6px;">Add a free Google Gemini key</p>
