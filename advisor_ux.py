@@ -778,6 +778,155 @@ def _other_players_block(querying_id: int, messages: list) -> str:
 
 
 # ==========================
+# MARKET / ECONOMY SNAPSHOT  (global, public game-wide state — included in every chat)
+# ==========================
+
+_MKT_CACHE: dict = {}          # {"t": epoch, "v": snapshot_text} — short TTL, off the hot path
+_MKT_TTL = 60                  # seconds
+
+
+def _market_snapshot() -> str:
+    """A compact, public, game-wide economic snapshot: headline indices, commodity prices,
+    district-item prices, currency yields/FX, crypto (county tokens + meme coins), and the land
+    market. This is public market data (the same numbers shown across the game's market pages),
+    so it carries no per-player privacy concern. Cached briefly to stay off the request hot
+    path. Each section is independently guarded."""
+    import time as _t
+    c = _MKT_CACHE
+    if c.get("v") is not None and (_t.time() - c.get("t", 0)) < _MKT_TTL:
+        return c["v"]
+
+    lines: List[str] = []
+
+    # Headline economic indices (the "state of the economy" gauges)
+    try:
+        from banks import indices as _ix
+        rows = []
+        for code, meta in _ix.INDICES.items():
+            try:
+                snap = _ix._get_latest(code)
+                if snap is None:
+                    continue
+                rows.append(f"  {meta.get('name', code)} ({meta.get('code', code)}): "
+                            f"{snap.value:,.2f} {meta.get('unit', '')}".rstrip())
+            except Exception:
+                continue
+        if rows:
+            lines.append("ECONOMIC INDICES (latest):")
+            lines.extend(rows)
+    except Exception:
+        pass
+
+    # Commodity market prices (open market)
+    try:
+        from market import get_all_market_prices
+        prices = get_all_market_prices() or {}
+        items = sorted((k, v) for k, v in prices.items() if v)
+        if items:
+            lines.append("")
+            lines.append(f"COMMODITY MARKET PRICES ({len(items)} items, USD):")
+            lines.append("  " + ", ".join(f"{k.replace('_',' ')} ${v:,.2f}" for k, v in items[:160]))
+    except Exception:
+        pass
+
+    # District-item market prices (sampled)
+    try:
+        import district_market as _dm
+        if not _dm.DISTRICT_ITEMS:
+            try:
+                _dm.load_district_items()
+            except Exception:
+                pass
+        sample = []
+        for k in list(_dm.DISTRICT_ITEMS.keys())[:60]:
+            try:
+                p = _dm.get_market_price(k)
+                if p:
+                    sample.append(f"{k.replace('_',' ')} ${p:,.2f}")
+            except Exception:
+                continue
+            if len(sample) >= 30:
+                break
+        if sample:
+            lines.append("")
+            lines.append(f"DISTRICT MARKET PRICES (sample of {len(sample)}, USD):")
+            lines.append("  " + ", ".join(sample))
+        elif _dm.DISTRICT_ITEMS:
+            lines.append("")
+            lines.append(f"DISTRICT MARKET: {len(_dm.DISTRICT_ITEMS)} district-item types tradable "
+                         "(no recent trade prices to quote).")
+    except Exception:
+        pass
+
+    # Currencies: FX rate + yield
+    try:
+        from reserve_banks import StateReserveBank, get_db as _rdb
+        db = _rdb()
+        try:
+            banks = db.query(StateReserveBank).all()
+        finally:
+            db.close()
+        if banks:
+            lines.append("")
+            lines.append("CURRENCIES (USD per unit · annual yield):")
+            lines.append("  " + ", ".join(
+                f"{b.currency_code} ${b.usd_per_unit:,.4f}/{(b.yield_rate or 0)*100:.1f}%"
+                for b in banks))
+    except Exception:
+        pass
+
+    # Crypto — county tokens (L1)
+    try:
+        from counties import get_all_counties
+        cos = [c2 for c2 in (get_all_counties() or []) if (c2.get("crypto_price") or 0) > 0]
+        cos.sort(key=lambda x: -(x.get("market_cap") or 0))
+        if cos:
+            lines.append("")
+            lines.append("COUNTY TOKENS (price · market cap):")
+            for c2 in cos[:12]:
+                lines.append(f"  {c2.get('crypto_symbol','?')} ({c2.get('name','?')}): "
+                             f"${c2.get('crypto_price',0):,.4f} · cap ${c2.get('market_cap',0):,.0f}")
+    except Exception:
+        pass
+
+    # Crypto — meme coins (top by volume)
+    try:
+        from memecoins import get_all_meme_coins_global
+        memes = get_all_meme_coins_global("volume") or []
+        if memes:
+            lines.append("TOP MEME COINS (by volume · last price, in native token):")
+            for m in memes[:10]:
+                lines.append(f"  {m.get('symbol','?')} on {m.get('native_symbol','?')}: "
+                             f"{m.get('last_price',0):,.6f}")
+    except Exception:
+        pass
+
+    # Land market
+    try:
+        from land_market import LandListing, get_db as _lmdb
+        db = _lmdb()
+        try:
+            asks = [l.asking_price for l in db.query(LandListing).filter(
+                LandListing.is_active == True).all() if l.asking_price]
+        finally:
+            db.close()
+        if asks:
+            lines.append("")
+            lines.append(f"LAND MARKET: {len(asks)} plots listed · "
+                         f"asking ${min(asks):,.0f}–${max(asks):,.0f} "
+                         f"(avg ${sum(asks)/len(asks):,.0f})")
+        else:
+            lines.append("")
+            lines.append("LAND MARKET: no plots currently listed for sale.")
+    except Exception:
+        pass
+
+    snapshot = "\n".join(lines) if lines else "(Market data temporarily unavailable.)"
+    c["t"], c["v"] = _t.time(), snapshot
+    return snapshot
+
+
+# ==========================
 # GEMINI CALL
 # ==========================
 
@@ -985,7 +1134,12 @@ def advisor_chat(
     from advisor_knowledge import system_prompt
     own = _build_player_context(player.id)
     others = _other_players_block(player.id, messages)
-    context = own if not others else f"{own}\n\n# OTHER PLAYERS REFERENCED\n\n{others}"
+    market = _market_snapshot()
+    context = own
+    if others:
+        context += f"\n\n# OTHER PLAYERS REFERENCED\n\n{others}"
+    if market:
+        context += f"\n\n# MARKET & ECONOMY (game-wide, public)\n\n{market}"
     system = system_prompt(context)
 
     ok, reply = _call_gemini(cred["api_key"], system, messages)
