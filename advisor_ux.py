@@ -1046,6 +1046,99 @@ def _market_snapshot() -> str:
     except Exception:
         pass
 
+    # Land market — individual cheapest listings
+    try:
+        from land_market import LandListing, get_db as _lm2
+        db = _lm2()
+        try:
+            lst = (db.query(LandListing.land_plot_id, LandListing.asking_price)
+                   .filter(LandListing.is_active == True)
+                   .order_by(LandListing.asking_price.asc()).limit(30).all())
+        finally:
+            db.close()
+        if lst:
+            lines.append("LAND LISTINGS (cheapest first): " + ", ".join(
+                f"plot #{pid} ${ap:,.0f}" for pid, ap in lst))
+    except Exception:
+        pass
+
+    # Stock order book — best bid/ask per company (from the brokerage order book)
+    try:
+        from banks.brokerage_order_book import OrderBook
+        from banks.brokerage_firm import CompanyShares
+        from database import SessionLocal as _SOB
+        db = _SOB()
+        try:
+            rows = (db.query(OrderBook.company_shares_id, OrderBook.order_side, OrderBook.limit_price)
+                    .filter(OrderBook.status.in_(["pending", "partial"]),
+                            OrderBook.limit_price.isnot(None)).all())
+            book = {}
+            for csid, side, price in rows:
+                if not price:
+                    continue
+                b = book.setdefault(csid, {"bid": None, "ask": None})
+                if str(side) == "sell":
+                    b["ask"] = price if b["ask"] is None else min(b["ask"], price)
+                else:
+                    b["bid"] = price if b["bid"] is None else max(b["bid"], price)
+            if book:
+                tickers = dict(db.query(CompanyShares.id, CompanyShares.ticker_symbol)
+                               .filter(CompanyShares.id.in_(list(book.keys()))).all())
+        finally:
+            db.close()
+        if book:
+            lines.append("")
+            lines.append(f"STOCK ORDER BOOK ({len(book)} companies with open orders):")
+            for csid in list(book.keys())[:30]:
+                b = book[csid]
+                tk = tickers.get(csid, f"#{csid}")
+                bid = f"bid ${b['bid']:,.2f}" if b["bid"] is not None else "bid —"
+                ask = f"ask ${b['ask']:,.2f}" if b["ask"] is not None else "ask —"
+                lines.append(f"  {tk}: {bid} / {ask}")
+    except Exception:
+        pass
+
+    # Meme-coin order book — best bid/ask per coin (priced in native tokens)
+    try:
+        from memecoins import MemeCoinOrder
+        from database import SessionLocal as _SMO
+        db = _SMO()
+        try:
+            rows = (db.query(MemeCoinOrder.meme_symbol, MemeCoinOrder.order_type, MemeCoinOrder.price)
+                    .filter(MemeCoinOrder.status.in_(["active", "partial"]),
+                            MemeCoinOrder.price.isnot(None)).all())
+        finally:
+            db.close()
+        book = {}
+        for sym, otype, price in rows:
+            if not price:
+                continue
+            b = book.setdefault(sym, {"bid": None, "ask": None})
+            if str(otype) == "sell":
+                b["ask"] = price if b["ask"] is None else min(b["ask"], price)
+            else:
+                b["bid"] = price if b["bid"] is None else max(b["bid"], price)
+        if book:
+            lines.append("")
+            lines.append(f"MEME-COIN ORDER BOOK ({len(book)} coins, priced in native token):")
+            for sym in list(book.keys())[:20]:
+                b = book[sym]
+                bid = f"bid {b['bid']:,.6f}" if b["bid"] is not None else "bid —"
+                ask = f"ask {b['ask']:,.6f}" if b["ask"] is not None else "ask —"
+                lines.append(f"  {sym}: {bid} / {ask}")
+    except Exception:
+        pass
+
+    # WSC stablecoin market
+    try:
+        from wallet import SWAP_FEE_SELL, SWAP_FEE_BUY, WSC_AMM_FEE
+        lines.append("")
+        lines.append(f"WSC STABLECOIN: pegged 1 WSC = $1 in-game cash · native↔WSC swap fee "
+                     f"{SWAP_FEE_BUY*100:.0f}%/leg · AMM pool fee {WSC_AMM_FEE*100:.1f}% · "
+                     f"redeemable 1:1 for cash.")
+    except Exception:
+        pass
+
     # Live ORDER BOOKS (open buy/sell orders) for the commodity & district markets. This is the
     # actual listings — best bid/ask plus the highest ask, which exposes a single inflated
     # sell order sitting on the book (the cause of weird "market prices").
