@@ -42,13 +42,19 @@ from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 # CONSTANTS
 # ==========================
 
-# Single model id kept here so swapping is one-line. gemini-2.5-flash is free-tier eligible.
-GEMINI_MODEL = "gemini-2.5-flash"
-GEMINI_URL = (
-    "https://generativelanguage.googleapis.com/v1beta/models/"
-    f"{GEMINI_MODEL}:generateContent"
-)
-HTTP_TIMEOUT = 30  # seconds; the chat call is the only outbound request
+# Selectable Gemini models (id, label). Works with free or paid keys — a paid key just lifts
+# rate limits. The endpoint/auth are identical; only the model id in the URL changes.
+GEMINI_MODELS = [
+    ("gemini-2.5-pro",        "2.5 Pro — most capable (slower)"),
+    ("gemini-2.5-flash",      "2.5 Flash — recommended (fast, free-tier)"),
+    ("gemini-2.5-flash-lite", "2.5 Flash-Lite — fastest / cheapest"),
+    ("gemini-2.0-flash",      "2.0 Flash"),
+    ("gemini-2.0-flash-lite", "2.0 Flash-Lite"),
+]
+DEFAULT_MODEL = "gemini-2.5-flash"
+_VALID_MODELS = {m for m, _ in GEMINI_MODELS}
+_GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
+HTTP_TIMEOUT = 45  # seconds; the chat call is the only outbound request (Pro can be slower)
 
 _ENC_CONFIG_KEY = "advisor_enc_key"   # system_config row name for the at-rest AES key
 _CHAT_COOLDOWN_SECS = 2               # light anti-loop guard (cost is on the player, not us)
@@ -74,6 +80,8 @@ def _ensure_table():
                 UNIQUE (player_id, credential_name)
             )""",
         "CREATE INDEX IF NOT EXISTS idx_advisor_cred_player ON advisor_credentials (player_id)",
+        # Per-key model choice (Gemini model id). Defaults to 2.5 Flash.
+        "ALTER TABLE advisor_credentials ADD COLUMN IF NOT EXISTS model TEXT NOT NULL DEFAULT 'gemini-2.5-flash'",
         # Per-player privacy preference. scannable == "another player's Financial Advisor may
         # surface my full data". Defaults TRUE (everyone is scannable). Only subscribers/admins
         # may set it FALSE to shield their books (enforced in the route). A player always sees
@@ -190,7 +198,7 @@ def list_credentials(player_id: int) -> List[dict]:
     db = get_db()
     try:
         rows = db.execute(text(
-            "SELECT id, credential_name, provider, key_last4, is_active, created_at "
+            "SELECT id, credential_name, provider, key_last4, is_active, model, created_at "
             "FROM advisor_credentials WHERE player_id = :pid ORDER BY created_at"
         ), {"pid": player_id}).mappings().all()
     finally:
@@ -206,13 +214,13 @@ def get_active_credential(player_id: int) -> Optional[dict]:
     db = get_db()
     try:
         row = db.execute(text(
-            "SELECT id, credential_name, provider, api_key_enc, key_last4 "
+            "SELECT id, credential_name, provider, api_key_enc, key_last4, model "
             "FROM advisor_credentials WHERE player_id = :pid AND is_active = TRUE "
             "ORDER BY created_at DESC LIMIT 1"
         ), {"pid": player_id}).mappings().first()
         if not row:
             row = db.execute(text(
-                "SELECT id, credential_name, provider, api_key_enc, key_last4 "
+                "SELECT id, credential_name, provider, api_key_enc, key_last4, model "
                 "FROM advisor_credentials WHERE player_id = :pid "
                 "ORDER BY created_at DESC LIMIT 1"
             ), {"pid": player_id}).mappings().first()
@@ -225,9 +233,10 @@ def get_active_credential(player_id: int) -> Optional[dict]:
     return rec
 
 
-def add_credential(player_id: int, name: str, api_key: str) -> tuple[bool, str]:
+def add_credential(player_id: int, name: str, api_key: str, model: str = DEFAULT_MODEL) -> tuple[bool, str]:
     name = (name or "").strip()[:60] or "My key"
     api_key = (api_key or "").strip()
+    model = model if model in _VALID_MODELS else DEFAULT_MODEL
     provider = _detect_provider(api_key)
     if not provider:
         return False, "Please paste your Google Gemini API key."
@@ -260,10 +269,10 @@ def add_credential(player_id: int, name: str, api_key: str) -> tuple[bool, str]:
                        {"pid": player_id})
         db.execute(text(
             "INSERT INTO advisor_credentials "
-            "(player_id, credential_name, provider, api_key_enc, key_last4, is_active) "
-            "VALUES (:pid, :name, :prov, :enc, :last4, :active)"
+            "(player_id, credential_name, provider, api_key_enc, key_last4, is_active, model) "
+            "VALUES (:pid, :name, :prov, :enc, :last4, :active, :model)"
         ), {"pid": player_id, "name": name, "prov": provider,
-            "enc": enc, "last4": api_key[-4:], "active": make_active})
+            "enc": enc, "last4": api_key[-4:], "active": make_active, "model": model})
         db.commit()
     except Exception as e:
         db.rollback()
@@ -296,6 +305,20 @@ def delete_credential(player_id: int, cred_id: int):
     try:
         db.execute(text("DELETE FROM advisor_credentials WHERE id = :cid AND player_id = :pid"),
                    {"cid": cred_id, "pid": player_id})
+        db.commit()
+    finally:
+        db.close()
+
+
+def set_credential_model(player_id: int, cred_id: int, model: str):
+    if model not in _VALID_MODELS:
+        return
+    from auth import get_db
+    from sqlalchemy import text
+    db = get_db()
+    try:
+        db.execute(text("UPDATE advisor_credentials SET model = :m WHERE id = :cid AND player_id = :pid"),
+                   {"m": model, "cid": cred_id, "pid": player_id})
         db.commit()
     finally:
         db.close()
@@ -1023,6 +1046,56 @@ def _market_snapshot() -> str:
     except Exception:
         pass
 
+    # Live ORDER BOOKS (open buy/sell orders) for the commodity & district markets. This is the
+    # actual listings — best bid/ask plus the highest ask, which exposes a single inflated
+    # sell order sitting on the book (the cause of weird "market prices").
+    def _book(model, get_db_fn, label):
+        try:
+            db = get_db_fn()
+            try:
+                orders = db.query(model.item_type, model.order_type, model.price).filter(
+                    model.status.in_(["active", "partial"]), model.price.isnot(None)).all()
+            finally:
+                db.close()
+            book = {}
+            for item, otype, price in orders:
+                if not price:
+                    continue
+                b = book.setdefault(item, {"bid": None, "ask": None, "ask_hi": None, "nb": 0, "ns": 0})
+                if str(otype) == "sell":
+                    b["ns"] += 1
+                    b["ask"] = price if b["ask"] is None else min(b["ask"], price)
+                    b["ask_hi"] = price if b["ask_hi"] is None else max(b["ask_hi"], price)
+                else:
+                    b["nb"] += 1
+                    b["bid"] = price if b["bid"] is None else max(b["bid"], price)
+            if not book:
+                return
+            lines.append("")
+            lines.append(f"{label} ORDER BOOK (open orders — best bid / best ask; 'high ask' flags "
+                         f"an inflated listing sitting on the book):")
+            for item in sorted(book)[:100]:
+                b = book[item]
+                bid = f"bid ${b['bid']:,.2f}" if b["bid"] is not None else "bid —"
+                ask = f"ask ${b['ask']:,.2f}" if b["ask"] is not None else "ask —"
+                hi = (f" · high ask ${b['ask_hi']:,.2f}"
+                      if b["ask_hi"] and b["ask"] and b["ask_hi"] > b["ask"] else "")
+                lines.append(f"  {item.replace('_',' ')}: {bid} / {ask}{hi} "
+                             f"· {b['nb']} buy / {b['ns']} sell orders")
+        except Exception:
+            pass
+
+    try:
+        from market import MarketOrder, get_db as _modb
+        _book(MarketOrder, _modb, "COMMODITY")
+    except Exception:
+        pass
+    try:
+        from district_market import DistrictMarketOrder, get_db as _ddmdb
+        _book(DistrictMarketOrder, _ddmdb, "DISTRICT")
+    except Exception:
+        pass
+
     snapshot = "\n".join(lines) if lines else "(Market data temporarily unavailable.)"
     c["t"], c["v"] = _t.time(), snapshot
     return snapshot
@@ -1286,8 +1359,24 @@ def _world_snapshot() -> str:
 # GEMINI CALL
 # ==========================
 
-def _call_gemini(api_key: str, system: str, messages: List[dict]) -> tuple[bool, str]:
+def _gen_config(model: str) -> dict:
+    """Per-model generationConfig. The 2.5 models are 'thinking' models whose thinking tokens
+    count against maxOutputTokens. Flash/Flash-Lite let us disable thinking for complete, fast
+    answers; Pro cannot disable thinking, so we just give it a bigger budget. 2.0 models aren't
+    thinking models, so we omit thinkingConfig entirely (some reject it)."""
+    cfg = {"temperature": 0.6, "maxOutputTokens": 2048}
+    if model in ("gemini-2.5-flash", "gemini-2.5-flash-lite"):
+        cfg["thinkingConfig"] = {"thinkingBudget": 0}
+    elif model == "gemini-2.5-pro":
+        cfg["maxOutputTokens"] = 4096  # Pro always thinks; leave room for the visible answer
+    return cfg
+
+
+def _call_gemini(api_key: str, system: str, messages: List[dict],
+                 model: str = DEFAULT_MODEL) -> tuple[bool, str]:
     """One stateless generateContent call. Returns (ok, reply_or_error_message)."""
+    if model not in _VALID_MODELS:
+        model = DEFAULT_MODEL
     contents = []
     for m in messages[-_MAX_TURNS:]:
         role = "user" if (m.get("role") == "user") else "model"
@@ -1300,18 +1389,11 @@ def _call_gemini(api_key: str, system: str, messages: List[dict]) -> tuple[bool,
     payload = {
         "system_instruction": {"parts": [{"text": system}]},
         "contents": contents,
-        # gemini-2.5-flash is a "thinking" model: thinking tokens count against
-        # maxOutputTokens, so a small cap truncates the visible reply mid-sentence. Disable
-        # thinking (thinkingBudget=0) for complete, snappy advisor answers and give ample room.
-        "generationConfig": {
-            "temperature": 0.6,
-            "maxOutputTokens": 2048,
-            "thinkingConfig": {"thinkingBudget": 0},
-        },
+        "generationConfig": _gen_config(model),
     }
     try:
         resp = requests.post(
-            GEMINI_URL,
+            f"{_GEMINI_BASE}/{model}:generateContent",
             params={"key": api_key},
             json=payload,
             timeout=HTTP_TIMEOUT,
@@ -1392,13 +1474,14 @@ def advisor_cred_add(
     session_token: Optional[str] = Cookie(None),
     credential_name: str = Form(...),
     api_key: str = Form(...),
+    model: str = Form(DEFAULT_MODEL),
 ):
     player = _player(session_token)
     if not player:
         return RedirectResponse(url="/login", status_code=303)
     if not _is_pro(player):
         return _redirect_advisor(err="The Financial Advisor is a Wadsworth Pro feature.")
-    ok, msg = add_credential(player.id, credential_name, api_key)
+    ok, msg = add_credential(player.id, credential_name, api_key, model=model)
     # api_key goes out of scope here — only the ciphertext persists.
     return _redirect_advisor(msg="API key saved." if ok else "", err="" if ok else msg)
 
@@ -1412,6 +1495,19 @@ def advisor_cred_activate(
     if not player:
         return RedirectResponse(url="/login", status_code=303)
     activate_credential(player.id, cred_id)
+    return _redirect_advisor()
+
+
+@router.post("/api/advisor/credentials/model")
+def advisor_cred_model(
+    session_token: Optional[str] = Cookie(None),
+    cred_id: int = Form(...),
+    model: str = Form(...),
+):
+    player = _player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    set_credential_model(player.id, cred_id, model)
     return _redirect_advisor()
 
 
@@ -1510,7 +1606,8 @@ def advisor_chat(
         context += f"\n\n# WORLD: EVENTS, LEADERBOARD, CITIES & COUNTIES (public)\n\n{world}"
     system = system_prompt(context)
 
-    ok, reply = _call_gemini(cred["api_key"], system, messages)
+    ok, reply = _call_gemini(cred["api_key"], system, messages,
+                             model=cred.get("model") or DEFAULT_MODEL)
     if not ok:
         return JSONResponse({"ok": False, "error": reply}, status_code=502)
     return JSONResponse({"ok": True, "reply": reply})
@@ -1532,32 +1629,46 @@ def _management_panel_html(player) -> str:
     if creds:
         rows = ('<p style="color:#94a3b8;font-size:0.78rem;margin:0 0 6px;">'
                 'Select which key the advisor uses:</p>')
+        sel_style = ("background:#020617;border:1px solid #334155;color:#e5e7eb;border-radius:6px;"
+                     "padding:4px 6px;font-size:0.72rem;font-family:inherit;cursor:pointer;")
         for c in creds:
             active = c["is_active"]
+            cur_model = c.get("model") or DEFAULT_MODEL
             active_tag = ('<span style="background:#052e16;border:1px solid #16a34a;color:#4ade80;'
                           'border-radius:8px;padding:1px 8px;font-size:0.68rem;font-weight:700;'
                           'margin-left:8px;">IN USE</span>' if active else '')
+            model_opts = "".join(
+                f'<option value="{mid}" {"selected" if mid == cur_model else ""}>{lbl}</option>'
+                for mid, lbl in GEMINI_MODELS)
             rows += f"""
-            <form action="/api/advisor/credentials/activate" method="post"
-                  style="display:flex;align-items:center;justify-content:space-between;gap:10px;
-                         padding:10px;margin-top:6px;border:1px solid {'#16a34a' if active else '#1e293b'};
-                         border-radius:8px;background:{'#0c1f16' if active else '#0b1220'};">
-                <input type="hidden" name="cred_id" value="{c['id']}">
-                <label style="display:flex;align-items:center;gap:10px;cursor:pointer;flex:1;">
-                    <input type="radio" name="_sel" {"checked" if active else ""}
-                           onchange="this.form.submit()"
-                           style="width:18px;height:18px;accent-color:#34d399;cursor:pointer;">
-                    <span>
-                        <span style="color:#e5e7eb;font-weight:600;">{_html.escape(c['credential_name'])}</span>
-                        <span style="color:#64748b;font-size:0.75rem;">&nbsp;· {c['provider']} · ••••{_html.escape(c['key_last4'])}</span>
-                        {active_tag}
-                    </span>
-                </label>
-                <button type="submit" formaction="/api/advisor/credentials/delete" formnovalidate
-                        onclick="return confirm('Delete this API key?');"
-                        style="background:#1e293b;border:1px solid #ef4444;color:#fca5a5;
-                            border-radius:6px;padding:4px 12px;font-size:0.72rem;cursor:pointer;font-family:inherit;">Delete</button>
-            </form>"""
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;
+                        padding:10px;margin-top:6px;border:1px solid {'#16a34a' if active else '#1e293b'};
+                        border-radius:8px;background:{'#0c1f16' if active else '#0b1220'};">
+                <form action="/api/advisor/credentials/activate" method="post"
+                      style="display:flex;align-items:center;gap:10px;flex:1;min-width:180px;margin:0;">
+                    <input type="hidden" name="cred_id" value="{c['id']}">
+                    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                        <input type="radio" name="_sel" {"checked" if active else ""}
+                               onchange="this.form.submit()"
+                               style="width:18px;height:18px;accent-color:#34d399;cursor:pointer;">
+                        <span>
+                            <span style="color:#e5e7eb;font-weight:600;">{_html.escape(c['credential_name'])}</span>
+                            <span style="color:#64748b;font-size:0.75rem;">&nbsp;· ••••{_html.escape(c['key_last4'])}</span>
+                            {active_tag}
+                        </span>
+                    </label>
+                </form>
+                <form action="/api/advisor/credentials/model" method="post" style="margin:0;">
+                    <input type="hidden" name="cred_id" value="{c['id']}">
+                    <select name="model" onchange="this.form.submit()" style="{sel_style}">{model_opts}</select>
+                </form>
+                <form action="/api/advisor/credentials/delete" method="post" style="margin:0;"
+                      onsubmit="return confirm('Delete this API key?');">
+                    <input type="hidden" name="cred_id" value="{c['id']}">
+                    <button type="submit" style="background:#1e293b;border:1px solid #ef4444;color:#fca5a5;
+                        border-radius:6px;padding:4px 12px;font-size:0.72rem;cursor:pointer;font-family:inherit;">Delete</button>
+                </form>
+            </div>"""
         creds_block = rows
     else:
         creds_block = ('<p style="color:#64748b;font-size:0.8rem;margin:10px 0 0;">'
@@ -1627,9 +1738,16 @@ def _management_panel_html(player) -> str:
                 <input type="password" name="api_key" placeholder="AIza…" required
                        style="width:100%;max-width:300px;padding:8px 10px;background:#020617;border:1px solid #1e293b;color:#e5e7eb;border-radius:4px;font-family:inherit;font-size:16px;">
             </div>
+            <div style="margin-bottom:8px;">
+                <label style="display:block;color:#64748b;font-size:0.75rem;margin-bottom:4px;">Model</label>
+                <select name="model" style="width:100%;max-width:300px;padding:8px 10px;background:#020617;border:1px solid #1e293b;color:#e5e7eb;border-radius:4px;font-family:inherit;font-size:16px;">
+                    {"".join(f'<option value="{mid}" {"selected" if mid == DEFAULT_MODEL else ""}>{lbl}</option>' for mid, lbl in GEMINI_MODELS)}
+                </select>
+            </div>
             <p style="color:#64748b;font-size:0.74rem;margin:8px 0 12px;line-height:1.5;">
                 Your key is encrypted at rest, shown only as ••••last-4, and used only for your advisor chats.
-                You can save several keys and switch between them anytime.
+                You can save several keys, pick a model per key, and switch anytime. (Paid keys work too —
+                same setup, just higher limits.)
             </p>
             <button type="submit"
                     style="background:#34d399;color:#04261a;border:none;border-radius:6px;padding:8px 18px;
@@ -1693,13 +1811,15 @@ def advisor_page(
 
     import html as _html
     powered = _html.escape(active_name or "your key", quote=True)
+    active_model = (cred.get("model") or DEFAULT_MODEL) if cred else DEFAULT_MODEL
+    model_label = dict(GEMINI_MODELS).get(active_model, active_model).split("—")[0].strip()
     shielded = not is_scannable(player.id)
     shield_status = "🛡️ your books are shielded" if shielded else "👁️ your books are scannable"
     body = f"""
     <a href="/" style="color:#38bdf8;">&larr; Dashboard</a>
     <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;">
         <h1 style="margin:8px 0 4px 0;">🤖 Financial Advisor</h1>
-        <span style="color:#64748b;font-size:0.78rem;">Powered by: {powered} · Gemini · {shield_status} · chats are never saved on our server</span>
+        <span style="color:#64748b;font-size:0.78rem;">Powered by: {powered} · {_html.escape(model_label)} · {shield_status} · chats are never saved on our server</span>
     </div>
     {banner}
     <p style="max-width:760px;color:#94a3b8;font-size:0.82rem;margin:4px 0 12px;line-height:1.5;">
