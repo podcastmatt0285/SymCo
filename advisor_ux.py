@@ -571,6 +571,30 @@ def _build_player_context(player_id: int) -> str:
         pass
     lines.append(f"  Legal tender: {disp.get('flag','')} {disp.get('code','USD')} ({disp.get('symbol','$')})")
 
+    # Metal coinage (government-issued hard money): holdings valued at the live peg + any pending
+    # redemption IOUs the government owes this player.
+    try:
+        from reserve_banks import (COIN_CURRENCY_CODES, get_live_coin_usd_per_unit,
+                                    get_player_coin_iou_notes, coin_display)
+        coin_lines = []
+        for b in bals:
+            if b.currency_code in COIN_CURRENCY_CODES and (b.balance or 0) > 0:
+                rate = get_live_coin_usd_per_unit(b.currency_code)
+                coin_lines.append(f"{b.balance:,.4f} {b.currency_code} (≈{money(b.balance*rate)})")
+        ious = [n for n in get_player_coin_iou_notes(player_id) if not n.is_fulfilled]
+        if coin_lines:
+            lines.append("  Coinage held: " + ", ".join(coin_lines))
+        if ious:
+            iou_strs = []
+            for n in ious[:6]:
+                rem = n.coin_amount_owed - n.filled_amount
+                pct = (n.filled_amount / n.coin_amount_owed * 100) if n.coin_amount_owed else 0
+                iou_strs.append(f"{rem:,.4f} {n.currency_code} ({pct:.0f}% filled)")
+            lines.append("  Pending coinage owed by the government (redemption IOUs): "
+                         + "; ".join(iou_strs))
+    except Exception:
+        pass
+
     # Debt
     try:
         from estate import calculate_total_debts
@@ -1013,12 +1037,13 @@ def _market_snapshot() -> str:
     except Exception:
         pass
 
-    # Currencies: FX rate + yield
+    # Currencies: FX rate + yield (fiat reserve banks only — coinage is government-issued)
     try:
-        from reserve_banks import StateReserveBank, get_db as _rdb
+        from reserve_banks import StateReserveBank, get_db as _rdb, COIN_CURRENCY_CODES
         db = _rdb()
         try:
-            banks = db.query(StateReserveBank).all()
+            banks = [b for b in db.query(StateReserveBank).all()
+                     if b.currency_code not in COIN_CURRENCY_CODES]  # guard stray coin rows
         finally:
             db.close()
         if banks:
@@ -1027,6 +1052,29 @@ def _market_snapshot() -> str:
             lines.append("  " + ", ".join(
                 f"{b.currency_code} ${b.usd_per_unit:,.4f}/{(b.yield_rate or 0)*100:.1f}%"
                 for b in banks))
+    except Exception:
+        pass
+
+    # Metal coinage market (federal-government issued; live metal peg; demurrage carry cost)
+    try:
+        from reserve_banks import (COIN_CURRENCY_CODES, get_live_coin_usd_per_unit,
+                                    get_gov_coin_reserve, get_coin_iou_queue,
+                                    COIN_DEMURRAGE_ANNUAL, coin_display)
+        coin_rows = []
+        for code in sorted(COIN_CURRENCY_CODES):
+            rate = get_live_coin_usd_per_unit(code)
+            if rate <= 0:
+                continue
+            treasury = get_gov_coin_reserve(code)
+            queue = get_coin_iou_queue(code)
+            owed = sum((n.coin_amount_owed - n.filled_amount) for n in queue)
+            coin_rows.append(f"{code} ${rate:,.2f}/unit (treasury holds {treasury:,.2f}; "
+                             f"{len(queue)} redemption IOU(s) owing {owed:,.2f})")
+        if coin_rows:
+            lines.append("")
+            lines.append(f"METAL COINAGE — government-issued hard money, pegged to live metal "
+                         f"prices, {COIN_DEMURRAGE_ANNUAL*100:.0f}%/yr demurrage on holdings:")
+            lines.append("  " + "; ".join(coin_rows))
     except Exception:
         pass
 

@@ -270,17 +270,19 @@ def _seed_institution_entries():
         (
             "Hard Money & Demurrage",
             "Coinage is deliberately designed as HARD MONEY — its supply cannot be inflated.\n\n"
-            "The only way coinage is ever created is by physically minting it from real metals you own. "
+            "The only way coinage is ever created is by physically minting it from real metals you own, "
+            "and all coinage is issued by the FEDERAL GOVERNMENT — there are no per-metal banks. "
             "There is no other issuance path:\n"
             "• USD income is never auto-converted into coinage — earnings always land in USD.\n"
-            "• Coinage bonds can never pay positive interest. Their yield band is capped at zero.\n"
-            "• In fact the default coinage bond yield is NEGATIVE (demurrage): holding a coinage bond slowly "
-            "costs you, exactly like paying to store physical bullion in a vault.\n\n"
+            "• Coinage can never pay positive interest.\n"
+            "• Holding coins carries a small DEMURRAGE: stored coin balances slowly decay (~1%/yr), "
+            "reclaimed by the government — exactly like paying to store physical bullion in a vault.\n\n"
             "This is the in-game gold standard: to acquire more coinage you must run a Mint and consume "
             "metal. No mint, no new coins. The result is a sound, scarce currency backed 1:1 by the metals "
-            "spent to create it.\n\n"
-            "Anyone may buy and trade coinage bonds, but only Pro subscribers can set a coinage as their "
-            "legal tender (the currency their income is paid and spent in).",
+            "spent to create it. The government skims 2% seigniorage on each mint run and uses its coin "
+            "holdings to honour redemption IOUs (created when a player switches legal tender into a coin).\n\n"
+            "Only Pro subscribers can set a coinage as their legal tender (the currency their income is "
+            "paid and spent in).",
         ),
         (
             "Institution Taxes",
@@ -541,9 +543,9 @@ def _seed_npc_currency_mandate_entry():
                 "TRY, SAR, AED, ANA) — each is a full, real switch.\n"
                 "• All 6 metal coinage currencies (AU24, AU22, AG999, AG925, PT9995, PT950). Coinage is "
                 "hard money — exactly as when a player switches to a coin currency, the NPC's existing "
-                "reserves are converted into a queued coinage redemption IOU (filled as the bank acquires "
-                "metal), while future income continues to land in USD because coins can only be created by "
-                "minting.\n\n"
+                "reserves are converted into a queued government redemption IOU (filled from the federal "
+                "treasury's coin holdings as mints produce seigniorage), while future income continues to "
+                "land in USD because coins can only be created by minting.\n\n"
                 "How to trigger it:\n"
                 "• Admins create the event from /admin/events using the NPC Currency Mandate quick-form card.\n"
                 "• Select the target currency, set a start date, and optionally set an end date for the "

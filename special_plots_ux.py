@@ -838,7 +838,7 @@ def _mint_dashboard_html(sp, owner=None) -> str:
         <div style="background:#111827;border-radius:6px;padding:10px;">
           <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;letter-spacing:.05em;">Total Minted (Lifetime)</div>
           <div style="color:#fbbf24;font-weight:bold;font-size:1.05rem;margin-top:2px;">{minted_str}</div>
-          <div style="color:#475569;font-size:0.65rem;">all {minted_code or "coins"} ever struck by this Mint — includes 2% seigniorage to bank, never decreases</div>
+          <div style="color:#475569;font-size:0.65rem;">all {minted_code or "coins"} ever struck by this Mint — includes 2% seigniorage paid to the federal government, never decreases</div>
         </div>
         <div style="background:#0a1f0a;border:1px solid #166534;border-radius:6px;padding:10px;">
           <div style="color:#4ade80;font-size:0.68rem;text-transform:uppercase;letter-spacing:.05em;font-weight:bold;">⬆ {minted_code or "Coins"} in Hand (Spendable)</div>
@@ -868,8 +868,9 @@ def _mint_dashboard_html(sp, owner=None) -> str:
       <h3 style="margin-top:0;color:#fbbf24;">💰 Coinage Live Prices</h3>
       <p style="color:#64748b;font-size:0.8rem;margin-bottom:12px;">
         Metal-pegged exchange rates update each game tick.
-        <strong style="color:#fbbf24;">Hard money:</strong> coinage enters circulation only by minting —
-        coinage bonds carry a negative demurrage yield and can never pay positive interest.
+        <strong style="color:#fbbf24;">Hard money:</strong> coinage enters circulation only by minting and is
+        issued by the federal government (not a bank). Stored coins carry a small demurrage (carry cost) reclaimed
+        by the government; coinage never pays positive interest.
       </p>
       {price_board}
     </div>
