@@ -401,6 +401,48 @@ def _build_player_context(player_id: int) -> str:
     except Exception:
         pass
 
+    # Subscription detail (Pro renewal/expiry) + skin
+    try:
+        from play_billing import get_player_subscription
+        sub = get_player_subscription(player_id)
+        if sub:
+            exp = sub.get("expiry_time")
+            exps = exp.strftime("%b %d, %Y") if exp else "—"
+            lines.append(f"Subscription: {sub.get('sub_state','?')} (product {sub.get('product_id','?')}, "
+                         f"through {exps})")
+        elif not is_pro:
+            lines.append("Subscription: none (free player)")
+    except Exception:
+        pass
+    try:
+        from auth import Player, get_db as _adb2
+        db2 = _adb2()
+        try:
+            pp = db2.query(Player).filter(Player.id == player_id).first()
+            skin = getattr(pp, "skin", None) if pp else None
+        finally:
+            db2.close()
+        if skin and skin != "default":
+            lines.append(f"Skin: {skin}")
+    except Exception:
+        pass
+
+    # Bluesky / public snapshot status
+    try:
+        import bluesky as _bsky
+        link = _bsky.get_link(player_id)
+        if link:
+            pub = "public" if link.get("public_profile") else "private"
+            h = link.get("handle") or "?"
+            lines.append(f"Bluesky: linked as @{h}; handle shown on P2P: "
+                         f"{'yes' if link.get('show_on_p2p') else 'no'}; "
+                         f"public snapshot page: {pub}")
+        else:
+            lines.append("Bluesky: not linked (can link in Settings → Account to enable a "
+                         "shareable public snapshot page).")
+    except Exception:
+        pass
+
     # Net worth & leaderboard
     try:
         from stats_ux import PlayerStats, get_db as _sdb
@@ -1110,8 +1152,14 @@ def _world_snapshot() -> str:
                         members = len(get_city_members(ct.id))
                     except Exception:
                         members = "?"
-                    lines.append(f"  {ct.name} — mayor {mname} · {members} members · "
-                                 f"join fee {_compact(ct.application_fee)}")
+                    try:
+                        from city_projects import get_city_sales_tax_rate
+                        stax = f"{get_city_sales_tax_rate(ct.id)*100:.2f}% sales tax"
+                    except Exception:
+                        stax = "sales tax —"
+                    cur = getattr(ct, "currency_type", None) or "USD"
+                    lines.append(f"  {ct.name} — mayor {mname} · {members} members · {stax} · "
+                                 f"legal tender {cur} · join fee {_compact(ct.application_fee)}")
             finally:
                 adb.close()
     except Exception:
@@ -1121,14 +1169,73 @@ def _world_snapshot() -> str:
     try:
         from counties import get_all_counties
         cos = get_all_counties() or []
+        # Merge in the per-county exchange fee (not exposed by get_all_counties).
+        fee_map = {}
+        try:
+            from counties import County, get_db as _ccdb
+            ccdb = _ccdb()
+            try:
+                for cid, fee in ccdb.query(County.id, County.transaction_fee_percent).all():
+                    fee_map[cid] = fee
+            finally:
+                ccdb.close()
+        except Exception:
+            pass
         if cos:
             lines.append("")
             lines.append(f"COUNTIES ({len(cos)}):")
             for c2 in cos[:15]:
+                fee = fee_map.get(c2.get("id"))
+                feetxt = f"{fee*100:.1f}% exchange fee" if fee is not None else "exchange fee 2%"
                 lines.append(f"  {c2.get('name','?')} — token {c2.get('crypto_symbol','?')} · "
                              f"{c2.get('city_count',0)}/{c2.get('max_cities','?')} cities · "
-                             f"treasury {_compact(c2.get('treasury_balance',0))} · "
+                             f"{feetxt} · treasury {_compact(c2.get('treasury_balance',0))} · "
                              f"mining pool {c2.get('mining_energy',0):,.0f}")
+    except Exception:
+        pass
+
+    # Open P2P contract market (LISTED contracts anyone can bid on)
+    try:
+        from p2p import Contract, ContractItem, ContractStatus, get_db as _pdb
+        pdb = _pdb()
+        try:
+            listed = (pdb.query(Contract)
+                      .filter(Contract.status == ContractStatus.LISTED)
+                      .order_by(Contract.listed_at.desc()).limit(15).all())
+            rows = []
+            for ct in listed:
+                items = pdb.query(ContractItem).filter(
+                    ContractItem.contract_id == ct.id).all()
+                idesc = ", ".join(
+                    f"{it.item_type.replace('_',' ')}×{it.quantity_per_delivery:,.0f}"
+                    for it in items) or "—"
+                mode = "price-bid" if ct.contract_mode == "price_bid" else "quantity-bid"
+                price = ct.price_per_delivery or ct.minimum_bid or 0
+                rows.append(f"  #{ct.id} [{mode}] {idesc} · "
+                            f"{ct.total_deliveries or 1} delivery(s) @ {_compact(price)} "
+                            f"per {getattr(ct,'delivery_interval','cycle')}")
+        finally:
+            pdb.close()
+        if rows:
+            lines.append("")
+            lines.append(f"OPEN P2P CONTRACTS ({len(rows)} listed on the trading market):")
+            lines.extend(rows)
+    except Exception:
+        pass
+
+    # WikiWads article index (so the advisor can point players to real in-game articles)
+    try:
+        import wiki as _wiki
+        entries = _wiki.list_entries() or []
+        if entries:
+            by_cat = {}
+            for e in entries:
+                by_cat.setdefault(e.get("category", "reference"), []).append(e.get("title", "?"))
+            lines.append("")
+            lines.append("WIKIWADS ARTICLES (in-game encyclopedia — point players here to learn more):")
+            for cat in sorted(by_cat):
+                titles = by_cat[cat][:12]
+                lines.append(f"  {cat}: " + "; ".join(titles))
     except Exception:
         pass
 

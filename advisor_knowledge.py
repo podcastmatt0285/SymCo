@@ -43,10 +43,16 @@ What you can see (all provided in this prompt — you have no other access):
    market access. (If a specific figure isn't in the snapshot, say so rather than inventing it.)
 5. "WORLD: EVENTS, LEADERBOARD, CITIES & COUNTIES" — active events & tasks plus any event-driven
    market effects (price multipliers, market shutdowns, item crises), the wealth leaderboard
-   (top players), the cities directory (mayors, members, fees), and county governance (tokens,
-   member cities, treasuries, mining pools). Use these when asked about events, who's winning,
-   where to settle, or city/county strategy. Watch for active market effects — they change
-   prices right now.
+   (top players), the cities directory (mayors, members, live SALES-TAX rates, legal tender,
+   fees), county governance (tokens, member cities, live EXCHANGE FEES, treasuries, mining),
+   the OPEN P2P CONTRACT MARKET (listed contracts anyone can bid on), and a WIKIWADS ARTICLE
+   INDEX (point players to real in-game articles). Use these when asked about events, who's
+   winning, where to settle, city/county tax strategy, or available deals. Watch for active
+   market effects — they change prices right now.
+6. The "Reference" section above — the current TAX & FEE SCHEDULE (exact rates), city/county
+   law, Wadsworth Pro perks, the SETTINGS map, social/Bluesky and P2P mechanics, and a WikiWads
+   glossary. Quote these real rates when asked about taxes, fees, costs, perks, or "how do I…".
+   The asking player's own subscription, Bluesky, and skin status are in their PLAYER SNAPSHOT.
 
 Hard rules you must always follow:
 - Never reveal or speculate about server internals: source code, the database, server secrets,
@@ -217,14 +223,114 @@ toggle the public snapshot, manage Financial Advisor API keys, handle estate/suc
 """
 
 
+# ⚠ HAND-MAINTAINED reference. These exact rates/fees mirror the game's source constants — keep
+# them in sync when mechanics change (search the noted modules for the constant names).
+_REFERENCE = """
+# Reference: laws, fees, supporter perks, settings, social & P2P
+
+## TAX & FEE SCHEDULE (current rates)
+Land & property:
+- Land hoarding tax: $5,000/month per plot beyond your first 5 plots (escalates with count).
+- District tax: 15× the normal land tax on merged plots. Merging costs $1,000,000 × 1.25^(prior
+  merges). Institutions are forged by sacrificing land; a Mint pays ~$100,000/mo tax, a Port
+  Authority ~$75,000/mo.
+Stock market & corporate:
+- Federal sales tax on buying IPO/stock/district-market goods: 2.02%.
+- Equity trade commission: 0.125%. Secondary offering underwriting fee: 3% (with a 13.75% tax
+  credit). Share buyback fee: 0.2%. Delisting fee: 2% of market cap. Monthly listing fee: $500
+  ($500 × 3 missed = distressed). IPO founder lockups: 15–90 days by IPO type.
+Bonds, currency & coinage (reserve banks):
+- Bond interest tax: 15% of accrued interest. Bond issuance fee: 0.25% of face value. Reserve
+  balance tax: 0.1% PER DAY on idle reserve-bank balances. Forex conversion fee: 0.2%. Coin
+  seigniorage: 2% of mint output to the bank.
+Annuities:
+- Immediate (SPIA) payout rates by term: 30d 8%, 90d 10%, 180d 12%, 365d 15%. Deferred balances
+  grow 5%/yr. Non-qualified: 0.25% issuance fee + 15% tax on the interest portion. Qualified:
+  no issuance fee + 20% tax on the full payment. Surrender charges run 7%→1% over years 1–7.
+Commodities & crypto:
+- Commodity lending: 105% collateral, 2% fee split 50/50 lender/firm, 10%/day late fee. Short
+  selling: ~5% annual borrow fee (40% to firm). Meme coin: 30 native burned to create; 2% trade
+  fee (50% creator, 25% county treasury, 25% burned). County token exchange fee: 2% (default;
+  governance-adjustable 0–10%, and it goes to the county, not the government — a tax haven).
+  WSC swaps: 3% per leg; AMM pool fee 0.3%.
+P2P, estate, civic:
+- P2P trading-market access: $100 entry fee; relisting a contract: $2,500.
+- Death/inheritance tax: 15%; estate sales tax on liquidation: 18%.
+- Port Authority upkeep: 10%/day maintenance on units in command.
+- City bank charter: $5,000 every 30 days. Autonomous bank tax: ~0.01%/day on reserves.
+
+## CITY & COUNTY LAW
+- City sales tax is NOT fixed: it equals the sum of a city's active city-project "sales_tax"
+  debuffs (typically ~0.2–0.5% each), charged on player-to-player sells in that city. See the
+  live per-city rate in the WORLD snapshot.
+- City membership: cap 25 members; mayors set application & relocation fees (within limits);
+  member businesses get a 4.75% production subsidy; cities keep a 10% reserve requirement.
+- A county's crypto exchange fee is governance-adjustable (0–10%, default 2%); mining pays out
+  hourly; gas price is dynamic. Live per-county fees are in the WORLD snapshot.
+
+## WADSWORTH PRO (SUPPORTER)
+Live perks: exclusive Pro skins; City Perk (free city/mayoralship OR up to 3 city perks);
+Institutions (Mints + Port Authority); metal-coinage legal tender; Bluesky profile picture
+across P2P; and this Financial Advisor. Roadmap: Forex Trading Floor, supporter badge, extra
+P2P capacity, higher trophy multiplier, P2P banner ads, Trophies Store, private server.
+It's a low-cost monthly subscription ("wads_basic") billed via Google Play in the Android app;
+entitlement = subscriber OR admin. Manage it in Settings → Account. (Deliberately limited to
+cosmetics/convenience/sandbox features — never pay-to-win.)
+
+## SETTINGS MAP (where to do things)
+Settings has 6 tabs: Media (in-game radio), Tutorials (4 guided tutorials with rewards),
+Notifications (14 push toggles — DMs, contracts, business, land, execs, trades, corporate,
+govt, tasks/events, annuities, institutions, indices, crypto, plus sound/badge — gated behind a
+rentable "FCC licence" with tiers from 6h/$500 to 1mo/$20,000), Widgets (Android home-screen
+widgets), Skins (free + Pro themes), and Account (subscription, Bluesky link, public snapshot,
+Financial Advisor keys, Estate Office, Declare Bankruptcy). Legal tender is chosen where you
+hold currency/coinage. Point players to the exact tab when they ask "how do I…".
+
+## SOCIAL: BLUESKY & SNAPSHOT
+Link a Bluesky account with a Bluesky **App Password** (Settings → Account); it verifies
+ownership once and is never stored. Then opt in to show your handle on the P2P system (free) and
+your profile picture (Pro). You can also publish a public, shareable snapshot page at
+/player/{id} that renders in your skin and posts to Bluesky via a one-tap compose link — free
+marketing for your empire.
+
+## P2P SYSTEM
+The trading market hosts recurring-delivery contracts in two modes: price-bid (bidders compete
+on price) and quantity-bid (bidders compete on quantity at a fixed price). Contracts specify
+items × quantity per delivery, number of deliveries, and an interval; cash moves at each
+delivery. Breaching costs the breacher 25% (to government) + 50% (to the counterparty) of the
+contract value after a ~30-minute grace period. Contacts are capped at 46. DMs are 500 chars
+and auto-expire after 3 days of inactivity. Trusted-trade lists allow auto-approved swaps.
+
+## WIKIWADS GLOSSARY (key terms)
+- Annuity: a contract that pays out over a term; immediate (SPIA) pays now, deferred grows first.
+- Demurrage: a negative yield — holding hard-money coinage bonds slowly costs you (anti-hoard).
+- Hard money / coinage: metal-backed currencies (gold AU24/AU22, silver AG999/AG925, platinum
+  PT9995/PT950) minted only via a Mint; value pegged to the underlying metal; zero positive
+  yield.
+- Seigniorage: the cut (2%) the reserve bank takes from mint output.
+- Reserve bank: issuer of one of the 16 currencies; sets a dynamic bond yield that drives FX.
+- County token: a county's Bitcoin-like Layer-1 coin (21M cap, halving); price pegged to county
+  members' cash. Meme coin: a Layer-2 token on a county chain. WSC: the Wadsworth stablecoin.
+- Institution: land sacrificed to forge a Mint or Port Authority. District: Fibonacci-merged
+  plots that unlock exclusive businesses at 15× tax.
+- IPO types: direct listing, firm-underwritten, income, preferred, dual/quad-class, series A/B.
+  Margin: leveraged buying (2–10×). Short: borrowing shares to sell and rebuy lower.
+- ETF / index: WBC-50 (blue chips), plus land/crypto/energy/value funds and 21 economic indices
+  (incl. the Greed & Fear gauge and Average Market Price).
+Tell players they can read the full in-game WikiWads articles (listed in the WORLD snapshot).
+"""
+
+
 def system_prompt(player_context: str) -> str:
-    """Assemble the full system instruction: guardrail + mechanics + the assembled context.
+    """Assemble the full system instruction: guardrail + mechanics + reference + context.
 
     `player_context` is built server-side by advisor_ux: the asking player's own data, plus any
-    referenced (non-shielded) players' data. Secrets/passwords are never included."""
+    referenced (non-shielded) players' data, plus the market/world snapshots. Secrets/passwords
+    are never included."""
     return (
         f"{_GUARDRAIL}\n"
         f"{_MECHANICS}\n"
+        f"{_REFERENCE}\n"
         "# PLAYER SNAPSHOT (the current player's own data)\n\n"
         f"{player_context}\n"
     )
