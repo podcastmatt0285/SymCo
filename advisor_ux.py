@@ -860,6 +860,9 @@ def _resolve_referenced_players(querying_id: int, messages: list) -> list:
         return []
     import re
     found: list = []
+    # Text with all tag tokens (@[..]/#[..]/$[..]/%[..]) stripped, so words *inside* a tag (e.g.
+    # the "wheat" in #[item|wheat|Wheat]) can't spuriously match a player's business name below.
+    clean_blob = re.sub(r"[@#$%/]\[[^\]]*\]", " ", text_blob)
 
     # @[id|name] mention tokens from the @ autocomplete — exact, unambiguous id resolution.
     for mid in re.findall(r"@\[(\d{1,7})\|", text_blob):
@@ -899,9 +902,9 @@ def _resolve_referenced_players(querying_id: int, messages: list) -> list:
             # inside longer words (e.g. "jo" should not hit "john").
             has_symbol = any(not (c.isalnum() or c.isspace()) for c in nm)
             if len(nm) >= 4 or has_symbol:
-                matched = nm in text_blob
+                matched = nm in clean_blob
             else:
-                matched = re.search(r"(?<!\w)" + re.escape(nm) + r"(?!\w)", text_blob) is not None
+                matched = re.search(r"(?<!\w)" + re.escape(nm) + r"(?!\w)", clean_blob) is not None
             if matched:
                 found.append(pid)
             if len(found) >= 6:
@@ -2164,32 +2167,44 @@ def advisor_page(
     {banner}
     <p style="max-width:760px;color:#94a3b8;font-size:0.82rem;margin:4px 0 12px;line-height:1.5;">
         I give in-game guidance about Wadsworth, your own empire, and your rivals — taxes, what to build,
-        how a mechanic works, and how you stack up against other players (type <strong>@</strong> to reference any
-        player or NPC by name or ID and I'll size them up). I can't trade or move money for you. Manage your keys
-        and privacy below the chat.
+        how a mechanic works, and how you stack up against other players. Tag things inline to be precise —
+        <strong>@</strong>player <strong>#</strong>item <strong>$</strong>token <strong>%</strong>TICKER — and I'll
+        size them up. I can't trade or move money for you. Manage your keys and privacy below the chat.
     </p>
     <style>
-    .adv-mention-dd {{ position:absolute; bottom:calc(100% - 4px); left:12px; right:64px; max-height:210px;
-        overflow-y:auto; background:#0b1220; border:1px solid #334155; border-radius:8px; display:none;
-        z-index:50; box-shadow:0 6px 22px rgba(0,0,0,.45); }}
-    .adv-mention-dd.show {{ display:block; }}
-    .adv-mention-dd-hdr {{ padding:6px 12px; font-size:0.7rem; text-transform:uppercase; letter-spacing:.05em;
-        color:#64748b; border-bottom:1px solid #1e293b; }}
-    .adv-mention-opt {{ padding:8px 12px; cursor:pointer; display:flex; align-items:center; gap:8px; font-size:0.85rem; }}
-    .adv-mention-opt:hover, .adv-mention-opt.sel {{ background:#1e2d3d; }}
-    .adv-mention-opt .nm {{ color:#e2e8f0; }}
-    .adv-mention-opt .id {{ color:#64748b; font-size:0.75rem; margin-left:auto; }}
-    .adv-mention {{ background:rgba(34,197,94,0.15); color:#22c55e; border-radius:3px; padding:1px 4px;
-        font-weight:600; font-size:0.9em; }}
+    /* Tag chips + autocomplete — same legend as DMs/chatrooms */
+    .mention {{ display:inline; padding:1px 4px; border-radius:3px; font-weight:600; font-size:0.82em; text-decoration:none; }}
+    a.mention:hover {{ opacity:0.75; }}
+    .mention-player {{ background:rgba(34,197,94,0.15);  color:#22c55e; }}
+    .mention-item   {{ background:rgba(56,189,248,0.15); color:#38bdf8; }}
+    .mention-crypto {{ background:rgba(251,191,36,0.15); color:#fbbf24; }}
+    .mention-stock  {{ background:rgba(249,115,22,0.15); color:#f97316; }}
+    .mention-dropdown {{ display:none; position:absolute; bottom:calc(100% + 4px); left:12px; right:64px;
+        background:#0f1828; border:1px solid #334155; border-radius:6px; z-index:50; max-height:220px;
+        overflow-y:auto; box-shadow:0 -4px 20px rgba(0,0,0,0.5); }}
+    .mention-dropdown.show {{ display:block; }}
+    .mention-dropdown-header {{ padding:5px 10px 3px; font-size:0.66rem; color:#64748b; text-transform:uppercase;
+        letter-spacing:0.05em; border-bottom:1px solid #1e293b; }}
+    .mention-option {{ display:flex; align-items:center; gap:8px; padding:7px 10px; cursor:pointer; font-size:0.82rem; }}
+    .mention-option:hover, .mention-option.selected {{ background:#1e2d3d; }}
+    .mention-trigger-badge {{ font-weight:700; font-size:0.85rem; min-width:12px; }}
+    .mention-primary {{ color:#e2e8f0; }}
+    .mention-secondary {{ color:#64748b; font-size:0.75rem; margin-left:auto; }}
     </style>
     <div class="card" style="max-width:760px;padding:0;overflow:hidden;">
         <div id="adv-log" style="height:52vh;min-height:320px;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px;"></div>
         <div style="border-top:1px solid var(--border,#1e293b);padding:12px;display:flex;gap:8px;align-items:flex-end;position:relative;">
-            <div id="adv-mention-dd" class="adv-mention-dd"></div>
-            <textarea id="adv-input" rows="2" placeholder="Ask about taxes, strategy… type @ to reference a player or NPC"
+            <div id="adv-mention-dd" class="mention-dropdown"></div>
+            <textarea id="adv-input" rows="2" placeholder="Ask about taxes, strategy…  tag with @player #item $token %TICKER"
                 style="flex:1;resize:vertical;background:var(--bg-page,#020617);border:1px solid var(--border,#334155);
                        color:var(--text-primary,#e5e7eb);border-radius:8px;padding:10px;font-family:inherit;font-size:16px;"></textarea>
             <button id="adv-send" class="btn-blue" style="padding:10px 18px;white-space:nowrap;">Send</button>
+        </div>
+        <div style="padding:0 12px 10px;font-size:0.7rem;color:#64748b;">
+            Tags: <span class="mention mention-player">@player</span>
+            <span class="mention mention-item">#item/business</span>
+            <span class="mention mention-crypto">$token</span>
+            <span class="mention mention-stock">%TICKER</span>
         </div>
     </div>
     <div style="max-width:760px;margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
@@ -2230,14 +2245,50 @@ def advisor_page(
             return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
         }}
         function fmt(raw) {{
-            var re = /@\[(\d+)\|([^\]]*)\]/g, out = '', last = 0, m;
+            // Render @player #item/business $token %stock tags as chips/links (matches DMs/chatrooms).
+            var re = /@\[([^\]]+)\]|#\[([^\]]+)\]|\/\[([^\]]+)\]|\$\[([^\]]+)\]|%\[([^\]]+)\]/g;
+            var escLink = function(s) {{
+                return esc(s).replace(/(https?:\/\/[^\s<]+)/g, function(u) {{
+                    return '<a href="' + u + '" target="_blank" rel="noopener noreferrer">' + u + '</a>';
+                }});
+            }};
+            var out = '', last = 0, m;
             raw = raw || '';
             while ((m = re.exec(raw)) !== null) {{
-                out += esc(raw.slice(last, m.index));
-                out += '<span class="adv-mention">@' + esc(m[2]) + '</span>';
+                if (m.index > last) out += escLink(raw.slice(last, m.index));
+                if (m[1] !== undefined) {{
+                    var p1 = m[1].split('|');
+                    var name = p1.length >= 2 ? p1[1] : p1[0];
+                    var id = p1.length >= 2 ? p1[0] : null;
+                    var href = id ? '/contacts?view=' + encodeURIComponent(id) : '/contacts?q=' + encodeURIComponent(name);
+                    out += '<a href="' + href + '" class="mention mention-player">@' + esc(name) + '</a>';
+                }} else if (m[2] !== undefined) {{
+                    var p2 = m[2].split('|');
+                    if (p2.length >= 3) {{
+                        var wtype = p2[0], key = p2[1], nm2 = p2[2];
+                        var href2 = wtype === 'item' ? '/market?item=' + encodeURIComponent(key)
+                                  : wtype === 'district_item' ? '/district-market?item=' + encodeURIComponent(key)
+                                  : wtype === 'district_biz' ? '/district-market' : '/land';
+                        out += '<a href="' + href2 + '" class="mention mention-item">#' + esc(nm2) + '</a>';
+                    }} else {{
+                        out += '<span class="mention mention-item">#' + esc(p2[0]) + '</span>';
+                    }}
+                }} else if (m[3] !== undefined) {{
+                    out += '<span class="mention mention-item">#' + esc(m[3]) + '</span>';
+                }} else if (m[4] !== undefined) {{
+                    var cp = m[4].split('|');
+                    var csym = cp.length >= 2 ? cp[1] : cp[0];
+                    var ctype = cp.length >= 2 ? cp[0] : 'meme';
+                    var chref = ctype === 'native' ? '/token/' + encodeURIComponent(csym)
+                              : ctype === 'meme' ? '/memecoins/' + encodeURIComponent(csym) : null;
+                    if (chref) out += '<a href="' + chref + '" class="mention mention-crypto">$' + esc(csym) + '</a>';
+                    else out += '<span class="mention mention-crypto">$' + esc(csym) + '</span>';
+                }} else {{
+                    out += '<a href="/brokerage/company/' + encodeURIComponent(m[5]) + '" class="mention mention-stock">%' + esc(m[5]) + '</a>';
+                }}
                 last = m.index + m[0].length;
             }}
-            out += esc(raw.slice(last));
+            if (last < raw.length) out += escLink(raw.slice(last));
             return out;
         }}
         function bubble(role, text) {{
@@ -2295,37 +2346,59 @@ def advisor_page(
         }}
         sendBtn.addEventListener('click', send);
 
-        // ── @-mention autocomplete (players & NPCs, by name or #ID) ──
+        // ── Tag autocomplete: @players  #items/business  $tokens  %stocks (matches DMs/chatrooms) ──
         var ddEl = document.getElementById('adv-mention-dd');
         var mState = null, mSugs = [], mSel = -1, mTimer = null;
-        function detectAt(val, pos) {{
-            var before = val.slice(0, pos);
-            var m = before.match(/(?:^|[\s,])@(\S*)$/);
-            if (!m) return null;
-            return {{ start: before.length - m[1].length - 1, query: m[1] }};
+        var TRIG_EP    = {{'@':'players','#':'items','$':'crypto','%':'stocks'}};
+        var TRIG_LABEL = {{'@':'Players & NPCs','#':'Businesses & Items','$':'Crypto','%':'Stocks'}};
+        var TRIG_COLOR = {{'@':'#22c55e','#':'#38bdf8','$':'#fbbf24','%':'#f97316'}};
+        function detectTrigger(val, pos) {{
+            var before = val.slice(0, pos), m;
+            m = before.match(/(?:^|[\s,])(@\S*)$/);
+            if (m) return {{ type:'@', start: before.lastIndexOf(m[1]), query: m[1].slice(1) }};
+            m = before.match(/(?:^|[\s,])(\$\S*)$/);
+            if (m) return {{ type:'$', start: before.lastIndexOf(m[1]), query: m[1].slice(1) }};
+            m = before.match(/(?:^|[\s,])(%\S*)$/);
+            if (m) return {{ type:'%', start: before.lastIndexOf(m[1]), query: m[1].slice(1) }};
+            m = before.match(/(?:^|[\s,])(#[^@$#%]*)$/);
+            if (m && m[1].length > 1) return {{ type:'#', start: before.lastIndexOf(m[1]), query: m[1].slice(1) }};
+            return null;
         }}
         function closeMD() {{ mState = null; mSugs = []; mSel = -1; ddEl.classList.remove('show'); ddEl.innerHTML = ''; }}
         function renderMD() {{
             if (!mSugs.length) {{ ddEl.classList.remove('show'); ddEl.innerHTML = ''; return; }}
-            var html = '<div class="adv-mention-dd-hdr">Players &amp; NPCs</div>';
+            var type = mState.type, color = TRIG_COLOR[type] || '#e2e8f0';
+            var html = '<div class="mention-dropdown-header">' + (TRIG_LABEL[type] || type) + '</div>';
             mSugs.forEach(function(s, i) {{
-                html += '<div class="adv-mention-opt' + (i === mSel ? ' sel' : '') + '"'
-                    + ' onmousedown="event.preventDefault();window.__advPick(' + i + ')">'
-                    + '<span class="nm">@' + esc(s.name) + '</span><span class="id">#' + s.id + '</span></div>';
+                var sel = i === mSel ? ' selected' : '', primary, secondary;
+                if (type === '@') {{ primary = esc(s.name); secondary = '#' + s.id; }}
+                else if (type === '#') {{ primary = esc(s.name); secondary = esc(s.category || ''); }}
+                else if (type === '%') {{ primary = esc(s.ticker) + ' · ' + esc(s.name); secondary = 'stock'; }}
+                else {{ primary = esc(s.symbol) + ' · ' + esc(s.name); secondary = s.type; }}
+                html += '<div class="mention-option' + sel + '" onmousedown="event.preventDefault();window.__advPick(' + i + ')">'
+                    + '<span class="mention-trigger-badge" style="color:' + color + '">' + esc(type) + '</span>'
+                    + '<span class="mention-primary">' + primary + '</span>'
+                    + '<span class="mention-secondary">' + secondary + '</span></div>';
             }});
             ddEl.innerHTML = html; ddEl.classList.add('show');
         }}
-        async function fetchMD(q) {{
+        async function fetchMD(type, q) {{
+            var ep = TRIG_EP[type]; if (!ep) return;
             try {{
-                var r = await fetch('/api/chat/suggest/players?q=' + encodeURIComponent(q), {{credentials:'same-origin'}});
+                var r = await fetch('/api/chat/suggest/' + ep + '?q=' + encodeURIComponent(q), {{credentials:'same-origin'}});
                 if (!r.ok) return;
                 mSugs = await r.json(); mSel = mSugs.length ? 0 : -1; renderMD();
             }} catch(e) {{}}
         }}
         function pickMD(i) {{
             if (!mState || i < 0 || i >= mSugs.length) return;
-            var s = mSugs[i];
-            var rep = '@[' + s.id + '|' + s.name + '] ';
+            var s = mSugs[i], type = mState.type, rep;
+            if (type === '@') {{ rep = '@[' + s.id + '|' + s.name + '] '; }}
+            else if (type === '#') {{
+                var wtype = s.wtype || ((s.category || '').toLowerCase().indexOf('item') >= 0 ? 'item' : 'biz');
+                rep = '#[' + wtype + '|' + s.key + '|' + s.name + '] ';
+            }} else if (type === '%') {{ rep = '%[' + s.ticker + '] '; }}
+            else {{ rep = '$[' + (s.type || 'meme') + '|' + s.symbol + '] '; }}
             var after = input.value.slice(input.selectionStart);
             input.value = input.value.slice(0, mState.start) + rep + after;
             var np = mState.start + rep.length;
@@ -2334,10 +2407,10 @@ def advisor_page(
         }}
         window.__advPick = pickMD;
         input.addEventListener('input', function() {{
-            var t = detectAt(input.value, input.selectionStart);
+            var t = detectTrigger(input.value, input.selectionStart);
             if (!t) {{ closeMD(); return; }}
             mState = t; clearTimeout(mTimer);
-            mTimer = setTimeout(function() {{ fetchMD(t.query); }}, 120);
+            mTimer = setTimeout(function() {{ fetchMD(t.type, t.query); }}, 120);
         }});
         input.addEventListener('blur', function() {{ setTimeout(closeMD, 150); }});
 
@@ -2426,6 +2499,38 @@ def advisor_page(
     return HTMLResponse(shell("Financial Advisor", body, player.cash_balance, player.id))
 
 
+def _tokens_to_html(raw: str) -> str:
+    """Render @player / #item-or-business / $token / %stock tags as colored chips, escaping
+    everything else. Mirrors the DM/chatroom tag legend (read-only, so chips not links)."""
+    import re as _re
+    import html as _h
+    pat = _re.compile(r"@\[([^\]]+)\]|#\[([^\]]+)\]|/\[([^\]]+)\]|\$\[([^\]]+)\]|%\[([^\]]+)\]")
+
+    def chip(bg, fg, text):
+        return ('<span style="background:%s;color:%s;border-radius:3px;padding:1px 4px;'
+                'font-weight:600;font-size:0.9em;">%s</span>' % (bg, fg, _h.escape(text)))
+
+    out, last = [], 0
+    for m in pat.finditer(raw):
+        out.append(_h.escape(raw[last:m.start()]))
+        if m.group(1) is not None:
+            p = m.group(1).split("|"); nm = p[1] if len(p) >= 2 else p[0]
+            out.append(chip("rgba(34,197,94,0.15)", "#22c55e", "@" + nm))
+        elif m.group(2) is not None:
+            p = m.group(2).split("|"); nm = p[2] if len(p) >= 3 else p[0]
+            out.append(chip("rgba(56,189,248,0.15)", "#38bdf8", "#" + nm))
+        elif m.group(3) is not None:
+            out.append(chip("rgba(56,189,248,0.15)", "#38bdf8", "#" + m.group(3)))
+        elif m.group(4) is not None:
+            p = m.group(4).split("|"); sym = p[1] if len(p) >= 2 else p[0]
+            out.append(chip("rgba(251,191,36,0.15)", "#fbbf24", "$" + sym))
+        else:
+            out.append(chip("rgba(249,115,22,0.15)", "#f97316", "%" + m.group(5)))
+        last = m.end()
+    out.append(_h.escape(raw[last:]))
+    return "".join(out)
+
+
 @router.get("/advisor/shared/{token}", response_class=HTMLResponse)
 def advisor_shared_view(token: str, session_token: Optional[str] = Cookie(None)):
     """Read-only viewer for a shared advisor transcript. Login required (any player); the
@@ -2447,23 +2552,11 @@ def advisor_shared_view(token: str, session_token: Optional[str] = Cookie(None))
         </div>"""
         return HTMLResponse(shell("Shared conversation", body, player.cash_balance, player.id))
 
-    def _pretty(raw: str) -> str:
-        # Escape, rendering @[id|name] mention tokens as green chips (matches the live chat).
-        import re as _re
-        parts, last = [], 0
-        for mt in _re.finditer(r"@\[(\d+)\|([^\]]*)\]", raw):
-            parts.append(_h.escape(raw[last:mt.start()]))
-            parts.append('<span style="background:rgba(34,197,94,0.15);color:#22c55e;border-radius:3px;'
-                         'padding:1px 4px;font-weight:600;">@' + _h.escape(mt.group(2)) + '</span>')
-            last = mt.end()
-        parts.append(_h.escape(raw[last:]))
-        return "".join(parts)
-
     sharer = _h.escape(shared["sharer_name"])
     bubbles = ""
     for m in shared["messages"]:
         mine = m.get("role") == "user"
-        txt = _pretty(str(m.get("content", "")))
+        txt = _tokens_to_html(str(m.get("content", "")))
         bubbles += (
             f'<div style="max-width:85%;padding:10px 14px;border-radius:12px;white-space:pre-wrap;'
             f'line-height:1.5;font-size:0.9rem;'
