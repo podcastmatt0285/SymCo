@@ -55,7 +55,10 @@ GEMINI_MODELS = [
 DEFAULT_MODEL = "gemini-2.5-flash"
 _VALID_MODELS = {m for m, _ in GEMINI_MODELS}
 _GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
-HTTP_TIMEOUT = 45  # seconds; the chat call is the only outbound request (Pro can be slower)
+HTTP_TIMEOUT = 60  # seconds; single outbound call. Kept under the ~100s edge/proxy limit even
+                   # after a fast-retry, so a slow Pro "thinking" response isn't cut off.
+_GEMINI_RETRIES = 3            # attempts on transient 5xx / connection blips (Gemini 503s are common)
+_GEMINI_TRANSIENT = {500, 502, 503, 504}
 
 _ENC_CONFIG_KEY = "advisor_enc_key"   # system_config row name for the at-rest AES key
 _CHAT_COOLDOWN_SECS = 2               # light anti-loop guard (cost is on the player, not us)
@@ -1571,17 +1574,30 @@ def _call_gemini(api_key: str, system: str, messages: List[dict],
         "contents": contents,
         "generationConfig": _gen_config(model),
     }
-    try:
-        resp = requests.post(
-            f"{_GEMINI_BASE}/{model}:generateContent",
-            params={"key": api_key},
-            json=payload,
-            timeout=HTTP_TIMEOUT,
-        )
-    except requests.Timeout:
-        return False, "The advisor took too long to respond. Please try again."
-    except Exception as e:
-        return False, f"Could not reach the AI service: {e}"
+    import time
+    resp = None
+    for attempt in range(_GEMINI_RETRIES):
+        try:
+            resp = requests.post(
+                f"{_GEMINI_BASE}/{model}:generateContent",
+                params={"key": api_key},
+                json=payload,
+                timeout=HTTP_TIMEOUT,
+            )
+        except requests.Timeout:
+            # Timeouts are slow; don't hammer the (already overloaded) endpoint — fail clearly.
+            return False, "The advisor took too long to respond. Please try again."
+        except Exception as e:
+            # Connection blip — brief backoff and retry, since these are usually fast.
+            if attempt < _GEMINI_RETRIES - 1:
+                time.sleep(0.8 * (attempt + 1))
+                continue
+            return False, f"Could not reach the AI service: {e}"
+        # Gemini frequently returns transient 503 "model is overloaded" / 500s — retry those.
+        if resp.status_code in _GEMINI_TRANSIENT and attempt < _GEMINI_RETRIES - 1:
+            time.sleep(0.8 * (attempt + 1))
+            continue
+        break
 
     if resp.status_code == 400:
         return False, "Your Gemini API key was rejected (invalid or malformed). Update it in Settings → Account."
@@ -1589,7 +1605,12 @@ def _call_gemini(api_key: str, system: str, messages: List[dict],
         return False, "Your Gemini API key is unauthorized or expired. Update it in Settings → Account."
     if resp.status_code == 429:
         return False, "Your Gemini key has hit its rate limit / quota. Try again later or use a different key."
+    if resp.status_code in _GEMINI_TRANSIENT:
+        print(f"[Advisor] Gemini transient error after {_GEMINI_RETRIES} tries "
+              f"(HTTP {resp.status_code}): {resp.text[:200]}")
+        return False, "The AI service is temporarily overloaded. Please try again in a moment."
     if resp.status_code != 200:
+        print(f"[Advisor] Gemini HTTP {resp.status_code}: {resp.text[:200]}")
         return False, f"The AI service returned an error (HTTP {resp.status_code})."
 
     try:
