@@ -3121,7 +3121,7 @@ _PRO_PERKS_LIVE = [
     ("🖼️", "Profile picture",
      "Show your linked Bluesky profile picture across the P2P system — contact card, contracts, chat, and DMs. Link your account in the Bluesky section below."),
     ("🤖", "Financial Advisor",
-     "A private AI advisor that knows the Wadsworth game and your own account. Bring your own free Google Gemini API key — set it up in the Financial Advisor section below."),
+     "A private AI advisor that knows the Wadsworth game, your own empire, and your rivals' standings. Open the Financial Advisor card on your dashboard and bring your own free Google Gemini API key."),
 ]
 _PRO_PERKS_SOON = [
     ("💱", "Forex Trading Floor",     "A subscriber-only currency-exchange dashboard."),
@@ -3435,17 +3435,6 @@ def _bluesky_section(player, error: bool = False) -> str:
     </div>"""
 
 
-def _advisor_section(player) -> str:
-    """Financial Advisor credential-wallet section, delegated to advisor_ux so storage logic
-    lives in one place."""
-    try:
-        from advisor_ux import _settings_section_html
-        return _settings_section_html(player)
-    except Exception as e:
-        return (f'<h3 style="margin:0 0 6px;color:#34d399;">🤖 Financial Advisor</h3>'
-                f'<p style="color:#64748b;font-size:0.82rem;">Temporarily unavailable.</p>')
-
-
 def _account_tab(player, bsky_err: bool = False) -> str:
     try:
         from corporate_actions import is_player_bankrupt
@@ -3502,10 +3491,6 @@ def _account_tab(player, bsky_err: bool = False) -> str:
     <hr style="border:none;border-top:1px solid #1e293b;margin:28px 0;">
 
     {_bluesky_section(player, error=bsky_err)}
-
-    <hr style="border:none;border-top:1px solid #1e293b;margin:28px 0;">
-
-    {_advisor_section(player)}
 
     <hr style="border:none;border-top:1px solid #1e293b;margin:28px 0;">
 

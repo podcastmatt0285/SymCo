@@ -2680,6 +2680,13 @@ def home(request: Request, session_token: Optional[str] = Cookie(None)):
                 <span class="dc-btn">Open Institutions</span>
             </a>
 
+            <a href="/advisor" class="dc" style="--c:#34d399;--g:linear-gradient(90deg,#34d399,#6ee7b7);--glow:rgba(52,211,153,0.14);--btn:#34d399;">
+                <span class="dc-ico">🤖</span>
+                <div class="dc-t">Financial Advisor <span style="font-size:0.7rem;background:#7c3aed;color:#fff;padding:1px 6px;border-radius:8px;vertical-align:middle;">PRO</span></div>
+                <div class="dc-d">A subscriber-exclusive private AI that knows the Wadsworth game inside out, reads your own books, and sizes up your rivals' standings — so you can plan, compete, and outmaneuver. Runs on your own free Google Gemini key; your conversations are never stored on our server.</div>
+                <span class="dc-btn">Open Advisor</span>
+            </a>
+
             <a href="/inventory" class="dc" style="--c:#f5a855;--g:linear-gradient(90deg,#f5a855,#f5d76e);--glow:rgba(245,168,85,0.12);--btn:#f5a855;">
                 <span class="dc-ico">📦</span>
                 <div class="dc-t">Inventory</div>

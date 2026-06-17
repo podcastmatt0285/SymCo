@@ -7,17 +7,25 @@ Architecture & security model (see also the approved plan):
 - The advisor is a **stateless proxy**. Players supply their own Google Gemini API key
   (named, switchable wallet); their account bears the cost. The server forwards one request
   and returns the reply — it never stores conversations.
-- The model is **pure text-in / text-out**. It is given NO tools and NO database access.
-  Everything it can ever know is (a) the hand-written game-knowledge document in
-  advisor_knowledge.py and (b) a fixed-allowlist text summary of the *authenticated* player's
-  OWN data built by `_build_player_context`. There is therefore no path by which a player
-  could extract source code, server secrets, or another player's private data through it.
+- The model is **pure text-in / text-out** with NO live tools and NO open database access.
+  Everything it sees is assembled server-side from a fixed allowlist of game data helpers
+  before the call: (a) the hand-written game-knowledge document (advisor_knowledge.py),
+  (b) the asking player's OWN full data, and (c) — this is a competitive-intelligence
+  feature — the data of *other players* the asking player references, subject to those
+  players' opt-out. There is no path to source code, server secrets, passwords, API keys, or
+  session tokens: the data builders simply never read them.
+- Cross-player visibility & opt-out: by default every player is "scannable" (their full data
+  may be surfaced to another player's advisor). **Subscribers/admins** can opt out
+  (advisor_settings.scannable = FALSE); free players cannot. A shielded player is reduced to
+  public, leaderboard-level info only, and the advisor is told to infer rather than quote
+  their books. A player always sees their OWN data regardless of their own shield.
 - API keys are encrypted at rest with AES-256-GCM (pycryptodome, already a dependency — the
   same library used for VAPID). The encryption key lives in env ADVISOR_ENC_KEY or, if unset,
   is generated once and persisted in system_config (mirrors push_ux's VAPID-key pattern).
   Plaintext keys are never returned to the browser (UI shows last-4 only) and never logged.
 
-Owns its own `advisor_credentials` table via run_ddl_migration, mirroring bluesky.py.
+Owns its own `advisor_credentials` + `advisor_settings` tables via run_ddl_migration,
+mirroring bluesky.py.
 """
 
 import os
@@ -66,13 +74,17 @@ def _ensure_table():
                 UNIQUE (player_id, credential_name)
             )""",
         "CREATE INDEX IF NOT EXISTS idx_advisor_cred_player ON advisor_credentials (player_id)",
-        # Per-player privacy preference. share_account_data == "the advisor may see my own
-        # game/financial data". Defaults TRUE (on); a player can switch it off so the advisor
-        # answers from game knowledge only, without their personal numbers.
+        # Per-player privacy preference. scannable == "another player's Financial Advisor may
+        # surface my full data". Defaults TRUE (everyone is scannable). Only subscribers/admins
+        # may set it FALSE to shield their books (enforced in the route). A player always sees
+        # their own data regardless of this flag.
         """CREATE TABLE IF NOT EXISTS advisor_settings (
-                player_id          INTEGER PRIMARY KEY,
-                share_account_data BOOLEAN NOT NULL DEFAULT TRUE
+                player_id INTEGER PRIMARY KEY,
+                scannable BOOLEAN NOT NULL DEFAULT TRUE
             )""",
+        # Migrate the earlier column name (share_account_data) if this table predates the
+        # competitive-intelligence model. Both are "default scannable / opt-out" booleans.
+        "ALTER TABLE advisor_settings RENAME COLUMN share_account_data TO scannable",
     ])
 
 
@@ -278,31 +290,31 @@ def delete_credential(player_id: int, cred_id: int):
 
 
 # ==========================
-# PRIVACY PREFERENCE (share own account data with the advisor — default ON)
+# PRIVACY PREFERENCE (scannable by other players' advisor — default ON, subscriber opt-out)
 # ==========================
 
-def get_share_account_data(player_id: int) -> bool:
-    """True (default) if the advisor may see this player's own game/financial data."""
+def is_scannable(player_id: int) -> bool:
+    """True (default) if another player's advisor may surface this player's full data."""
     from auth import get_db
     from sqlalchemy import text
     db = get_db()
     try:
         row = db.execute(text(
-            "SELECT share_account_data FROM advisor_settings WHERE player_id = :pid"
+            "SELECT scannable FROM advisor_settings WHERE player_id = :pid"
         ), {"pid": player_id}).first()
     finally:
         db.close()
     return True if row is None else bool(row[0])
 
 
-def set_share_account_data(player_id: int, on: bool):
+def set_scannable(player_id: int, on: bool):
     from auth import get_db
     from sqlalchemy import text
     db = get_db()
     try:
         db.execute(text(
-            "INSERT INTO advisor_settings (player_id, share_account_data) VALUES (:pid, :v) "
-            "ON CONFLICT (player_id) DO UPDATE SET share_account_data = EXCLUDED.share_account_data"
+            "INSERT INTO advisor_settings (player_id, scannable) VALUES (:pid, :v) "
+            "ON CONFLICT (player_id) DO UPDATE SET scannable = EXCLUDED.scannable"
         ), {"pid": player_id, "v": bool(on)})
         db.commit()
     finally:
@@ -633,6 +645,112 @@ def _build_player_context(player_id: int) -> str:
     return "\n".join(lines) if lines else f"(No data available for Player #{player_id}.)"
 
 
+def _public_player_summary(player_id: int) -> str:
+    """Leaderboard-level, publicly-inferable info for a SHIELDED player. Deliberately omits
+    exact cash, holdings, and transaction history so a shielded player's books stay private."""
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player_id)
+    def money(a):
+        try: return fmt_usd(a or 0, disp)
+        except Exception: return f"${(a or 0):,.2f}"
+    bits = []
+    try:
+        from auth import Player, get_db as _adb
+        db = _adb()
+        try:
+            p = db.query(Player).filter(Player.id == player_id).first()
+        finally:
+            db.close()
+        bits.append(f"Name: {p.business_name if p else f'Player #{player_id}'} (Player ID #{player_id})")
+    except Exception:
+        bits.append(f"Player ID #{player_id}")
+    try:
+        from events import get_player_level
+        lv = get_player_level(player_id)
+        bits.append(f"Level {lv['level']} · {lv['trophies']:,} trophies")
+    except Exception:
+        pass
+    try:
+        from stats_ux import PlayerStats, get_db as _sdb
+        sdb = _sdb()
+        try:
+            ps = sdb.query(PlayerStats).filter(PlayerStats.player_id == player_id).first()
+        finally:
+            sdb.close()
+        if ps:
+            bits.append(f"Net worth: {money(ps.total_net_worth)} (public leaderboard, wealth rank #{ps.wealth_rank or '—'})")
+            bits.append(f"Visible scale: {ps.lands_owned} plots · {ps.businesses_owned} businesses · {ps.districts_owned} districts")
+    except Exception:
+        pass
+    try:
+        from cities import get_player_city
+        c = get_player_city(player_id)
+        if c: bits.append(f"City: {c.name}")
+    except Exception:
+        pass
+    bits.append("DETAILED BOOKS: SHIELDED — this player has opted out of being scanned. Do NOT "
+                "claim to know their exact cash, holdings, or transactions; infer only from the "
+                "public standings above.")
+    return "\n".join(bits)
+
+
+# Players whose names are too generic to safely substring-match get an id/length guard below.
+def _resolve_referenced_players(querying_id: int, messages: list) -> list:
+    """Find OTHER players the conversation refers to, by business name or #ID, across the
+    whole transcript (so follow-ups like 'how do I beat them' still resolve). Returns a list
+    of player ids (excluding the asker), capped to keep the prompt bounded."""
+    text_blob = " ".join(str(m.get("content", "")) for m in messages if isinstance(m, dict)).lower()
+    if not text_blob.strip():
+        return []
+    import re
+    found: list = []
+
+    # Explicit "#123" / "player 123" id references
+    for m in re.findall(r"(?:#|player\s+#?)(\d{1,7})", text_blob):
+        try:
+            pid = int(m)
+            if pid > 0 and pid != querying_id and pid not in found:
+                found.append(pid)
+        except Exception:
+            pass
+
+    # Name references
+    try:
+        from auth import Player, get_db as _adb
+        db = _adb()
+        try:
+            rows = db.query(Player.id, Player.business_name).filter(Player.id > 0).all()
+        finally:
+            db.close()
+        for pid, bname in rows:
+            if pid == querying_id or pid in found:
+                continue
+            nm = (bname or "").strip().lower()
+            # length guard avoids matching ultra-short/common names inside other words
+            if len(nm) >= 4 and nm in text_blob:
+                found.append(pid)
+            if len(found) >= 6:
+                break
+    except Exception:
+        pass
+    return found[:6]
+
+
+def _other_players_block(querying_id: int, messages: list) -> str:
+    """Assemble the data block for OTHER players referenced in the conversation, honoring each
+    target's opt-out. Empty string if none referenced."""
+    ids = _resolve_referenced_players(querying_id, messages)
+    if not ids:
+        return ""
+    chunks = []
+    for pid in ids:
+        if is_scannable(pid):
+            chunks.append(f"--- Player #{pid} (full books) ---\n{_build_player_context(pid)}")
+        else:
+            chunks.append(f"--- Player #{pid} (SHIELDED) ---\n{_public_player_summary(pid)}")
+    return "\n\n".join(chunks)
+
+
 # ==========================
 # GEMINI CALL
 # ==========================
@@ -714,8 +832,8 @@ def _is_pro(player) -> bool:
         return False
 
 
-def _redirect_account():
-    return RedirectResponse(url="/settings?tab=account", status_code=303)
+def _redirect_advisor():
+    return RedirectResponse(url="/advisor", status_code=303)
 
 
 # ==========================
@@ -732,10 +850,10 @@ def advisor_cred_add(
     if not player:
         return RedirectResponse(url="/login", status_code=303)
     if not _is_pro(player):
-        return _redirect_account()
+        return _redirect_advisor()
     add_credential(player.id, credential_name, api_key)
     # api_key goes out of scope here — only the ciphertext persists.
-    return _redirect_account()
+    return _redirect_advisor()
 
 
 @router.post("/api/advisor/credentials/activate")
@@ -747,7 +865,7 @@ def advisor_cred_activate(
     if not player:
         return RedirectResponse(url="/login", status_code=303)
     activate_credential(player.id, cred_id)
-    return _redirect_account()
+    return _redirect_advisor()
 
 
 @router.post("/api/advisor/credentials/delete")
@@ -759,24 +877,26 @@ def advisor_cred_delete(
     if not player:
         return RedirectResponse(url="/login", status_code=303)
     delete_credential(player.id, cred_id)
-    return _redirect_account()
+    return _redirect_advisor()
 
 
 @router.post("/api/advisor/privacy")
 def advisor_privacy(
     session_token: Optional[str] = Cookie(None),
-    share_account_data: Optional[str] = Form(None),
+    shield: Optional[str] = Form(None),
 ):
-    """Toggle whether the advisor may see the player's own account data. Gated to Pro (the
-    whole feature is), so only subscribers/admins can change it. Checkbox submits its name
-    only when checked, so absence == off."""
+    """Set whether OTHER players' advisors may scan this player. Only subscribers/admins may
+    shield (set scannable = FALSE); free players stay scannable. The checkbox is "Shield my
+    books", so checked == not scannable."""
     player = _player(session_token)
     if not player:
         return RedirectResponse(url="/login", status_code=303)
     if not _is_pro(player):
-        return _redirect_account()
-    set_share_account_data(player.id, share_account_data is not None)
-    return _redirect_account()
+        # Free players cannot opt out — force scannable and bounce back.
+        set_scannable(player.id, True)
+        return _redirect_advisor()
+    set_scannable(player.id, shield is None)  # shield checked → scannable False
+    return _redirect_advisor()
 
 
 # ==========================
@@ -816,17 +936,13 @@ def advisor_chat(
     if not isinstance(messages, list):
         return JSONResponse({"ok": False, "error": "Malformed request."}, status_code=400)
 
-    # Build the private, per-player system prompt. The model sees ONLY this. If the player has
-    # opted out of sharing their account data, send a neutral placeholder instead of their
-    # numbers so the advisor answers from game knowledge only.
+    # Build the system prompt server-side: the asker's OWN full data, plus the books of any
+    # OTHER players they reference (honoring each target's opt-out). The model gets no live
+    # tools — only this pre-assembled, allowlisted context. Secrets/passwords are never in it.
     from advisor_knowledge import system_prompt
-    if get_share_account_data(player.id):
-        context = _build_player_context(player.id)
-    else:
-        context = ("(The player has chosen NOT to share their personal account data. You do "
-                   "not have their balances, holdings, or stats. Give general Wadsworth game "
-                   "guidance and, where personalized numbers would help, suggest they enable "
-                   "account-data sharing in Settings - Account - Financial Advisor.)")
+    own = _build_player_context(player.id)
+    others = _other_players_block(player.id, messages)
+    context = own if not others else f"{own}\n\n# OTHER PLAYERS REFERENCED\n\n{others}"
     system = system_prompt(context)
 
     ok, reply = _call_gemini(cred["api_key"], system, messages)
@@ -839,26 +955,12 @@ def advisor_chat(
 # ADVISOR PAGE
 # ==========================
 
-def _settings_section_html(player) -> str:
-    """The Financial Advisor credential-wallet section rendered inside Settings → Account.
-    Exposed here so settings_ux.py can include it without duplicating storage logic."""
+def _management_panel_html(player) -> str:
+    """Key wallet + scan-shield privacy panel, rendered on the /advisor page (collapsed in a
+    <details>). Storage logic lives here so the page stays thin. Assumes the caller already
+    confirmed the player is Pro."""
     import html as _html
-    is_pro = _is_pro(player)
-    creds = list_credentials(player.id) if is_pro else []
-
-    intro = """
-    <h3 style="margin:0 0 6px;color:#34d399;">🤖 Financial Advisor</h3>
-    <p style="color:#64748b;font-size:0.82rem;margin:0 0 12px;">
-        A private AI advisor that knows the Wadsworth game and your own account, and answers
-        your strategy questions. You bring your own free Google Gemini API key — your key is
-        encrypted, never shared, and your conversations are never stored on our server.
-    </p>"""
-
-    if not is_pro:
-        return f"""{intro}
-        <div style="background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:18px 20px;max-width:600px;">
-            <p style="color:#fbbf24;font-size:0.85rem;margin:0;">🔒 The Financial Advisor is a Wadsworth Pro feature. Subscribe above to unlock it.</p>
-        </div>"""
+    creds = list_credentials(player.id)
 
     # Credential rows
     if creds:
@@ -895,41 +997,37 @@ def _settings_section_html(player) -> str:
         creds_block = ('<p style="color:#64748b;font-size:0.8rem;margin:10px 0 0;">'
                        'No API keys yet. Add one below to start chatting.</p>')
 
-    # Privacy toggle — account-data sharing (default ON; Pro can switch off).
-    share_on = get_share_account_data(player.id)
-    kl = "22px" if share_on else "2px"
-    kb = "#34d399" if share_on else "#1e293b"
-    kbd = "#34d399" if share_on else "#334155"
-    privacy_note = (
-        "On — the advisor can see your own balances, holdings, taxes and stats to give "
-        "personalized answers."
-        if share_on else
-        "Off — the advisor answers from game knowledge only and cannot see your personal "
-        "numbers.")
-    privacy_block = f"""
+    # Scan-shield toggle — checked == shielded (not scannable). Subscriber-only opt-out.
+    shielded = not is_scannable(player.id)
+    kl = "22px" if shielded else "2px"
+    kb = "#ef4444" if shielded else "#1e293b"
+    kbd = "#ef4444" if shielded else "#334155"
+    shield_note = (
+        "Shielded — other players' advisors can't see your books; they only get your public "
+        "leaderboard standing and must infer the rest."
+        if shielded else
+        "Open — other players' advisors can surface your full books when they ask about you. "
+        "(This is the default. Only subscribers can shield.)")
+    shield_block = f"""
         <form action="/api/advisor/privacy" method="post" style="margin-top:14px;border-top:1px solid #1e293b;padding-top:12px;">
             <label style="display:flex;align-items:center;gap:12px;cursor:pointer;">
                 <div style="position:relative;flex-shrink:0;width:44px;height:24px;">
-                    <input type="checkbox" name="share_account_data" {"checked" if share_on else ""}
+                    <input type="checkbox" name="shield" {"checked" if shielded else ""}
                            style="position:absolute;opacity:0;width:0;height:0;" onchange="this.form.submit()">
                     <div style="position:absolute;inset:0;border-radius:12px;background:{kb};border:1px solid {kbd};transition:background .2s;">
                         <div style="position:absolute;top:2px;left:{kl};width:18px;height:18px;border-radius:50%;background:white;transition:left .2s;"></div>
                     </div>
                 </div>
-                <span style="font-size:0.85rem;color:#f1f5f9;">Let the advisor see my account data</span>
+                <span style="font-size:0.85rem;color:#f1f5f9;">🛡️ Shield my books from other players' advisors</span>
             </label>
-            <p style="color:#64748b;font-size:0.74rem;margin:6px 0 0;">{privacy_note} Your data is sent only to your own AI provider for that one reply, and is never stored on our server.</p>
+            <p style="color:#64748b;font-size:0.74rem;margin:6px 0 0;">{shield_note}</p>
         </form>"""
 
-    return f"""{intro}
+    return f"""
     <div style="background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:18px 20px;max-width:600px;">
-        <p style="color:#94a3b8;font-size:0.8rem;margin:0 0 8px;line-height:1.55;">
-            Ask it things like <em>"how is my land tax calculated?"</em>, <em>"what should I build on my
-            prairie plot?"</em>, or <em>"is my portfolio too concentrated?"</em> It gives in-game guidance
-            only (it can't trade or move money for you), and it knows nothing about other players.
-        </p>
+        <p style="color:#e5e7eb;font-size:0.82rem;font-weight:600;margin:0 0 6px;">Your Gemini API keys</p>
         {creds_block}
-        {privacy_block}
+        {shield_block}
         <div style="margin-top:14px;border-top:1px solid #1e293b;padding-top:14px;">
             <p style="color:#e5e7eb;font-size:0.82rem;font-weight:600;margin:0 0 6px;">Add a free Google Gemini key</p>
             <ol style="color:#94a3b8;font-size:0.78rem;line-height:1.7;margin:0 0 12px;padding-left:18px;">
@@ -957,10 +1055,6 @@ def _settings_section_html(player) -> str:
                     style="background:#34d399;color:#04261a;border:none;border-radius:6px;padding:8px 18px;
                            font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;">Save key</button>
         </form>
-        <div style="margin-top:14px;">
-            <a href="/advisor" style="background:#064e3b;border:1px solid #34d399;color:#6ee7b7;border-radius:6px;
-               padding:8px 16px;font-size:0.82rem;font-weight:700;text-decoration:none;">💬 Open the Financial Advisor →</a>
-        </div>
     </div>"""
 
 
@@ -973,13 +1067,13 @@ def advisor_page(session_token: Optional[str] = Cookie(None)):
 
     if not _is_pro(player):
         body = """
-        <a href="/settings?tab=account" style="color:#38bdf8;">&larr; Settings</a>
+        <a href="/" style="color:#38bdf8;">&larr; Dashboard</a>
         <h1 style="margin:8px 0 4px 0;">🤖 Financial Advisor</h1>
         <div class="card" style="max-width:640px;margin-top:16px;text-align:center;padding:36px;">
             <div style="font-size:2.2rem;margin-bottom:10px;">🔒</div>
             <p style="color:#e5e7eb;font-weight:600;">The Financial Advisor is a Wadsworth Pro feature.</p>
-            <p style="color:#94a3b8;font-size:0.88rem;">Get a personal AI that understands the game and your
-               own portfolio — bring your own free Gemini key.</p>
+            <p style="color:#94a3b8;font-size:0.88rem;">Get a personal AI that understands the game, your
+               own empire, and your rivals' standings — bring your own free Gemini key.</p>
             <a href="/settings?tab=account" class="btn-blue" style="display:inline-block;margin-top:12px;padding:10px 22px;">View Wadsworth Pro</a>
         </div>"""
         return HTMLResponse(shell("Financial Advisor", body, player.cash_balance, player.id))
@@ -989,44 +1083,36 @@ def advisor_page(session_token: Optional[str] = Cookie(None)):
     active_name = cred.get("credential_name") if cred else ""
 
     if not has_key:
-        body = """
-        <a href="/settings?tab=account" style="color:#38bdf8;">&larr; Settings</a>
+        body = f"""
+        <a href="/" style="color:#38bdf8;">&larr; Dashboard</a>
         <h1 style="margin:8px 0 4px 0;">🤖 Financial Advisor</h1>
-        <div class="card" style="max-width:640px;margin-top:16px;padding:30px;">
-            <p style="color:#94a3b8;font-size:0.9rem;margin-top:0;line-height:1.6;">
-                Your Financial Advisor is a private AI that understands the Wadsworth game and (if you
-                allow it) your own account, so it can answer strategy questions with your real numbers.
-                It uses your own free Google Gemini key, so it's free to run and the conversation stays
-                between you and Google — we never store it.
-            </p>
-            <p style="color:#e5e7eb;font-weight:600;margin:18px 0 6px;">One quick step: add a free Gemini API key.</p>
-            <ol style="color:#94a3b8;font-size:0.9rem;line-height:1.7;">
-                <li>Open <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style="color:#38bdf8;">Google AI Studio → API keys</a> (free — many players make a fresh Google account just for this).</li>
-                <li>Click <strong>Create API key</strong> and copy it (it starts with <code>AIza…</code>). The free tier is plenty for normal chatting.</li>
-                <li>Paste it into <a href="/settings?tab=account" style="color:#38bdf8;">Settings → Account → Financial Advisor</a>, then come back here.</li>
-            </ol>
-            <p style="color:#64748b;font-size:0.8rem;">Your key is encrypted, shown only as ••••last-4, used only for your advisor chats, and never shared.</p>
-            <a href="/settings?tab=account" class="btn-blue" style="display:inline-block;margin-top:8px;padding:9px 20px;">Add my key</a>
-        </div>"""
+        <p style="max-width:600px;color:#94a3b8;font-size:0.9rem;margin:0 0 16px;line-height:1.6;">
+            A private AI that understands the Wadsworth game, your own empire, and your rivals' standings,
+            so it can help you plan, compete, and outmaneuver. It runs on your own free Google Gemini key,
+            so it's free to use and your conversations are never stored on our server. Add a key to begin:
+        </p>
+        {_management_panel_html(player)}"""
         return HTMLResponse(shell("Financial Advisor", body, player.cash_balance, player.id))
 
     import html as _html
     powered = _html.escape(active_name or "your key", quote=True)
-    share_on = get_share_account_data(player.id)
-    data_status = ("🔓 sees your account data" if share_on
-                   else "🙈 not using your account data")
+    shielded = not is_scannable(player.id)
+    shield_status = "🛡️ your books are shielded" if shielded else "👁️ your books are scannable"
     body = f"""
-    <a href="/settings?tab=account" style="color:#38bdf8;">&larr; Settings</a>
+    <a href="/" style="color:#38bdf8;">&larr; Dashboard</a>
     <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;">
         <h1 style="margin:8px 0 4px 0;">🤖 Financial Advisor</h1>
-        <span style="color:#64748b;font-size:0.78rem;">Powered by: {powered} · Gemini · {data_status} · chats are never saved on our server</span>
+        <span style="color:#64748b;font-size:0.78rem;">Powered by: {powered} · Gemini · {shield_status} · chats are never saved on our server</span>
     </div>
     <p style="max-width:760px;color:#94a3b8;font-size:0.82rem;margin:4px 0 12px;line-height:1.5;">
-        I give in-game guidance about Wadsworth and your own empire — taxes, what to build, how a
-        mechanic works, how your portfolio looks. I can't trade or move money for you, and I can't see
-        any other player. Toggle whether I see your account data in
-        <a href="/settings?tab=account" style="color:#38bdf8;">Settings → Account</a>.
+        I give in-game guidance about Wadsworth, your own empire, and your rivals — taxes, what to build,
+        how a mechanic works, and how you stack up against other players (name a player and I'll size them
+        up). I can't trade or move money for you. Manage your keys and privacy below.
     </p>
+    <details style="max-width:760px;margin-bottom:12px;">
+        <summary style="cursor:pointer;color:#34d399;font-size:0.85rem;font-weight:600;">⚙️ Manage keys & privacy</summary>
+        <div style="margin-top:10px;">{_management_panel_html(player)}</div>
+    </details>
     <div class="card" style="max-width:760px;padding:0;overflow:hidden;">
         <div id="adv-log" style="height:52vh;min-height:320px;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px;"></div>
         <div style="border-top:1px solid var(--border,#1e293b);padding:12px;display:flex;gap:8px;align-items:flex-end;">
