@@ -31,6 +31,7 @@ mirroring bluesky.py.
 import os
 import json
 import base64
+import secrets
 from typing import Optional, List
 
 import requests
@@ -80,6 +81,15 @@ def _ensure_table():
                 UNIQUE (player_id, credential_name)
             )""",
         "CREATE INDEX IF NOT EXISTS idx_advisor_cred_player ON advisor_credentials (player_id)",
+        # Explicitly-shared advisor transcripts, addressed by an unguessable token. Short-lived
+        # (cleaned on a ~3-day TTL matching the DM system) — only created when a player shares.
+        """CREATE TABLE IF NOT EXISTS advisor_shared_threads (
+                token         TEXT        PRIMARY KEY,
+                sharer_id     INTEGER     NOT NULL,
+                sharer_name   TEXT        NOT NULL,
+                messages_json TEXT        NOT NULL,
+                created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )""",
         # Per-key model choice (Gemini model id). Defaults to 2.5 Flash.
         "ALTER TABLE advisor_credentials ADD COLUMN IF NOT EXISTS model TEXT NOT NULL DEFAULT 'gemini-2.5-flash'",
         # Per-player privacy preference. scannable == "another player's Financial Advisor may
@@ -368,6 +378,61 @@ def set_scannable(player_id: int, on: bool):
         db.commit()
     finally:
         db.close()
+
+
+# ==========================
+# SHARED THREADS (explicitly-shared transcripts behind an unguessable token; short TTL)
+# ==========================
+
+_SHARE_TTL_DAYS = 4  # ~matches the DM system's CONVERSATION_TTL_DAYS (3); the link outlives the DM slightly
+
+
+def _store_shared_thread(sharer_id: int, sharer_name: str, messages: list) -> Optional[str]:
+    """Persist a transcript and return its token. Also purges expired rows (cheap, keeps the
+    table tiny since it only ever holds the last few days of explicit shares)."""
+    token = secrets.token_urlsafe(12)
+    from auth import get_db
+    from sqlalchemy import text
+    db = get_db()
+    try:
+        db.execute(text(
+            "DELETE FROM advisor_shared_threads "
+            "WHERE created_at < NOW() - (:days || ' days')::interval"
+        ), {"days": _SHARE_TTL_DAYS})
+        db.execute(text(
+            "INSERT INTO advisor_shared_threads (token, sharer_id, sharer_name, messages_json) "
+            "VALUES (:t, :sid, :sn, :mj)"
+        ), {"t": token, "sid": sharer_id, "sn": sharer_name[:80],
+            "mj": json.dumps(messages)[:200000]})
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"[Advisor] Could not store shared thread: {e}")
+        return None
+    finally:
+        db.close()
+    return token
+
+
+def _get_shared_thread(token: str) -> Optional[dict]:
+    """Return {sharer_name, messages} for a live (non-expired) token, else None."""
+    from auth import get_db
+    from sqlalchemy import text
+    db = get_db()
+    try:
+        row = db.execute(text(
+            "SELECT sharer_name, messages_json FROM advisor_shared_threads "
+            "WHERE token = :t AND created_at >= NOW() - (:days || ' days')::interval"
+        ), {"t": token, "days": _SHARE_TTL_DAYS}).first()
+    finally:
+        db.close()
+    if not row:
+        return None
+    try:
+        msgs = json.loads(row[1]) or []
+    except Exception:
+        msgs = []
+    return {"sharer_name": row[0], "messages": msgs}
 
 
 # ==========================
@@ -1707,6 +1772,169 @@ def advisor_chat(
 
 
 # ==========================
+# SHARE TO DM / GROUP DM
+# ==========================
+
+def _format_transcript(messages: list) -> list:
+    """Normalize the client messages into [{role, content}] (user|model), trimmed."""
+    out = []
+    for m in messages:
+        if not isinstance(m, dict):
+            continue
+        content = str(m.get("content", "")).strip()
+        if not content:
+            continue
+        role = "user" if m.get("role") == "user" else "model"
+        out.append({"role": role, "content": content[:8000]})
+    return out
+
+
+@router.get("/api/advisor/share/targets")
+def advisor_share_targets(session_token: Optional[str] = Cookie(None)):
+    player = _player(session_token)
+    if not player:
+        return JSONResponse({"ok": False, "error": "Not signed in."}, status_code=401)
+    if not _is_pro(player):
+        return JSONResponse({"ok": False, "error": "Pro feature."}, status_code=403)
+    targets = []
+    try:
+        import dm
+        from auth import Player, get_db as _adb
+        convs = dm.get_player_conversations(player.id) or []
+        adb = _adb()
+        try:
+            for c in convs:
+                other = c["player2_id"] if c["player1_id"] == player.id else c["player1_id"]
+                if other == player.id:
+                    continue
+                p = adb.query(Player).filter(Player.id == other).first()
+                targets.append({"type": "dm", "id": other,
+                                "name": p.business_name if p else f"Player #{other}"})
+        finally:
+            adb.close()
+        for g in (dm.get_player_group_conversations(player.id) or []):
+            targets.append({"type": "group", "id": g["id"],
+                            "name": g.get("name") or "Group chat"})
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": f"Could not load conversations: {e}"},
+                            status_code=500)
+    return JSONResponse({"ok": True, "targets": targets})
+
+
+@router.post("/api/advisor/share")
+def advisor_share(
+    session_token: Optional[str] = Cookie(None),
+    payload: dict = Body(...),
+):
+    player = _player(session_token)
+    if not player:
+        return JSONResponse({"ok": False, "error": "Not signed in."}, status_code=401)
+    if not _is_pro(player):
+        return JSONResponse({"ok": False, "error": "The Financial Advisor is a Wadsworth Pro feature."},
+                            status_code=403)
+    messages = _format_transcript(payload.get("messages") or [])
+    if not messages:
+        return JSONResponse({"ok": False, "error": "There's no conversation to share yet."},
+                            status_code=400)
+    target_type = payload.get("target_type")
+    target_id = payload.get("target_id")
+
+    import dm
+    sharer_name = getattr(player, "business_name", None) or f"Player #{player.id}"
+
+    # Resolve destination + recipients, scoped to the sharer.
+    if target_type == "dm":
+        try:
+            other_id = int(target_id)
+        except Exception:
+            return JSONResponse({"ok": False, "error": "Bad target."}, status_code=400)
+        if other_id == player.id:
+            return JSONResponse({"ok": False, "error": "Can't share to yourself."}, status_code=400)
+        try:
+            dm.get_or_create_conversation(player.id, other_id)
+        except Exception:
+            pass
+        conv_id = dm.make_conversation_id(player.id, other_id)
+        recipients = [other_id]
+        is_group = False
+        # Destination display name
+        try:
+            from auth import Player, get_db as _adb
+            adb = _adb()
+            try:
+                p = adb.query(Player).filter(Player.id == other_id).first()
+                dest_name = p.business_name if p else f"Player #{other_id}"
+            finally:
+                adb.close()
+        except Exception:
+            dest_name = f"Player #{other_id}"
+    elif target_type == "group":
+        conv_id = str(target_id)
+        try:
+            members = dm.get_group_participant_ids(conv_id) or []
+        except Exception:
+            members = []
+        if player.id not in members:
+            return JSONResponse({"ok": False, "error": "You're not in that group."}, status_code=403)
+        recipients = [m for m in members if m != player.id]
+        is_group = True
+        dest_name = "the group"
+        try:
+            for g in (dm.get_player_group_conversations(player.id) or []):
+                if g["id"] == conv_id:
+                    dest_name = g.get("name") or "the group"
+                    break
+        except Exception:
+            pass
+    else:
+        return JSONResponse({"ok": False, "error": "Bad target type."}, status_code=400)
+
+    # Store the transcript behind a token.
+    token = _store_shared_thread(player.id, sharer_name, messages)
+    if not token:
+        return JSONResponse({"ok": False, "error": "Could not prepare the share. Try again."},
+                            status_code=500)
+
+    # One short message, attributed to the advisor, with a link to the full thread.
+    try:
+        from profiles_ux import SITE_BASE as _BASE
+    except Exception:
+        _BASE = ""
+    link = f"{_BASE}/advisor/shared/{token}"
+    first_q = next((m["content"] for m in messages if m["role"] == "user"), "")
+    preview = (" — “" + first_q[:90] + ("…" if len(first_q) > 90 else "") + "”") if first_q else ""
+    content = f"\U0001F4E4 Shared by {sharer_name}{preview}\nOpen the full conversation: {link}"
+    if len(content) > 500:
+        content = f"\U0001F4E4 Shared by {sharer_name}\nOpen the full conversation: {link}"
+
+    try:
+        if is_group:
+            saved = dm.save_group_dm(conv_id, player.id, "\U0001F916 Financial Advisor", content)
+        else:
+            saved = dm.save_dm(conv_id, player.id, "\U0001F916 Financial Advisor", content)
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": f"Could not send: {e}"}, status_code=500)
+    if not saved:
+        return JSONResponse({"ok": False, "error": "Could not send the message."}, status_code=500)
+
+    # Notify recipients (save_dm itself doesn't notify).
+    try:
+        from push_ux import send_push_notification
+        body = f"shared a Financial Advisor conversation{preview}"
+        for rid in recipients:
+            try:
+                send_push_notification(rid, f"\U0001F916 Financial Advisor (via {sharer_name})",
+                                       body[:120], url="/p2p/dms", notif_type="dm",
+                                       tag=f"dm-{conv_id}")
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    return JSONResponse({"ok": True, "name": dest_name})
+
+
+# ==========================
 # ADVISOR PAGE
 # ==========================
 
@@ -1936,12 +2164,21 @@ def advisor_page(
             padding:7px 14px;font-size:0.8rem;cursor:pointer;">⬆ Import conversation
             <input id="adv-import" type="file" accept="application/json,.json" style="display:none;">
         </label>
+        <button id="adv-share" style="background:#1e293b;border:1px solid #334155;color:#94a3b8;border-radius:6px;
+            padding:7px 14px;font-size:0.8rem;cursor:pointer;font-family:inherit;">📤 Share to a DM</button>
         <button id="adv-clear" style="background:#1e293b;border:1px solid #334155;color:#94a3b8;border-radius:6px;
             padding:7px 14px;font-size:0.8rem;cursor:pointer;font-family:inherit;">🗑 Clear</button>
     </div>
+    <div id="adv-share-box" style="max-width:760px;margin-top:8px;display:none;background:var(--bg-card,#0f172a);
+        border:1px solid var(--border,#1e293b);border-radius:8px;padding:12px;">
+        <div style="font-size:0.82rem;color:#e5e7eb;margin-bottom:8px;">Share this conversation to a DM or group:</div>
+        <div id="adv-share-targets" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+        <div id="adv-share-status" style="font-size:0.78rem;color:#64748b;margin-top:8px;"></div>
+    </div>
     <p style="max-width:760px;color:#64748b;font-size:0.75rem;margin-top:8px;">
         Educational, in-game guidance only — not real-world financial advice. Conversations live only in your
-        browser; download them to continue later, even on another device.
+        browser (never stored unless you share one, then it's kept a few days behind a private link, like a DM);
+        download them to continue later, even on another device.
     </p>
 
     <h2 style="max-width:760px;margin:22px 0 8px;font-size:1.05rem;color:#34d399;">⚙️ Your keys &amp; privacy</h2>
@@ -2044,7 +2281,119 @@ def advisor_page(
                 messages = []; render();
             }}
         }});
+
+        // ── Share to a DM / group DM ──
+        var shareBox = document.getElementById('adv-share-box');
+        var shareTargets = document.getElementById('adv-share-targets');
+        var shareStatus = document.getElementById('adv-share-status');
+        document.getElementById('adv-share').addEventListener('click', async function() {{
+            if (!messages.length) {{ alert('Say something to the advisor first.'); return; }}
+            if (shareBox.style.display === 'block') {{ shareBox.style.display = 'none'; return; }}
+            shareBox.style.display = 'block';
+            shareTargets.innerHTML = ''; shareStatus.textContent = 'Loading your conversations…';
+            try {{
+                var r = await fetch('/api/advisor/share/targets', {{credentials:'same-origin'}});
+                var data = await r.json();
+                if (!data.ok) {{ shareStatus.textContent = data.error || 'Could not load conversations.'; return; }}
+                if (!data.targets.length) {{
+                    shareStatus.textContent = 'No DMs or groups yet — start one from P2P → DMs.'; return;
+                }}
+                shareStatus.textContent = '';
+                data.targets.forEach(function(t) {{
+                    var b = document.createElement('button');
+                    b.textContent = (t.type === 'group' ? '👥 ' : '💬 ') + t.name;
+                    b.style.cssText = 'background:#1e293b;border:1px solid #334155;color:#e5e7eb;border-radius:6px;'
+                        + 'padding:5px 12px;font-size:0.8rem;cursor:pointer;font-family:inherit;';
+                    b.addEventListener('click', function() {{ doShare(t, b); }});
+                    shareTargets.appendChild(b);
+                }});
+            }} catch(e) {{ shareStatus.textContent = 'Network error loading conversations.'; }}
+        }});
+        async function doShare(t, btn) {{
+            btn.disabled = true; shareStatus.textContent = 'Sharing…';
+            try {{
+                var r = await fetch('/api/advisor/share', {{
+                    method:'POST', headers:{{'Content-Type':'application/json'}}, credentials:'same-origin',
+                    body: JSON.stringify({{target_type:t.type, target_id:t.id, messages:messages}})
+                }});
+                var data = await r.json();
+                if (data.ok) {{ shareStatus.textContent = '✓ Shared to ' + (data.name || t.name) + '.'; }}
+                else {{ shareStatus.textContent = '⚠ ' + (data.error || 'Could not share.'); btn.disabled = false; }}
+            }} catch(e) {{ shareStatus.textContent = '⚠ Network error.'; btn.disabled = false; }}
+        }}
     }})();
     </script>
     """
     return HTMLResponse(shell("Financial Advisor", body, player.cash_balance, player.id))
+
+
+@router.get("/advisor/shared/{token}", response_class=HTMLResponse)
+def advisor_shared_view(token: str, session_token: Optional[str] = Cookie(None)):
+    """Read-only viewer for a shared advisor transcript. Login required (any player); the
+    unguessable token + short TTL keep it private to whoever holds the DM link."""
+    from ux import shell
+    import html as _h
+    player = _player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+
+    shared = _get_shared_thread(token)
+    if not shared:
+        body = """
+        <a href="/" style="color:#38bdf8;">&larr; Dashboard</a>
+        <h1 style="margin:8px 0 4px 0;">🤖 Shared conversation</h1>
+        <div class="card" style="max-width:640px;margin-top:16px;padding:30px;text-align:center;">
+            <p style="color:#94a3b8;">This shared conversation isn't available — the link may have
+            expired (shared threads are kept only a few days, like DMs).</p>
+        </div>"""
+        return HTMLResponse(shell("Shared conversation", body, player.cash_balance, player.id))
+
+    sharer = _h.escape(shared["sharer_name"])
+    bubbles = ""
+    for m in shared["messages"]:
+        mine = m.get("role") == "user"
+        txt = _h.escape(str(m.get("content", "")))
+        bubbles += (
+            f'<div style="max-width:85%;padding:10px 14px;border-radius:12px;white-space:pre-wrap;'
+            f'line-height:1.5;font-size:0.9rem;'
+            + ("align-self:flex-end;background:var(--accent,#2563eb);color:#fff;border-bottom-right-radius:3px;"
+               if mine else
+               "align-self:flex-start;background:var(--bg-page,#0f172a);border:1px solid var(--border,#1e293b);color:var(--text-primary,#e5e7eb);border-bottom-left-radius:3px;")
+            + f'">{txt}</div>'
+        )
+
+    # Raw JSON for a <script type="application/json"> block (entities are NOT decoded inside
+    # <script>, so do NOT html-escape; just neutralize </script> breakout via <).
+    payload = json.dumps({"version": 1, "messages": shared["messages"]}).replace("<", "\\u003c")
+    body = f"""
+    <a href="/" style="color:#38bdf8;">&larr; Dashboard</a>
+    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+        <h1 style="margin:8px 0 4px 0;">🤖 Shared conversation</h1>
+        <span style="color:#64748b;font-size:0.8rem;">Shared by {sharer} · read-only</span>
+    </div>
+    <div class="card" style="max-width:760px;padding:18px;display:flex;flex-direction:column;gap:12px;">
+        {bubbles}
+    </div>
+    <div style="max-width:760px;margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button id="sh-download" style="background:#1e293b;border:1px solid #334155;color:#94a3b8;border-radius:6px;
+            padding:7px 14px;font-size:0.8rem;cursor:pointer;font-family:inherit;">⬇ Download conversation</button>
+        <a href="/advisor" class="btn-blue" style="padding:7px 14px;font-size:0.8rem;text-decoration:none;">Open my Advisor</a>
+    </div>
+    <p style="max-width:760px;color:#64748b;font-size:0.75rem;margin-top:8px;">
+        Download this thread and import it into your own Financial Advisor to continue it. (Pro feature.)
+    </p>
+    <script>
+    (function() {{
+        var data = JSON.parse(document.getElementById('sh-data').textContent);
+        document.getElementById('sh-download').addEventListener('click', function() {{
+            var blob = new Blob([JSON.stringify(data, null, 2)], {{type:'application/json'}});
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'wadsworth-advisor-shared.json';
+            a.click(); URL.revokeObjectURL(a.href);
+        }});
+    }})();
+    </script>
+    <script type="application/json" id="sh-data">{payload}</script>
+    """
+    return HTMLResponse(shell("Shared conversation", body, player.cash_balance, player.id))

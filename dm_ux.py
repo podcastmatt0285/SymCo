@@ -1748,9 +1748,15 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
 
     function formatMessageContent(raw) {{
         const re = /@\[([^\]]+)\]|#\[([^\]]+)\]|\/\[([^\]]+)\]|\$\[([^\]]+)\]|%\[([^\]]+)\]/g;
+        // Escape, then linkify bare http(s) URLs (used by e.g. shared Advisor links).
+        const escLink = function(s) {{
+            return escapeHtml(s).replace(/(https?:\/\/[^\s<]+)/g, function(u) {{
+                return '<a href="' + u + '" target="_blank" rel="noopener noreferrer">' + u + '</a>';
+            }});
+        }};
         let out = '', last = 0, m;
         while ((m = re.exec(raw)) !== null) {{
-            if (m.index > last) out += escapeHtml(raw.slice(last, m.index));
+            if (m.index > last) out += escLink(raw.slice(last, m.index));
             if (m[1] !== undefined) {{
                 const parts = m[1].split('|');
                 const name = parts.length >= 2 ? parts[1] : parts[0];
@@ -1789,7 +1795,7 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
             }}
             last = m.index + m[0].length;
         }}
-        if (last < raw.length) out += escapeHtml(raw.slice(last));
+        if (last < raw.length) out += escLink(raw.slice(last));
         return out;
     }}
 
