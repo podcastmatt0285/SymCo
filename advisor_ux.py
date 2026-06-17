@@ -1046,6 +1046,56 @@ def _market_snapshot() -> str:
     except Exception:
         pass
 
+    # Live ORDER BOOKS (open buy/sell orders) for the commodity & district markets. This is the
+    # actual listings — best bid/ask plus the highest ask, which exposes a single inflated
+    # sell order sitting on the book (the cause of weird "market prices").
+    def _book(model, get_db_fn, label):
+        try:
+            db = get_db_fn()
+            try:
+                orders = db.query(model.item_type, model.order_type, model.price).filter(
+                    model.status.in_(["active", "partial"]), model.price.isnot(None)).all()
+            finally:
+                db.close()
+            book = {}
+            for item, otype, price in orders:
+                if not price:
+                    continue
+                b = book.setdefault(item, {"bid": None, "ask": None, "ask_hi": None, "nb": 0, "ns": 0})
+                if str(otype) == "sell":
+                    b["ns"] += 1
+                    b["ask"] = price if b["ask"] is None else min(b["ask"], price)
+                    b["ask_hi"] = price if b["ask_hi"] is None else max(b["ask_hi"], price)
+                else:
+                    b["nb"] += 1
+                    b["bid"] = price if b["bid"] is None else max(b["bid"], price)
+            if not book:
+                return
+            lines.append("")
+            lines.append(f"{label} ORDER BOOK (open orders — best bid / best ask; 'high ask' flags "
+                         f"an inflated listing sitting on the book):")
+            for item in sorted(book)[:100]:
+                b = book[item]
+                bid = f"bid ${b['bid']:,.2f}" if b["bid"] is not None else "bid —"
+                ask = f"ask ${b['ask']:,.2f}" if b["ask"] is not None else "ask —"
+                hi = (f" · high ask ${b['ask_hi']:,.2f}"
+                      if b["ask_hi"] and b["ask"] and b["ask_hi"] > b["ask"] else "")
+                lines.append(f"  {item.replace('_',' ')}: {bid} / {ask}{hi} "
+                             f"· {b['nb']} buy / {b['ns']} sell orders")
+        except Exception:
+            pass
+
+    try:
+        from market import MarketOrder, get_db as _modb
+        _book(MarketOrder, _modb, "COMMODITY")
+    except Exception:
+        pass
+    try:
+        from district_market import DistrictMarketOrder, get_db as _ddmdb
+        _book(DistrictMarketOrder, _ddmdb, "DISTRICT")
+    except Exception:
+        pass
+
     snapshot = "\n".join(lines) if lines else "(Market data temporarily unavailable.)"
     c["t"], c["v"] = _t.time(), snapshot
     return snapshot
