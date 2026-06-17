@@ -231,6 +231,13 @@ def add_credential(player_id: int, name: str, api_key: str) -> tuple[bool, str]:
     provider = _detect_provider(api_key)
     if not provider:
         return False, "That doesn't look like a Google Gemini API key (expected to start with 'AIza')."
+    # Self-heal: make sure the table exists (covers a running instance whose startup didn't
+    # create it) and that we can build the encryption key before we touch the row.
+    try:
+        _ensure_table()
+        enc = _encrypt(api_key)
+    except Exception as e:
+        return False, f"Setup error (encryption/storage): {e}"
     from auth import get_db
     from sqlalchemy import text
     db = get_db()
@@ -256,11 +263,11 @@ def add_credential(player_id: int, name: str, api_key: str) -> tuple[bool, str]:
             "(player_id, credential_name, provider, api_key_enc, key_last4, is_active) "
             "VALUES (:pid, :name, :prov, :enc, :last4, :active)"
         ), {"pid": player_id, "name": name, "prov": provider,
-            "enc": _encrypt(api_key), "last4": api_key[-4:], "active": make_active})
+            "enc": enc, "last4": api_key[-4:], "active": make_active})
         db.commit()
     except Exception as e:
         db.rollback()
-        return False, f"Could not save credential: {e}"
+        return False, f"Could not save credential: {type(e).__name__}: {e}"
     finally:
         db.close()
     return True, "Saved."
@@ -851,8 +858,15 @@ def _is_pro(player) -> bool:
         return False
 
 
-def _redirect_advisor():
-    return RedirectResponse(url="/advisor", status_code=303)
+def _redirect_advisor(msg: str = "", err: str = ""):
+    from urllib.parse import urlencode
+    q = {}
+    if msg:
+        q["m"] = msg
+    if err:
+        q["e"] = err
+    url = "/advisor" + (("?" + urlencode(q)) if q else "")
+    return RedirectResponse(url=url, status_code=303)
 
 
 # ==========================
@@ -869,10 +883,10 @@ def advisor_cred_add(
     if not player:
         return RedirectResponse(url="/login", status_code=303)
     if not _is_pro(player):
-        return _redirect_advisor()
-    add_credential(player.id, credential_name, api_key)
+        return _redirect_advisor(err="The Financial Advisor is a Wadsworth Pro feature.")
+    ok, msg = add_credential(player.id, credential_name, api_key)
     # api_key goes out of scope here — only the ciphertext persists.
-    return _redirect_advisor()
+    return _redirect_advisor(msg="API key saved." if ok else "", err="" if ok else msg)
 
 
 @router.post("/api/advisor/credentials/activate")
@@ -905,8 +919,8 @@ def advisor_cred_wipe(session_token: Optional[str] = Cookie(None)):
     player = _player(session_token)
     if not player:
         return RedirectResponse(url="/login", status_code=303)
-    delete_all_credentials(player.id)
-    return _redirect_advisor()
+    n = delete_all_credentials(player.id)
+    return _redirect_advisor(msg=f"Removed {n} saved key{'s' if n != 1 else ''}.")
 
 
 @router.post("/api/advisor/privacy")
@@ -1103,11 +1117,27 @@ def _management_panel_html(player) -> str:
 
 
 @router.get("/advisor", response_class=HTMLResponse)
-def advisor_page(session_token: Optional[str] = Cookie(None)):
+def advisor_page(
+    session_token: Optional[str] = Cookie(None),
+    m: str = "",
+    e: str = "",
+):
     from ux import shell
+    import html as _h
     player = _player(session_token)
     if not player:
         return RedirectResponse(url="/login", status_code=303)
+
+    # Status banner from a prior action (save / wipe / error). Capped + escaped.
+    banner = ""
+    if e:
+        banner = (f'<div style="max-width:760px;margin:10px 0;padding:10px 14px;background:#1a0505;'
+                  f'border:1px solid #ef4444;color:#fca5a5;border-radius:8px;font-size:0.85rem;">'
+                  f'⚠ {_h.escape(e[:300])}</div>')
+    elif m:
+        banner = (f'<div style="max-width:760px;margin:10px 0;padding:10px 14px;background:#052e16;'
+                  f'border:1px solid #16a34a;color:#4ade80;border-radius:8px;font-size:0.85rem;">'
+                  f'✓ {_h.escape(m[:300])}</div>')
 
     if not _is_pro(player):
         body = """
@@ -1130,6 +1160,7 @@ def advisor_page(session_token: Optional[str] = Cookie(None)):
         body = f"""
         <a href="/" style="color:#38bdf8;">&larr; Dashboard</a>
         <h1 style="margin:8px 0 4px 0;">🤖 Financial Advisor</h1>
+        {banner}
         <p style="max-width:600px;color:#94a3b8;font-size:0.9rem;margin:0 0 16px;line-height:1.6;">
             A private AI that understands the Wadsworth game, your own empire, and your rivals' standings,
             so it can help you plan, compete, and outmaneuver. It runs on your own free Google Gemini key,
@@ -1148,6 +1179,7 @@ def advisor_page(session_token: Optional[str] = Cookie(None)):
         <h1 style="margin:8px 0 4px 0;">🤖 Financial Advisor</h1>
         <span style="color:#64748b;font-size:0.78rem;">Powered by: {powered} · Gemini · {shield_status} · chats are never saved on our server</span>
     </div>
+    {banner}
     <p style="max-width:760px;color:#94a3b8;font-size:0.82rem;margin:4px 0 12px;line-height:1.5;">
         I give in-game guidance about Wadsworth, your own empire, and your rivals — taxes, what to build,
         how a mechanic works, and how you stack up against other players (name a player and I'll size them
