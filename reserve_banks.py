@@ -2139,10 +2139,10 @@ def set_player_legal_tender(player_id: int, currency_code: str,
 
         is_coin_target = code in COIN_CURRENCY_CODES
 
-        # Resolve the target bank up front for demand signalling. USD has a bank
-        # row too, so a switch *to* USD can still register inflow demand.
+        # Resolve the target bank up front. USD has a bank row too, so a switch *to* USD
+        # can still register inflow demand and receive redeemed-coin reserves.
         target_bank = new_bank
-        if record_forex and target_bank is None and code == "USD":
+        if target_bank is None and code == "USD":
             target_bank = db.query(StateReserveBank).filter(
                 StateReserveBank.currency_code == "USD"
             ).first()
@@ -2185,6 +2185,12 @@ def set_player_legal_tender(player_id: int, currency_code: str,
             else:
                 # Non-coin target: standard synthetic conversion
                 _adjust_currency_balance(db, player_id, code, new_amt)
+                if cb.currency_code in COIN_CURRENCY_CODES and target_bank is not None:
+                    # Hard money leaving circulation must NOT be destroyed. Deposit the redeemed
+                    # coins into the destination bank's reserves — the mirror of the deposit made
+                    # when switching INTO a coin currency (Yen→Ag puts yen in the silver bank;
+                    # Ag→Yen puts silver in the yen bank). Keeps coin supply conserved.
+                    _add_bank_reserve(db, target_bank.id, cb.currency_code, net_native)
                 conversion_details.append(
                     f"{cb.currency_code} {amt:,.2f} → {code} {new_amt:,.2f}"
                 )
