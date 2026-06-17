@@ -176,11 +176,11 @@ def _decrypt(token: str) -> Optional[str]:
 # ==========================
 
 def _detect_provider(api_key: str) -> Optional[str]:
-    """Return the provider for a key, or None if unrecognized. Gemini only at launch."""
+    """Provider for a key. Gemini is the only provider at launch, so any non-empty key is
+    treated as Gemini — we do NOT reject on key shape (Google issues more than one key
+    format, and the real validity check is the API call itself, which fails gracefully)."""
     k = (api_key or "").strip()
-    if k.startswith("AIza"):
-        return "gemini"
-    return None
+    return "gemini" if k else None
 
 
 def list_credentials(player_id: int) -> List[dict]:
@@ -230,7 +230,7 @@ def add_credential(player_id: int, name: str, api_key: str) -> tuple[bool, str]:
     api_key = (api_key or "").strip()
     provider = _detect_provider(api_key)
     if not provider:
-        return False, "That doesn't look like a Google Gemini API key (expected to start with 'AIza')."
+        return False, "Please paste your Google Gemini API key."
     # Self-heal: make sure the table exists (covers a running instance whose startup didn't
     # create it) and that we can build the encryption key before we touch the row.
     try:
@@ -1090,7 +1090,7 @@ def _management_panel_html(player) -> str:
             <p style="color:#e5e7eb;font-size:0.82rem;font-weight:600;margin:0 0 6px;">Add a free Google Gemini key</p>
             <ol style="color:#94a3b8;font-size:0.78rem;line-height:1.7;margin:0 0 12px;padding-left:18px;">
                 <li>Go to <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style="color:#38bdf8;">Google AI Studio → API keys</a> (free; many players use a fresh Google account just for this).</li>
-                <li>Click <strong>Create API key</strong> and copy the key (it starts with <code>AIza…</code>).</li>
+                <li>Click <strong>Create API key</strong> and copy the key (usually starts with <code>AIza…</code>).</li>
                 <li>Paste it below, give it a name, and Save. Gemini's free tier is plenty for normal chatting; any cost is billed to <em>your</em> Google account, not ours.</li>
             </ol>
         </div>
