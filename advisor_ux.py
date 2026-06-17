@@ -861,6 +861,15 @@ def _resolve_referenced_players(querying_id: int, messages: list) -> list:
     import re
     found: list = []
 
+    # @[id|name] mention tokens from the @ autocomplete — exact, unambiguous id resolution.
+    for mid in re.findall(r"@\[(\d{1,7})\|", text_blob):
+        try:
+            pid = int(mid)
+            if pid > 0 and pid != querying_id and pid not in found:
+                found.append(pid)
+        except Exception:
+            pass
+
     # Explicit "#123" / "player 123" id references
     for m in re.findall(r"(?:#|player\s+#?)(\d{1,7})", text_blob):
         try:
@@ -2155,13 +2164,29 @@ def advisor_page(
     {banner}
     <p style="max-width:760px;color:#94a3b8;font-size:0.82rem;margin:4px 0 12px;line-height:1.5;">
         I give in-game guidance about Wadsworth, your own empire, and your rivals — taxes, what to build,
-        how a mechanic works, and how you stack up against other players (name a player and I'll size them
-        up). I can't trade or move money for you. Manage your keys and privacy below the chat.
+        how a mechanic works, and how you stack up against other players (type <strong>@</strong> to reference any
+        player or NPC by name or ID and I'll size them up). I can't trade or move money for you. Manage your keys
+        and privacy below the chat.
     </p>
+    <style>
+    .adv-mention-dd {{ position:absolute; bottom:calc(100% - 4px); left:12px; right:64px; max-height:210px;
+        overflow-y:auto; background:#0b1220; border:1px solid #334155; border-radius:8px; display:none;
+        z-index:50; box-shadow:0 6px 22px rgba(0,0,0,.45); }}
+    .adv-mention-dd.show {{ display:block; }}
+    .adv-mention-dd-hdr {{ padding:6px 12px; font-size:0.7rem; text-transform:uppercase; letter-spacing:.05em;
+        color:#64748b; border-bottom:1px solid #1e293b; }}
+    .adv-mention-opt {{ padding:8px 12px; cursor:pointer; display:flex; align-items:center; gap:8px; font-size:0.85rem; }}
+    .adv-mention-opt:hover, .adv-mention-opt.sel {{ background:#1e2d3d; }}
+    .adv-mention-opt .nm {{ color:#e2e8f0; }}
+    .adv-mention-opt .id {{ color:#64748b; font-size:0.75rem; margin-left:auto; }}
+    .adv-mention {{ background:rgba(34,197,94,0.15); color:#22c55e; border-radius:3px; padding:1px 4px;
+        font-weight:600; font-size:0.9em; }}
+    </style>
     <div class="card" style="max-width:760px;padding:0;overflow:hidden;">
         <div id="adv-log" style="height:52vh;min-height:320px;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px;"></div>
-        <div style="border-top:1px solid var(--border,#1e293b);padding:12px;display:flex;gap:8px;align-items:flex-end;">
-            <textarea id="adv-input" rows="2" placeholder="Ask about your taxes, portfolio, strategy…"
+        <div style="border-top:1px solid var(--border,#1e293b);padding:12px;display:flex;gap:8px;align-items:flex-end;position:relative;">
+            <div id="adv-mention-dd" class="adv-mention-dd"></div>
+            <textarea id="adv-input" rows="2" placeholder="Ask about taxes, strategy… type @ to reference a player or NPC"
                 style="flex:1;resize:vertical;background:var(--bg-page,#020617);border:1px solid var(--border,#334155);
                        color:var(--text-primary,#e5e7eb);border-radius:8px;padding:10px;font-family:inherit;font-size:16px;"></textarea>
             <button id="adv-send" class="btn-blue" style="padding:10px 18px;white-space:nowrap;">Send</button>
@@ -2204,13 +2229,24 @@ def advisor_page(
         function esc(s) {{
             return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
         }}
+        function fmt(raw) {{
+            var re = /@\[(\d+)\|([^\]]*)\]/g, out = '', last = 0, m;
+            raw = raw || '';
+            while ((m = re.exec(raw)) !== null) {{
+                out += esc(raw.slice(last, m.index));
+                out += '<span class="adv-mention">@' + esc(m[2]) + '</span>';
+                last = m.index + m[0].length;
+            }}
+            out += esc(raw.slice(last));
+            return out;
+        }}
         function bubble(role, text) {{
             var mine = role === 'user';
             var d = document.createElement('div');
             d.style.cssText = 'max-width:85%;padding:10px 14px;border-radius:12px;white-space:pre-wrap;line-height:1.5;font-size:0.9rem;' +
                 (mine ? 'align-self:flex-end;background:var(--accent,#2563eb);color:#fff;border-bottom-right-radius:3px;'
                       : 'align-self:flex-start;background:var(--bg-page,#0f172a);border:1px solid var(--border,#1e293b);color:var(--text-primary,#e5e7eb);border-bottom-left-radius:3px;');
-            d.innerHTML = esc(text);
+            d.innerHTML = fmt(text);
             log.appendChild(d);
             log.scrollTop = log.scrollHeight;
             return d;
@@ -2258,7 +2294,60 @@ def advisor_page(
             }}
         }}
         sendBtn.addEventListener('click', send);
+
+        // ── @-mention autocomplete (players & NPCs, by name or #ID) ──
+        var ddEl = document.getElementById('adv-mention-dd');
+        var mState = null, mSugs = [], mSel = -1, mTimer = null;
+        function detectAt(val, pos) {{
+            var before = val.slice(0, pos);
+            var m = before.match(/(?:^|[\s,])@(\S*)$/);
+            if (!m) return null;
+            return {{ start: before.length - m[1].length - 1, query: m[1] }};
+        }}
+        function closeMD() {{ mState = null; mSugs = []; mSel = -1; ddEl.classList.remove('show'); ddEl.innerHTML = ''; }}
+        function renderMD() {{
+            if (!mSugs.length) {{ ddEl.classList.remove('show'); ddEl.innerHTML = ''; return; }}
+            var html = '<div class="adv-mention-dd-hdr">Players &amp; NPCs</div>';
+            mSugs.forEach(function(s, i) {{
+                html += '<div class="adv-mention-opt' + (i === mSel ? ' sel' : '') + '"'
+                    + ' onmousedown="event.preventDefault();window.__advPick(' + i + ')">'
+                    + '<span class="nm">@' + esc(s.name) + '</span><span class="id">#' + s.id + '</span></div>';
+            }});
+            ddEl.innerHTML = html; ddEl.classList.add('show');
+        }}
+        async function fetchMD(q) {{
+            try {{
+                var r = await fetch('/api/chat/suggest/players?q=' + encodeURIComponent(q), {{credentials:'same-origin'}});
+                if (!r.ok) return;
+                mSugs = await r.json(); mSel = mSugs.length ? 0 : -1; renderMD();
+            }} catch(e) {{}}
+        }}
+        function pickMD(i) {{
+            if (!mState || i < 0 || i >= mSugs.length) return;
+            var s = mSugs[i];
+            var rep = '@[' + s.id + '|' + s.name + '] ';
+            var after = input.value.slice(input.selectionStart);
+            input.value = input.value.slice(0, mState.start) + rep + after;
+            var np = mState.start + rep.length;
+            input.setSelectionRange(np, np);
+            closeMD(); input.focus();
+        }}
+        window.__advPick = pickMD;
+        input.addEventListener('input', function() {{
+            var t = detectAt(input.value, input.selectionStart);
+            if (!t) {{ closeMD(); return; }}
+            mState = t; clearTimeout(mTimer);
+            mTimer = setTimeout(function() {{ fetchMD(t.query); }}, 120);
+        }});
+        input.addEventListener('blur', function() {{ setTimeout(closeMD, 150); }});
+
         input.addEventListener('keydown', function(e) {{
+            if (mState && ddEl.classList.contains('show') && mSugs.length) {{
+                if (e.key === 'ArrowDown') {{ e.preventDefault(); mSel = (mSel + 1) % mSugs.length; renderMD(); return; }}
+                if (e.key === 'ArrowUp') {{ e.preventDefault(); mSel = (mSel - 1 + mSugs.length) % mSugs.length; renderMD(); return; }}
+                if (e.key === 'Enter' || e.key === 'Tab') {{ e.preventDefault(); pickMD(mSel); return; }}
+                if (e.key === 'Escape') {{ e.preventDefault(); closeMD(); return; }}
+            }}
             if (e.key === 'Enter' && !e.shiftKey) {{ e.preventDefault(); send(); }}
         }});
 
@@ -2358,11 +2447,23 @@ def advisor_shared_view(token: str, session_token: Optional[str] = Cookie(None))
         </div>"""
         return HTMLResponse(shell("Shared conversation", body, player.cash_balance, player.id))
 
+    def _pretty(raw: str) -> str:
+        # Escape, rendering @[id|name] mention tokens as green chips (matches the live chat).
+        import re as _re
+        parts, last = [], 0
+        for mt in _re.finditer(r"@\[(\d+)\|([^\]]*)\]", raw):
+            parts.append(_h.escape(raw[last:mt.start()]))
+            parts.append('<span style="background:rgba(34,197,94,0.15);color:#22c55e;border-radius:3px;'
+                         'padding:1px 4px;font-weight:600;">@' + _h.escape(mt.group(2)) + '</span>')
+            last = mt.end()
+        parts.append(_h.escape(raw[last:]))
+        return "".join(parts)
+
     sharer = _h.escape(shared["sharer_name"])
     bubbles = ""
     for m in shared["messages"]:
         mine = m.get("role") == "user"
-        txt = _h.escape(str(m.get("content", "")))
+        txt = _pretty(str(m.get("content", "")))
         bubbles += (
             f'<div style="max-width:85%;padding:10px 14px;border-radius:12px;white-space:pre-wrap;'
             f'line-height:1.5;font-size:0.9rem;'
