@@ -921,6 +921,66 @@ def _market_snapshot() -> str:
     except Exception:
         pass
 
+    # Stock market — tradable companies (top by market cap)
+    try:
+        from banks.brokerage_firm import CompanyShares, get_db as _fdb
+        fdb = _fdb()
+        try:
+            cos = fdb.query(CompanyShares).filter(CompanyShares.current_price > 0).all()
+        finally:
+            fdb.close()
+        if cos:
+            cos.sort(key=lambda x: -((x.current_price or 0) * (x.shares_outstanding or 0)))
+            lines.append("")
+            lines.append(f"STOCK MARKET ({len(cos)} listed companies, top by market cap):")
+            for co in cos[:20]:
+                cap = (co.current_price or 0) * (co.shares_outstanding or 0)
+                lines.append(f"  {co.ticker_symbol} ({co.company_name}): "
+                             f"${co.current_price:,.2f}/sh · cap {_compact(cap)}")
+    except Exception:
+        pass
+
+    # Bank shares
+    try:
+        from banks import BankEntity
+        from database import SessionLocal as _BS
+        bdb = _BS()
+        try:
+            be = bdb.query(BankEntity).all()
+        finally:
+            bdb.close()
+        if be:
+            lines.append("BANK SHARES: " + ", ".join(
+                f"{b.bank_id} ${(b.share_price or 0):,.2f}/sh" for b in be))
+    except Exception:
+        pass
+
+    # ETFs / index funds (share price / NAV where exposed)
+    try:
+        etfs = []
+        for _mod, _label in (("city_nav_etf", "CityNav"), ("energy_etf", "Energy"),
+                             ("apple_seeds_etf", "AppleSeeds"), ("wbc50_index_fund", "WBC-50 Fund")):
+            try:
+                m = __import__(f"banks.{_mod}", fromlist=["get_etf_info"])
+                info = m.get_etf_info()
+                if info and info.get("share_price"):
+                    etfs.append(f"{info.get('name', _label)} ${info['share_price']:,.4f}/sh")
+            except Exception:
+                continue
+        if etfs:
+            lines.append("ETFs / INDEX FUNDS: " + ", ".join(etfs))
+    except Exception:
+        pass
+
+    # Annuity products (immediate-rate schedule)
+    try:
+        from banks.brokerage_firm import ANNUITY_IMMEDIATE_RATES
+        if ANNUITY_IMMEDIATE_RATES:
+            lines.append("ANNUITY RATES (immediate, by term): " + ", ".join(
+                f"{d}d {r*100:.0f}%" for d, r in sorted(ANNUITY_IMMEDIATE_RATES.items())))
+    except Exception:
+        pass
+
     snapshot = "\n".join(lines) if lines else "(Market data temporarily unavailable.)"
     c["t"], c["v"] = _t.time(), snapshot
     return snapshot
