@@ -253,10 +253,12 @@ Stock market & corporate:
 - Equity trade commission: 0.125%. Secondary offering underwriting fee: 3% (with a 13.75% tax
   credit). Share buyback fee: 0.2%. Delisting fee: 2% of market cap. Monthly listing fee: $500
   ($500 × 3 missed = distressed). IPO founder lockups: 15–90 days by IPO type.
-Bonds, currency & coinage (reserve banks):
+Bonds, currency & coinage:
 - Bond interest tax: 15% of accrued interest. Bond issuance fee: 0.25% of face value. Reserve
   balance tax: 0.1% PER DAY on idle reserve-bank balances. Forex conversion fee: 0.2%. Coin
-  seigniorage: 2% of mint output to the bank.
+  seigniorage: 2% of every mint run skimmed to the FEDERAL GOVERNMENT (player 0), which is the
+  sole issuer/holder of all metal coinage (there are no per-metal coin banks). Coin demurrage:
+  ~1%/yr carry cost on stored coin balances, also reclaimed by the government.
 Annuities:
 - Immediate (SPIA) payout rates by term: 30d 8%, 90d 10%, 180d 12%, 365d 15%. Deferred balances
   grow 5%/yr. Non-qualified: 0.25% issuance fee + 15% tax on the interest portion. Qualified:
@@ -317,12 +319,17 @@ and auto-expire after 3 days of inactivity. Trusted-trade lists allow auto-appro
 
 ## WIKIWADS GLOSSARY (key terms)
 - Annuity: a contract that pays out over a term; immediate (SPIA) pays now, deferred grows first.
-- Demurrage: a negative yield — holding hard-money coinage bonds slowly costs you (anti-hoard).
+- Demurrage: a ~1%/yr carry cost on stored hard-money coin BALANCES (like paying to vault
+  bullion), reclaimed by the federal government (anti-hoard). It is a balance carry cost, not a
+  bond yield.
 - Hard money / coinage: metal-backed currencies (gold AU24/AU22, silver AG999/AG925, platinum
-  PT9995/PT950) minted only via a Mint; value pegged to the underlying metal; zero positive
-  yield.
-- Seigniorage: the cut (2%) the reserve bank takes from mint output.
-- Reserve bank: issuer of one of the 16 currencies; sets a dynamic bond yield that drives FX.
+  PT9995/PT950), struck only by player-owned Mints and ISSUED BY THE FEDERAL GOVERNMENT (player
+  0) — there are no per-metal banks. Value pegged to the underlying metal; zero positive yield.
+  Switching legal tender INTO a coin queues a government redemption IOU (filled from the
+  treasury's coin holdings as minting seigniorage + demurrage flow in).
+- Seigniorage: the cut (2%) the FEDERAL GOVERNMENT takes from every mint run.
+- Reserve bank: issuer of one of the fiat currencies (USD, JPY, EUR, …) — NOT coinage; sets a
+  dynamic bond yield that drives FX. Metal coinage is government-issued, not bank-issued.
 - County token: a county's Bitcoin-like Layer-1 coin (21M cap, halving); price pegged to county
   members' cash. Meme coin: a Layer-2 token on a county chain. WSC: the Wadsworth stablecoin.
 - Institution: land sacrificed to forge a Mint or Port Authority. District: Fibonacci-merged

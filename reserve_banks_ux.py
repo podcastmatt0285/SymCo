@@ -269,8 +269,9 @@ def bond_market(
           the same place your businesses earn into, bonds pay out to, and trades settle in.
           Bond face values shown below are <em>what a bond will pay when it matures</em>, not yet spendable.
           <strong style="color:#f59e0b;">Coin tender holders:</strong> income does not land as spendable coin instantly —
-          it queues as a non-transferable coin IOU backed by the income value deposited into the bank.
-          Coins fill in as your (or any other) mint produces seigniorage. Check your Mint dashboard for IOU status.
+          it queues as a non-transferable redemption IOU owed by the federal government (backed by the income value
+          deposited to the treasury). Coins fill in as mints produce them — the government skims 2% seigniorage and
+          collects demurrage on stored coins, then pays the queue. Check your Mint dashboard for IOU status.
         </div>
       </div>
       <div style="margin-bottom:10px;">

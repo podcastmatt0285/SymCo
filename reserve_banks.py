@@ -2522,6 +2522,11 @@ def get_player_display_currency(player_id: int) -> dict:
     code = get_player_legal_tender(player_id)
     if code == "USD":
         return {"code": "USD", "symbol": "$", "usd_per_unit": 1.0, "flag": "🇺🇸"}
+    # Metal coinage has no bank row — label it from coin metadata and price via the live peg.
+    if code in COIN_CURRENCY_CODES:
+        m = coin_display(code)
+        return {"code": code, "symbol": m["symbol"],
+                "usd_per_unit": get_live_coin_usd_per_unit(code) or 1.0, "flag": m["flag"]}
     db = get_db()
     try:
         bank = db.query(StateReserveBank).filter(
@@ -2576,18 +2581,16 @@ def can_afford_usd(player_id: int, usd_cost: float) -> bool:
             ).first()
             return (row.balance if row else 0.0) >= usd_cost
 
-        bank = db.query(StateReserveBank).filter(
-            StateReserveBank.currency_code == tender
-        ).first()
-        if not bank:
-            # Unknown tender — check USD fallback
+        # Non-USD tender: price via _get_usd_rate (live metal peg for coins, bank rate for fiat).
+        rate = _get_usd_rate(db, tender)
+        if rate <= 0:
             row = db.query(PlayerCurrencyBalance).filter(
                 PlayerCurrencyBalance.player_id     == player_id,
                 PlayerCurrencyBalance.currency_code == "USD",
             ).first()
             return (row.balance if row else 0.0) >= usd_cost
 
-        foreign_cost = usd_cost / bank.usd_per_unit
+        foreign_cost = usd_cost / rate
         foreign_row = db.query(PlayerCurrencyBalance).filter(
             PlayerCurrencyBalance.player_id     == player_id,
             PlayerCurrencyBalance.currency_code == tender,
@@ -2828,11 +2831,11 @@ def spend_player_funds(player_id: int, usd_cost: float) -> Tuple[bool, str]:
             bal = usd_row.balance if usd_row else 0.0
             return False, f"Insufficient funds. Need ${usd_cost:,.2f}, have ${bal:,.2f}."
 
-        bank = db.query(StateReserveBank).filter(
-            StateReserveBank.currency_code == tender
-        ).first()
-        if not bank:
-            # Unknown tender — try USD fallback
+        # Non-USD tender (fiat reserve currency OR metal coinage). Price via _get_usd_rate, which
+        # uses the live metal peg for coins (no bank row exists) and the bank rate for fiat.
+        rate = _get_usd_rate(db, tender)
+        if rate <= 0:
+            # Can't price the tender — try USD fallback.
             if _debit_currency_balance_atomic(db, player_id, "USD", usd_cost):
                 db.commit()
                 return True, ""
@@ -2843,14 +2846,14 @@ def spend_player_funds(player_id: int, usd_cost: float) -> Tuple[bool, str]:
             bal = usd_row.balance if usd_row else 0.0
             return False, f"Insufficient funds. Need ${usd_cost:,.2f}, have ${bal:,.2f}."
 
-        foreign_cost = usd_cost / bank.usd_per_unit
+        foreign_cost = usd_cost / rate
 
         # Attempt atomic foreign-currency debit (eliminates TOCTOU race).
         if _debit_currency_balance_atomic(db, player_id, tender, foreign_cost):
             db.commit()
             return True, ""
 
-        # Insufficient foreign balance — try USD fallback.
+        # Insufficient tender balance — try USD fallback.
         if _debit_currency_balance_atomic(db, player_id, "USD", usd_cost):
             db.commit()
             return True, ""
@@ -2861,7 +2864,12 @@ def spend_player_funds(player_id: int, usd_cost: float) -> Tuple[bool, str]:
             PlayerCurrencyBalance.currency_code == tender,
         ).first()
         foreign_balance = bal_row.balance if bal_row else 0.0
-        symbol = bank.currency_symbol or tender
+        if tender in COIN_CURRENCY_CODES:
+            symbol = coin_display(tender)["symbol"]
+        else:
+            _b = db.query(StateReserveBank).filter(
+                StateReserveBank.currency_code == tender).first()
+            symbol = (_b.currency_symbol if _b else tender)
         return False, (
             f"Insufficient funds. Need {symbol}{foreign_cost:,.2f} {tender} "
             f"(≈ ${usd_cost:,.2f}), have {symbol}{foreign_balance:,.2f} {tender}."

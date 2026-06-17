@@ -8634,6 +8634,24 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
                     f'(yield {bk["yield_pct"]:+.4f}%,  1 {bk["code"]} = ${bk["usd_per_unit"]:.6f}){_pro_tag}'
                     f'</option>'
                 )
+            # Metal coinage is government-issued (no bank row) — append it as selectable tender.
+            from reserve_banks import (coin_display as _cdisp,
+                                       get_live_coin_usd_per_unit as _cprice)
+            for _code in sorted(COIN_CURRENCY_CODES):
+                _rate = _cprice(_code)
+                if _rate <= 0:
+                    continue
+                _sel = ' selected' if current_code == _code else ''
+                _gated = not _player_is_pro
+                _disabled = ' disabled' if _gated else ''
+                _pro_tag = ' 🔒 Pro only' if _gated else ' ✨ Pro coinage (hard money)'
+                _m = _cdisp(_code)
+                currency_rows += (
+                    f'<option value="{_code}"{_sel}{_disabled}>'
+                    f'{_m["flag"]} {_code} — {_m["name"]} '
+                    f'(hard money, 1 {_code} = ${_rate:,.2f}){_pro_tag}'
+                    f'</option>'
+                )
             bank_html += f'''
             <div class="card" style="border-top:3px solid #a78bfa;">
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">

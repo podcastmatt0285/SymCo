@@ -1698,7 +1698,7 @@ def login_page(session_token: Optional[str] = Cookie(None)):
                         &bull; <strong>Forex Trading Floor</strong> — a currency-exchange dashboard<br>
                         &bull; <strong>Supporter badge</strong> on the leaderboard and your profile<br>
                         &bull; Extra <strong>P2P contact capacity</strong>, a permanent <strong>profile picture</strong>, a higher <strong>trophy multiplier</strong>, a <strong>Trophies Store</strong>, and more<br><br>
-                        You can see the current status of every perk — what's active versus coming soon — any time under <strong>Settings → Account</strong>. Anyone can buy sovereign bonds, including the metal-coinage banks; all markets, production, land, stocks, and trading are fully available for free, forever.</div>
+                        You can see the current status of every perk — what's active versus coming soon — any time under <strong>Settings → Account</strong>. Anyone can buy sovereign bonds; metal coinage is government-issued and struck by player Mints; all markets, production, land, stocks, and trading are fully available for free, forever.</div>
                     </details>
 
                     <details class="faq-item">
