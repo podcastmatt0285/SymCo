@@ -324,6 +324,34 @@ def search_players(query: str, viewer_id: int, limit: int = 12) -> list:
 # CONTACT CARD RENDERER
 # ──────────────────────────────────────────────────────────────────────────────
 
+# The card is composed with a fixed slate palette inline; this maps each token onto a
+# skin CSS variable (with the original hex as fallback) so the card renders correctly in
+# any skin — in the P2P contacts page, DMs, and the public Bluesky snapshot alike. Each
+# key is replaced once; an inserted hex equals only its own key, so order is irrelevant.
+_CARD_SKIN_MAP = {
+    "#0f172a": "var(--bg-card-2,#0f172a)",
+    "#1e293b": "var(--border,#1e293b)",
+    "#334155": "var(--border-subtle,#334155)",
+    "#64748b": "var(--text-muted,#64748b)",
+    "#94a3b8": "var(--text-secondary,#94a3b8)",
+    "#e5e7eb": "var(--text-primary,#e5e7eb)",
+    "#f1f5f9": "var(--text-bright,#f1f5f9)",
+    "#38bdf8": "var(--accent,#38bdf8)",
+    "#22c55e": "var(--color-success,#22c55e)",
+    "#ef4444": "var(--color-danger,#ef4444)",
+    "#f59e0b": "var(--color-warning,#f59e0b)",
+    "#fbbf24": "var(--color-gold,#fbbf24)",
+    "#a78bfa": "var(--accent-2,#a78bfa)",
+}
+
+
+def skinify_card(card_html: str) -> str:
+    """Rewrite the card's fixed palette onto skin CSS variables."""
+    for hexc, var in _CARD_SKIN_MAP.items():
+        card_html = card_html.replace(hexc, var)
+    return card_html
+
+
 def _sec(title: str, body: str, icon: str = "") -> str:
     return f'''
     <div style="margin-bottom:16px;">
@@ -335,10 +363,17 @@ def _sec(title: str, body: str, icon: str = "") -> str:
     </div>'''
 
 
-def build_contact_card_html(subject_id: int, disp: dict, fmt_usd_fn) -> str:
+def build_contact_card_html(subject_id: int, disp: dict, fmt_usd_fn,
+                            viewer_id: Optional[int] = None) -> str:
     """
-    Assemble a full contact-card HTML panel for subject_id as seen by the viewer.
-    Uses try/except per section so a missing module never crashes the whole card.
+    Assemble a full contact-card HTML panel for subject_id.
+
+    viewer_id, when provided (P2P contact card), enables a true "mutual contacts" count
+    (intersection of the viewer's and subject's networks). When None (public Bluesky
+    snapshot), the network section shows the subject's total contacts instead.
+
+    Uses try/except per section so a missing module never crashes the whole card, and the
+    assembled HTML is run through skinify_card() so it themes to the rendering skin.
     """
     from auth import Player, get_db as get_auth_db
     auth_db = get_auth_db()
@@ -348,8 +383,15 @@ def build_contact_card_html(subject_id: int, disp: dict, fmt_usd_fn) -> str:
             return '<div style="color:#ef4444;">Player not found.</div>'
         name = subject.business_name
         cash = subject.cash_balance
+        subscriber = bool(getattr(subject, "subscriber", False))
     finally:
         auth_db.close()
+
+    try:
+        from admins import is_admin as _is_admin
+        is_pro_flag = subscriber or bool(_is_admin(subject_id))
+    except Exception:
+        is_pro_flag = subscriber
 
     F = fmt_usd_fn  # shorthand
 
@@ -381,14 +423,26 @@ def build_contact_card_html(subject_id: int, disp: dict, fmt_usd_fn) -> str:
         from beta import has_pocket_empire
         if has_pocket_empire(subject_id):
             _founding_badge = (
-                '<span title="Founding Tester — one of the original 48 Android beta players" '
-                'style="display:inline-flex;align-items:center;gap:4px;'
+                '<a href="/founding" target="_blank" rel="noopener noreferrer" '
+                'title="Founding Tester — one of the original 48 Android beta players" '
+                'style="display:inline-flex;align-items:center;gap:4px;text-decoration:none;'
                 'background:#1c1008;border:1px solid #f59e0b;border-radius:10px;'
                 'padding:2px 8px;font-size:0.72rem;font-weight:700;color:#fbbf24;">'
-                '📱 Founding Tester</span>'
+                '📱 Founding Tester</a>'
             )
     except Exception:
         pass
+
+    # Wadsworth Pro badge (subscriber or admin)
+    _pro_badge = ""
+    if is_pro_flag:
+        _pro_badge = (
+            '<span title="Wadsworth Pro" '
+            'style="display:inline-flex;align-items:center;gap:4px;'
+            'background:#1c1410;border:1px solid #fbbf24;border-radius:10px;'
+            'padding:2px 8px;font-size:0.72rem;font-weight:700;color:#fbbf24;">'
+            '⭐ Pro</span>'
+        )
 
     # ── Bluesky (only when the subject has linked + opted into P2P display) ──
     _avatar_content = name[0].upper() if name else "?"
@@ -425,6 +479,7 @@ def build_contact_card_html(subject_id: int, disp: dict, fmt_usd_fn) -> str:
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                 <span style="font-size:1.15rem; font-weight:bold; color:#e5e7eb;">{name}</span>
                 {_level_badge}
+                {_pro_badge}
                 {_founding_badge}
                 {_bsky_badge}
             </div>
@@ -451,6 +506,8 @@ def build_contact_card_html(subject_id: int, disp: dict, fmt_usd_fn) -> str:
                     <div><span style="color:#64748b;">Inventory Value</span><br>{F(ps.inventory_value, disp)}</div>
                     <div><span style="color:#64748b;">Business Value</span><br>{F(ps.business_value, disp)}</div>
                     <div><span style="color:#64748b;">Share Value</span><br>{F(ps.share_value, disp)}</div>
+                    <div><span style="color:#64748b;">District Value</span><br>{F(ps.district_value or 0, disp)}</div>
+                    <div><span style="color:#64748b;">Cash (all)</span><br>{F(ps.cash_balance or 0, disp)}</div>
                 </div>''', "📊"))
     except Exception:
         pass
@@ -574,7 +631,7 @@ def build_contact_card_html(subject_id: int, disp: dict, fmt_usd_fn) -> str:
 
     # ── Executives ──
     try:
-        from executive import get_active_executives, get_db as get_exec_db, EXECUTIVE_TYPES
+        from executive import get_active_executives, get_db as get_exec_db, EXECUTIVE_JOBS
         edb = get_exec_db()
         try:
             execs = get_active_executives(edb, subject_id)
@@ -583,8 +640,8 @@ def build_contact_card_html(subject_id: int, disp: dict, fmt_usd_fn) -> str:
         if execs:
             exec_html = "".join(
                 f'<div style="padding:3px 0; border-bottom:1px solid #0f172a;">'
-                f'<span style="color:#fbbf24;">{e.name}</span>'
-                f' <span style="color:#64748b; font-size:0.8rem;">— {EXECUTIVE_TYPES.get(e.executive_type, {}).get("title", e.executive_type)}</span></div>'
+                f'<span style="color:#fbbf24;">{e.first_name} {e.last_name}</span>'
+                f' <span style="color:#64748b; font-size:0.8rem;">— {EXECUTIVE_JOBS.get(e.job, {}).get("title", e.job.replace("_", " ").title())}</span></div>'
                 for e in execs
             )
             parts.append(_sec(f"Executives Employed ({len(execs)})", exec_html, "👔"))
@@ -605,13 +662,13 @@ def build_contact_card_html(subject_id: int, disp: dict, fmt_usd_fn) -> str:
             if positions:
                 stock_rows = ""
                 for pos in positions:
-                    co = fdb.query(CompanyShares).filter(CompanyShares.id == pos.company_id).first()
+                    co = fdb.query(CompanyShares).filter(CompanyShares.id == pos.company_shares_id).first()
                     ticker = co.ticker_symbol if co else f"#{pos.company_id}"
                     stock_rows += (
                         f'<div style="padding:3px 0; border-bottom:1px solid #0f172a;">'
                         f'<span style="color:#38bdf8;">{ticker}</span>'
                         f' <span style="color:#e5e7eb;">{pos.shares_owned:,.0f} shares</span>'
-                        f' <span style="color:#64748b; font-size:0.8rem;">avg {F(pos.average_cost or 0, disp)}/share</span>'
+                        f' <span style="color:#64748b; font-size:0.8rem;">avg {F(pos.average_cost_basis or 0, disp)}/share</span>'
                         f'</div>'
                     )
                 parts.append(_sec(f"Stock Holdings ({len(positions)} positions)", stock_rows, "📈"))
@@ -636,8 +693,8 @@ def build_contact_card_html(subject_id: int, disp: dict, fmt_usd_fn) -> str:
         if bonds:
             bond_html = "".join(
                 f'<div style="padding:3px 0; border-bottom:1px solid #0f172a;">'
-                f'<span style="color:#f59e0b;">{F(b.face_value, disp)}</span>'
-                f' <span style="color:#64748b; font-size:0.8rem;">{b.yield_rate*100:.1f}% yield · matures {b.matures_at.strftime("%b %d %Y") if b.matures_at else "—"}</span>'
+                f'<span style="color:#f59e0b;">{F(b.face_value_wsc, disp)}</span>'
+                f' <span style="color:#64748b; font-size:0.8rem;">{(b.purchase_yield or 0)*100:.1f}% yield · matures {b.matures_at.strftime("%b %d %Y") if b.matures_at else "—"}</span>'
                 f'</div>'
                 for b in bonds
             )
@@ -717,7 +774,7 @@ def build_contact_card_html(subject_id: int, disp: dict, fmt_usd_fn) -> str:
                 f'<span style="color:{"#22c55e" if o.order_type == OrderType.BUY else "#ef4444"};">'
                 f'{"BUY" if o.order_type == OrderType.BUY else "SELL"}</span>'
                 f' {o.item_type.replace("_"," ").title()}'
-                f' × {o.quantity_remaining:,.2f}'
+                f' × {(o.quantity - o.quantity_filled):,.2f}'
                 f' @ {F(o.price, disp)}</div>'
                 for o in orders
             )
@@ -738,7 +795,7 @@ def build_contact_card_html(subject_id: int, disp: dict, fmt_usd_fn) -> str:
                 f'{o.order_type.upper()}</span>'
                 f' {o.item_type.replace("_"," ").title()}'
                 f' × {o.quantity:,.2f}'
-                f' @ {F(o.price_per_unit, disp)}</div>'
+                f' @ {F(o.price, disp)}</div>'
                 for o in d_orders
             )
             parts.append(_sec(f"District Market Orders ({len(d_orders)})", dm_html, "🏗️"))
@@ -773,14 +830,162 @@ def build_contact_card_html(subject_id: int, disp: dict, fmt_usd_fn) -> str:
     except Exception:
         pass
 
-    # ── Contact List Count ──
+    # ── Districts Owned ──
     try:
-        contacts_count = len(get_contacts(subject_id))
-        parts.append(_sec("Contact Network", f'{contacts_count} mutual contact(s)', "🤝"))
+        from districts import District
+        from database import SessionLocal as _DS
+        _ddb2 = _DS()
+        try:
+            dists = _ddb2.query(District).filter(District.owner_id == subject_id).all()
+        finally:
+            _ddb2.close()
+        if dists:
+            d_html = "".join(
+                f'<span style="background:#0f172a; border:1px solid #1e293b; padding:2px 8px; border-radius:3px; margin:2px; display:inline-block;">'
+                f'<span style="color:#a78bfa;">{d.district_type.replace("_", " ").title()}</span> '
+                f'<span style="color:#64748b; font-size:0.8rem;">{d.plots_merged} plots</span></span>'
+                for d in dists
+            )
+            parts.append(_sec(f"Districts Owned ({len(dists)})", d_html, "🏙️"))
     except Exception:
         pass
 
-    return "".join(parts)
+    # ── Institutions (special plots: Mints, etc.) ──
+    try:
+        from special_plots import get_player_special_plots
+        insts = get_player_special_plots(subject_id)
+        if insts:
+            i_html = "".join(
+                f'<div style="padding:3px 0; border-bottom:1px solid #0f172a;">'
+                f'<span style="color:#fbbf24;">{sp.special_type.replace("_", " ").title()}</span> '
+                f'<span style="color:#64748b; font-size:0.8rem;">{sp.plots_merged} plots · {F((sp.monthly_tax or 0)*12, disp)}/yr tax</span></div>'
+                for sp in insts
+            )
+            parts.append(_sec(f"Institutions ({len(insts)})", i_html, "🏛️"))
+    except Exception:
+        pass
+
+    # ── Crypto Holdings (county tokens, meme coins, WSC) ──
+    try:
+        crypto_rows = ""
+        try:
+            from counties import get_player_wallets
+            for w in get_player_wallets(subject_id):
+                if (w.get("balance") or 0) > 0:
+                    crypto_rows += (
+                        f'<div><span style="color:#38bdf8;">{w["symbol"]}</span> '
+                        f'<span style="color:#e5e7eb;">{w["balance"]:,.2f}</span> '
+                        f'<span style="color:#64748b; font-size:0.8rem;">≈ {F(w.get("value", 0), disp)}</span></div>'
+                    )
+        except Exception:
+            pass
+        try:
+            from memecoins import MemeCoinWallet
+            from database import SessionLocal as _CS
+            _mdb = _CS()
+            try:
+                memes = _mdb.query(MemeCoinWallet).filter(
+                    MemeCoinWallet.player_id == subject_id, MemeCoinWallet.balance > 0
+                ).all()
+            finally:
+                _mdb.close()
+            for m in memes:
+                crypto_rows += (
+                    f'<div><span style="color:#a78bfa;">{m.meme_symbol}</span> '
+                    f'<span style="color:#e5e7eb;">{m.balance:,.2f}</span></div>'
+                )
+        except Exception:
+            pass
+        try:
+            from wallet import WSCWallet
+            from database import SessionLocal as _CS2
+            _wdb = _CS2()
+            try:
+                wsc = _wdb.query(WSCWallet).filter(WSCWallet.player_id == subject_id).first()
+            finally:
+                _wdb.close()
+            if wsc and (wsc.balance or 0) > 0:
+                crypto_rows += (
+                    f'<div><span style="color:#22c55e;">WSC</span> '
+                    f'<span style="color:#e5e7eb;">{wsc.balance:,.2f}</span></div>'
+                )
+        except Exception:
+            pass
+        if crypto_rows:
+            parts.append(_sec("Crypto Holdings",
+                f'<div style="display:flex; flex-wrap:wrap; gap:12px;">{crypto_rows}</div>', "🪙"))
+    except Exception:
+        pass
+
+    # ── IPO Companies Founded ──
+    try:
+        from banks.brokerage_firm import CompanyShares, get_db as _firm_db2
+        cdb = _firm_db2()
+        try:
+            cos = cdb.query(CompanyShares).filter(CompanyShares.founder_id == subject_id).all()
+            if cos:
+                co_html = "".join(
+                    f'<div style="padding:3px 0; border-bottom:1px solid #0f172a;">'
+                    f'<span style="color:#38bdf8;">{c.company_name}</span> '
+                    f'<span style="color:#64748b;">({c.ticker_symbol})</span> '
+                    f'<span style="color:#e5e7eb;">{F(c.current_price or 0, disp)}/sh</span>'
+                    f'<span style="color:#64748b; font-size:0.8rem;"> · cap {F((c.current_price or 0)*(c.shares_outstanding or 0), disp)}</span></div>'
+                    for c in cos
+                )
+                parts.append(_sec(f"Companies Founded ({len(cos)})", co_html, "🏢"))
+        finally:
+            cdb.close()
+    except Exception:
+        pass
+
+    # ── Legal Tender ──
+    try:
+        from reserve_banks import get_player_display_currency as _gpdc
+        _lt = _gpdc(subject_id)
+        if _lt:
+            parts.append(_sec("Legal Tender",
+                f'<span style="color:#e5e7eb;">{_lt.get("flag", "")} {_lt.get("code", "USD")} '
+                f'<span style="color:#64748b;">({_lt.get("symbol", "$")})</span></span>', "💱"))
+    except Exception:
+        pass
+
+    # ── Recent Activity (WikiWads transaction ledger) ──
+    try:
+        from stats_ux import TransactionLog, get_db as _stx
+        adb = _stx()
+        try:
+            logs = adb.query(TransactionLog).filter(
+                TransactionLog.player_id == subject_id
+            ).order_by(TransactionLog.timestamp.desc()).limit(8).all()
+        finally:
+            adb.close()
+        if logs:
+            act_html = "".join(
+                f'<div style="padding:3px 0; border-bottom:1px solid #0f172a; display:flex; justify-content:space-between; gap:10px;">'
+                f'<span style="color:#94a3b8;">{(l.description or l.transaction_type.replace("_", " ").title())[:48]}</span>'
+                f'<span style="color:{"#22c55e" if (l.amount or 0) >= 0 else "#ef4444"};">{F(l.amount or 0, disp)}</span></div>'
+                for l in logs
+            )
+            parts.append(_sec("Recent Activity", act_html, "🧾"))
+    except Exception:
+        pass
+
+    # ── Network (true mutual contacts when a viewer is known) ──
+    try:
+        subj_net = {oid for (_, oid, _) in get_contacts(subject_id) if oid != ADMIN_PLAYER_ID}
+        if viewer_id and viewer_id != subject_id:
+            viewer_net = {oid for (_, oid, _) in get_contacts(viewer_id) if oid != ADMIN_PLAYER_ID}
+            mutual = (viewer_net & subj_net) - {viewer_id, subject_id}
+            n = len(mutual)
+            parts.append(_sec("Mutual Contacts",
+                f'{n} mutual contact{"s" if n != 1 else ""}', "🤝"))
+        else:
+            n = len(subj_net)
+            parts.append(_sec("Network", f'{n} contact{"s" if n != 1 else ""}', "🤝"))
+    except Exception:
+        pass
+
+    return skinify_card("".join(parts))
 
 
 # ──────────────────────────────────────────────────────────────────────────────

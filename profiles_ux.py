@@ -47,32 +47,6 @@ _SKIN_LOGOS = {
     "kawaii":            "static/logo-kawaii.png",
 }
 
-# The contact card uses a fixed slate palette inline. Map each token onto a skin CSS
-# variable (with the original hex as fallback) so the card adapts to any skin. Each key is
-# replaced exactly once; inserted hexes equal only their own key, so order is irrelevant.
-_SKIN_COLOR_MAP = {
-    "#0f172a": "var(--bg-card-2,#0f172a)",
-    "#1e293b": "var(--border,#1e293b)",
-    "#334155": "var(--border-subtle,#334155)",
-    "#64748b": "var(--text-muted,#64748b)",
-    "#94a3b8": "var(--text-secondary,#94a3b8)",
-    "#e5e7eb": "var(--text-primary,#e5e7eb)",
-    "#38bdf8": "var(--accent,#38bdf8)",
-    "#22c55e": "var(--color-success,#22c55e)",
-    "#ef4444": "var(--color-danger,#ef4444)",
-    "#f59e0b": "var(--color-warning,#f59e0b)",
-    "#fbbf24": "var(--color-gold,#fbbf24)",
-    "#a78bfa": "var(--accent-2,#a78bfa)",
-}
-
-
-def _skinify(card_html: str) -> str:
-    """Rewrite the contact card's fixed palette onto skin CSS variables."""
-    for hexc, var in _SKIN_COLOR_MAP.items():
-        card_html = card_html.replace(hexc, var)
-    return card_html
-
-
 # ──────────────────────────────────────────────────────────────────────────────
 # HELPERS
 # ──────────────────────────────────────────────────────────────────────────────
@@ -229,7 +203,9 @@ def render_snapshot(player_id: int, info: dict, *, owner: bool,
     skin = _effective_skin(player_id)
     logo = "/" + _SKIN_LOGOS.get(skin, "static/logo.png")
 
-    card = _skinify(build_contact_card_html(player_id, disp, fmt_usd_fn))
+    # build_contact_card_html already skinifies its output (contacts.skinify_card), so it
+    # themes to this player's skin. No viewer on a public snapshot → shows total contacts.
+    card = build_contact_card_html(player_id, disp, fmt_usd_fn)
 
     share_bar = ""
     if owner:
