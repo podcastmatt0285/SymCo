@@ -967,36 +967,37 @@ def _management_panel_html(player) -> str:
     import html as _html
     creds = list_credentials(player.id)
 
-    # Credential rows
+    # Credential rows — an explicit radio selector: the checked row is the active key, and
+    # picking another radio immediately switches. Delete is a separate submit on the same row.
     if creds:
-        rows = ""
+        rows = ('<p style="color:#94a3b8;font-size:0.78rem;margin:0 0 6px;">'
+                'Select which key the advisor uses:</p>')
         for c in creds:
             active = c["is_active"]
-            badge = ('<span style="background:#052e16;border:1px solid #16a34a;color:#4ade80;'
-                     'border-radius:8px;padding:1px 8px;font-size:0.7rem;font-weight:700;">ACTIVE</span>'
-                     if active else
-                     f'''<form action="/api/advisor/credentials/activate" method="post" style="display:inline;">
-                         <input type="hidden" name="cred_id" value="{c['id']}">
-                         <button type="submit" style="background:#1e293b;border:1px solid #334155;color:#94a3b8;
-                             border-radius:6px;padding:3px 10px;font-size:0.72rem;cursor:pointer;font-family:inherit;">Use this</button>
-                     </form>''')
+            active_tag = ('<span style="background:#052e16;border:1px solid #16a34a;color:#4ade80;'
+                          'border-radius:8px;padding:1px 8px;font-size:0.68rem;font-weight:700;'
+                          'margin-left:8px;">IN USE</span>' if active else '')
             rows += f"""
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;
-                        padding:10px 0;border-top:1px solid #1e293b;">
-                <div>
-                    <span style="color:#e5e7eb;font-weight:600;">{_html.escape(c['credential_name'])}</span>
-                    <span style="color:#64748b;font-size:0.75rem;">&nbsp;· {c['provider']} · ••••{_html.escape(c['key_last4'])}</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:8px;">
-                    {badge}
-                    <form action="/api/advisor/credentials/delete" method="post" style="display:inline;"
-                          onsubmit="return confirm('Delete this API key?');">
-                        <input type="hidden" name="cred_id" value="{c['id']}">
-                        <button type="submit" style="background:#1e293b;border:1px solid #ef4444;color:#fca5a5;
-                            border-radius:6px;padding:3px 10px;font-size:0.72rem;cursor:pointer;font-family:inherit;">Delete</button>
-                    </form>
-                </div>
-            </div>"""
+            <form action="/api/advisor/credentials/activate" method="post"
+                  style="display:flex;align-items:center;justify-content:space-between;gap:10px;
+                         padding:10px;margin-top:6px;border:1px solid {'#16a34a' if active else '#1e293b'};
+                         border-radius:8px;background:{'#0c1f16' if active else '#0b1220'};">
+                <input type="hidden" name="cred_id" value="{c['id']}">
+                <label style="display:flex;align-items:center;gap:10px;cursor:pointer;flex:1;">
+                    <input type="radio" name="_sel" {"checked" if active else ""}
+                           onchange="this.form.submit()"
+                           style="width:18px;height:18px;accent-color:#34d399;cursor:pointer;">
+                    <span>
+                        <span style="color:#e5e7eb;font-weight:600;">{_html.escape(c['credential_name'])}</span>
+                        <span style="color:#64748b;font-size:0.75rem;">&nbsp;· {c['provider']} · ••••{_html.escape(c['key_last4'])}</span>
+                        {active_tag}
+                    </span>
+                </label>
+                <button type="submit" formaction="/api/advisor/credentials/delete" formnovalidate
+                        onclick="return confirm('Delete this API key?');"
+                        style="background:#1e293b;border:1px solid #ef4444;color:#fca5a5;
+                            border-radius:6px;padding:4px 12px;font-size:0.72rem;cursor:pointer;font-family:inherit;">Delete</button>
+            </form>"""
         creds_block = rows
     else:
         creds_block = ('<p style="color:#64748b;font-size:0.8rem;margin:10px 0 0;">'
