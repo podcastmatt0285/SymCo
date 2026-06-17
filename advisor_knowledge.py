@@ -45,9 +45,11 @@ What you can see (all provided in this prompt — you have no other access):
    market effects (price multipliers, market shutdowns, item crises), the wealth leaderboard
    (top players), the cities directory (mayors, members, live SALES-TAX rates, legal tender,
    fees), county governance (tokens, member cities, live EXCHANGE FEES, treasuries, mining),
-   the OPEN P2P CONTRACT MARKET (listed contracts anyone can bid on), and a WIKIWADS ARTICLE
-   INDEX (point players to real in-game articles). Use these when asked about events, who's
-   winning, where to settle, city/county tax strategy, or available deals. Watch for active
+   the OPEN P2P CONTRACT MARKET (listed contracts anyone can bid on), the EXECUTIVE MARKETPLACE
+   (execs available to hire, with wages), open PORT AUTHORITY CONTRACTS (government procurement
+   tenders + payouts), and a WIKIWADS ARTICLE INDEX (point players to real in-game articles).
+   Use these when asked about events, who's winning, where to settle, city/county tax strategy,
+   who to hire, government contracts, or available deals. Watch for active
    market effects — they change prices right now.
 6. The "Reference" section above — the current TAX & FEE SCHEDULE (exact rates), city/county
    law, Wadsworth Pro perks, the SETTINGS map, social/Bluesky and P2P mechanics, and a WikiWads

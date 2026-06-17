@@ -1223,6 +1223,44 @@ def _world_snapshot() -> str:
     except Exception:
         pass
 
+    # Executive marketplace (execs available to hire)
+    try:
+        from executive import get_marketplace_executives, get_db as _edb, EXECUTIVE_JOBS
+        edb = _edb()
+        try:
+            free = get_marketplace_executives(edb) or []
+            rows = []
+            for e in free[:20]:
+                title = EXECUTIVE_JOBS.get(e.job, {}).get("title", e.job.replace("_", " ").title())
+                rows.append(f"  {e.first_name} {e.last_name} — {title} · Lv{e.level} · "
+                            f"wage ${e.wage:,.0f}/{e.pay_cycle} · {e.marketplace_reason or 'available'}")
+        finally:
+            edb.close()
+        if rows:
+            lines.append("")
+            lines.append(f"EXECUTIVE MARKETPLACE ({len(rows)} available to hire; hiring cost scales "
+                         "with your net worth):")
+            lines.extend(rows)
+    except Exception:
+        pass
+
+    # Port Authority government contracts (open for bidding)
+    try:
+        from port_authority import get_open_contracts
+        pacs = get_open_contracts() or []
+        if pacs:
+            lines.append("")
+            lines.append(f"PORT AUTHORITY CONTRACTS ({len(pacs)} open for bidding):")
+            for pc in pacs[:10]:
+                items = pc.get("required_items") or {}
+                idesc = ", ".join(f"{k.replace('_',' ')}×{v:,.0f}" for k, v in list(items.items())[:6]) or "—"
+                close = pc.get("bid_closes_at", "")[:10]
+                lines.append(f"  {pc.get('title','?')}: needs {idesc} · "
+                             f"pays {_compact(pc.get('payment_usd',0))} + {pc.get('trophy_reward',0)} trophies "
+                             f"· deposit {_compact(pc.get('security_deposit_usd',0))} · bids close {close}")
+    except Exception:
+        pass
+
     # WikiWads article index (so the advisor can point players to real in-game articles)
     try:
         import wiki as _wiki
@@ -1262,7 +1300,14 @@ def _call_gemini(api_key: str, system: str, messages: List[dict]) -> tuple[bool,
     payload = {
         "system_instruction": {"parts": [{"text": system}]},
         "contents": contents,
-        "generationConfig": {"temperature": 0.6, "maxOutputTokens": 1024},
+        # gemini-2.5-flash is a "thinking" model: thinking tokens count against
+        # maxOutputTokens, so a small cap truncates the visible reply mid-sentence. Disable
+        # thinking (thinkingBudget=0) for complete, snappy advisor answers and give ample room.
+        "generationConfig": {
+            "temperature": 0.6,
+            "maxOutputTokens": 2048,
+            "thinkingConfig": {"thinkingBudget": 0},
+        },
     }
     try:
         resp = requests.post(
@@ -1291,11 +1336,13 @@ def _call_gemini(api_key: str, system: str, messages: List[dict]) -> tuple[bool,
         # Safety blocks / empty finish
         parts = (cand.get("content") or {}).get("parts") or []
         reply = "".join(p.get("text", "") for p in parts).strip()
+        fr = cand.get("finishReason") or ""
         if not reply:
-            fr = cand.get("finishReason") or ""
             if fr == "SAFETY":
                 return True, "I can't help with that one. Try rephrasing your question about your Wadsworth strategy."
             return True, "I didn't have a response for that — try rephrasing your question."
+        if fr == "MAX_TOKENS":
+            reply += "\n\n…(reply was long and got cut off — ask me to continue.)"
         return True, reply
     except Exception as e:
         return False, f"Could not parse the AI response: {e}"
