@@ -492,16 +492,12 @@ def _mint_dashboard_html(sp, owner=None) -> str:
     except Exception:
         pass
 
-    # ── Load live coin prices + ALL coinage balances ────────────────────────
-    coin_banks = {}
+    # ── Load ALL coinage balances (prices come from the live metal peg) ─────
     # Current holdings of the struck coin (the player's live coinage balance).
     holdings = 0.0
     all_coin_balances: dict = {}   # code → balance for every non-zero coin the player holds
     try:
         rb_db = rb_get_db()
-        coin_banks = {b.currency_code: b for b in rb_db.query(StateReserveBank).filter(
-            StateReserveBank.currency_code.in_(list(_COIN_INFO.keys()))
-        ).all()}
         # Load ALL coinage balances so the dashboard can show which silver/gold/platinum
         # coins the player owns — prevents confusion when they have both AG999 and AG925.
         from reserve_banks import COIN_CURRENCY_CODES
@@ -616,21 +612,20 @@ def _mint_dashboard_html(sp, owner=None) -> str:
             </form>
         </div>{missing_row}{qb_panels}'''
 
-    # ── IOU queue stats for this bank ───────────────────────────────────────
+    # ── Government redemption queue for this coin ───────────────────────────
     iou_card = ""
     if minted_code:
         try:
-            from reserve_banks import (get_coin_iou_queue, get_coin_bank_own_reserve,
+            from reserve_banks import (get_coin_iou_queue, get_gov_coin_reserve,
                                        get_player_coin_iou_notes)
-            struck_bank = coin_banks.get(minted_code)
-            if struck_bank:
-                queue       = get_coin_iou_queue(struck_bank.id)
-                on_hand     = get_coin_bank_own_reserve(struck_bank.id, minted_code)
+            if True:
+                queue       = get_coin_iou_queue(minted_code)
+                on_hand     = get_gov_coin_reserve(minted_code)   # held by the federal treasury
                 total_owed  = sum(n.coin_amount_owed - n.filled_amount for n in queue)
                 n_notes     = len(queue)
-                # Player's own unfulfilled note for this bank (if any)
+                # Player's own unfulfilled note for this coin (if any)
                 my_notes = [n for n in get_player_coin_iou_notes(sp.owner_id)
-                            if n.bank_id == struck_bank.id and not n.is_fulfilled]
+                            if n.currency_code == minted_code and not n.is_fulfilled]
                 my_note_html = ""
                 for n in my_notes:
                     remaining = n.coin_amount_owed - n.filled_amount
@@ -650,11 +645,11 @@ def _mint_dashboard_html(sp, owner=None) -> str:
                 iou_card = f'''
                 <div class="card" style="background:#0f172a;border-left:4px solid #f59e0b;">
                   <div style="font-size:0.72rem;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">
-                    {minted_code} Bank · IOU Queue
+                    {minted_code} · Government Redemption Queue
                   </div>
                   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;">
                     <div style="background:#111827;border-radius:6px;padding:8px;">
-                      <div style="color:#64748b;font-size:0.68rem;">COINS ON HAND</div>
+                      <div style="color:#64748b;font-size:0.68rem;">TREASURY ON HAND</div>
                       <div style="color:#fbbf24;font-weight:bold;">{on_hand:,.4f}</div>
                     </div>
                     <div style="background:#111827;border-radius:6px;padding:8px;">
@@ -664,8 +659,8 @@ def _mint_dashboard_html(sp, owner=None) -> str:
                     </div>
                   </div>
                   <div style="color:#64748b;font-size:0.72rem;margin-top:8px;">
-                    Each mint run contributes {int(COIN_SEIGNIORAGE_RATE*100)}% seigniorage to this queue.
-                    Demurrage on coin bonds also flows here.
+                    Each mint run skims {int(COIN_SEIGNIORAGE_RATE*100)}% seigniorage to the federal
+                    treasury, which fills this queue. Demurrage on stored coinage also flows here.
                   </div>
                   {my_note_html}
                 </div>'''
@@ -676,8 +671,8 @@ def _mint_dashboard_html(sp, owner=None) -> str:
     coin_card = ""
     if minted_code:
         info = _COIN_INFO.get(minted_code, {})
-        bank = coin_banks.get(minted_code)
-        rate = (bank.usd_per_unit or 0.0) if bank else 0.0
+        from reserve_banks import get_live_coin_usd_per_unit
+        rate = get_live_coin_usd_per_unit(minted_code)   # live metal peg (no bank row)
         rate_str = fmt_usd(rate, disp)
         coin_card = f'''<div class="card" style="background:linear-gradient(135deg,#3a2e0a 0%,#0f172a 100%);border-left:4px solid #f59e0b;">
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
@@ -694,10 +689,10 @@ def _mint_dashboard_html(sp, owner=None) -> str:
         </div>'''
 
     # ── Full coinage price board ─────────────────────────────────────────────
+    from reserve_banks import get_live_coin_usd_per_unit as _coin_rate
     price_board = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;">'
     for code, info in _COIN_INFO.items():
-        bank = coin_banks.get(code)
-        rate = (bank.usd_per_unit or 0.0) if bank else 0.0
+        rate = _coin_rate(code)               # live metal peg (no bank row)
         rate_str = fmt_usd(rate, disp)
         highlight = ';border:2px solid #f59e0b' if code == minted_code else ''
         price_board += f'''<div style="background:#1e293b;border-radius:6px;padding:10px{highlight};">

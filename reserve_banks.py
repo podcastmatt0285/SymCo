@@ -87,8 +87,11 @@ BOND_ISSUANCE_FEE_RATE      = 0.0025 # 0.25% of face value on new bond → feder
 # Positive net flow (buys > redeems) → yield falls.
 YIELD_SENSITIVITY  = 0.00001       # yield change per $1 of net demand per tick
 
-# Coinage-specific constants
-COIN_SEIGNIORAGE_RATE = 0.02  # 2% of each mint run goes to the bank before crediting the operator
+# Coinage-specific constants. The FEDERAL GOVERNMENT (player 0) is the sole issuer/holder of
+# all metal coinage — there are no per-metal reserve banks. It skims seigniorage on minting and
+# collects demurrage on stored coins, honoring redemptions from its own holdings (hard money).
+COIN_SEIGNIORAGE_RATE = 0.02   # 2% of each mint run skimmed to the government before crediting the operator
+COIN_DEMURRAGE_ANNUAL = 0.01   # 1%/yr carry cost on stored coin balances, reclaimed to the government
 
 # FX dynamics: each 1 % yield change causes a proportional FX movement.
 FX_YIELD_LINK      = 0.02          # usd_per_unit fractional change per 1 % yield Δ (4× more sensitive)
@@ -172,6 +175,19 @@ COIN_METAL_COMPOSITIONS: dict = {
 
 # Set of coin currency codes for O(1) membership tests.
 COIN_CURRENCY_CODES: frozenset = frozenset(COIN_METAL_COMPOSITIONS)
+
+# Display metadata for coins (name, symbol, flag) — sourced from DEFAULT_BANKS so coinage can be
+# labelled in the UI without a bank row now that the government is the issuer.
+_COIN_META: dict = {
+    code: {"name": name, "symbol": sym, "flag": flag}
+    for (code, name, sym, flag, *_rest) in DEFAULT_BANKS
+    if code in COIN_CURRENCY_CODES
+}
+
+
+def coin_display(currency_code: str) -> dict:
+    """(name, symbol, flag) for a coin currency, for UI labelling without a bank row."""
+    return _COIN_META.get(currency_code, {"name": currency_code, "symbol": currency_code, "flag": "🪙"})
 
 
 def get_live_coin_usd_per_unit(currency_code: str, fallback: float = 0.0) -> float:
@@ -369,21 +385,23 @@ class BankDebt(Base):
 
 class CoinageRedemptionNote(Base):
     """
-    An IOU issued by a coin reserve bank (AU24, AG999, etc.) when a requester
-    wants coinage but the bank's own-coin reserves are insufficient.
+    An IOU issued by the FEDERAL GOVERNMENT (the sole coinage issuer) when a
+    requester wants coinage but the government's coin holdings are insufficient.
 
-    The requester's submitted currency is deposited into the bank's foreign
-    reserves immediately (no escrow — it belongs to the bank). The bank
-    then owes the requester a quantity of coins, paid out in FIFO order as
-    coinage flows into the bank via seigniorage, demurrage reclaim, and fees.
+    The requester's submitted currency is deposited into the government's reserves
+    immediately (no escrow — it belongs to the treasury). The government then owes
+    the requester a quantity of coins (identified by `currency_code`), paid out in
+    FIFO order as coinage flows into the treasury via minting seigniorage, demurrage
+    reclaim, and redeemed coins.
 
-    Partial fills are supported: filled_amount is incremented each time the
-    bank processes an inflow and is less than coin_amount_owed.
+    `bank_id` is legacy/unused under the government-issuer model (kept nullable for
+    back-compat); the queue is keyed by `currency_code`.
     """
     __tablename__ = "coinage_redemption_notes"
 
     id               = Column(Integer, primary_key=True, index=True)
-    bank_id          = Column(Integer, index=True, nullable=False)
+    bank_id          = Column(Integer, index=True, nullable=True)
+    currency_code    = Column(String(16), index=True, nullable=True)   # the coin owed (AG999, AU24, …)
     requester_type   = Column(String(16), nullable=False, default="player")  # player | government | city | bank
     requester_id     = Column(Integer, index=True, nullable=False)
     coin_amount_owed = Column(Float, nullable=False)
@@ -392,7 +410,7 @@ class CoinageRedemptionNote(Base):
     created_at       = Column(DateTime, default=datetime.utcnow)
     fulfilled_at     = Column(DateTime, nullable=True)
     __table_args__ = (
-        Index("ix_crn_bank_open",   "bank_id", "is_fulfilled"),
+        Index("ix_crn_ccy_open",    "currency_code", "is_fulfilled"),
         Index("ix_crn_requester",   "requester_type", "requester_id"),
     )
 
@@ -452,6 +470,46 @@ def get_db():
 # INITIALIZATION
 # ==========================
 
+def _reset_coinage_to_government():
+    """One-time migration: retire the per-metal reserve banks so the federal government is the
+    sole coinage issuer/holder. Idempotent — it only does work while coin bank rows still exist,
+    so it never touches IOUs created later under the new model. Player coin BALANCES are kept;
+    pending IOUs, coin bonds, and coin reserve balances are cleared (fresh-start, per design)."""
+    from sqlalchemy import or_
+    db = get_db()
+    try:
+        coin_banks = db.query(StateReserveBank).filter(
+            StateReserveBank.currency_code.in_(tuple(COIN_CURRENCY_CODES))
+        ).all()
+        if not coin_banks:
+            return  # already migrated — do NOT disturb live government-issued IOUs
+        coin_bank_ids = [b.id for b in coin_banks]
+
+        # Clear coin bonds tied to the retired banks.
+        db.query(ReserveBankBond).filter(
+            ReserveBankBond.bank_id.in_(coin_bank_ids)
+        ).delete(synchronize_session=False)
+        # Fresh-start the redemption queue (old rows were bank-keyed).
+        db.query(CoinageRedemptionNote).delete(synchronize_session=False)
+        # Drop coin reserve balances: those held BY the coin banks, plus any coin currency held
+        # as a reserve by a fiat bank (from the prior transitional deposit model).
+        db.query(BankReserveBalance).filter(or_(
+            BankReserveBalance.bank_id.in_(coin_bank_ids),
+            BankReserveBalance.currency_code.in_(tuple(COIN_CURRENCY_CODES)),
+        )).delete(synchronize_session=False)
+        # Retire the bank rows.
+        for b in coin_banks:
+            db.delete(b)
+        db.commit()
+        print(f"[ReserveBanks] Retired {len(coin_bank_ids)} per-metal coin bank(s); "
+              f"coinage is now federal-government issued.")
+    except Exception as e:
+        db.rollback()
+        print(f"[ReserveBanks] Coinage reset error: {e}")
+    finally:
+        db.close()
+
+
 def initialize():
     """Seed default reserve banks if they don't exist yet."""
     from database import run_ddl_migration
@@ -479,13 +537,28 @@ def initialize():
             )""",
             "CREATE INDEX IF NOT EXISTS ix_crn_bank_open ON coinage_redemption_notes (bank_id, is_fulfilled)",
             "CREATE INDEX IF NOT EXISTS ix_crn_requester ON coinage_redemption_notes (requester_type, requester_id)",
+            # Government-issuer coinage: queue keyed by the coin owed, bank_id retired.
+            "ALTER TABLE coinage_redemption_notes ADD COLUMN IF NOT EXISTS currency_code VARCHAR(16)",
+            "ALTER TABLE coinage_redemption_notes ALTER COLUMN bank_id DROP NOT NULL",
+            "CREATE INDEX IF NOT EXISTS ix_crn_ccy_open ON coinage_redemption_notes (currency_code, is_fulfilled)",
         ],
         admin_env_var="RESERVE_DATABASE_ADMIN_URL",
     )
 
+    # ── One-time coinage reset to the government-issuer model ─────────────────
+    # The federal government is now the sole issuer/holder of metal coinage; the per-metal
+    # reserve banks are retired. Delete the coin bank rows and wipe stale coin-bank state
+    # (pending IOUs, coin bonds, coin reserve balances). Player coin *balances* are kept.
+    try:
+        _reset_coinage_to_government()
+    except Exception as e:
+        print(f"[ReserveBanks] Coinage reset error: {e}")
+
     db = get_db()
     try:
         for (code, name, sym, flag, yield_r, usd_rate, min_y, max_y) in DEFAULT_BANKS:
+            if code in COIN_CURRENCY_CODES:
+                continue  # metal coinage has no bank row — the government issues it
             exists = db.query(StateReserveBank).filter(
                 StateReserveBank.currency_code == code
             ).first()
@@ -572,6 +645,8 @@ def tick(app_tick: int, now: datetime):
             _call_bonds_if_needed(db, bank)
             _mature_bonds(db, bank, now)
             _snapshot_history(db, bank, now)
+        # Government coinage carry-cost (demurrage) — independent of the (now-retired) coin banks
+        _apply_coin_demurrage(db)
         # Inter-bank settlement runs after all yield/FX adjustments are done
         _tick_interbank_settlement(db)
         # Daily operations (once per 24 h)
@@ -702,22 +777,14 @@ def credit_mint_coinage(player_id: int, currency_code: str, metal_usd_value: flo
     Hard money: coinage only enters circulation here, pegged 1:1 to the USD value
     of the precious metal actually consumed. The bank cannot issue freely.
     """
+    if currency_code not in COIN_CURRENCY_CODES:
+        print(f"[Mint] {currency_code} is not a coin currency")
+        return 0.0
     db = get_db()
     try:
-        bank = db.query(StateReserveBank).filter(
-            StateReserveBank.currency_code == currency_code
-        ).first()
-        if not bank:
-            print(f"[Mint] No active bank for {currency_code}")
-            return 0.0
-
-        # Value the coin through the SINGLE shared live-peg helper so the mint and
-        # every display page agree on usd_per_unit. The reserve-bank tick also
-        # refreshes bank.usd_per_unit to this same value every tick, so the stored
-        # field the display pages read never diverges from what we mint at here.
-        # Because metal_usd_value is computed from current prices in the same cycle,
-        # `amount` stays exactly the metal-unit count and fully price-independent.
-        unit_rate = get_live_coin_usd_per_unit(currency_code, fallback=bank.usd_per_unit)
+        # Value the coin through the SINGLE shared live-peg helper (Σ alloy × metal price).
+        # The government is the issuer; there is no per-metal bank row to read.
+        unit_rate = get_live_coin_usd_per_unit(currency_code)
         if unit_rate <= 0:
             print(f"[Mint] Zero rate for {currency_code}; cannot mint")
             return 0.0
@@ -726,30 +793,25 @@ def credit_mint_coinage(player_id: int, currency_code: str, metal_usd_value: flo
         if amount <= 0:
             return 0.0
 
-        # Seigniorage: a share of each mint run flows to the bank first.
-        # The bank uses these coins to drain its IOU queue (oldest requests first),
-        # then holds any surplus as own-coin reserves for future immediate fulfilments.
+        # Seigniorage: the government skims a share of each mint run. Those coins enter the
+        # treasury (player 0) and immediately service that coin's redemption queue (oldest
+        # first); any surplus stays as the government's coin reserve / profit.
         seigniorage    = amount * COIN_SEIGNIORAGE_RATE
         player_amount  = amount - seigniorage
 
         _adjust_currency_balance(db, player_id, currency_code, player_amount)
-        _coin_inflow(db, bank, seigniorage)           # drains IOU queue, then → reserves
-        # Track total minted supply in USD equiv at the SAME rate we minted at, so
-        # this counter stays reconciled with (circulating coins × usd_per_unit).
-        # amount * unit_rate == metal_usd_value when unit_rate is the live peg.
-        bank.total_face_value_wsc += amount * unit_rate
+        _gov_coin_inflow(db, currency_code, seigniorage)
         db.commit()
         # Ledger entry (USD-equivalent value of minted coinage — operator's share only)
         try:
             from stats_ux import log_transaction
             log_transaction(player_id, "coin_mint", "money", metal_usd_value * (1 - COIN_SEIGNIORAGE_RATE),
-                            f"Minted {player_amount:,.4f} {currency_code} "
-                            f"({bank.currency_symbol}{player_amount:,.4f}) @ ${unit_rate:,.2f}/unit"
-                            f" (2% seigniorage → bank)")
+                            f"Minted {player_amount:,.4f} {currency_code} @ ${unit_rate:,.2f}/unit"
+                            f" ({COIN_SEIGNIORAGE_RATE*100:.0f}% seigniorage → federal government)")
         except Exception:
             pass
         print(f"[Mint] Credited {player_amount:.6f} {currency_code} to player {player_id} "
-              f"+ {seigniorage:.6f} seigniorage → bank IOU queue "
+              f"+ {seigniorage:.6f} seigniorage → federal government "
               f"(${metal_usd_value:.2f} metal value @ {unit_rate:.2f}/unit)")
         return player_amount
     except Exception as e:
@@ -1159,6 +1221,80 @@ def _try_drain_from_reserves(db, bank: "StateReserveBank"):
         reserve.balance = 0.0
 
 
+# ── Government-issuer coinage (the gov holds all coins; queue keyed by currency) ──────────
+
+def _drain_coin_queue(db, currency_code: str, exclude_requester: int = None):
+    """Fill the FIFO redemption queue for `currency_code` from the GOVERNMENT's coin holdings.
+
+    Each fill moves coins out of the treasury (player 0) and into the requester's balance.
+    Stops when the treasury runs dry or the queue is empty. `exclude_requester` skips one
+    player's notes — used when a player is switching OUT of the coin so their own redeemed
+    coins don't circularly refill their own outstanding IOU."""
+    gov_bal = _get_or_create_currency_balance(db, GOVERNMENT_PLAYER_ID, currency_code)
+    if gov_bal.balance <= 0:
+        return
+    q = db.query(CoinageRedemptionNote).filter(
+        CoinageRedemptionNote.currency_code == currency_code,
+        CoinageRedemptionNote.is_fulfilled  == False,
+    )
+    if exclude_requester is not None:
+        q = q.filter(CoinageRedemptionNote.requester_id != exclude_requester)
+    notes = q.order_by(CoinageRedemptionNote.created_at.asc()).all()
+    for note in notes:
+        if gov_bal.balance <= 0:
+            break
+        remaining = note.coin_amount_owed - note.filled_amount
+        if remaining <= 0:
+            note.is_fulfilled = True
+            note.fulfilled_at = datetime.utcnow()
+            continue
+        pay = min(remaining, gov_bal.balance)
+        note.filled_amount += pay
+        # _adjust_currency_balance mutates the same ORM row as gov_bal, so gov_bal.balance
+        # reflects the debit automatically — do NOT also subtract it here (double-count).
+        _adjust_currency_balance(db, GOVERNMENT_PLAYER_ID, currency_code, -pay)  # leaves the treasury
+        _adjust_currency_balance(db, note.requester_id, currency_code, pay)      # delivered to requester
+        if note.filled_amount >= note.coin_amount_owed - 1e-9:
+            note.is_fulfilled = True
+            note.fulfilled_at = datetime.utcnow()
+
+
+def _gov_coin_inflow(db, currency_code: str, amount: float, exclude_requester: int = None):
+    """Government receives `amount` of a coin (minting seigniorage, demurrage reclaim, or coins
+    redeemed back out of the currency), then services that coin's redemption queue. Any surplus
+    simply stays in the treasury (player 0) as the government's coin reserve / profit.
+    `exclude_requester` is forwarded so a player switching OUT of a coin doesn't refill their own IOU."""
+    if amount <= 0:
+        return
+    _adjust_currency_balance(db, GOVERNMENT_PLAYER_ID, currency_code, amount)
+    _drain_coin_queue(db, currency_code, exclude_requester=exclude_requester)
+
+
+def _apply_coin_demurrage(db):
+    """Per-tick carry cost on stored metal coinage — the in-game 'cost of storing bullion'.
+    Every holder's coin balance slowly decays; the reclaimed coins flow to the federal
+    government (which also uses them to service the redemption queue). The treasury's own
+    holdings are exempt. Runs once per reserve tick (hourly)."""
+    per_tick = COIN_DEMURRAGE_ANNUAL / TICKS_PER_YEAR
+    if per_tick <= 0:
+        return
+    rows = db.query(PlayerCurrencyBalance).filter(
+        PlayerCurrencyBalance.currency_code.in_(tuple(COIN_CURRENCY_CODES)),
+        PlayerCurrencyBalance.player_id != GOVERNMENT_PLAYER_ID,
+        PlayerCurrencyBalance.balance   > 0,
+    ).all()
+    reclaimed_by_ccy = {}
+    for r in rows:
+        charge = r.balance * per_tick
+        if charge <= 0:
+            continue
+        # charge << balance (per_tick is tiny), so floor=0 clamp effectively never bites
+        _adjust_currency_balance(db, r.player_id, r.currency_code, -charge, floor=0.0)
+        reclaimed_by_ccy[r.currency_code] = reclaimed_by_ccy.get(r.currency_code, 0.0) + charge
+    for ccy, amt in reclaimed_by_ccy.items():
+        _gov_coin_inflow(db, ccy, amt)
+
+
 def _record_bank_debt(db, debtor_bank_id: int, creditor_currency: str, amount: float):
     """Record that the debtor bank owes `amount` of creditor's currency."""
     debt = db.query(BankDebt).filter(
@@ -1440,41 +1576,35 @@ def process_income_conversion(player_id: int, usd_amount: float) -> Tuple[float,
 
     # HARD MONEY: coinage enters circulation ONLY via physical minting — never via
     # synthetic conversion. Income for a coin-tender holder therefore queues as a
-    # non-transferable CoinageRedemptionNote IOU backed by the deposited income value.
-    # The IOU fills automatically as minting seigniorage (2%) and demurrage reclaim
-    # trickle into the coin bank. Holding is intentionally illiquid: that's the
-    # in-game gold standard. One active IOU per player per bank is upserted so the
-    # table doesn't explode when income arrives every tick.
+    # non-transferable CoinageRedemptionNote IOU owed by the FEDERAL GOVERNMENT and
+    # backed by the deposited income value (deposited to the treasury). The IOU fills
+    # automatically as minting seigniorage and demurrage reclaim flow into the
+    # government's coin holdings. Holding is intentionally illiquid: the in-game gold
+    # standard. One active IOU per player per coin is upserted so the table can't explode.
     if code in COIN_CURRENCY_CODES:
         db = get_db()
         try:
-            bank = db.query(StateReserveBank).filter(
-                StateReserveBank.currency_code == code
-            ).first()
-            if not bank or (bank.usd_per_unit or 0.0) <= 0:
-                # No bank or peg not set yet — fall back to USD so no income is lost.
+            unit_rate = get_live_coin_usd_per_unit(code)
+            if unit_rate <= 0:
+                # Peg unavailable — fall back to USD so no income is lost.
                 _adjust_currency_balance(db, player_id, "USD", usd_amount)
                 db.commit()
                 return usd_amount, "USD"
 
             # Convert income value to coin units and deduct forex fee.
-            coin_gross = usd_amount / bank.usd_per_unit
+            coin_gross = usd_amount / unit_rate
             fee_coin   = coin_gross * FOREX_FEE_RATE
             net_coin   = coin_gross - fee_coin
 
-            # Deposit the income value into the coin bank's USD reserves as backing —
-            # the IOU is fully collateralised from creation.
-            _add_bank_reserve(db, bank.id, "USD", usd_amount)
-
-            # Positive demand signal: capital flowing into this coin currency.
-            bank.net_demand_wsc = (bank.net_demand_wsc or 0.0) + usd_amount
+            # The income's USD value backs the IOU: deposit it into the federal treasury.
+            _adjust_currency_balance(db, GOVERNMENT_PLAYER_ID, "USD", usd_amount)
 
             # Upsert: grow the player's existing unfulfilled IOU rather than creating
             # one per income event (prevents millions of tiny rows over time).
             existing_iou = (
                 db.query(CoinageRedemptionNote)
                 .filter(
-                    CoinageRedemptionNote.bank_id        == bank.id,
+                    CoinageRedemptionNote.currency_code  == code,
                     CoinageRedemptionNote.requester_type == "player",
                     CoinageRedemptionNote.requester_id   == player_id,
                     CoinageRedemptionNote.is_fulfilled   == False,
@@ -1485,18 +1615,17 @@ def process_income_conversion(player_id: int, usd_amount: float) -> Tuple[float,
             if existing_iou:
                 existing_iou.coin_amount_owed += net_coin
             else:
-                new_iou = CoinageRedemptionNote(
-                    bank_id          = bank.id,
+                db.add(CoinageRedemptionNote(
+                    currency_code    = code,
                     requester_type   = "player",
                     requester_id     = player_id,
                     coin_amount_owed = net_coin,
                     filled_amount    = 0.0,
-                )
-                db.add(new_iou)
+                ))
                 db.flush()
 
-            # Fill immediately from whatever coin the bank already holds on reserve.
-            _try_drain_from_reserves(db, bank)
+            # Fill immediately from whatever coin the government already holds.
+            _drain_coin_queue(db, code)
             db.commit()
             return net_coin, code
 
@@ -1953,14 +2082,19 @@ def get_exchange_rate(from_currency: str, to_currency: str) -> float:
 
 def _get_usd_rate(db, currency_code: str) -> float:
     """USD value of one unit of currency_code.  USD itself = 1.0 (always fixed)."""
-    if currency_code == "USD":
+    cc = currency_code.upper()
+    if cc == "USD":
         return 1.0
+    # Metal coinage is priced by the live metal peg, independent of any bank row —
+    # the federal government is the sole issuer, there is no per-metal bank.
+    if cc in COIN_CURRENCY_CODES:
+        live = get_live_coin_usd_per_unit(cc)
+        if live > 0:
+            return live
     bank = db.query(StateReserveBank).filter(
-        StateReserveBank.currency_code == currency_code.upper()
+        StateReserveBank.currency_code == cc
     ).first()
-    rate = bank.usd_per_unit if bank else 1.0
-    # USD bank row exists for bond purposes but its exchange rate is always 1.0
-    return 1.0 if currency_code.upper() == "USD" else rate
+    return bank.usd_per_unit if bank else 1.0
 
 
 def forex_swap(player_id: int, from_currency: str, amount: float, to_currency: str) -> Tuple[bool, str, dict]:
@@ -2058,8 +2192,10 @@ def set_player_legal_tender(player_id: int, currency_code: str,
     db = get_db()
     try:
         # ── Validate new currency ─────────────────────────────────────────────
+        # Metal coinage has no bank row (the government issues it); validity is membership
+        # in COIN_CURRENCY_CODES. Fiat/USD still require a reserve-bank row.
         new_bank = None
-        if code != "USD":
+        if code != "USD" and code not in COIN_CURRENCY_CODES:
             new_bank = db.query(StateReserveBank).filter(
                 StateReserveBank.currency_code == code
             ).first()
@@ -2110,12 +2246,18 @@ def set_player_legal_tender(player_id: int, currency_code: str,
         ).first()
         if bal and bal.balance > 0:
             fee = bal.balance * TENDER_SWITCH_FEE_RATE
-            old_bank = db.query(StateReserveBank).filter(
+            current_is_coin = current_code in COIN_CURRENCY_CODES
+            old_bank = None if current_is_coin else db.query(StateReserveBank).filter(
                 StateReserveBank.currency_code == current_code
             ).first()
-            # Deduct fee from player's balance (taken by the reserve bank)
+            # Deduct fee from player's balance.
             _adjust_currency_balance(db, player_id, current_code, -fee)
-            if old_bank:
+            if current_is_coin:
+                # Coin repatriation fee is collected by the federal government (the issuer);
+                # routing it through the treasury also lets it service the redemption queue
+                # (excluding this player, who is leaving the currency).
+                _gov_coin_inflow(db, current_code, fee, exclude_requester=player_id)
+            elif old_bank:
                 _add_bank_reserve(db, old_bank.id, current_code, fee)
             sym = old_bank.currency_symbol if old_bank else current_code
             fee_msg = (
@@ -2124,7 +2266,7 @@ def set_player_legal_tender(player_id: int, currency_code: str,
             )
             try:
                 from stats_ux import log_transaction as _lt
-                fee_usd = fee * (old_bank.usd_per_unit if old_bank else 1.0)
+                fee_usd = fee * _get_usd_rate(db, current_code)
                 _lt(player_id, "forex_fee", "money", -fee_usd,
                     f"Legal tender switch fee: {sym}{fee:,.4f} {current_code} → {code}")
             except Exception:
@@ -2164,20 +2306,25 @@ def set_player_legal_tender(player_id: int, currency_code: str,
             usd_val    = net_native * usd_per_from
             new_amt    = usd_val / usd_per_new if usd_per_new > 0 else 0.0
 
-            # Credit the fee to the source bank's reserves
-            src_bank = db.query(StateReserveBank).filter(
-                StateReserveBank.currency_code == cb.currency_code
-            ).first()
-            if src_bank:
-                _add_bank_reserve(db, src_bank.id, cb.currency_code, fee_native)
+            # Credit the forex fee: coins → federal treasury (which then services the queue),
+            # fiat → the source bank's reserves.
+            if cb.currency_code in COIN_CURRENCY_CODES:
+                src_bank = None
+                _gov_coin_inflow(db, cb.currency_code, fee_native, exclude_requester=player_id)
+            else:
+                src_bank = db.query(StateReserveBank).filter(
+                    StateReserveBank.currency_code == cb.currency_code
+                ).first()
+                if src_bank:
+                    _add_bank_reserve(db, src_bank.id, cb.currency_code, fee_native)
 
             # Deduct from player
             _adjust_currency_balance(db, player_id, cb.currency_code, -amt)
 
             if is_coin_target:
-                # Hard money: cannot conjure coins. Deposit the submitted currency
-                # into the bank's foreign reserves and queue an IOU for the coins.
-                _add_bank_reserve(db, new_bank.id, cb.currency_code, net_native)
+                # Hard money: cannot conjure coins. The submitted currency is deposited into the
+                # federal treasury as backing, and the government queues an IOU for the coins owed.
+                _adjust_currency_balance(db, GOVERNMENT_PLAYER_ID, cb.currency_code, net_native)
                 total_iou_coins += new_amt
                 conversion_details.append(
                     f"{cb.currency_code} {amt:,.4f} → {code} {new_amt:,.4f} (IOU queued)"
@@ -2185,12 +2332,11 @@ def set_player_legal_tender(player_id: int, currency_code: str,
             else:
                 # Non-coin target: standard synthetic conversion
                 _adjust_currency_balance(db, player_id, code, new_amt)
-                if cb.currency_code in COIN_CURRENCY_CODES and target_bank is not None:
-                    # Hard money leaving circulation must NOT be destroyed. Deposit the redeemed
-                    # coins into the destination bank's reserves — the mirror of the deposit made
-                    # when switching INTO a coin currency (Yen→Ag puts yen in the silver bank;
-                    # Ag→Yen puts silver in the yen bank). Keeps coin supply conserved.
-                    _add_bank_reserve(db, target_bank.id, cb.currency_code, net_native)
+                if cb.currency_code in COIN_CURRENCY_CODES:
+                    # Hard money leaving circulation must NOT be destroyed — the redeemed coins go
+                    # back to the federal government (the issuer), which services OTHER players'
+                    # queues (not the leaver's own outstanding IOU).
+                    _gov_coin_inflow(db, cb.currency_code, net_native, exclude_requester=player_id)
                 conversion_details.append(
                     f"{cb.currency_code} {amt:,.2f} → {code} {new_amt:,.2f}"
                 )
@@ -2218,18 +2364,17 @@ def set_player_legal_tender(player_id: int, currency_code: str,
         if conversion_details:
             conversion_msg = " Converted: " + "; ".join(conversion_details) + "."
 
-        # ── Create IOU for coin-currency switches ─────────────────────────────
+        # ── Create the government IOU for coin-currency switches ──────────────
         if is_coin_target and total_iou_coins > 0:
-            note = CoinageRedemptionNote(
-                bank_id          = new_bank.id,
+            db.add(CoinageRedemptionNote(
+                currency_code    = code,
                 requester_type   = "player",
                 requester_id     = player_id,
                 coin_amount_owed = total_iou_coins,
                 filled_amount    = 0.0,
-            )
-            db.add(note)
+            ))
             db.flush()
-            _try_drain_from_reserves(db, new_bank)   # fill immediately if bank has reserves
+            _drain_coin_queue(db, code)   # fill immediately from the treasury's holdings
 
         # ── Persist the change ────────────────────────────────────────────────
         if row:
@@ -2248,14 +2393,20 @@ def set_player_legal_tender(player_id: int, currency_code: str,
             )
             return True, f"Legal tender set back to USD (default game currency).{fee_msg}{conversion_msg}"
 
+        # Coin currencies have no bank row — label them from the coin metadata instead.
+        if new_bank is not None:
+            disp_flag, disp_name = new_bank.flag_emoji, new_bank.currency_name
+        else:
+            _m = coin_display(code)
+            disp_flag, disp_name = _m["flag"], _m["name"]
         _push_reserve(
             player_id,
             f"Legal Tender Changed to {code}",
-            f"Now using {new_bank.flag_emoji} {new_bank.currency_name} ({code}) as legal tender. "
+            f"Now using {disp_flag} {disp_name} ({code}) as legal tender. "
             f"Future income auto-converts at the live forex rate.{fee_msg}",
         )
         return True, (
-            f"Legal tender changed to {new_bank.flag_emoji} {new_bank.currency_name} ({code}). "
+            f"Legal tender changed to {disp_flag} {disp_name} ({code}). "
             f"Future income will be auto-converted at the live forex rate.{fee_msg}{conversion_msg}"
         )
     except Exception as e:
@@ -3002,15 +3153,16 @@ def get_interbank_trades(limit: int = 50) -> List[dict]:
         db.close()
 
 
-def get_coin_iou_queue(bank_id: int) -> list:
-    """Return all unfulfilled CoinageRedemptionNote rows for a bank, oldest first."""
+def get_coin_iou_queue(currency_code: str) -> list:
+    """Return all unfulfilled redemption notes for a coin currency, oldest first
+    (the government's outstanding obligation for that coin)."""
     db = get_db()
     try:
         return (
             db.query(CoinageRedemptionNote)
             .filter(
-                CoinageRedemptionNote.bank_id      == bank_id,
-                CoinageRedemptionNote.is_fulfilled == False,
+                CoinageRedemptionNote.currency_code == currency_code,
+                CoinageRedemptionNote.is_fulfilled  == False,
             )
             .order_by(CoinageRedemptionNote.created_at.asc())
             .all()
@@ -3020,7 +3172,7 @@ def get_coin_iou_queue(bank_id: int) -> list:
 
 
 def get_player_coin_iou_notes(player_id: int) -> list:
-    """Return all CoinageRedemptionNote rows for a player (any bank, any status)."""
+    """Return all CoinageRedemptionNote rows for a player (any coin, any status)."""
     db = get_db()
     try:
         return (
@@ -3036,17 +3188,25 @@ def get_player_coin_iou_notes(player_id: int) -> list:
         db.close()
 
 
-def get_coin_bank_own_reserve(bank_id: int, currency_code: str) -> float:
-    """Return the bank's own-coin reserve balance (coins on hand to fulfil IOUs immediately)."""
+def get_gov_coin_reserve(currency_code: str) -> float:
+    """Coins of `currency_code` currently held by the federal government (player 0) — the
+    treasury reserve available to honor redemptions immediately."""
     db = get_db()
     try:
-        r = db.query(BankReserveBalance).filter(
-            BankReserveBalance.bank_id       == bank_id,
-            BankReserveBalance.currency_code == currency_code,
+        r = db.query(PlayerCurrencyBalance).filter(
+            PlayerCurrencyBalance.player_id     == GOVERNMENT_PLAYER_ID,
+            PlayerCurrencyBalance.currency_code == currency_code,
         ).first()
         return r.balance if r else 0.0
     finally:
         db.close()
+
+
+def get_coin_bank_own_reserve(bank_id: int, currency_code: str) -> float:
+    """Deprecated under the government-issuer model — coinage reserves live with the federal
+    government. Retained as a shim (delegates to the treasury holding) so older callers don't
+    break; pass any value for bank_id."""
+    return get_gov_coin_reserve(currency_code)
 
 
 __all__ = [
