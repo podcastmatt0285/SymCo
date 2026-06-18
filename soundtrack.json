@@ -229,5 +229,19 @@
     "title": "Dark",
     "is_active": true,
     "order": 32
+  },
+  {
+    "id": 36,
+    "filename": "bassfullGO.wav",
+    "title": "String Cheese",
+    "is_active": true,
+    "order": 33
+  },
+  {
+    "id": 37,
+    "filename": "musicfx-dj-1761274934138.wav",
+    "title": "Swiss Cheese",
+    "is_active": true,
+    "order": 34
   }
 ]
