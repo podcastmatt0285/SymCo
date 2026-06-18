@@ -1284,27 +1284,34 @@ def _market_snapshot() -> str:
         try:
             db = get_db_fn()
             try:
-                orders = db.query(model.item_type, model.order_type, model.price).filter(
+                orders = db.query(model.item_type, model.order_type, model.price,
+                                  model.quantity, model.quantity_filled).filter(
                     model.status.in_(["active", "partial"]), model.price.isnot(None)).all()
             finally:
                 db.close()
             book = {}
-            for item, otype, price in orders:
+            for item, otype, price, qty, qfilled in orders:
                 if not price:
                     continue
-                b = book.setdefault(item, {"bid": None, "ask": None, "ask_hi": None, "nb": 0, "ns": 0})
+                rem = (qty or 0) - (qfilled or 0)   # units still available on this order
+                if rem <= 0:
+                    continue
+                b = book.setdefault(item, {"bid": None, "ask": None, "ask_hi": None,
+                                           "nb": 0, "ns": 0, "sq": 0.0, "bq": 0.0})
                 if str(otype) == "sell":
                     b["ns"] += 1
+                    b["sq"] += rem
                     b["ask"] = price if b["ask"] is None else min(b["ask"], price)
                     b["ask_hi"] = price if b["ask_hi"] is None else max(b["ask_hi"], price)
                 else:
                     b["nb"] += 1
+                    b["bq"] += rem
                     b["bid"] = price if b["bid"] is None else max(b["bid"], price)
             if not book:
                 return
             lines.append("")
-            lines.append(f"{label} ORDER BOOK (open orders — best bid / best ask; 'high ask' flags "
-                         f"an inflated listing sitting on the book):")
+            lines.append(f"{label} ORDER BOOK (best bid / best ask · TOTAL UNITS available to buy and "
+                         f"sought to buy; 'high ask' flags an inflated listing):")
             for item in sorted(book)[:100]:
                 b = book[item]
                 bid = f"bid ${b['bid']:,.2f}" if b["bid"] is not None else "bid —"
@@ -1312,7 +1319,8 @@ def _market_snapshot() -> str:
                 hi = (f" · high ask ${b['ask_hi']:,.2f}"
                       if b["ask_hi"] and b["ask"] and b["ask_hi"] > b["ask"] else "")
                 lines.append(f"  {item.replace('_',' ')}: {bid} / {ask}{hi} "
-                             f"· {b['nb']} buy / {b['ns']} sell orders")
+                             f"· {b['sq']:,.0f} units for sale across {b['ns']} sell order(s), "
+                             f"{b['bq']:,.0f} units sought across {b['nb']} buy order(s)")
         except Exception:
             pass
 
@@ -1324,6 +1332,30 @@ def _market_snapshot() -> str:
     try:
         from district_market import DistrictMarketOrder, get_db as _ddmdb
         _book(DistrictMarketOrder, _ddmdb, "DISTRICT")
+    except Exception:
+        pass
+
+    # Recent COMMODITY TURNOVER — units actually traded in the last 24h per item. Lets the advisor
+    # judge how fast an item moves (e.g. whether the market can realistically supply a big contract).
+    try:
+        from market import Trade as _Trade, get_db as _tdb
+        from datetime import datetime as _dt, timedelta as _td
+        from sqlalchemy import func as _f
+        db = _tdb()
+        try:
+            since = _dt.utcnow() - _td(hours=24)
+            rows = (db.query(_Trade.item_type, _f.sum(_Trade.quantity), _f.count(_Trade.id))
+                    .filter(_Trade.executed_at >= since)
+                    .group_by(_Trade.item_type)
+                    .order_by(_f.sum(_Trade.quantity).desc()).all())
+        finally:
+            db.close()
+        if rows:
+            lines.append("")
+            lines.append("COMMODITY TURNOVER (last 24h — units traded · number of trades; gauges how "
+                         "fast an item actually sells):")
+            for item, qty, ntr in rows[:60]:
+                lines.append(f"  {item.replace('_',' ')}: {(qty or 0):,.0f} units in {ntr} trade(s)")
     except Exception:
         pass
 
