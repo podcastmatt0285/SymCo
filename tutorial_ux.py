@@ -232,18 +232,32 @@ def player_has_apple_in_inventory(player_id: int) -> bool:
 
 
 def player_has_apple_market_listing(player_id: int) -> bool:
-    """Return True if the player has an active or partially-filled SELL order for apples."""
+    """Return True if the player has LISTED apples for sale — whether the order is still
+    resting (active/partial), already fully FILLED, or it sold instantly (a trade with the
+    player as seller). The old check only looked at active/partial orders, so an apple that
+    sold the moment it was listed left no resting order and the tutorial got stuck."""
     try:
-        from market import MarketOrder, OrderType, OrderStatus, get_db as get_market_db
+        from market import MarketOrder, OrderType, OrderStatus, Trade, get_db as get_market_db
         db = get_market_db()
-        count = db.query(MarketOrder).filter(
-            MarketOrder.player_id == player_id,
-            MarketOrder.order_type == OrderType.SELL,
-            MarketOrder.item_type == "apples",
-            MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED]),
-        ).count()
-        db.close()
-        return count > 0
+        try:
+            order = db.query(MarketOrder).filter(
+                MarketOrder.player_id == player_id,
+                MarketOrder.order_type == OrderType.SELL,
+                MarketOrder.item_type == "apples",
+                MarketOrder.status.in_([OrderStatus.ACTIVE,
+                                        OrderStatus.PARTIALLY_FILLED,
+                                        OrderStatus.FILLED]),
+            ).first()
+            if order:
+                return True
+            # Instant-sell: the order is gone but the trade record proves they listed.
+            sold = db.query(Trade).filter(
+                Trade.seller_id == player_id,
+                Trade.item_type == "apples",
+            ).first()
+            return sold is not None
+        finally:
+            db.close()
     except Exception as e:
         print(f"[Tutorial] player_has_apple_market_listing error: {e}")
         return False
@@ -520,7 +534,6 @@ def get_tutorial_overlay_html(player, current_page: str) -> str:
         """
 
     elif step == 7:
-        has_apple = player_has_apple_in_inventory(player.id)
         has_listing = player_has_apple_market_listing(player.id)
         title = "The Trading Floor"
         if has_listing:
@@ -534,47 +547,15 @@ def get_tutorial_overlay_html(player, current_page: str) -> str:
                 </button>
             </form>
             """
-        elif has_apple:
+        else:
+            # Apples are in the starting inventory, so there's no waiting on production —
+            # the player can list one for sale immediately.
             action_html = """
             <div style="background:#0a1628;border:1px solid #d4af37;padding:10px 14px;border-radius:4px;color:#fde68a;margin-bottom:16px;">
-                🍎 An apple is ready in your inventory! Now place a <strong>SELL limit order</strong> using the form below.
-                Choose a price, enter quantity 1, and submit.
+                🍎 You have <strong>apples</strong> in your inventory! Place a <strong>SELL limit order</strong> using the
+                form below — choose a price, enter a quantity, and submit. (If it sells instantly, that still counts!)
             </div>
             <span style="color:#64748b;font-size:0.85rem;">Place your sell order above to continue.</span>
-            """
-        else:
-            action_html = """
-            <div style="background:#0f172a;border:1px solid #1e293b;padding:10px 14px;border-radius:4px;color:#64748b;margin-bottom:16px;" id="tut-apple-wait">
-                <span id="tut-apple-status">⏳ Waiting for your Plantation to produce an apple… (checks every 10 sec)</span>
-            </div>
-            <span style="color:#64748b;font-size:0.85rem;">Your plantation is working — this page will notify you when an apple is ready.</span>
-            <script>
-            (function() {
-                var interval = setInterval(function() {
-                    fetch('/api/tutorial/check-apple')
-                        .then(function(r) { return r.json(); })
-                        .then(function(d) {
-                            if (d.has_apple) {
-                                clearInterval(interval);
-                                document.getElementById('tut-apple-status').innerHTML =
-                                    '🍎 Apple ready! Scroll up and place a SELL limit order for apples.';
-                                document.getElementById('tut-apple-wait').style.borderColor = '#d4af37';
-                                document.getElementById('tut-apple-wait').style.color = '#fde68a';
-                            }
-                        }).catch(function() {});
-                }, 10000);
-            })();
-            </script>
-            <div style="margin-top:14px;padding-top:12px;border-top:1px solid #1e293b;">
-                <p style="color:#475569;font-size:0.8rem;margin:0 0 6px 0;">
-                    Plantation not producing? Make sure it has water input and is set to run.
-                </p>
-                <a href="/api/tutorial/skip-apple-wait"
-                   onclick="return confirm('Skip the apple wait? You can still sell on the Market anytime.');"
-                   style="color:#475569;font-size:0.78rem;text-decoration:underline;">
-                    My plantation isn't working — skip this step
-                </a>
-            </div>
             """
 
         content = f"""

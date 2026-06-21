@@ -1792,6 +1792,16 @@ def _tutorials_tab(player) -> str:
 </a>"""
     elif step < 12:
         t3_reward = '<div style="font-size:0.82rem;color:#334155;">&#128274; Margin Lending — complete Tutorial 2 to unlock</div>'
+    elif step3 == 0:
+        t3_reward = """
+<div style="font-size:0.82rem;color:#475569;margin-bottom:10px;">&#128274; Margin Lending — finish this tutorial to claim</div>
+<form method="post" action="/api/tutorial3/start" style="display:inline;">
+  <button type="submit"
+          style="padding:8px 18px;background:#38bdf8;color:#020617;border:none;
+                 border-radius:4px;font-weight:bold;font-size:0.82rem;cursor:pointer;">
+    Start Tutorial 3 →
+  </button>
+</form>"""
     else:
         t3_reward = '<div style="font-size:0.82rem;color:#475569;">&#128274; Margin Lending — finish this tutorial to claim</div>'
 
@@ -2569,7 +2579,13 @@ document.querySelectorAll('input[type=checkbox]').forEach(function(cb) {
         + _section("App Icon Badge", badge_body)
         + form_end
         + base_js
-        + (subscribe_js if has_cco else "")
+        # Always include the push enable/subscribe JS so the "Enable Push" button is never a
+        # dead control: it defines requestPushPermission()/disablePush()/_subscribePush() and
+        # shows the button. Previously this was gated on has_cco, so the onclick handlers were
+        # undefined for anyone without CCO/FCC access (including new players mid-onboarding),
+        # which made the button appear broken. The per-category TOGGLES remain gated (disabled)
+        # — this only governs the browser-permission/subscription control itself.
+        + subscribe_js
     )
 
 
