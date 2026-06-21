@@ -79,22 +79,28 @@ echo "  [ok] Databases ready"
 
 # ── 5. Restore databases ──────────────────────────────────────────────────────
 _restore() {
-    local dbname="$1" primary="$2" fallback="$3"
+    local dbname="$1"; shift
+    # First existing candidate wins — prefer the GZIPPED dumps backup.sh writes.
     local sqlfile=""
-    [ -f "$primary" ]  && sqlfile="$primary"
-    [ -z "$sqlfile" ] && [ -f "$fallback" ] && sqlfile="$fallback"
+    for cand in "$@"; do [ -f "$cand" ] && { sqlfile="$cand"; break; }; done
 
     if [ -n "$sqlfile" ]; then
-        echo "  Restoring '$dbname' from $sqlfile..."
-        sudo -u postgres psql "$dbname" < "$sqlfile"
+        local age_h
+        age_h="$(( ( $(date +%s) - $(stat -c %Y "$sqlfile" 2>/dev/null || echo "$(date +%s)") ) / 3600 ))"
+        echo "  Restoring '$dbname' from $sqlfile (~${age_h}h old)..."
+        [ "$age_h" -gt 24 ] && echo "  [warn] backup is ~${age_h}h old — may not be your latest live data (run ./backup.sh on the source server first)."
+        case "$sqlfile" in
+            *.gz) gunzip -c "$sqlfile" | sudo -u postgres psql "$dbname" ;;
+            *)    sudo -u postgres psql "$dbname" < "$sqlfile" ;;
+        esac
         echo "  [ok] '$dbname' restored"
     else
         echo "  [warn] No backup found for '$dbname' — starting empty (app will create tables)"
     fi
 }
 
-_restore "$DB_MAIN" "backups/wadsworth.sql"     "wadsworth_backup.sql"
-_restore "$DB_RES"  "backups/reserve_banks.sql"  "reserve_banks_backup.sql"
+_restore "$DB_MAIN" wadsworth_backup.sql.gz     backups/wadsworth.sql     wadsworth_backup.sql
+_restore "$DB_RES"  reserve_banks_backup.sql.gz backups/reserve_banks.sql reserve_banks_backup.sql
 
 # ── 6. Transfer ownership + grant privileges (must run AFTER restore) ────────
 # pg_dump --no-owner restores tables owned by postgres. Transfer ownership to

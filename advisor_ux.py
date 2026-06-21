@@ -35,7 +35,7 @@ import secrets
 from typing import Optional, List
 
 import requests
-from fastapi import APIRouter, Cookie, Form, Body
+from fastapi import APIRouter, Cookie, Form, Body, Query
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 
 
@@ -95,6 +95,21 @@ def _ensure_table():
             )""",
         # Per-key model choice (Gemini model id). Defaults to 2.5 Flash.
         "ALTER TABLE advisor_credentials ADD COLUMN IF NOT EXISTS model TEXT NOT NULL DEFAULT 'gemini-2.5-flash'",
+        # Player-raised support tickets / bug reports, optionally with the advisor transcript
+        # attached. Surfaced to the admin (/admin/advisor-tickets) so issues get triaged fast.
+        """CREATE TABLE IF NOT EXISTS advisor_support_tickets (
+                id            SERIAL      PRIMARY KEY,
+                player_id     INTEGER     NOT NULL,
+                player_name   TEXT        NOT NULL,
+                category      TEXT        NOT NULL DEFAULT 'bug',
+                message       TEXT        NOT NULL,
+                messages_json TEXT,
+                status        TEXT        NOT NULL DEFAULT 'open',
+                admin_note    TEXT,
+                created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                resolved_at   TIMESTAMPTZ
+            )""",
+        "CREATE INDEX IF NOT EXISTS idx_advisor_tickets_status ON advisor_support_tickets (status, created_at DESC)",
         # Per-player privacy preference. scannable == "another player's Financial Advisor may
         # surface my full data". Defaults TRUE (everyone is scannable). Only subscribers/admins
         # may set it FALSE to shield their books (enforced in the route). A player always sees
@@ -436,6 +451,115 @@ def _get_shared_thread(token: str) -> Optional[dict]:
     except Exception:
         msgs = []
     return {"sharer_name": row[0], "messages": msgs}
+
+
+# ==========================
+# SUPPORT TICKETS (player → admin, with the advisor transcript optionally attached)
+# ==========================
+
+_TICKET_CATEGORIES = {"bug", "question", "suggestion", "other"}
+
+
+def _create_ticket(player_id: int, player_name: str, category: str,
+                   message: str, messages: list) -> Optional[int]:
+    cat = category if category in _TICKET_CATEGORIES else "other"
+    from auth import get_db
+    from sqlalchemy import text
+    db = get_db()
+    try:
+        row = db.execute(text(
+            "INSERT INTO advisor_support_tickets "
+            "(player_id, player_name, category, message, messages_json) "
+            "VALUES (:pid, :pn, :cat, :msg, :mj) RETURNING id"
+        ), {"pid": player_id, "pn": player_name[:80], "cat": cat,
+            "msg": message[:4000],
+            "mj": (json.dumps(messages)[:200000] if messages else None)}).first()
+        db.commit()
+        return int(row[0]) if row else None
+    except Exception as e:
+        db.rollback()
+        print(f"[Advisor] Could not create ticket: {e}")
+        return None
+    finally:
+        db.close()
+
+
+def _list_tickets(status: Optional[str] = None, limit: int = 200) -> list:
+    from auth import get_db
+    from sqlalchemy import text
+    q = ("SELECT id, player_id, player_name, category, message, status, created_at, resolved_at "
+         "FROM advisor_support_tickets ")
+    params = {"lim": limit}
+    if status:
+        q += "WHERE status = :st "
+        params["st"] = status
+    # open first, then newest
+    q += "ORDER BY (status = 'open') DESC, created_at DESC LIMIT :lim"
+    db = get_db()
+    try:
+        rows = db.execute(text(q), params).all()
+    finally:
+        db.close()
+    return [{"id": r[0], "player_id": r[1], "player_name": r[2], "category": r[3],
+             "message": r[4], "status": r[5], "created_at": r[6], "resolved_at": r[7]}
+            for r in rows]
+
+
+def _get_ticket(tid: int) -> Optional[dict]:
+    from auth import get_db
+    from sqlalchemy import text
+    db = get_db()
+    try:
+        r = db.execute(text(
+            "SELECT id, player_id, player_name, category, message, messages_json, status, "
+            "admin_note, created_at, resolved_at FROM advisor_support_tickets WHERE id = :id"
+        ), {"id": tid}).first()
+    finally:
+        db.close()
+    if not r:
+        return None
+    try:
+        msgs = json.loads(r[5]) if r[5] else []
+    except Exception:
+        msgs = []
+    return {"id": r[0], "player_id": r[1], "player_name": r[2], "category": r[3],
+            "message": r[4], "messages": msgs, "status": r[6], "admin_note": r[7],
+            "created_at": r[8], "resolved_at": r[9]}
+
+
+def _resolve_ticket(tid: int, admin_note: str = "", reopen: bool = False) -> bool:
+    from auth import get_db
+    from sqlalchemy import text
+    db = get_db()
+    try:
+        if reopen:
+            db.execute(text("UPDATE advisor_support_tickets SET status='open', resolved_at=NULL, "
+                            "admin_note=:n WHERE id=:id"), {"id": tid, "n": (admin_note or "")[:2000]})
+        else:
+            db.execute(text("UPDATE advisor_support_tickets SET status='resolved', "
+                            "resolved_at=NOW(), admin_note=:n WHERE id=:id"),
+                       {"id": tid, "n": (admin_note or "")[:2000]})
+        db.commit()
+        return True
+    except Exception as e:
+        db.rollback()
+        print(f"[Advisor] Could not update ticket {tid}: {e}")
+        return False
+    finally:
+        db.close()
+
+
+def _open_ticket_count() -> int:
+    from auth import get_db
+    from sqlalchemy import text
+    db = get_db()
+    try:
+        r = db.execute(text("SELECT COUNT(*) FROM advisor_support_tickets WHERE status='open'")).first()
+        return int(r[0]) if r else 0
+    except Exception:
+        return 0
+    finally:
+        db.close()
 
 
 # ==========================
@@ -2058,6 +2182,50 @@ def advisor_share(
 
 
 # ==========================
+# SUPPORT TICKET (raise the conversation to a game admin)
+# ==========================
+
+@router.post("/api/advisor/ticket")
+def advisor_ticket(
+    session_token: Optional[str] = Cookie(None),
+    payload: dict = Body(...),
+):
+    player = _player(session_token)
+    if not player:
+        return JSONResponse({"ok": False, "error": "Not signed in."}, status_code=401)
+    message = str(payload.get("message", "")).strip()
+    if not message:
+        return JSONResponse({"ok": False, "error": "Please describe the issue first."},
+                            status_code=400)
+    category = str(payload.get("category", "bug")).lower()
+    # Attach the transcript only if the player opted in (client sends [] otherwise).
+    messages = _format_transcript(payload.get("messages") or [])
+    name = getattr(player, "business_name", None) or f"Player #{player.id}"
+
+    tid = _create_ticket(player.id, name, category, message, messages)
+    if not tid:
+        return JSONResponse({"ok": False, "error": "Could not file the ticket. Try again."},
+                            status_code=500)
+
+    # Notify the admin(s) so issues are seen quickly.
+    try:
+        from push_ux import send_push_notification
+        from admins import ADMIN_PLAYER_IDS
+        body = f"{name} ({category}): {message[:90]}"
+        for aid in ADMIN_PLAYER_IDS:
+            try:
+                send_push_notification(aid, "🛟 New advisor support ticket", body,
+                                       url="/admin/advisor-tickets", notif_type="general",
+                                       tag=f"advisor-ticket-{tid}")
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    return JSONResponse({"ok": True, "id": tid})
+
+
+# ==========================
 # ADVISOR PAGE
 # ==========================
 
@@ -2317,6 +2485,8 @@ def advisor_page(
         </label>
         <button id="adv-share" style="background:#1e293b;border:1px solid #334155;color:#94a3b8;border-radius:6px;
             padding:7px 14px;font-size:0.8rem;cursor:pointer;font-family:inherit;">📤 Share to a DM</button>
+        <button id="adv-report" style="background:#1e293b;border:1px solid #334155;color:#94a3b8;border-radius:6px;
+            padding:7px 14px;font-size:0.8rem;cursor:pointer;font-family:inherit;">🛟 Report to admin</button>
         <button id="adv-clear" style="background:#1e293b;border:1px solid #334155;color:#94a3b8;border-radius:6px;
             padding:7px 14px;font-size:0.8rem;cursor:pointer;font-family:inherit;">🗑 Clear</button>
     </div>
@@ -2325,6 +2495,27 @@ def advisor_page(
         <div style="font-size:0.82rem;color:#e5e7eb;margin-bottom:8px;">Share this conversation to a DM or group:</div>
         <div id="adv-share-targets" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
         <div id="adv-share-status" style="font-size:0.78rem;color:#64748b;margin-top:8px;"></div>
+    </div>
+    <div id="adv-report-box" style="max-width:760px;margin-top:8px;display:none;background:var(--bg-card,#0f172a);
+        border:1px solid var(--border,#1e293b);border-radius:8px;padding:12px;">
+        <div style="font-size:0.82rem;color:#e5e7eb;margin-bottom:8px;">Raise an issue to the game admin (bug, question, or suggestion):</div>
+        <select id="adv-report-cat" style="background:#020617;border:1px solid #334155;color:#e5e7eb;border-radius:6px;
+            padding:7px;font-size:0.8rem;font-family:inherit;margin-bottom:8px;">
+            <option value="bug">🐞 Bug / something's broken</option>
+            <option value="question">❓ Question</option>
+            <option value="suggestion">💡 Suggestion</option>
+            <option value="other">🛟 Other</option>
+        </select>
+        <textarea id="adv-report-msg" rows="3" placeholder="Describe the issue…"
+            style="width:100%;box-sizing:border-box;background:#020617;border:1px solid #334155;color:#e5e7eb;
+            border-radius:6px;padding:9px;font-family:inherit;font-size:0.85rem;resize:vertical;"></textarea>
+        <label style="display:flex;align-items:center;gap:6px;font-size:0.78rem;color:#94a3b8;margin-top:8px;">
+            <input type="checkbox" id="adv-report-attach" checked> Attach this conversation to help the admin debug
+        </label>
+        <div style="margin-top:8px;display:flex;gap:8px;align-items:center;">
+            <button id="adv-report-send" class="btn-blue" style="padding:7px 16px;font-size:0.8rem;">Submit ticket</button>
+            <span id="adv-report-status" style="font-size:0.78rem;color:#64748b;"></span>
+        </div>
     </div>
     <p style="max-width:760px;color:#64748b;font-size:0.75rem;margin-top:8px;">
         Educational, in-game guidance only — not real-world financial advice. Conversations live only in your
@@ -2594,6 +2785,34 @@ def advisor_page(
                 else {{ shareStatus.textContent = '⚠ ' + (data.error || 'Could not share.'); btn.disabled = false; }}
             }} catch(e) {{ shareStatus.textContent = '⚠ Network error.'; btn.disabled = false; }}
         }}
+
+        // ── Report to admin (file a support ticket, optionally with the conversation) ──
+        var reportBox = document.getElementById('adv-report-box');
+        var reportStatus = document.getElementById('adv-report-status');
+        document.getElementById('adv-report').addEventListener('click', function() {{
+            reportBox.style.display = (reportBox.style.display === 'block') ? 'none' : 'block';
+        }});
+        document.getElementById('adv-report-send').addEventListener('click', async function() {{
+            var btn = this;
+            var msg = (document.getElementById('adv-report-msg').value || '').trim();
+            if (!msg) {{ reportStatus.textContent = 'Please describe the issue first.'; return; }}
+            var cat = document.getElementById('adv-report-cat').value;
+            var attach = document.getElementById('adv-report-attach').checked;
+            btn.disabled = true; reportStatus.textContent = 'Submitting…';
+            try {{
+                var r = await fetch('/api/advisor/ticket', {{
+                    method:'POST', headers:{{'Content-Type':'application/json'}}, credentials:'same-origin',
+                    body: JSON.stringify({{category:cat, message:msg, messages: attach ? messages : []}})
+                }});
+                var data = await r.json();
+                if (data.ok) {{
+                    reportStatus.textContent = '✓ Ticket #' + data.id + ' sent to the admin. Thank you!';
+                    document.getElementById('adv-report-msg').value = '';
+                }} else {{
+                    reportStatus.textContent = '⚠ ' + (data.error || 'Could not submit.'); btn.disabled = false;
+                }}
+            }} catch(e) {{ reportStatus.textContent = '⚠ Network error.'; btn.disabled = false; }}
+        }});
     }})();
     </script>
     """
@@ -2702,3 +2921,138 @@ def advisor_shared_view(token: str, session_token: Optional[str] = Cookie(None))
     <script type="application/json" id="sh-data">{payload}</script>
     """
     return HTMLResponse(shell("Shared conversation", body, player.cash_balance, player.id))
+
+
+# ==========================
+# ADMIN: SUPPORT TICKET TRIAGE
+# ==========================
+
+_TICKET_CAT_EMOJI = {"bug": "🐞", "question": "❓", "suggestion": "💡", "other": "🛟"}
+
+
+@router.get("/admin/advisor-tickets", response_class=HTMLResponse)
+def admin_advisor_tickets(session_token: Optional[str] = Cookie(None),
+                          status: Optional[str] = Query(None)):
+    from admins import require_admin
+    from ux import shell
+    import html as _h
+    admin = require_admin(session_token)
+    if not admin:
+        return RedirectResponse(url="/login", status_code=303)
+    flt = status if status in ("open", "resolved") else None
+    tickets = _list_tickets(status=flt)
+    n_open = _open_ticket_count()
+
+    def _tab(label, val):
+        active = (flt == val) or (val is None and flt is None)
+        href = "/admin/advisor-tickets" + (f"?status={val}" if val else "")
+        bg = "#2563eb" if active else "#1e293b"
+        return (f'<a href="{href}" style="text-decoration:none;background:{bg};color:#e5e7eb;'
+                f'border:1px solid #334155;border-radius:6px;padding:6px 12px;font-size:0.8rem;">{label}</a>')
+
+    rows = ""
+    for t in tickets:
+        emoji = _TICKET_CAT_EMOJI.get(t["category"], "🛟")
+        st = ('<span style="color:#f59e0b;">● open</span>' if t["status"] == "open"
+              else '<span style="color:#22c55e;">✓ resolved</span>')
+        when = t["created_at"].strftime("%Y-%m-%d %H:%M") if t["created_at"] else "—"
+        preview = _h.escape((t["message"] or "")[:120])
+        rows += (f'<tr style="border-top:1px solid #1e293b;">'
+                 f'<td style="padding:8px;color:#64748b;">#{t["id"]}</td>'
+                 f'<td style="padding:8px;">{emoji} {t["category"]}</td>'
+                 f'<td style="padding:8px;">{_h.escape(t["player_name"])} '
+                 f'<span style="color:#475569;">#{t["player_id"]}</span></td>'
+                 f'<td style="padding:8px;color:#94a3b8;max-width:340px;">{preview}</td>'
+                 f'<td style="padding:8px;white-space:nowrap;">{st}</td>'
+                 f'<td style="padding:8px;color:#64748b;white-space:nowrap;">{when}</td>'
+                 f'<td style="padding:8px;"><a href="/admin/advisor-tickets/{t["id"]}" '
+                 f'style="color:#38bdf8;">view →</a></td></tr>')
+    if not rows:
+        rows = '<tr><td colspan="7" style="padding:20px;text-align:center;color:#64748b;">No tickets.</td></tr>'
+
+    body = f"""
+    <a href="/admin" style="color:#38bdf8;">← Admin</a>
+    <h1 style="margin:8px 0 4px;">🛟 Advisor Support Tickets</h1>
+    <p style="color:#94a3b8;font-size:0.85rem;">{n_open} open.</p>
+    <div style="display:flex;gap:8px;margin:10px 0 14px;">{_tab('All', None)}{_tab('Open', 'open')}{_tab('Resolved', 'resolved')}</div>
+    <div class="card" style="padding:0;overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+        <tr style="text-align:left;color:#64748b;font-size:0.72rem;text-transform:uppercase;">
+          <th style="padding:8px;">#</th><th style="padding:8px;">Type</th><th style="padding:8px;">Player</th>
+          <th style="padding:8px;">Message</th><th style="padding:8px;">Status</th>
+          <th style="padding:8px;">Filed</th><th style="padding:8px;"></th></tr>
+        {rows}
+      </table>
+    </div>
+    """
+    return HTMLResponse(shell("Support Tickets", body, admin.cash_balance, admin.id))
+
+
+@router.get("/admin/advisor-tickets/{tid}", response_class=HTMLResponse)
+def admin_advisor_ticket_detail(tid: int, session_token: Optional[str] = Cookie(None)):
+    from admins import require_admin
+    from ux import shell
+    import html as _h
+    admin = require_admin(session_token)
+    if not admin:
+        return RedirectResponse(url="/login", status_code=303)
+    t = _get_ticket(tid)
+    if not t:
+        return HTMLResponse(shell("Ticket", '<a href="/admin/advisor-tickets" style="color:#38bdf8;">← Tickets</a>'
+                                  '<div class="card" style="margin-top:16px;">Ticket not found.</div>',
+                                  admin.cash_balance, admin.id))
+    when = t["created_at"].strftime("%Y-%m-%d %H:%M") if t["created_at"] else "—"
+    emoji = _TICKET_CAT_EMOJI.get(t["category"], "🛟")
+    bubbles = ""
+    for m in t["messages"]:
+        mine = m.get("role") == "user"
+        txt = _tokens_to_html(str(m.get("content", "")))
+        bubbles += (
+            f'<div style="max-width:88%;padding:9px 13px;border-radius:11px;white-space:pre-wrap;'
+            f'line-height:1.5;font-size:0.85rem;margin-bottom:8px;'
+            + ("align-self:flex-end;background:#2563eb;color:#fff;"
+               if mine else "align-self:flex-start;background:#0f172a;border:1px solid #1e293b;color:#e5e7eb;")
+            + f'">{txt}</div>')
+    transcript = (f'<div class="card" style="display:flex;flex-direction:column;margin-top:14px;">'
+                  f'<div style="font-size:0.72rem;color:#64748b;text-transform:uppercase;margin-bottom:8px;">'
+                  f'Attached advisor conversation</div>{bubbles}</div>'
+                  if bubbles else
+                  '<p style="color:#64748b;font-size:0.8rem;margin-top:14px;">No conversation was attached.</p>')
+    status_badge = ('<span style="color:#f59e0b;">● open</span>' if t["status"] == "open"
+                    else '<span style="color:#22c55e;">✓ resolved</span>')
+    note = _h.escape(t["admin_note"] or "")
+    is_open = t["status"] == "open"
+    body = f"""
+    <a href="/admin/advisor-tickets" style="color:#38bdf8;">← Tickets</a>
+    <h1 style="margin:8px 0 4px;">{emoji} Ticket #{t['id']} — {t['category']}</h1>
+    <p style="color:#94a3b8;font-size:0.85rem;">From <strong>{_h.escape(t['player_name'])}</strong>
+       <span style="color:#475569;">#{t['player_id']}</span> · filed {when} · {status_badge}</p>
+    <div class="card" style="margin-top:12px;">
+      <div style="font-size:0.72rem;color:#64748b;text-transform:uppercase;margin-bottom:6px;">Player's message</div>
+      <div style="white-space:pre-wrap;line-height:1.5;">{_h.escape(t['message'])}</div>
+    </div>
+    {transcript}
+    <form action="/admin/advisor-tickets/{t['id']}/resolve" method="post"
+          style="max-width:760px;margin-top:14px;display:flex;flex-direction:column;gap:8px;">
+      <textarea name="admin_note" rows="2" placeholder="Optional note…"
+        style="background:#020617;border:1px solid #334155;color:#e5e7eb;border-radius:8px;padding:10px;font-family:inherit;">{note}</textarea>
+      <div style="display:flex;gap:8px;">
+        <button name="action" value="{'resolve' if is_open else 'reopen'}" class="btn-blue"
+          style="padding:8px 16px;">{'✓ Mark resolved' if is_open else '↺ Reopen'}</button>
+        <a href="/p2p/dms" class="btn-blue" style="padding:8px 16px;text-decoration:none;background:#1e293b;">
+          DM the player</a>
+      </div>
+    </form>
+    """
+    return HTMLResponse(shell(f"Ticket #{t['id']}", body, admin.cash_balance, admin.id))
+
+
+@router.post("/admin/advisor-tickets/{tid}/resolve")
+def admin_advisor_ticket_resolve(tid: int, session_token: Optional[str] = Cookie(None),
+                                 admin_note: str = Form(""), action: str = Form("resolve")):
+    from admins import require_admin
+    admin = require_admin(session_token)
+    if not admin:
+        return RedirectResponse(url="/login", status_code=303)
+    _resolve_ticket(tid, admin_note=admin_note, reopen=(action == "reopen"))
+    return RedirectResponse(url=f"/admin/advisor-tickets/{tid}", status_code=303)
