@@ -399,6 +399,9 @@ def process_business_tick(db):
 
     # Accumulate revenue credits per player — flush in batch after the loop.
     _pending_credits: dict = {}  # player_id → total founder_credit
+    _pending_logs: list = []     # TransactionLog kwargs, bulk-inserted once after the loop
+    _gov_retail_tax: float = 0.0 # accumulated retail sales tax → credited to gov once after loop
+    _exec_sales_cache: dict = {} # owner_id → sales-bonus fraction (cached per owner per tick)
 
     _pht["loads_done"] = _pt.monotonic()
     for biz in active_biz:
@@ -732,8 +735,10 @@ def process_business_tick(db):
                 # Apply executive sales bonus to retail revenue
                 if has_retail and total_revenue > 0:
                     try:
-                        from executive import get_player_job_bonus as _exec_gjb
-                        _sales_bonus = _exec_gjb(db, player.id, "sales")
+                        if player.id not in _exec_sales_cache:
+                            from executive import get_player_job_bonus as _exec_gjb
+                            _exec_sales_cache[player.id] = _exec_gjb(db, player.id, "sales")
+                        _sales_bonus = _exec_sales_cache[player.id]
                         if _sales_bonus > 0:
                             total_revenue = round(total_revenue * (1.0 + _sales_bonus), 2)
                     except Exception:
@@ -743,14 +748,9 @@ def process_business_tick(db):
                 _retail_tax = 0.0
                 if has_retail and total_revenue > 0:
                     _retail_tax = round(total_revenue * 0.05, 2)
-                    try:
-                        from reserve_banks import GOVERNMENT_PLAYER_ID as _RTGOV, credit_usd as _rt_credit
-                        _rt_credit(_RTGOV, _retail_tax)
-                        from govt_ledger import log_gov_event as _rt_lge
-                        _rt_lge("retail_sales_tax", "in", _retail_tax, "USD",
-                                f"Retail sales tax: {config.get('name', biz.business_type)} (biz {biz.id})")
-                    except Exception as _rt_e:
-                        print(f"[Business] Retail tax routing error biz {biz.id}: {_rt_e}")
+                    # Accumulate — credit the government ONCE after the loop instead of a
+                    # credit_usd + log_gov_event per business (200+ sessions/commits/tick).
+                    _gov_retail_tax += _retail_tax
 
                 net_revenue = total_revenue - wage_cost - _retail_tax
 
@@ -774,30 +774,20 @@ def process_business_tick(db):
                     _pending_credits[player.id] = _pending_credits.get(player.id, 0.0) + founder_credit
                 biz.progress_ticks = 0
                 # Do NOT commit here — batch commit at end of loop is more efficient.
+                # Accumulate ledger rows — bulk-inserted once after the loop instead of a
+                # session+commit per business (these are pure money-category inserts).
                 if wage_cost > 0:
-                    try:
-                        log_transaction(
-                            biz.owner_id,
-                            "wage_payment",
-                            "money",
-                            -wage_cost,
-                            f"Wages: {config.get('name', biz.business_type)}",
-                            str(biz.id)
-                        )
-                    except Exception as _lt_e:
-                        print(f"[Business] wage log error biz {biz.id}: {_lt_e}")
+                    _pending_logs.append(dict(
+                        player_id=biz.owner_id, transaction_type="wage_payment",
+                        category="money", amount=-wage_cost,
+                        description=f"Wages: {config.get('name', biz.business_type)}",
+                        reference_id=str(biz.id)))
                 if net_revenue > 0:
-                    try:
-                        log_transaction(
-                            biz.owner_id,
-                            "retail_sale",
-                            "money",
-                            founder_credit,
-                            f"Retail revenue: {biz.business_type}",
-                            str(biz.id)
-                        )
-                    except Exception as _lt_e:
-                        print(f"[Business] retail log error biz {biz.id}: {_lt_e}")
+                    _pending_logs.append(dict(
+                        player_id=biz.owner_id, transaction_type="retail_sale",
+                        category="money", amount=founder_credit,
+                        description=f"Retail revenue: {biz.business_type}",
+                        reference_id=str(biz.id)))
         except Exception as _biz_tick_e:
             # Log the error but do NOT rollback — other businesses in this tick
             # have already modified the session (inventory, progress_ticks) and
@@ -814,6 +804,25 @@ def process_business_tick(db):
             db.rollback()
         except Exception:
             pass
+
+    # Flush accumulated retail sales tax to the government in ONE credit + ledger event.
+    if _gov_retail_tax > 0:
+        try:
+            from reserve_banks import GOVERNMENT_PLAYER_ID as _RTGOV, credit_usd as _rt_credit
+            _rt_credit(_RTGOV, round(_gov_retail_tax, 2))
+            from govt_ledger import log_gov_event as _rt_lge
+            _rt_lge("retail_sales_tax", "in", round(_gov_retail_tax, 2), "USD",
+                    "Retail sales tax (batched, business tick)")
+        except Exception as _rt_e:
+            print(f"[Business] Retail tax flush error: {_rt_e}")
+
+    # Bulk-insert all accumulated ledger rows in one session/commit.
+    if _pending_logs:
+        try:
+            from stats_ux import log_transactions_bulk
+            log_transactions_bulk(_pending_logs)
+        except Exception as _bl_e:
+            print(f"[Business] bulk transaction log error: {_bl_e}")
 
     # Flush accumulated revenue credits (one call per unique player instead of per business).
     if _pending_credits:

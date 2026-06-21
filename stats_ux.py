@@ -172,6 +172,29 @@ def log_transaction(
         db.close()
 
 
+def log_transactions_bulk(entries: list):
+    """Insert many money-category transaction logs in ONE session/commit.
+
+    For pure inserts only (no cost-averaging) — used by hot loops (e.g. the business tick)
+    that previously called log_transaction() once per record, opening a session + commit
+    each time. Uses ORM objects so Python-side defaults (timestamp) still fire. `entries`
+    is a list of dicts of TransactionLog kwargs; system accounts (player_id<=0) are skipped.
+    """
+    rows = [e for e in entries if e.get("player_id", 0) > 0]
+    if not rows:
+        return
+    db = get_db()
+    try:
+        for e in rows:
+            db.add(TransactionLog(**e))
+        db.commit()
+    except Exception as e:
+        print(f"[Stats] bulk transaction log error: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
+
 def update_cost_average(db, player_id: int, item_type: str, spent: float, quantity: float):
     """Update running cost average for a player's item."""
     avg = db.query(PlayerCostAverage).filter(
