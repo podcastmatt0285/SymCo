@@ -93,7 +93,10 @@ _restore() {
             *.gz) gunzip -c "$sqlfile" | sudo -u postgres psql "$dbname" ;;
             *)    sudo -u postgres psql "$dbname" < "$sqlfile" ;;
         esac
-        echo "  [ok] '$dbname' restored"
+        # Refresh planner statistics — pg_dump omits them, and without ANALYZE a fresh
+        # restore seq-scans everything (shows up as "SLOW module" ticks / tunnel stalls).
+        sudo -u postgres psql "$dbname" -c "ANALYZE;" >/dev/null 2>&1 || true
+        echo "  [ok] '$dbname' restored (stats refreshed)"
     else
         echo "  [warn] No backup found for '$dbname' — starting empty (app will create tables)"
     fi

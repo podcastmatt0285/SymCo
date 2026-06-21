@@ -59,6 +59,11 @@ _restore_one() {
         *.gz) gunzip -c "$src" | sudo -u postgres psql "$db" ;;
         *)    sudo -u postgres psql "$db" < "$src" ;;
     esac
+    # pg_dump does NOT carry planner statistics, so a freshly restored DB seq-scans
+    # everything until ANALYZE runs — which on the live game shows up as every module's
+    # tick being "SLOW" and can stall the loop / trip the tunnel. Refresh stats now.
+    echo "  → Refreshing planner statistics (ANALYZE)…"
+    sudo -u postgres psql "$db" -c "ANALYZE;" >/dev/null 2>&1 || echo "  (ANALYZE skipped)"
     echo "  ✓ '$db' restored."
 }
 
