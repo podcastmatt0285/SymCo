@@ -42,3 +42,6 @@ claudeHelper/
 *.mp4
 *.apk
 *.aab
+
+# Daily backup cron log (install-backup-cron.sh)
+backup.log
