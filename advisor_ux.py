@@ -2427,7 +2427,7 @@ def advisor_page(
     model_label = dict(GEMINI_MODELS).get(active_model, active_model).split("—")[0].strip()
     shielded = not is_scannable(player.id)
     shield_status = "🛡️ your books are shielded" if shielded else "👁️ your books are scannable"
-    body = f"""
+    body = rf"""
     <a href="/" style="color:#38bdf8;">&larr; Dashboard</a>
     <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;">
         <h1 style="margin:8px 0 4px 0;">🤖 Financial Advisor</h1>

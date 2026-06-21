@@ -1649,13 +1649,13 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
 
     function detectDmMentionTrigger(val, cursorPos) {{
         const before = val.slice(0, cursorPos);
-        let m = before.match(/(?:^|[\s,])(@\S*)$/);
+        let m = before.match(/(?:^|[\\s,])(@\\S*)$/);
         if (m) return {{ type: '@', start: before.lastIndexOf(m[1]), query: m[1].slice(1) }};
-        m = before.match(/(?:^|[\s,])(\$\S*)$/);
+        m = before.match(/(?:^|[\\s,])(\\$\\S*)$/);
         if (m) return {{ type: '$', start: before.lastIndexOf(m[1]), query: m[1].slice(1) }};
-        m = before.match(/(?:^|[\s,])(%\S*)$/);
+        m = before.match(/(?:^|[\\s,])(%\\S*)$/);
         if (m) return {{ type: '%', start: before.lastIndexOf(m[1]), query: m[1].slice(1) }};
-        m = before.match(/(?:^|[\s,])(#[^@$#%]*)$/);
+        m = before.match(/(?:^|[\\s,])(#[^@$#%]*)$/);
         if (m && m[1].length > 1) return {{ type: '#', start: before.lastIndexOf(m[1]), query: m[1].slice(1) }};
         return null;
     }}
@@ -1747,10 +1747,10 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
     }}
 
     function formatMessageContent(raw) {{
-        const re = /@\[([^\]]+)\]|#\[([^\]]+)\]|\/\[([^\]]+)\]|\$\[([^\]]+)\]|%\[([^\]]+)\]/g;
+        const re = /@\\[([^\\]]+)\\]|#\\[([^\\]]+)\\]|\\/\\[([^\\]]+)\\]|\\$\\[([^\\]]+)\\]|%\\[([^\\]]+)\\]/g;
         // Escape, then linkify bare http(s) URLs (used by e.g. shared Advisor links).
         const escLink = function(s) {{
-            return escapeHtml(s).replace(/(https?:\/\/[^\s<]+)/g, function(u) {{
+            return escapeHtml(s).replace(/(https?:\\/\\/[^\\s<]+)/g, function(u) {{
                 return '<a href="' + u + '" target="_blank" rel="noopener noreferrer">' + u + '</a>';
             }});
         }};
