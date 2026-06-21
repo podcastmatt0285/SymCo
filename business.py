@@ -1038,33 +1038,46 @@ def set_retail_price(player_id: int, item_type: str, price: float) -> bool:
 # Districts
 # =========================
 
+_district_business_types_cache = None  # parsed+augmented once; JSON config is static at runtime
 def get_district_business_types():
     """Load district business types from district_businesses.json.
 
     Each business's retail "products" are augmented with its own production
     outputs (using per-item demand parameters from district_items.json) so
     every district item has a consumer demand sink — see _augment_district_retail.
+
+    Cached after first build: this is called per-business each tick (and per-item in
+    NPC cost calc), and re-reading + re-parsing the JSON every call was a major tick cost.
     """
+    global _district_business_types_cache
+    if _district_business_types_cache is not None:
+        return _district_business_types_cache
     try:
         with open('district_businesses.json', 'r') as f:
             types = json.load(f)
     except FileNotFoundError:
         print("[Business] Warning: district_businesses.json not found")
         return {}
-    return {
+    _district_business_types_cache = {
         k: (_augment_district_retail(k, v) if isinstance(v, dict) else v)
         for k, v in types.items()
     }
+    return _district_business_types_cache
 
 
+_mint_business_types_cache = None  # parsed once; JSON config is static at runtime
 def get_mint_business_types():
-    """Load mint business types from mint_businesses.json"""
+    """Load mint business types from mint_businesses.json (cached after first read)."""
+    global _mint_business_types_cache
+    if _mint_business_types_cache is not None:
+        return _mint_business_types_cache
     try:
         with open('mint_businesses.json', 'r') as f:
-            return json.load(f)
+            _mint_business_types_cache = json.load(f)
     except FileNotFoundError:
         print("[Business] Warning: mint_businesses.json not found")
-        return {}
+        _mint_business_types_cache = {}
+    return _mint_business_types_cache
 
 
 # ==========================
