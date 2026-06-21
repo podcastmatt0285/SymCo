@@ -557,6 +557,14 @@ def admin_dashboard(
     except Exception:
         pass
 
+    try:
+        from advisor_ux import _open_ticket_count
+        _open_tix = _open_ticket_count()
+    except Exception:
+        _open_tix = 0
+    _tix_badge = (f' <span style="background:#f59e0b;color:#0b1220;border-radius:8px;padding:0 6px;'
+                  f'font-size:0.7rem;font-weight:700;">{_open_tix}</span>') if _open_tix else ""
+
     body = f"""
     {_flash(msg=success, err=error)}
     <div class="stat-grid">
@@ -582,6 +590,7 @@ def admin_dashboard(
     <div class="link-grid" style="margin-bottom: 12px;">
         <a href="/admin/updates" class="link-card"><div class="lc-icon">📢</div><div class="lc-title">Post Update</div><div class="lc-desc">Updates channel</div></a>
         <a href="/admin/players" class="link-card"><div class="lc-icon">👥</div><div class="lc-title">Players</div><div class="lc-desc">View &amp; edit all</div></a>
+        <a href="/admin/advisor-tickets" class="link-card"><div class="lc-icon">🛟</div><div class="lc-title">Support Tickets{_tix_badge}</div><div class="lc-desc">Player bug reports &amp; questions</div></a>
         <a href="/admin/events" class="link-card"><div class="lc-icon">📅</div><div class="lc-title">Events</div><div class="lc-desc">Manage game events &amp; beta</div></a>
         <a href="/admin/military" class="link-card"><div class="lc-icon">⚔️</div><div class="lc-title">Procurement Events</div><div class="lc-desc">Branch warfare events</div></a>
         <a href="/admin/cities" class="link-card"><div class="lc-icon">🏙️</div><div class="lc-title">Cities &amp; Counties</div><div class="lc-desc">Manage memberships</div></a>
