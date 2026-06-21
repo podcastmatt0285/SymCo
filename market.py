@@ -110,6 +110,7 @@ class Trade(Base):
 # STARTER INVENTORY
 # ==========================
 STARTER_INVENTORY = {
+    "apples": 5,
     "apple_seeds": 15,
     "orange_seeds": 5,
     "water": 5000,
