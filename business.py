@@ -321,6 +321,7 @@ def process_business_tick(db):
 
     import time as _pt
     _pht = {"start": _pt.monotonic()}
+    _produced = 0  # how many businesses actually ran the production path this tick
 
     # Batch-load data needed in every iteration to eliminate N+1 query patterns.
     busy_biz_ids = {s.business_id for s in db.query(BusinessSale.business_id).all()}
@@ -445,6 +446,7 @@ def process_business_tick(db):
             if biz.progress_ticks < cycles:
                 continue
 
+            _produced += 1
             player = _players_by_id.get(biz.owner_id)
 
             # FIXED: For district/special-plot businesses, skip land plot lookup
@@ -850,7 +852,7 @@ def process_business_tick(db):
         _tail  = _end - _pht["loop_done"]
         print(f"[Business tick] {_total:.1f}s — loads {_loads:.2f}s · loop {_loop:.2f}s · "
               f"commit+credits {_tail:.2f}s · businesses={len(active_biz)} · "
-              f"credited_players={len(_pending_credits)}", flush=True)
+              f"produced={_produced} · credited_players={len(_pending_credits)}", flush=True)
 
 def create_business(player_id: int, plot_id: int, business_type_key: str):
     """Create a business on a vacant land plot owned by the player."""
