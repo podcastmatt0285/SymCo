@@ -339,6 +339,15 @@ def process_business_tick(db):
         if _ii.quantity > 0:
             _inv_qty.setdefault(_ii.player_id, {})[_ii.item_type] = _ii.quantity
 
+    # Pre-load every owner's retail prices in ONE query — avoids a per-product
+    # RetailPrice lookup inside the sell loop (an N+1 that scaled with the number of
+    # producing businesses each tick).
+    _retail_prices: dict = {}  # (player_id, item_type) → price
+    for _rp in db.query(RetailPrice).filter(
+        RetailPrice.player_id.in_(list(_all_owner_ids))
+    ).all():
+        _retail_prices[(_rp.player_id, _rp.item_type)] = _rp.price
+
     def _inv_add(pid, itype, qty):
         if qty <= 0:
             return
@@ -543,13 +552,8 @@ def process_business_tick(db):
                             biz_name, f"{_fmt_item(item)} is out of stock — restock to keep selling")
                         continue
 
-                    price_entry = db.query(RetailPrice).filter(
-                        RetailPrice.player_id == player.id,
-                        RetailPrice.item_type == item
-                    ).first()
-
                     mkt_p = _retail_reference_price(item)
-                    current_p = price_entry.price if price_entry else mkt_p
+                    current_p = _retail_prices.get((player.id, item), mkt_p)
 
                     try:
                         eff_elasticity = rule.get("elasticity", 1.0) * _imm_mults.get("elasticity", 1.0)

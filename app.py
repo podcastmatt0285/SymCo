@@ -387,6 +387,7 @@ from starlette.concurrency import run_in_threadpool
 
 TICK_INTERVAL = 5.0  # seconds
 MODULE_TICK_TIMEOUT = 30.0  # circuit breaker: max seconds a single module's tick may take
+_tick_profile = {}  # module name → [total_seconds, call_count, max_seconds] (perf diagnostics)
 current_tick = 0
 tick_start_time = None
 tick_task = None
@@ -463,12 +464,22 @@ async def tick_loop():
                 # Warn if a single module monopolises the tick — early signal of a
                 # freeze before it starves the whole game loop.
                 _elapsed = _time.monotonic() - _t0
+                # Cumulative profile so the worst modules are visible over time, not just
+                # one-off spikes. Printed periodically below.
+                _p = _tick_profile.setdefault(name, [0.0, 0, 0.0])
+                _p[0] += _elapsed; _p[1] += 1; _p[2] = max(_p[2], _elapsed)
                 if _elapsed > 4.0:
                     print(f"[Tick {current_tick}] SLOW module '{name}': {_elapsed:.1f}s")
 
         if current_tick % 60 == 0:
             print(f"[Tick {current_tick}] {now.isoformat()}")
             _save_tick_state(current_tick)
+            # Tick profile: top time-consumers since startup (total · avg · max · calls).
+            _top = sorted(_tick_profile.items(), key=lambda kv: kv[1][0], reverse=True)[:6]
+            if _top:
+                print("[Tick profile] top modules by total time:")
+                for _n, (_tot, _cnt, _mx) in _top:
+                    print(f"    {_n:<22} total {_tot:7.1f}s · avg {_tot/max(_cnt,1):5.2f}s · max {_mx:5.1f}s · {_cnt} calls")
         await asyncio.sleep(TICK_INTERVAL)
 
 # ==========================
