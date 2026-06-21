@@ -1007,6 +1007,15 @@ def get_all_market_prices(item_keys: "list[str] | None" = None) -> "dict[str, fl
 
 _PRICE_STALENESS_DAYS = 30  # trades older than this don't set valuations
 
+# get_market_price is called hundreds of times per tick (per business product, per NPC
+# item) and each call runs 2-4 DB queries on a fresh session — historically the dominant
+# cost of the business/NPC ticks. A few-second memo collapses repeated lookups for the same
+# item into one. Prices are recomputed every few seconds anyway, and order MATCHING reads
+# the live book directly (not this), so a short staleness window is safe.
+_PRICE_CACHE: dict = {}        # item_type -> (monotonic_ts, price)
+_PRICE_CACHE_TTL = 3.0         # seconds
+
+
 def get_market_price(item_type: str) -> Optional[float]:
     """Best available price for an item, adjusted by any active event factor.
 
@@ -1014,6 +1023,11 @@ def get_market_price(item_type: str) -> Optional[float]:
     Trades older than _PRICE_STALENESS_DAYS are ignored so a single ancient
     fat-finger trade can't distort valuations indefinitely.
     """
+    import time as _t
+    _now_m = _t.monotonic()
+    _cached = _PRICE_CACHE.get(item_type)
+    if _cached is not None and (_now_m - _cached[0]) < _PRICE_CACHE_TTL:
+        return _cached[1]
     db = get_db()
     try:
         best_bid = db.query(MarketOrder).filter(
@@ -1078,6 +1092,7 @@ def get_market_price(item_type: str) -> Optional[float]:
                 price = price * _pf
         except Exception:
             pass
+    _PRICE_CACHE[item_type] = (_now_m, price)
     return price
 
 def cancel_order(order_id: int, player_id: int) -> bool:

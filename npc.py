@@ -141,10 +141,35 @@ def _trade_class(market_key: str) -> Type:
     return Trade
 
 
+def _ttl_memo(ttl: float = 3.0):
+    """Tiny per-process TTL cache for the NPC price-reference helpers. These run a
+    90-day aggregate query every call and are invoked per-item for every NPC each tick;
+    memoizing for a few seconds collapses hundreds of identical queries into one without
+    changing behaviour (these are slow-moving valuation references, not the live book)."""
+    import time as _t
+
+    def deco(fn):
+        store: dict = {}
+
+        def wrapper(*args, **kwargs):
+            key = (args, tuple(sorted(kwargs.items())))
+            now = _t.monotonic()
+            hit = store.get(key)
+            if hit is not None and (now - hit[0]) < ttl:
+                return hit[1]
+            val = fn(*args, **kwargs)
+            store[key] = (now, val)
+            return val
+        wrapper.__name__ = getattr(fn, "__name__", "memoized")
+        return wrapper
+    return deco
+
+
 # ===========================
 # ROLLING AVERAGE PRICE
 # ===========================
 
+@_ttl_memo(3.0)
 def _rolling_avg(item_type: str, market_key: str = "regular") -> Optional[float]:
     """
     Return the rolling average price of the last PRICE_ROLLING_WINDOW trades
@@ -183,6 +208,7 @@ def _get_market_price(item_type: str, market_key: str = "regular") -> Optional[f
         return None
 
 
+@_ttl_memo(3.0)
 def _human_anchor(item_type: str, market_key: str = "regular") -> Optional[float]:
     """Average price of recent trades involving at least one HUMAN player
     (buyer_id > 0 or seller_id > 0), last 90 days.
