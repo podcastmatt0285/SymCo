@@ -349,14 +349,15 @@ def _cash_state(cash: float, caps: dict) -> str:
 # SELL ORDER MANAGEMENT
 # ===========================
 
-def _manage_sell_orders(player_id: int, cfg: dict, state: str):
+def _manage_sell_orders(player_id: int, cfg: dict, state: str, inv_qty: dict = None):
     """
     For each item in sell_items:
     1. Evaluate each open order individually; cancel where warranted.
     2. Sum remaining listed quantity after cancellations.
     3. Place a new order only for the delta still needed.
     """
-    import inventory as inv
+    if inv_qty is None:
+        inv_qty = _load_inventory_map(player_id)
 
     markup = _MARKUP[state]
 
@@ -366,7 +367,7 @@ def _manage_sell_orders(player_id: int, cfg: dict, state: str):
             min_keep   = sell_cfg.get("min_inventory_to_keep", 0)
             max_order  = sell_cfg.get("max_order_quantity", 10_000)
 
-            current_inv  = inv.get_item_quantity(player_id, item_type)
+            current_inv  = inv_qty.get(item_type, 0.0)
             want_to_sell = current_inv - min_keep
             if want_to_sell <= 0:
                 continue
@@ -407,25 +408,11 @@ def _manage_sell_orders(player_id: int, cfg: dict, state: str):
                         order.status = OrderStatus.CANCELLED
 
                 db.commit()
-            finally:
-                db.close()
-
-            # --- Step 2: sum remaining listed quantity after cancellations ---
-            db = SessionLocal()
-            try:
-                still_active = (
-                    db.query(MarketOrder)
-                    .filter(
-                        MarketOrder.player_id == player_id,
-                        MarketOrder.order_type == OrderType.SELL,
-                        MarketOrder.item_type  == item_type,
-                        MarketOrder.status.in_([OrderStatus.ACTIVE,
-                                                OrderStatus.PARTIALLY_FILLED]),
-                    )
-                    .all()
-                )
+                # Step 2 (merged): remaining listed qty = the orders we did NOT cancel,
+                # computed in-memory from the rows we already loaded — no second query/session.
                 already_listed = sum(
-                    o.quantity - o.quantity_filled for o in still_active
+                    (o.quantity - o.quantity_filled)
+                    for o in active if o.status != OrderStatus.CANCELLED
                 )
             finally:
                 db.close()
@@ -478,13 +465,14 @@ def _manage_sell_orders(player_id: int, cfg: dict, state: str):
 # BUY ORDER MANAGEMENT
 # ===========================
 
-def _manage_buy_orders(player_id: int, cfg: dict, state: str):
+def _manage_buy_orders(player_id: int, cfg: dict, state: str, inv_qty: dict = None):
     """
     For each item in buy_items:
     1. Cancel open buy orders that are no longer needed or are stale/unaffordable.
     2. Place a new buy order for the delta needed to reach target_inventory.
     """
-    import inventory as inv
+    if inv_qty is None:
+        inv_qty = _load_inventory_map(player_id)
 
     for item_type, buy_cfg in cfg.get("buy_items", {}).items():
         try:
@@ -493,7 +481,7 @@ def _manage_buy_orders(player_id: int, cfg: dict, state: str):
             target_inv = buy_cfg.get("target_inventory", 0)
             max_mult   = buy_cfg.get("max_price_multiplier", 1.10)
 
-            current_inv  = inv.get_item_quantity(player_id, item_type)
+            current_inv  = inv_qty.get(item_type, 0.0)
             market_price = _tame_reference_price(
                 item_type, market_key, _get_market_price(item_type, market_key))
             MarketOrder, OrderType, OrderStatus, _ = _order_classes(market_key)
@@ -614,6 +602,24 @@ def _manage_buy_orders(player_id: int, cfg: dict, state: str):
 # NPC DECISION CYCLE
 # ===========================
 
+def _load_inventory_map(player_id: int) -> dict:
+    """All of an NPC's item quantities in one query → {item_type: qty}. Replaces dozens of
+    per-item get_item_quantity() calls (each its own session/round-trip) per cycle."""
+    try:
+        from inventory import InventoryItem
+        from sqlalchemy import func as _f
+        db = SessionLocal()
+        try:
+            rows = (db.query(InventoryItem.item_type, _f.sum(InventoryItem.quantity))
+                    .filter(InventoryItem.player_id == player_id)
+                    .group_by(InventoryItem.item_type).all())
+            return {it: float(q or 0.0) for it, q in rows}
+        finally:
+            db.close()
+    except Exception:
+        return {}
+
+
 def _run_npc_cycle(player_id: int, cfg: dict):
     """
     Run one full automated decision cycle for a single NPC.
@@ -630,10 +636,14 @@ def _run_npc_cycle(player_id: int, cfg: dict):
         _a = _pt.monotonic()
         cash  = get_spendable_usd(player_id)
         state = _cash_state(cash, cfg["cash_caps"])
+        # Load this NPC's whole inventory in ONE query and reuse it across every sell/buy
+        # item, instead of a per-item get_item_quantity() that opened a fresh DB session
+        # (a round-trip) each time.
+        inv_qty = _load_inventory_map(player_id)
         _b = _pt.monotonic()
-        _manage_sell_orders(player_id, cfg, state)
+        _manage_sell_orders(player_id, cfg, state, inv_qty)
         _c = _pt.monotonic()
-        _manage_buy_orders(player_id, cfg, state)
+        _manage_buy_orders(player_id, cfg, state, inv_qty)
         _d = _pt.monotonic()
         _NPC_PHASE["spendable"] += _b - _a
         _NPC_PHASE["sell"]      += _c - _b
