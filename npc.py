@@ -43,7 +43,12 @@ from database import engine, SessionLocal
 # CONSTANTS
 # ===========================
 
-NPC_TICK_INTERVAL    = 12   # run NPC logic every N game ticks
+# Spread NPC cycles across this many ticks. Each NPC re-quoting ~20 items costs ~1.8s
+# (placing + matching orders — inherent matching-engine work), so the more NPCs that run
+# in the SAME tick, the longer that tick. At 12 it bunched ~8 NPCs/tick (~15s); 48 spreads
+# to ~2/tick (~4s) so the game loop stays responsive. NPCs still re-quote on a steady
+# cadence — they're market-makers of last resort, not HFT. Env-tunable for live tuning.
+NPC_TICK_INTERVAL    = int(os.environ.get("NPC_TICK_INTERVAL", "48"))  # run NPC logic every N game ticks
 PRICE_ROLLING_WINDOW = 20   # number of recent trades for the rolling average
 
 # Sell markup rates by cash state.
