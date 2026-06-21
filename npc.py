@@ -71,6 +71,9 @@ _SELL_CANCEL_ROSE_THRESHOLD = 0.10   # market > listed * 1.10
 _NPC_CONFIGS: dict = {}   # config_key  -> config dict
 _NPC_PLAYERS: dict = {}   # player_id   -> config dict  (populated after seeding)
 
+# Per-tick phase timing (diagnostic): how long the NPC cycle spends in each phase.
+_NPC_PHASE: dict = {"spendable": 0.0, "sell": 0.0, "buy": 0.0, "cycles": 0.0}
+
 # Populated by seed_npcs_background(); read by is_ready() and the status endpoint.
 _seeding_done:     bool = False
 _seeding_progress: int  = 0
@@ -622,11 +625,20 @@ def _run_npc_cycle(player_id: int, cfg: dict):
         # USD balance drains to ~0. get_spendable_usd expresses tender + USD holdings
         # in USD terms, so cash-state stays accurate after a currency mandate. For
         # USD-tender NPCs this returns exactly the USD balance — no behavior change.
+        import time as _pt
         from reserve_banks import get_spendable_usd
+        _a = _pt.monotonic()
         cash  = get_spendable_usd(player_id)
         state = _cash_state(cash, cfg["cash_caps"])
+        _b = _pt.monotonic()
         _manage_sell_orders(player_id, cfg, state)
+        _c = _pt.monotonic()
         _manage_buy_orders(player_id, cfg, state)
+        _d = _pt.monotonic()
+        _NPC_PHASE["spendable"] += _b - _a
+        _NPC_PHASE["sell"]      += _c - _b
+        _NPC_PHASE["buy"]       += _d - _c
+        _NPC_PHASE["cycles"]    += 1
     except Exception as e:
         import traceback
         print(f"[NPC] Cycle error for {cfg.get('business_name', player_id)}: {e}")
@@ -1369,9 +1381,19 @@ def tick(current_tick: int, now: datetime):
         return
     interval = max(1, NPC_TICK_INTERVAL)
     slot = current_tick % interval
+    import time as _pt
+    for k in _NPC_PHASE:
+        _NPC_PHASE[k] = 0.0
+    _t0 = _pt.monotonic()
     for idx in range(slot, n, interval):
         player_id = npc_ids[idx]
         _run_npc_cycle(player_id, _NPC_PLAYERS[player_id])
+    _total = _pt.monotonic() - _t0
+    if _total > 2.0:
+        c = max(1, int(_NPC_PHASE["cycles"]))
+        print(f"[NPC tick] {_total:.1f}s over {int(_NPC_PHASE['cycles'])} NPCs "
+              f"({_total/c:.2f}s each) — spendable {_NPC_PHASE['spendable']:.2f}s · "
+              f"sell {_NPC_PHASE['sell']:.2f}s · buy {_NPC_PHASE['buy']:.2f}s", flush=True)
 
 
 __all__ = ["initialize", "seed_npcs_background", "is_ready", "seeding_status", "tick"]
