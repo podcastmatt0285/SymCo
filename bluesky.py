@@ -284,7 +284,7 @@ def verify_app_password(handle: str, app_password: str) -> Optional[dict]:
         return None
 
 
-def fetch_profile(actor: str) -> Optional[dict]:
+def fetch_profile(actor: str, timeout: float = HTTP_TIMEOUT) -> Optional[dict]:
     """Fetch public profile (handle, displayName, avatar URL) for a did or handle."""
     if not actor:
         return None
@@ -292,7 +292,7 @@ def fetch_profile(actor: str) -> Optional[dict]:
         resp = requests.get(
             f"{BSKY_PUBLIC}/xrpc/app.bsky.actor.getProfile",
             params={"actor": actor},
-            timeout=HTTP_TIMEOUT,
+            timeout=timeout,
         )
         if resp.status_code != 200:
             return None
@@ -428,9 +428,20 @@ def bluesky_unlink(session_token: Optional[str] = Cookie(None)):
 def tick(current_tick: int, now: datetime):
     """Periodically refresh handle + avatar URL for linked accounts (handles are mutable
     and hotlinked CDN URLs can rotate; the did is the stable key). Slow cadence + small
-    batch keeps external HTTP out of the request hot path. ~hourly at the 5s tick."""
+    batch keeps external HTTP out of the request hot path. ~hourly at the 5s tick.
+
+    The actual network work runs in a DETACHED daemon thread so the main game tick loop is
+    never blocked by outbound HTTP — previously, up to 10 sequential getProfile calls at a
+    10s timeout could freeze the tick loop for ~45-100s when bsky egress was slow/blocked,
+    which showed up as a 'SLOW module' and stalled the whole game."""
     if current_tick % 720 != 0:
         return
+    import threading
+    threading.Thread(target=_refresh_linked_accounts, args=(now,), daemon=True).start()
+
+
+def _refresh_linked_accounts(now: datetime):
+    """Background batch refresh of stale linked accounts. Runs off the tick loop."""
     from auth import get_db
     from sqlalchemy import text
     cutoff = now - AVATAR_REFRESH_AFTER
@@ -438,10 +449,11 @@ def tick(current_tick: int, now: datetime):
     try:
         rows = db.execute(text(
             "SELECT player_id, did FROM bluesky_links "
-            "WHERE refreshed_at IS NULL OR refreshed_at < :cutoff LIMIT 10"
+            "WHERE refreshed_at IS NULL OR refreshed_at < :cutoff LIMIT 5"
         ), {"cutoff": cutoff}).mappings().all()
         for r in rows:
-            profile = fetch_profile(r["did"])
+            # Short per-call timeout so a slow/blocked endpoint can't drag the batch out.
+            profile = fetch_profile(r["did"], timeout=4)
             if profile and profile.get("handle"):
                 db.execute(text(
                     "UPDATE bluesky_links SET handle = :h, avatar_url = :a, banner_url = :b, "

@@ -386,6 +386,7 @@ from starlette.concurrency import run_in_threadpool
 # ==========================
 
 TICK_INTERVAL = 5.0  # seconds
+MODULE_TICK_TIMEOUT = 30.0  # circuit breaker: max seconds a single module's tick may take
 current_tick = 0
 tick_start_time = None
 tick_task = None
@@ -445,10 +446,18 @@ async def tick_loop():
                 _t0 = _time.monotonic()
                 try:
                     tick_fn = module.tick
+                    # Circuit breaker: never let one module freeze the whole game loop
+                    # (e.g. a tick blocking on slow/hung network or a huge query). On
+                    # timeout we log and move on; a sync tick's worker thread finishes on
+                    # its own. Heavy/network work should run off the loop anyway.
                     if asyncio.iscoroutinefunction(tick_fn):
-                        await tick_fn(current_tick, now)
+                        await asyncio.wait_for(tick_fn(current_tick, now),
+                                               timeout=MODULE_TICK_TIMEOUT)
                     else:
-                        await run_in_threadpool(tick_fn, current_tick, now)
+                        await asyncio.wait_for(run_in_threadpool(tick_fn, current_tick, now),
+                                               timeout=MODULE_TICK_TIMEOUT)
+                except asyncio.TimeoutError:
+                    print(f"[Tick {current_tick}] TIMEOUT module '{name}' (>{MODULE_TICK_TIMEOUT:.0f}s) — skipped, loop continues")
                 except Exception as e:
                     print(f"[Tick {current_tick}] ERROR in {name}: {e}")
                 # Warn if a single module monopolises the tick — early signal of a
