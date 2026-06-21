@@ -439,6 +439,7 @@ async def tick_loop():
     """Global tick loop executing every second."""
     global current_tick
     import time as _time
+    _last_profile = _time.monotonic()
     while True:
         current_tick += 1
         now = datetime.utcnow()
@@ -458,9 +459,9 @@ async def tick_loop():
                         await asyncio.wait_for(run_in_threadpool(tick_fn, current_tick, now),
                                                timeout=MODULE_TICK_TIMEOUT)
                 except asyncio.TimeoutError:
-                    print(f"[Tick {current_tick}] TIMEOUT module '{name}' (>{MODULE_TICK_TIMEOUT:.0f}s) — skipped, loop continues")
+                    print(f"[Tick {current_tick}] TIMEOUT module '{name}' (>{MODULE_TICK_TIMEOUT:.0f}s) — skipped, loop continues", flush=True)
                 except Exception as e:
-                    print(f"[Tick {current_tick}] ERROR in {name}: {e}")
+                    print(f"[Tick {current_tick}] ERROR in {name}: {e}", flush=True)
                 # Warn if a single module monopolises the tick — early signal of a
                 # freeze before it starves the whole game loop.
                 _elapsed = _time.monotonic() - _t0
@@ -469,17 +470,23 @@ async def tick_loop():
                 _p = _tick_profile.setdefault(name, [0.0, 0, 0.0])
                 _p[0] += _elapsed; _p[1] += 1; _p[2] = max(_p[2], _elapsed)
                 if _elapsed > 4.0:
-                    print(f"[Tick {current_tick}] SLOW module '{name}': {_elapsed:.1f}s")
+                    print(f"[Tick {current_tick}] SLOW module '{name}': {_elapsed:.1f}s", flush=True)
 
         if current_tick % 60 == 0:
-            print(f"[Tick {current_tick}] {now.isoformat()}")
+            print(f"[Tick {current_tick}] {now.isoformat()}", flush=True)
             _save_tick_state(current_tick)
-            # Tick profile: top time-consumers since startup (total · avg · max · calls).
-            _top = sorted(_tick_profile.items(), key=lambda kv: kv[1][0], reverse=True)[:6]
+
+        # Tick profile on a WALL-CLOCK cadence (every ~60s of real time) so it appears even
+        # when ticks are slow — and flushed so output buffering can't swallow it. Window
+        # resets each print, so the numbers reflect the LAST ~60s, not since boot.
+        if _time.monotonic() - _last_profile >= 60.0:
+            _last_profile = _time.monotonic()
+            _top = sorted(_tick_profile.items(), key=lambda kv: kv[1][0], reverse=True)[:8]
             if _top:
-                print("[Tick profile] top modules by total time:")
+                print(f"[Tick profile] last ~60s — top modules by total time (tick {current_tick}):", flush=True)
                 for _n, (_tot, _cnt, _mx) in _top:
-                    print(f"    {_n:<22} total {_tot:7.1f}s · avg {_tot/max(_cnt,1):5.2f}s · max {_mx:5.1f}s · {_cnt} calls")
+                    print(f"    {_n:<22} total {_tot:7.1f}s · avg {_tot/max(_cnt,1):6.2f}s · max {_mx:6.1f}s · {_cnt} calls", flush=True)
+            _tick_profile.clear()
         await asyncio.sleep(TICK_INTERVAL)
 
 # ==========================
