@@ -319,6 +319,9 @@ def process_business_tick(db):
     except Exception:
         _crisis_factors = {}
 
+    import time as _pt
+    _pht = {"start": _pt.monotonic()}
+
     # Batch-load data needed in every iteration to eliminate N+1 query patterns.
     busy_biz_ids = {s.business_id for s in db.query(BusinessSale.business_id).all()}
     _city_buffs_cache: dict = {}  # owner_id → buffs dict, populated lazily per owner
@@ -396,6 +399,7 @@ def process_business_tick(db):
     # Accumulate revenue credits per player — flush in batch after the loop.
     _pending_credits: dict = {}  # player_id → total founder_credit
 
+    _pht["loads_done"] = _pt.monotonic()
     for biz in active_biz:
         try:
             if biz.id in busy_biz_ids:
@@ -799,6 +803,7 @@ def process_business_tick(db):
             print(f"[Business] tick error for biz {getattr(biz, 'id', '?')} "
                   f"({getattr(biz, 'business_type', '?')}): {_biz_tick_e}")
 
+    _pht["loop_done"] = _pt.monotonic()
     # Persist any progress_ticks and inventory increments not yet committed.
     try:
         db.commit()
@@ -835,6 +840,17 @@ def process_business_tick(db):
                 _brok_db.close()
             except Exception:
                 pass
+
+    # Phase breakdown (only when the tick is slow) so we can see where time goes.
+    _end = _pt.monotonic()
+    _total = _end - _pht["start"]
+    if _total > 2.0:
+        _loads = _pht["loads_done"] - _pht["start"]
+        _loop  = _pht["loop_done"] - _pht["loads_done"]
+        _tail  = _end - _pht["loop_done"]
+        print(f"[Business tick] {_total:.1f}s — loads {_loads:.2f}s · loop {_loop:.2f}s · "
+              f"commit+credits {_tail:.2f}s · businesses={len(active_biz)} · "
+              f"credited_players={len(_pending_credits)}", flush=True)
 
 def create_business(player_id: int, plot_id: int, business_type_key: str):
     """Create a business on a vacant land plot owned by the player."""
