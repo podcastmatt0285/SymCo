@@ -469,7 +469,8 @@ def _manage_sell_orders(player_id: int, cfg: dict, state: str, inv_qty: dict = N
 # BUY ORDER MANAGEMENT
 # ===========================
 
-def _manage_buy_orders(player_id: int, cfg: dict, state: str, inv_qty: dict = None):
+def _manage_buy_orders(player_id: int, cfg: dict, state: str, inv_qty: dict = None,
+                       orders_map: dict = None):
     """
     For each item in buy_items:
     1. Cancel open buy orders that are no longer needed or are stale/unaffordable.
