@@ -291,8 +291,20 @@ def _ensure_rate_limit_table() -> None:
         print(f"[Push] Could not create push_rate_limit table: {e}")
 
 
+# In-process mirror of push_rate_limit.last_sent. The hot caller (the business tick) checks
+# rate limits hundreds of times per tick for starved businesses; each check used to be an
+# engine.connect() + SELECT (a DB round-trip), which dominated the tick. Cooldowns are long
+# (hours) and the value only changes on mark(), so a memory cache serves the steady state
+# with zero DB hits. Single-process app, so the cache is authoritative alongside the DB.
+_rate_cache: dict = {}   # key -> last_sent (epoch seconds)
+
+
 def push_rate_ok(key: str, cooldown_secs: float) -> bool:
     """Return True if the notification identified by key is allowed (cooldown elapsed)."""
+    now = _time.time()
+    cached = _rate_cache.get(key)
+    if cached is not None:
+        return (now - cached) >= cooldown_secs
     try:
         from database import engine
         from sqlalchemy import text
@@ -302,14 +314,16 @@ def push_rate_ok(key: str, cooldown_secs: float) -> bool:
                 {"k": key}
             ).fetchone()
         if row is None:
-            return True
-        return (_time.time() - row[0]) >= cooldown_secs
+            return True   # never sent (don't cache "absent" — mark() will populate it)
+        _rate_cache[key] = row[0]
+        return (now - row[0]) >= cooldown_secs
     except Exception:
         return True  # fail open — better to over-notify than silently drop
 
 
 def push_rate_mark(key: str) -> None:
     """Record that a notification with key was just sent."""
+    _rate_cache[key] = _time.time()   # update memory first so subsequent checks skip the DB
     try:
         from database import engine
         from sqlalchemy import text
@@ -317,7 +331,7 @@ def push_rate_mark(key: str) -> None:
             c.execute(text(
                 "INSERT INTO push_rate_limit (key, last_sent) VALUES (:k, :t) "
                 "ON CONFLICT (key) DO UPDATE SET last_sent = EXCLUDED.last_sent"
-            ), {"k": key, "t": _time.time()})
+            ), {"k": key, "t": _rate_cache[key]})
             c.commit()
     except Exception as e:
         print(f"[Push] Could not write rate limit for {key!r}: {e}")
