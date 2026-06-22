@@ -438,7 +438,9 @@ def process_business_tick(db):
             try:
                 from city_projects import get_city_production_buffs as _gcpb
                 if biz.owner_id not in _city_buffs_cache:
+                    _tb = _pt.monotonic()
                     _city_buffs_cache[biz.owner_id] = _gcpb(biz.owner_id)
+                    _pht["buffs"] = _pht.get("buffs", 0.0) + (_pt.monotonic() - _tb)
                 _cs_mult = _city_buffs_cache[biz.owner_id].get("cycle_speed_multiplier", 1.0)
                 cycles = max(1, int(cycles * _cs_mult))
             except Exception:
@@ -523,7 +525,10 @@ def process_business_tick(db):
                 # NPCs always assumed to have funds — skip the per-business DB check.
                 if player.id > 0:
                     from reserve_banks import can_afford_usd
-                    if not can_afford_usd(player.id, wage_cost):
+                    _ta = _pt.monotonic()
+                    _afford = can_afford_usd(player.id, wage_cost)
+                    _pht["afford"] = _pht.get("afford", 0.0) + (_pt.monotonic() - _ta)
+                    if not _afford:
                         biz_name = config.get("name", biz.business_type)
                         _fire_business_push(player.id, biz.id, "wages",
                             biz_name, f"Can't afford wages — ${wage_cost:,.0f} needed to keep running")
@@ -717,6 +722,7 @@ def process_business_tick(db):
                 if production_lines and lines_successfully_produced > 0 and player.id > 0:
                     try:
                         from cities import pay_production_subsidy
+                        _ts = _pt.monotonic()
                         production_cost = 0.0
                         for line in production_lines:
                             for req in line.get("inputs", []):
@@ -724,6 +730,7 @@ def process_business_tick(db):
                                 production_cost += item_price * req["quantity"]
 
                         subsidy = pay_production_subsidy(player.id, biz.id, production_cost)
+                        _pht["subsidy"] = _pht.get("subsidy", 0.0) + (_pt.monotonic() - _ts)
                         if subsidy > 0:
                             print(f"[Business] City subsidy: ${subsidy:.2f} to player {player.id}")
                             total_revenue += subsidy
@@ -859,8 +866,13 @@ def process_business_tick(db):
         _loads = _pht["loads_done"] - _pht["start"]
         _loop  = _pht["loop_done"] - _pht["loads_done"]
         _tail  = _end - _pht["loop_done"]
-        print(f"[Business tick] {_total:.1f}s — loads {_loads:.2f}s · loop {_loop:.2f}s · "
-              f"commit+credits {_tail:.2f}s · businesses={len(active_biz)} · "
+        _afford_t = _pht.get("afford", 0.0)
+        _buffs_t  = _pht.get("buffs", 0.0)
+        _subsidy_t = _pht.get("subsidy", 0.0)
+        _rest = _loop - _afford_t - _buffs_t - _subsidy_t
+        print(f"[Business tick] {_total:.1f}s — loads {_loads:.2f}s · loop {_loop:.2f}s "
+              f"(afford {_afford_t:.2f} · buffs {_buffs_t:.2f} · subsidy {_subsidy_t:.2f} · "
+              f"rest {_rest:.2f}) · commit+credits {_tail:.2f}s · businesses={len(active_biz)} · "
               f"produced={_produced} · credited_players={len(_pending_credits)}", flush=True)
 
 def create_business(player_id: int, plot_id: int, business_type_key: str):
