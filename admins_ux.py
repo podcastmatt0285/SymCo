@@ -5962,6 +5962,44 @@ def admin_events(session_token: Optional[str] = Cookie(None),
     {crisis_quick_form}
     {boom_quick_form}
     {tender_rush_form}
+    <div class="card" style="margin-bottom:18px;border:2px solid #b91c1c;background:#0b0202;">
+      <div style="font-size:0.9rem;color:#fca5a5;font-weight:800;margin-bottom:4px;">🔴 Marketplace Shutdown (Pandemic)</div>
+      <p style="font-size:0.74rem;color:#7c3a3a;margin:0 0 12px;line-height:1.45;">
+        Closes the commodity <strong>and</strong> district markets: cancels every open order and
+        blocks all new orders — for players <strong>and NPCs</strong> — until you stop the event.
+        Production and inventory continue; only trading halts. Use this button so the
+        <code>market_shutdown</code> flag is always set correctly (a hand-typed event without it
+        will NOT block trading). Stop it any time from the events list to reopen markets.
+      </p>
+      <form method="post" action="/admin/events/create">
+        <input type="hidden" name="event_type" value="market">
+        <input type="hidden" name="duration_class" value="daily">
+        <input type="hidden" name="task_metric" value="">
+        <input type="hidden" name="task_target" value="0">
+        <input type="hidden" name="trophy_reward" value="0">
+        <input type="hidden" name="effect_data" value='{{"market_shutdown": true}}'>
+        <input type="hidden" name="activate_now" value="1">
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:10px;">
+          <div>
+            <div style="font-size:0.68rem;color:#7c3a3a;margin-bottom:3px;">Event Title</div>
+            <input type="text" name="title" value="Pandemic — Markets Closed"
+                   style="{_inp}" placeholder="Event title">
+          </div>
+          <div>
+            <div style="font-size:0.68rem;color:#7c3a3a;margin-bottom:3px;">Description (optional)</div>
+            <input type="text" name="description"
+                   value="A public health emergency has closed all markets. Trading is suspended until the emergency lifts."
+                   style="{_inp}">
+          </div>
+        </div>
+        <button type="submit"
+                onclick="return confirm('Close ALL markets now? This cancels every open order and blocks new ones (players and NPCs) until you stop the event.')"
+                style="background:#7f1d1d;color:#fca5a5;border:1px solid #dc2626;border-radius:4px;
+                       padding:7px 18px;font-size:0.8rem;font-weight:700;cursor:pointer;">
+          🔴 Shut Down Markets Now
+        </button>
+      </form>
+    </div>
     <div class="card" style="margin-bottom:18px;border:2px solid #7f1d1d;background:#0b0202;">
       <div style="font-size:0.9rem;color:#fca5a5;font-weight:800;margin-bottom:4px;">🌍 Foreign Land Sale (Emergency Reset)</div>
       <p style="font-size:0.74rem;color:#7c3a3a;margin:0 0 12px;line-height:1.45;">
@@ -6544,6 +6582,15 @@ def admin_event_create(
         if is_active:
             from events import invalidate_effects_cache as _inv_cache
             _inv_cache()
+            # If this newly-activated event is a market shutdown, cancel all open orders now
+            # (mirrors the /admin/events/start path) so create+activate also clears the book.
+            try:
+                if _json.loads(ed_str).get("market_shutdown"):
+                    from events import cancel_all_open_market_orders
+                    _n = cancel_all_open_market_orders()
+                    print(f"[Admin] Marketplace Shutdown (create+activate): {_n} orders cancelled")
+            except Exception as _se:
+                print(f"[Admin] shutdown cancel-on-create error: {_se}")
             if start > now:
                 schedule_event_notifications(ev)
                 broadcast_event_push(ev.id, f"📅 Upcoming: {ev.title}",
