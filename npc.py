@@ -354,7 +354,8 @@ def _cash_state(cash: float, caps: dict) -> str:
 # SELL ORDER MANAGEMENT
 # ===========================
 
-def _manage_sell_orders(player_id: int, cfg: dict, state: str, inv_qty: dict = None):
+def _manage_sell_orders(player_id: int, cfg: dict, state: str, inv_qty: dict = None,
+                        orders_map: dict = None):
     """
     For each item in sell_items:
     1. Evaluate each open order individually; cancel where warranted.
@@ -363,6 +364,8 @@ def _manage_sell_orders(player_id: int, cfg: dict, state: str, inv_qty: dict = N
     """
     if inv_qty is None:
         inv_qty = _load_inventory_map(player_id)
+    if orders_map is None:
+        orders_map = _load_orders_map(player_id, _collect_market_keys(cfg))
 
     markup = _MARKUP[state]
 
@@ -379,48 +382,44 @@ def _manage_sell_orders(player_id: int, cfg: dict, state: str, inv_qty: dict = N
 
             market_price = _tame_reference_price(
                 item_type, market_key, _get_market_price(item_type, market_key))
-            MarketOrder, OrderType, OrderStatus, _ = _order_classes(market_key)
 
-            # --- Step 1: evaluate existing orders, cancel where warranted ---
-            db = SessionLocal()
-            try:
-                active = (
-                    db.query(MarketOrder)
-                    .filter(
-                        MarketOrder.player_id == player_id,
-                        MarketOrder.order_type == OrderType.SELL,
-                        MarketOrder.item_type  == item_type,
-                        MarketOrder.status.in_([OrderStatus.ACTIVE,
-                                                OrderStatus.PARTIALLY_FILLED]),
-                    )
-                    .all()
-                )
+            # --- Step 1: evaluate existing orders (pre-loaded snapshots), cancel where warranted ---
+            existing = orders_map.get(market_key, {}).get(("SELL", item_type), [])
+            to_cancel = []
+            for o in existing:
+                cancel = False
+                if market_price and o["price"]:
+                    # Market rose >10% above our listing — relist higher
+                    if market_price > o["price"] * (1 + _SELL_CANCEL_ROSE_THRESHOLD):
+                        cancel = True
+                        print(f"[NPC] Cancel sell #{o['id']} {item_type}: "
+                              f"market ${market_price:.4f} > listed ${o['price']:.4f} +10%")
+                    # Hard-low emergency: cancel and relist at bare market price
+                    elif state == "hard_low" and o["price"] > market_price * 1.005:
+                        cancel = True
+                        print(f"[NPC] Cancel sell #{o['id']} {item_type}: "
+                              f"hard_low emergency, relisting at market")
+                if cancel:
+                    to_cancel.append(o["id"])
 
-                for order in active:
-                    cancel = False
-                    if market_price and order.price:
-                        # Market rose >10% above our listing — relist higher
-                        if market_price > order.price * (1 + _SELL_CANCEL_ROSE_THRESHOLD):
-                            cancel = True
-                            print(f"[NPC] Cancel sell #{order.id} {item_type}: "
-                                  f"market ${market_price:.4f} > listed ${order.price:.4f} +10%")
-                        # Hard-low emergency: cancel and relist at bare market price
-                        elif state == "hard_low" and order.price > market_price * 1.005:
-                            cancel = True
-                            print(f"[NPC] Cancel sell #{order.id} {item_type}: "
-                                  f"hard_low emergency, relisting at market")
-                    if cancel:
-                        order.status = OrderStatus.CANCELLED
+            # Only touch the DB when there is actually something to cancel (rare path).
+            if to_cancel:
+                MarketOrder, _, OrderStatus, _ = _order_classes(market_key)
+                db = SessionLocal()
+                try:
+                    db.query(MarketOrder).filter(MarketOrder.id.in_(to_cancel)).update(
+                        {MarketOrder.status: OrderStatus.CANCELLED},
+                        synchronize_session=False)
+                    db.commit()
+                finally:
+                    db.close()
 
-                db.commit()
-                # Step 2 (merged): remaining listed qty = the orders we did NOT cancel,
-                # computed in-memory from the rows we already loaded — no second query/session.
-                already_listed = sum(
-                    (o.quantity - o.quantity_filled)
-                    for o in active if o.status != OrderStatus.CANCELLED
-                )
-            finally:
-                db.close()
+            # Step 2: remaining listed qty = open orders we did NOT cancel, in-memory.
+            cancel_set = set(to_cancel)
+            already_listed = sum(
+                (o["quantity"] - o["quantity_filled"])
+                for o in existing if o["id"] not in cancel_set
+            )
 
             need_to_list = want_to_sell - already_listed
             if need_to_list <= 0:
@@ -478,6 +477,8 @@ def _manage_buy_orders(player_id: int, cfg: dict, state: str, inv_qty: dict = No
     """
     if inv_qty is None:
         inv_qty = _load_inventory_map(player_id)
+    if orders_map is None:
+        orders_map = _load_orders_map(player_id, _collect_market_keys(cfg))
 
     for item_type, buy_cfg in cfg.get("buy_items", {}).items():
         try:
@@ -489,53 +490,48 @@ def _manage_buy_orders(player_id: int, cfg: dict, state: str, inv_qty: dict = No
             current_inv  = inv_qty.get(item_type, 0.0)
             market_price = _tame_reference_price(
                 item_type, market_key, _get_market_price(item_type, market_key))
-            MarketOrder, OrderType, OrderStatus, _ = _order_classes(market_key)
 
-            # --- Step 1: evaluate and cancel stale buy orders ---
-            db = SessionLocal()
-            try:
-                active = (
-                    db.query(MarketOrder)
-                    .filter(
-                        MarketOrder.player_id == player_id,
-                        MarketOrder.order_type == OrderType.BUY,
-                        MarketOrder.item_type  == item_type,
-                        MarketOrder.status.in_([OrderStatus.ACTIVE,
-                                                OrderStatus.PARTIALLY_FILLED]),
-                    )
-                    .all()
-                )
+            # --- Step 1: evaluate stale buy orders (pre-loaded snapshots), cancel where warranted ---
+            existing = orders_map.get(market_key, {}).get(("BUY", item_type), [])
+            to_cancel = []
+            for o in existing:
+                cancel = False
+                # Inventory target already met — no longer need more
+                if current_inv >= target_inv:
+                    cancel = True
+                    print(f"[NPC] Cancel buy #{o['id']} {item_type}: "
+                          f"inventory target met ({current_inv:.0f}/{target_inv})")
+                # Cash emergency: stop all spending
+                elif state == "hard_low":
+                    cancel = True
+                    print(f"[NPC] Cancel buy #{o['id']} {item_type}: hard_low cash")
+                # Bid is now >30% below market — will never fill
+                elif (market_price and o["price"]
+                      and o["price"] < market_price * 0.70):
+                    cancel = True
+                    print(f"[NPC] Cancel buy #{o['id']} {item_type}: "
+                          f"stale bid ${o['price']:.4f} vs market ${market_price:.4f}")
+                if cancel:
+                    to_cancel.append(o["id"])
 
-                for order in active:
-                    cancel = False
-                    # Inventory target already met — no longer need more
-                    if current_inv >= target_inv:
-                        cancel = True
-                        print(f"[NPC] Cancel buy #{order.id} {item_type}: "
-                              f"inventory target met ({current_inv:.0f}/{target_inv})")
-                    # Cash emergency: stop all spending
-                    elif state == "hard_low":
-                        cancel = True
-                        print(f"[NPC] Cancel buy #{order.id} {item_type}: hard_low cash")
-                    # Bid is now >30% below market — will never fill
-                    elif (market_price and order.price
-                          and order.price < market_price * 0.70):
-                        cancel = True
-                        print(f"[NPC] Cancel buy #{order.id} {item_type}: "
-                              f"stale bid ${order.price:.4f} vs market ${market_price:.4f}")
-                    if cancel:
-                        order.status = OrderStatus.CANCELLED
+            # Only touch the DB when there is actually something to cancel (rare path).
+            if to_cancel:
+                MarketOrder, _, OrderStatus, _ = _order_classes(market_key)
+                db = SessionLocal()
+                try:
+                    db.query(MarketOrder).filter(MarketOrder.id.in_(to_cancel)).update(
+                        {MarketOrder.status: OrderStatus.CANCELLED},
+                        synchronize_session=False)
+                    db.commit()
+                finally:
+                    db.close()
 
-                db.commit()
-                # Step 3 (merged): remaining ordered qty = the buy orders we did NOT
-                # cancel, computed in-memory from the rows already loaded in Step 1 —
-                # no second session/query. Mirrors _manage_sell_orders' already_listed.
-                already_ordered = sum(
-                    (o.quantity - o.quantity_filled)
-                    for o in active if o.status != OrderStatus.CANCELLED
-                )
-            finally:
-                db.close()
+            # Step 3 prep: remaining ordered qty = open orders we did NOT cancel, in-memory.
+            cancel_set = set(to_cancel)
+            already_ordered = sum(
+                (o["quantity"] - o["quantity_filled"])
+                for o in existing if o["id"] not in cancel_set
+            )
 
             # --- Step 2: decide whether to buy at all ---
             if state == "hard_low":
@@ -615,6 +611,57 @@ def _load_inventory_map(player_id: int) -> dict:
         return {}
 
 
+def _load_orders_map(player_id: int, market_keys) -> dict:
+    """All of an NPC's open (ACTIVE / PARTIALLY_FILLED) orders, loaded with ONE query
+    per distinct market table per cycle instead of a fresh SessionLocal()+query for every
+    sell/buy item. Mirrors _load_inventory_map for the order book.
+
+    Returns {market_key: {("SELL"|"BUY", item_type): [snapshot, ...]}} where each snapshot
+    is a plain dict {id, quantity, quantity_filled, price} — detached read-only data, so the
+    session can close immediately. Only ACTIVE/PARTIALLY_FILLED rows are loaded, so every
+    snapshot is by definition still-open (no status field needed)."""
+    out: dict = {}
+    for market_key in market_keys:
+        per_market: dict = {}
+        try:
+            MarketOrder, OrderType, OrderStatus, _ = _order_classes(market_key)
+            db = SessionLocal()
+            try:
+                rows = (
+                    db.query(
+                        MarketOrder.id, MarketOrder.order_type, MarketOrder.item_type,
+                        MarketOrder.quantity, MarketOrder.quantity_filled, MarketOrder.price,
+                    )
+                    .filter(
+                        MarketOrder.player_id == player_id,
+                        MarketOrder.status.in_([OrderStatus.ACTIVE,
+                                                OrderStatus.PARTIALLY_FILLED]),
+                    )
+                    .all()
+                )
+            finally:
+                db.close()
+            for oid, otype, item, qty, qfilled, price in rows:
+                side = "SELL" if otype == OrderType.SELL else "BUY"
+                per_market.setdefault((side, item), []).append({
+                    "id": oid, "quantity": qty,
+                    "quantity_filled": qfilled, "price": price,
+                })
+        except Exception:
+            per_market = {}
+        out[market_key] = per_market
+    return out
+
+
+def _collect_market_keys(cfg: dict) -> set:
+    """Distinct market tables ('regular'/'district') referenced by an NPC's sell/buy items."""
+    keys = set()
+    for section in ("sell_items", "buy_items"):
+        for item_cfg in cfg.get(section, {}).values():
+            keys.add(item_cfg.get("market", "regular"))
+    return keys
+
+
 def _run_npc_cycle(player_id: int, cfg: dict):
     """
     Run one full automated decision cycle for a single NPC.
@@ -635,10 +682,13 @@ def _run_npc_cycle(player_id: int, cfg: dict):
         # item, instead of a per-item get_item_quantity() that opened a fresh DB session
         # (a round-trip) each time.
         inv_qty = _load_inventory_map(player_id)
+        # Load the whole order book for this NPC in one query per market table, reused
+        # across every sell/buy item — replaces a per-item SessionLocal()+query each cycle.
+        orders_map = _load_orders_map(player_id, _collect_market_keys(cfg))
         _b = _pt.monotonic()
-        _manage_sell_orders(player_id, cfg, state, inv_qty)
+        _manage_sell_orders(player_id, cfg, state, inv_qty, orders_map)
         _c = _pt.monotonic()
-        _manage_buy_orders(player_id, cfg, state, inv_qty)
+        _manage_buy_orders(player_id, cfg, state, inv_qty, orders_map)
         _d = _pt.monotonic()
         _NPC_PHASE["spendable"] += _b - _a
         _NPC_PHASE["sell"]      += _c - _b
