@@ -303,6 +303,28 @@ def get_dismantling_status(business_id: int):
 # ==========================
 # FIXED process_business_tick FUNCTION
 # ==========================
+def _binomial_count(n, p: float) -> int:
+    """Number of successes in n independent Bernoulli(p) trials — i.e. how many of `n`
+    units sell at per-unit probability `p`. Mathematically a binomial draw.
+
+    The old code did `sum(1 for _ in range(int(qty)) if random.random() < p)`, an O(n)
+    Python loop that ran the FULL inventory count every tick — retailing a large stockpile
+    (inventories reach hundreds of thousands) cost millions of random() calls per product.
+    This keeps the exact loop for small n and uses a normal approximation for large n so
+    the result is statistically equivalent at O(1)."""
+    n = int(n)
+    if n <= 0 or p <= 0.0:
+        return 0
+    if p >= 1.0:
+        return n
+    if n <= 2000:
+        return sum(1 for _ in range(n) if random.random() < p)
+    import math
+    mean = n * p
+    sd = math.sqrt(n * p * (1.0 - p))
+    return max(0, min(n, int(round(random.gauss(mean, sd)))))
+
+
 def process_business_tick(db):
     from inventory import InventoryItem
     from land import LandPlot
@@ -582,7 +604,7 @@ def process_business_tick(db):
                         print(f"[Business] Skipping retail item {item} for biz {biz.id}: {e}")
                         continue
 
-                    sold = sum(1 for _ in range(int(qty)) if random.random() < chance)
+                    sold = _binomial_count(qty, chance)
                     if sold > 0:
                         _inv_remove(player.id, item, sold)
                         total_revenue += sold * current_p
