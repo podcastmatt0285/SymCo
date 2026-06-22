@@ -527,6 +527,13 @@ def _manage_buy_orders(player_id: int, cfg: dict, state: str, inv_qty: dict = No
                         order.status = OrderStatus.CANCELLED
 
                 db.commit()
+                # Step 3 (merged): remaining ordered qty = the buy orders we did NOT
+                # cancel, computed in-memory from the rows already loaded in Step 1 —
+                # no second session/query. Mirrors _manage_sell_orders' already_listed.
+                already_ordered = sum(
+                    (o.quantity - o.quantity_filled)
+                    for o in active if o.status != OrderStatus.CANCELLED
+                )
             finally:
                 db.close()
 
@@ -546,23 +553,6 @@ def _manage_buy_orders(player_id: int, cfg: dict, state: str, inv_qty: dict = No
                 continue   # no price reference — can't bid
 
             # --- Step 3: calculate order delta ---
-            db = SessionLocal()
-            try:
-                pending = (
-                    db.query(MarketOrder)
-                    .filter(
-                        MarketOrder.player_id == player_id,
-                        MarketOrder.order_type == OrderType.BUY,
-                        MarketOrder.item_type  == item_type,
-                        MarketOrder.status.in_([OrderStatus.ACTIVE,
-                                                OrderStatus.PARTIALLY_FILLED]),
-                    )
-                    .all()
-                )
-                already_ordered = sum(o.quantity - o.quantity_filled for o in pending)
-            finally:
-                db.close()
-
             target_buy = target_inv - current_inv - already_ordered
             if target_buy <= 0:
                 continue   # already covered by pending orders
