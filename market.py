@@ -13,6 +13,7 @@ Handles:
 - Initial inventory distribution for new players
 """
 
+import os
 from datetime import datetime, timedelta
 from typing import Optional, List, Tuple
 from enum import Enum
@@ -1141,24 +1142,37 @@ def initialize():
     ])
     print("[Market] Module initialized")
 
-_MATCH_PER_TICK = 200   # max orders to attempt matching per 5-second tick
+_MATCH_PER_TICK = 200   # max orders to attempt matching per sweep
+# Re-match resting orders only every N ticks rather than every tick. Real crosses are
+# matched SYNCHRONOUSLY when an order is placed (create_order → match_order), so two
+# resting orders that don't cross will never cross until a new order arrives. This sweep
+# is purely a safety net for orders that somehow entered the book without going through
+# create_order (admin tools, restores, migrations). Running it every tick re-proved up
+# to 200 non-crossing orders against the DB every 5s for no economic effect; every 6
+# ticks (~30s) keeps the net while cutting that scan ~6×. Env-tunable.
+_MATCH_SWEEP_INTERVAL = int(os.environ.get("MARKET_MATCH_SWEEP_INTERVAL", "6"))
 
 def tick(current_tick: int, now: datetime):
+    do_sweep  = (current_tick % _MATCH_SWEEP_INTERVAL == 0)
+    do_hourly = (current_tick % 3600 == 0)
+    if not (do_sweep or do_hourly):
+        return   # nothing to do this tick — don't even check out a DB session
     db = get_db()
     try:
-        # Process at most _MATCH_PER_TICK orders per tick to prevent the loop
+        # Process at most _MATCH_PER_TICK orders per sweep to prevent the loop
         # from freezing when the order book is large (O(n²) naively).
         # Orders cycle through in FIFO order so older orders get priority.
-        active_orders = (
-            db.query(MarketOrder)
-            .filter(MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED]))
-            .order_by(MarketOrder.created_at.asc())
-            .limit(_MATCH_PER_TICK)
-            .all()
-        )
-        for order in active_orders:
-            match_order(db, order)
-        if current_tick % 3600 == 0:
+        if do_sweep:
+            active_orders = (
+                db.query(MarketOrder)
+                .filter(MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED]))
+                .order_by(MarketOrder.created_at.asc())
+                .limit(_MATCH_PER_TICK)
+                .all()
+            )
+            for order in active_orders:
+                match_order(db, order)
+        if do_hourly:
             total = db.query(MarketOrder).filter(
                 MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED])
             ).count()
