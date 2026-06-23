@@ -1483,6 +1483,49 @@ def _market_snapshot() -> str:
     except Exception:
         pass
 
+    # PETRODOLLAR DEMAND — commodities a city has set as its currency (City.currency_type) carry
+    # STRUCTURAL buy-side demand the live order book usually hides: every member must hold a reserve
+    # worth ≥RESERVE_REQUIREMENT_PERCENT of their net worth in that commodity (the city bank buys the
+    # shortfall on the open market to enforce it), and holders of any active petrodollar earn periodic
+    # WSC airdrops. So a commodity can have heavy real demand with ZERO resting buy orders — this is
+    # what lets the advisor answer "who's buying X / why is X demanded" correctly instead of declaring
+    # there's no demand just because the book is empty.
+    try:
+        from cities import (City, CityMember, get_db as _cdb,
+                            RESERVE_REQUIREMENT_PERCENT as _RRP)
+        from sqlalchemy import func as _pf
+        import market as _pmkt
+        cdb = _cdb()
+        try:
+            prows = cdb.query(City.id, City.name, City.currency_type).filter(
+                City.currency_type.isnot(None), City.currency_type != "").all()
+            mcounts = dict(cdb.query(CityMember.city_id, _pf.count(CityMember.id))
+                           .group_by(CityMember.city_id).all())
+        finally:
+            cdb.close()
+        agg = {}
+        for cid, cname, ctype in prows:
+            a = agg.setdefault(ctype, {"cities": 0, "members": 0, "names": []})
+            a["cities"] += 1
+            a["members"] += int(mcounts.get(cid, 0) or 0)
+            a["names"].append(cname)
+        if agg:
+            lines.append("")
+            lines.append(f"PETRODOLLAR DEMAND (commodities cities use as their currency — each carries "
+                         f"HIDDEN structural demand even when the order book above shows no buyers: every "
+                         f"member must hold ≥{_RRP*100:.0f}% of their net worth in it as a reserve, and the "
+                         f"city bank buys any shortfall on the open market to enforce that; holders also earn "
+                         f"periodic WSC airdrops):")
+            for ctype in sorted(agg, key=lambda k: -agg[k]["members"]):
+                a = agg[ctype]
+                price = _pmkt.get_market_price(ctype) or 0.0
+                px = f"${price:,.4f}/unit" if price else "no live market price"
+                names = ", ".join(a["names"][:4]) + ("…" if len(a["names"]) > 4 else "")
+                lines.append(f"  {ctype.replace('_',' ')}: petrodollar for {a['cities']} city/cities "
+                             f"({names}) · {a['members']} member(s) bound to the reserve rule · {px}")
+    except Exception:
+        pass
+
     snapshot = "\n".join(lines) if lines else "(Market data temporarily unavailable.)"
     c["t"], c["v"] = _t.time(), snapshot
     return snapshot
@@ -1617,9 +1660,10 @@ def _world_snapshot() -> str:
                         stax = f"{get_city_sales_tax_rate(ct.id)*100:.2f}% sales tax"
                     except Exception:
                         stax = "sales tax —"
-                    cur = getattr(ct, "currency_type", None) or "USD"
+                    cur = getattr(ct, "currency_type", None) or "—"
                     lines.append(f"  {ct.name} — mayor {mname} · {members} members · {stax} · "
-                                 f"legal tender {cur} · join fee {_compact(ct.application_fee)}")
+                                 f"petrodollar {cur} (commodity members must hold as reserve; "
+                                 f"NOT a reserve-bank legal tender) · join fee {_compact(ct.application_fee)}")
             finally:
                 adb.close()
     except Exception:

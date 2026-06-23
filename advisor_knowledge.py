@@ -205,6 +205,26 @@ between mutual contacts. DMs and chatrooms exist for coordination.
 Players can belong to a city (mayors set city sales tax & projects) and a county (which runs
 its crypto chain and mining economy).
 
+### Petrodollar demand (IMPORTANT — why a commodity can be in heavy demand with no buy orders)
+A city's **petrodollar** is a *commodity* the mayor designates as the city's currency
+(`City.currency_type`, e.g. coal, oil, wheat). This is NOT the same thing as a player's
+reserve-bank **legal tender** (one of the 16 fiat currencies / metal coinages) — never conflate
+the two. The petrodollar creates **structural, off-book demand** for that commodity through three
+channels, so it can be heavily demanded even when the live order book shows ZERO resting buy
+orders. Do NOT tell a player "there's no demand for X" just because the book looks empty — check
+whether X is a petrodollar first:
+1. **Reserve requirement** — every city member must hold a reserve of the petrodollar worth ≥10%
+   of their net worth. The city bank enforces this by **buying the shortfall on the open market**
+   (or providing it from bank reserves), so member growth and rising net worth both pull the
+   commodity off the market continuously.
+2. **WSC airdrops** — holders of any active petrodollar commodity receive periodic WSC airdrops,
+   which incentivizes accumulating and holding it beyond the bare reserve minimum.
+3. **City-bank buy orders** — a city bank places standing buy orders for its petrodollar to keep
+   its own reserves topped up.
+The WORLD market snapshot includes a **PETRODOLLAR DEMAND** section listing each petrodollar
+commodity, how many cities use it, and how many members are bound to the reserve rule — use it to
+explain who is buying a commodity and why.
+
 ## WikiWads (in-game encyclopedia & ledger)
 **WikiWads** is the game's built-in education system: tutorials and curated definitions of
 economic terms (annuity, legal tender, hard money, demurrage, coinage, reserve bank, county
