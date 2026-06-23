@@ -1014,7 +1014,11 @@ _PRICE_STALENESS_DAYS = 30  # trades older than this don't set valuations
 # item into one. Prices are recomputed every few seconds anyway, and order MATCHING reads
 # the live book directly (not this), so a short staleness window is safe.
 _PRICE_CACHE: dict = {}        # item_type -> (monotonic_ts, price)
-_PRICE_CACHE_TTL = 3.0         # seconds
+_PRICE_CACHE_TTL = 10.0        # seconds — must exceed TICK_INTERVAL (5.0s) so the
+                               # per-tick coin-peg refresh (reserve_banks._refresh_coin_pegs,
+                               # which prices 6 coins off their backing metals every tick)
+                               # hits this cache instead of re-querying the book each tick.
+                               # Safe: matching reads the live book directly, not this cache.
 
 
 def get_market_price(item_type: str) -> Optional[float]:
