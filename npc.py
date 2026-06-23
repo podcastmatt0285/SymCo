@@ -677,7 +677,17 @@ def _run_npc_cycle(player_id: int, cfg: dict):
         import time as _pt
         from reserve_banks import get_spendable_usd
         _a = _pt.monotonic()
-        cash  = get_spendable_usd(player_id)
+        # Run all of get_spendable_usd's reads on one shared session (it otherwise
+        # opens ~3 per call — tender lookup, legacy rescue, balance queries — for
+        # every NPC every cadence). NPCs have no legacy auth-DB cash, so the rescue
+        # is safely skipped on the db-passed fast path. The reserve-bank models live
+        # in the RESERVE database, so this must be a reserve session, not the main one.
+        from database import ReserveSessionLocal
+        _sdb = ReserveSessionLocal()
+        try:
+            cash = get_spendable_usd(player_id, db=_sdb)
+        finally:
+            _sdb.close()
         state = _cash_state(cash, cfg["cash_caps"])
         # Load this NPC's whole inventory in ONE query and reuse it across every sell/buy
         # item, instead of a per-item get_item_quantity() that opened a fresh DB session

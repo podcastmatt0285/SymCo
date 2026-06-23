@@ -2695,7 +2695,7 @@ def get_usd_balance(player_id: int) -> float:
 get_player_usd_pcb_balance = get_usd_balance
 
 
-def get_spendable_usd(player_id: int) -> float:
+def get_spendable_usd(player_id: int, db=None) -> float:
     """Best single-purchase spending power expressed in USD.
 
     Mirrors can_afford_usd(): a USD-denominated cost can be paid from the player's
@@ -2703,13 +2703,27 @@ def get_spendable_usd(player_id: int) -> float:
     larger of (tender balance → USD) and (USD balance), so callers can display a
     balance that matches what the spend check will actually allow.
 
-    Also triggers the one-time legacy cash_balance rescue (via get_usd_balance),
-    so a player whose funds never migrated sees — and can spend — their real money.
+    With db=None (the default) behaviour is unchanged: it triggers the one-time
+    legacy cash_balance rescue (via get_usd_balance) and manages its own session.
+
+    When a caller supplies a db session (e.g. the NPC cycle, run for every NPC
+    every cadence), ALL reads — legal tender + balances — run on that single
+    session instead of opening three, and the legacy rescue is skipped: batched
+    callers (NPCs) have no un-migrated auth-DB cash to rescue. Collapses ~3
+    sessions per call to 0 extra (reuses the caller's).
     """
-    get_usd_balance(player_id)  # one-time legacy rescue into the reserve system
-    tender = get_player_legal_tender(player_id)
-    db = get_db()
+    own = db is None
+    if own:
+        get_usd_balance(player_id)            # one-time legacy rescue into the reserve system
+        tender = get_player_legal_tender(player_id)
+        db = get_db()
     try:
+        if not own:
+            # Resolve tender on the shared session (no separate get_db()).
+            lt = db.query(PlayerLegalTender).filter(
+                PlayerLegalTender.player_id == player_id
+            ).first()
+            tender = lt.currency_code if lt else "USD"
         usd_row = db.query(PlayerCurrencyBalance).filter(
             PlayerCurrencyBalance.player_id     == player_id,
             PlayerCurrencyBalance.currency_code == "USD",
@@ -2729,7 +2743,8 @@ def get_spendable_usd(player_id: int) -> float:
         tender_usd = (float(tender_row.balance) * bank.usd_per_unit) if tender_row else 0.0
         return max(tender_usd, usd_bal)
     finally:
-        db.close()
+        if own:
+            db.close()
 
 
 def credit_usd(player_id: int, amount: float):

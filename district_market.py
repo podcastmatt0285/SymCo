@@ -16,6 +16,7 @@ Handles:
 """
 
 import json
+import os
 from datetime import datetime, timedelta
 from typing import Optional, List
 from enum import Enum
@@ -731,22 +732,31 @@ def initialize():
     load_district_items()
     print("[DistrictMarket] Module initialized")
 
-_MATCH_PER_TICK = 100  # cap per tick to prevent tick freeze with large order books
+_MATCH_PER_TICK = 100  # cap per sweep to prevent tick freeze with large order books
+# Re-match resting orders only every N ticks, not every tick. Real crosses are matched
+# synchronously in create_order; this sweep is a safety net for orders that bypassed it.
+# Every 6 ticks (~30s) keeps the net while cutting the per-tick scan ~6×. Env-tunable.
+_MATCH_SWEEP_INTERVAL = int(os.environ.get("MARKET_MATCH_SWEEP_INTERVAL", "6"))
 
 def tick(current_tick: int, now: datetime):
     """Tick handler - match pending orders."""
+    do_sweep  = (current_tick % _MATCH_SWEEP_INTERVAL == 0)
+    do_hourly = (current_tick % 3600 == 0)
+    if not (do_sweep or do_hourly):
+        return   # nothing to do this tick — don't even check out a DB session
     db = get_db()
     try:
-        active_orders = (
-            db.query(DistrictMarketOrder)
-            .filter(DistrictMarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED]))
-            .order_by(DistrictMarketOrder.created_at.asc())
-            .limit(_MATCH_PER_TICK)
-            .all()
-        )
-        for order in active_orders:
-            match_order(db, order)
-        if current_tick % 3600 == 0:
+        if do_sweep:
+            active_orders = (
+                db.query(DistrictMarketOrder)
+                .filter(DistrictMarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED]))
+                .order_by(DistrictMarketOrder.created_at.asc())
+                .limit(_MATCH_PER_TICK)
+                .all()
+            )
+            for order in active_orders:
+                match_order(db, order)
+        if do_hourly:
             print(f"[DistrictMarket] Hourly Stats: {get_market_stats()}")
     except Exception as e:
         print(f"[DistrictMarket] Tick error: {e}")
