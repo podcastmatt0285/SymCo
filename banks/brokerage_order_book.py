@@ -14,6 +14,7 @@ To integrate into brokerage_firm.py:
 3. Add tick handler for order matching
 """
 
+import os
 from datetime import datetime, timedelta
 from typing import Optional, List, Tuple
 from enum import Enum
@@ -1169,29 +1170,45 @@ def initialize():
     print("[OrderBook] Order book system initialized")
 
 
+# Re-match resting equity orders only every N ticks, not every tick. Real crosses are
+# matched SYNCHRONOUSLY when an order is placed (place_limit_order / place_market_order,
+# which both call match_orders before returning — and the player_place_* wrappers route
+# through them). Two resting orders that don't cross will never cross until a new order
+# arrives, so the per-tick sweep was re-proving non-crosses for every active company —
+# each company opening its own DB session (N+1 sessions/tick). Sweep every N ticks
+# (~30s @ 5s tick) keeps the safety net for orders that bypassed placement (admin tools,
+# restores, migrations) while cutting that churn ~6×. Shares the markets' env knob.
+_MATCH_SWEEP_INTERVAL = max(1, int(os.environ.get("MARKET_MATCH_SWEEP_INTERVAL", "6")))
+
+
 def tick(current_tick: int):
     """
     Order book tick handler.
-    
+
     Processes:
-    - Order matching for all active companies
+    - Order matching for all active companies (throttled — see _MATCH_SWEEP_INTERVAL)
     - Order expiry
     """
-    # Match orders every tick
-    from banks.brokerage_firm import CompanyShares
-    db = get_db()
-    try:
-        active_companies = db.query(CompanyShares).filter(
-            CompanyShares.is_delisted == False
-        ).all()
-        
-        for company in active_companies:
-            match_orders(company.id)
-    finally:
-        db.close()
-    
+    do_sweep  = (current_tick % _MATCH_SWEEP_INTERVAL == 0)
+    do_expire = (current_tick % 60 == 0)
+    if not (do_sweep or do_expire):
+        return   # nothing to do this tick — don't even check out a DB session
+
+    if do_sweep:
+        from banks.brokerage_firm import CompanyShares
+        db = get_db()
+        try:
+            active_companies = db.query(CompanyShares).filter(
+                CompanyShares.is_delisted == False
+            ).all()
+
+            for company in active_companies:
+                match_orders(company.id)
+        finally:
+            db.close()
+
     # Expire old orders every 60 ticks (1 minute)
-    if current_tick % 60 == 0:
+    if do_expire:
         expire_old_orders()
 
 
