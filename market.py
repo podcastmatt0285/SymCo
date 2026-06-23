@@ -1150,7 +1150,9 @@ _MATCH_PER_TICK = 200   # max orders to attempt matching per sweep
 # create_order (admin tools, restores, migrations). Running it every tick re-proved up
 # to 200 non-crossing orders against the DB every 5s for no economic effect; every 6
 # ticks (~30s) keeps the net while cutting that scan ~6×. Env-tunable.
-_MATCH_SWEEP_INTERVAL = int(os.environ.get("MARKET_MATCH_SWEEP_INTERVAL", "6"))
+# max(1, …) guards against a 0/negative override that would make `% interval` raise
+# ZeroDivisionError (or never sweep) and crash the tick every 5s.
+_MATCH_SWEEP_INTERVAL = max(1, int(os.environ.get("MARKET_MATCH_SWEEP_INTERVAL", "6")))
 
 def tick(current_tick: int, now: datetime):
     do_sweep  = (current_tick % _MATCH_SWEEP_INTERVAL == 0)
