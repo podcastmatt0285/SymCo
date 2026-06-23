@@ -37,7 +37,7 @@ import os
 from datetime import datetime, timedelta
 from typing import Optional, Tuple, Type
 
-from database import engine, SessionLocal
+from database import engine, SessionLocal, ReserveSessionLocal
 
 # ===========================
 # CONSTANTS
@@ -682,7 +682,6 @@ def _run_npc_cycle(player_id: int, cfg: dict):
         # every NPC every cadence). NPCs have no legacy auth-DB cash, so the rescue
         # is safely skipped on the db-passed fast path. The reserve-bank models live
         # in the RESERVE database, so this must be a reserve session, not the main one.
-        from database import ReserveSessionLocal
         _sdb = ReserveSessionLocal()
         try:
             cash = get_spendable_usd(player_id, db=_sdb)

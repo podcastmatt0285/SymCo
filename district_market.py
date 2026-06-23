@@ -736,7 +736,7 @@ _MATCH_PER_TICK = 100  # cap per sweep to prevent tick freeze with large order b
 # Re-match resting orders only every N ticks, not every tick. Real crosses are matched
 # synchronously in create_order; this sweep is a safety net for orders that bypassed it.
 # Every 6 ticks (~30s) keeps the net while cutting the per-tick scan ~6×. Env-tunable.
-_MATCH_SWEEP_INTERVAL = int(os.environ.get("MARKET_MATCH_SWEEP_INTERVAL", "6"))
+_MATCH_SWEEP_INTERVAL = max(1, int(os.environ.get("MARKET_MATCH_SWEEP_INTERVAL", "6")))
 
 def tick(current_tick: int, now: datetime):
     """Tick handler - match pending orders."""
