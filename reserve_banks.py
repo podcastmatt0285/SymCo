@@ -93,6 +93,15 @@ YIELD_SENSITIVITY  = 0.00001       # yield change per $1 of net demand per tick
 COIN_SEIGNIORAGE_RATE = 0.02   # 2% of each mint run skimmed to the government before crediting the operator
 COIN_DEMURRAGE_ANNUAL = 0.01   # 1%/yr carry cost on stored coin balances, reclaimed to the government
 
+# Government coinage bonds. A player locks metal coinage with the FEDERAL GOVERNMENT (the sole
+# coinage issuer) for a fixed term; the locked coins flow straight into the treasury, where they
+# service that coin's redemption-IOU queue. Hard money never pays to hold — the bond carries a
+# NEGATIVE yield (demurrage), so at maturity the holder gets their principal back MINUS the accrued
+# carry cost, which the government keeps. There is deliberately no positive-yield option: minting is
+# the only way new coinage enters circulation, so a coin bond can never mint interest out of nothing.
+COIN_BOND_DEMURRAGE_ANNUAL = 0.01           # 1%/yr carry cost charged against a coin bond's principal
+COIN_BOND_MATURITIES       = (7, 30, 90)    # allowed lock-up terms in calendar days
+
 # FX dynamics: each 1 % yield change causes a proportional FX movement.
 FX_YIELD_LINK      = 0.02          # usd_per_unit fractional change per 1 % yield Δ (4× more sensitive)
 
@@ -287,6 +296,35 @@ class ReserveBankBond(Base):
     __table_args__ = (
         Index("ix_rrb_accrual", "bank_id", "status", "matures_at"),
         Index("ix_rrb_call",    "bank_id", "status", "purchase_yield"),
+    )
+
+
+class GovernmentCoinageBond(Base):
+    """A hard-money bond issued by the FEDERAL GOVERNMENT, denominated in a metal coinage.
+
+    At purchase the holder locks `principal_coins` of a coin currency with the treasury (player 0);
+    the coins flow in immediately via _gov_coin_inflow, so they help service that coin's redemption
+    queue while the bond is outstanding. The bond carries a NEGATIVE yield (demurrage) — holding
+    bullion in the vault costs you, it never pays — so demurrage accrues against the principal each
+    tick. At maturity the holder is repaid principal minus the accrued demurrage, paid in the same
+    coin from the treasury (or queued as a redemption IOU if the treasury is short); the reclaimed
+    demurrage stays with the government."""
+    __tablename__ = "government_coinage_bonds"
+
+    id                = Column(Integer, primary_key=True, index=True)
+    holder_player_id  = Column(Integer, index=True, nullable=False)
+    currency_code     = Column(String(16), index=True, nullable=False)   # AG999, AU24, …
+    principal_coins   = Column(Float, nullable=False)     # coin units locked at purchase
+    demurrage_rate    = Column(Float, nullable=False)     # annual, ≤ 0 (e.g. -0.01)
+    maturity_days     = Column(Integer, nullable=False)   # 7 / 30 / 90
+    purchased_at      = Column(DateTime, default=datetime.utcnow)
+    matures_at        = Column(DateTime, nullable=False)
+    demurrage_accrued = Column(Float, default=0.0)        # coin units reclaimed so far (positive)
+    status            = Column(String, default="active")  # active / redeemed
+    redeemed_at       = Column(DateTime, nullable=True)
+    __table_args__ = (
+        Index("ix_gcb_accrual", "status", "matures_at"),
+        Index("ix_gcb_holder",  "holder_player_id", "status"),
     )
 
 
@@ -555,6 +593,22 @@ def initialize():
             "ALTER TABLE coinage_redemption_notes ADD COLUMN IF NOT EXISTS currency_code VARCHAR(16)",
             "ALTER TABLE coinage_redemption_notes ALTER COLUMN bank_id DROP NOT NULL",
             "CREATE INDEX IF NOT EXISTS ix_crn_ccy_open ON coinage_redemption_notes (currency_code, is_fulfilled)",
+            # Government-issued coinage bonds (federal government is the issuer, not any bank).
+            """CREATE TABLE IF NOT EXISTS government_coinage_bonds (
+                id                SERIAL PRIMARY KEY,
+                holder_player_id  INTEGER NOT NULL,
+                currency_code     VARCHAR(16) NOT NULL,
+                principal_coins   DOUBLE PRECISION NOT NULL,
+                demurrage_rate    DOUBLE PRECISION NOT NULL,
+                maturity_days     INTEGER NOT NULL,
+                purchased_at      TIMESTAMP DEFAULT NOW(),
+                matures_at        TIMESTAMP NOT NULL,
+                demurrage_accrued DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+                status            VARCHAR(16) NOT NULL DEFAULT 'active',
+                redeemed_at       TIMESTAMP
+            )""",
+            "CREATE INDEX IF NOT EXISTS ix_gcb_accrual ON government_coinage_bonds (status, matures_at)",
+            "CREATE INDEX IF NOT EXISTS ix_gcb_holder  ON government_coinage_bonds (holder_player_id, status)",
         ],
         admin_env_var="RESERVE_DATABASE_ADMIN_URL",
     )
@@ -661,6 +715,8 @@ def tick(app_tick: int, now: datetime):
             _snapshot_history(db, bank, now)
         # Government coinage carry-cost (demurrage) — independent of the (now-retired) coin banks
         _apply_coin_demurrage(db)
+        # Government coinage bonds: accrue demurrage on active bonds, repay matured ones
+        _process_coinage_bonds(db, now)
         # Inter-bank settlement runs after all yield/FX adjustments are done
         _tick_interbank_settlement(db)
         # Daily operations (once per 24 h)
@@ -1307,6 +1363,122 @@ def _apply_coin_demurrage(db):
         reclaimed_by_ccy[r.currency_code] = reclaimed_by_ccy.get(r.currency_code, 0.0) + charge
     for ccy, amt in reclaimed_by_ccy.items():
         _gov_coin_inflow(db, ccy, amt)
+
+
+def _deliver_coins_or_iou(db, player_id: int, currency_code: str, amount: float):
+    """Deliver `amount` of a coin to a player from the treasury, queuing a government redemption
+    IOU for any shortfall — the same hard-money settlement used when a player switches INTO a coin.
+    Value-conserving: coins move treasury→player up to what the treasury holds; the rest becomes a
+    FIFO claim filled from future coin inflows. Returns (paid_now, iou_amount)."""
+    if amount <= 0:
+        return 0.0, 0.0
+    gov_bal = _get_or_create_currency_balance(db, GOVERNMENT_PLAYER_ID, currency_code)
+    pay_now = min(amount, max(gov_bal.balance, 0.0))
+    if pay_now > 0:
+        _adjust_currency_balance(db, GOVERNMENT_PLAYER_ID, currency_code, -pay_now)
+        _adjust_currency_balance(db, player_id, currency_code, pay_now)
+    shortfall = amount - pay_now
+    if shortfall > 1e-9:
+        db.add(CoinageRedemptionNote(
+            currency_code    = currency_code,
+            requester_type   = "player",
+            requester_id     = player_id,
+            coin_amount_owed = shortfall,
+            filled_amount    = 0.0,
+        ))
+        return pay_now, shortfall
+    return pay_now, 0.0
+
+
+def buy_coinage_bond(player_id: int, currency_code: str, principal_coins: float,
+                     maturity_days: int):
+    """Buy a government-issued coinage bond: lock `principal_coins` of a metal coin with the federal
+    treasury for `maturity_days`. The coins flow straight into the treasury (servicing that coin's
+    redemption queue); at maturity the holder is repaid principal minus accrued demurrage.
+
+    Returns (ok, message, bond_id | None)."""
+    code = (currency_code or "").upper()
+    if code not in COIN_CURRENCY_CODES:
+        return False, f"{currency_code} is not a metal coinage.", None
+    if maturity_days not in COIN_BOND_MATURITIES:
+        return False, (f"Invalid term. Choose "
+                       f"{' / '.join(str(d) for d in COIN_BOND_MATURITIES)} days."), None
+    if not principal_coins or principal_coins <= 0:
+        return False, "Enter a positive amount of coinage to lock.", None
+    db = get_db()
+    try:
+        bal = _get_or_create_currency_balance(db, player_id, code)
+        if bal.balance + 1e-9 < principal_coins:
+            return False, (f"Insufficient {code}: you hold {bal.balance:,.4f}, "
+                           f"need {principal_coins:,.4f}."), None
+        # Debit the holder and route the coins into the treasury (fills the redemption queue).
+        # Exclude the buyer so their deposit services OTHERS' IOUs / the treasury rather than
+        # circularly refilling their own outstanding IOU — the coins are meant to be locked away.
+        _adjust_currency_balance(db, player_id, code, -principal_coins, floor=0.0)
+        _gov_coin_inflow(db, code, principal_coins, exclude_requester=player_id)
+        now = datetime.utcnow()
+        bond = GovernmentCoinageBond(
+            holder_player_id  = player_id,
+            currency_code     = code,
+            principal_coins   = principal_coins,
+            demurrage_rate    = -abs(COIN_BOND_DEMURRAGE_ANNUAL),
+            maturity_days     = maturity_days,
+            purchased_at      = now,
+            matures_at        = now + timedelta(days=maturity_days),
+            demurrage_accrued = 0.0,
+            status            = "active",
+        )
+        db.add(bond)
+        db.commit()
+        disp = coin_display(code)
+        return True, (f"Locked {principal_coins:,.4f} {disp.get('symbol', code)} {code} with the "
+                      f"federal treasury for {maturity_days} days "
+                      f"({abs(COIN_BOND_DEMURRAGE_ANNUAL)*100:.0f}%/yr demurrage)."), bond.id
+    except Exception as e:
+        db.rollback()
+        print(f"[ReserveBanks] Coinage bond purchase error: {e}")
+        return False, "Could not purchase coinage bond.", None
+    finally:
+        db.close()
+
+
+def _process_coinage_bonds(db, now: datetime):
+    """Once per reserve tick: accrue demurrage on active coinage bonds and redeem matured ones.
+
+    Accrual is bookkeeping only — the principal already sits in the treasury, so demurrage just
+    grows the share the government keeps (never moves coins). On maturity the net (principal minus
+    accrued demurrage) is paid back to the holder from the treasury, queuing an IOU for any shortfall.
+    """
+    per_tick = abs(COIN_BOND_DEMURRAGE_ANNUAL) / TICKS_PER_YEAR
+    bonds = db.query(GovernmentCoinageBond).filter(
+        GovernmentCoinageBond.status == "active"
+    ).all()
+    for bond in bonds:
+        if bond.matures_at is not None and now >= bond.matures_at:
+            net = bond.principal_coins - (bond.demurrage_accrued or 0.0)
+            if net < 0:
+                net = 0.0
+            if net > 0:
+                _deliver_coins_or_iou(db, bond.holder_player_id, bond.currency_code, net)
+            bond.status      = "redeemed"
+            bond.redeemed_at = now
+        elif per_tick > 0:
+            # Accrue on the remaining net so demurrage can never exceed the principal.
+            remaining = bond.principal_coins - (bond.demurrage_accrued or 0.0)
+            if remaining > 0:
+                bond.demurrage_accrued = (bond.demurrage_accrued or 0.0) + remaining * per_tick
+
+
+def get_player_coinage_bonds(player_id: int) -> list:
+    """Active (unredeemed) government coinage bonds held by a player, newest first."""
+    db = get_db()
+    try:
+        return db.query(GovernmentCoinageBond).filter(
+            GovernmentCoinageBond.holder_player_id == player_id,
+            GovernmentCoinageBond.status == "active",
+        ).order_by(GovernmentCoinageBond.purchased_at.desc()).all()
+    finally:
+        db.close()
 
 
 def _record_bank_debt(db, debtor_bank_id: int, creditor_currency: str, amount: float):

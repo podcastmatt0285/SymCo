@@ -166,6 +166,20 @@ days (interbank 3 days). Yields are dynamic. Interest accrues hourly and is paid
 issuing bank's currency. Early redemption within 7 days costs a 1.5% fee. Banks may "call" a
 bond at 40% of the purchase yield.
 
+### Government coinage bonds (hard-money term deposits)
+Separate from the fiat reserve-bank bonds above, the **FEDERAL GOVERNMENT** (player 0 — the sole
+coinage issuer, NOT any bank) issues **coinage bonds** denominated in a metal coin (AU24/AU22/
+AG999/AG925/PT9995/PT950). Terms are 7/30/90 days. A holder LOCKS a quantity of that coin with the
+treasury; the locked coins flow straight into treasury holdings, where they help fill that coin's
+redemption-IOU queue while the bond is outstanding — so buying, say, a silver bond directly helps
+service outstanding AG999 redemption IOUs. Because this is hard money, a coinage bond carries a
+NEGATIVE yield (**demurrage**, ~1%/yr) and can never pay positive interest (minting is the only way
+new coinage is created). At maturity the holder is repaid **principal minus accrued demurrage** in
+the same coin, from the treasury — or, if the treasury is short, a redemption IOU is queued and
+filled FIFO from later coin inflows. The government keeps the demurrage. Net: a holder always gets
+back slightly LESS coinage than they locked (the cost of vaulting hard money), and no coinage is
+ever created out of thin air.
+
 ## Commodities
 Spot trading via an order book, plus **commodity lending**: borrow against 105% collateral,
 2% fee split 50/50 with the lender, dynamic due dates, 10%/day late fees, and force-close

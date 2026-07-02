@@ -7,6 +7,7 @@ GET  /reserve-banks/bonds                    Bond Market dashboard
 GET  /reserve-banks/forex                    Forex informational dashboard (read-only)
 POST /api/reserve-banks/bonds/buy            Purchase a bond
 POST /api/reserve-banks/bonds/sell/{bond_id} Sell a bond early
+POST /api/reserve-banks/coinage-bonds/buy    Buy a government coinage bond (hard-money term deposit)
 POST /api/corporate-actions/legal-tender/set Set player's legal tender
 
 NOTE: There is NO manual forex swap route. All currency conversion is automatic
@@ -402,6 +403,67 @@ def bond_market(
             </form>
         </div>"""
 
+    # ── Government coinage bonds (hard-money term deposits with the federal treasury) ──
+    from reserve_banks import (get_player_coinage_bonds, COIN_BOND_MATURITIES,
+                               COIN_BOND_DEMURRAGE_ANNUAL, get_live_coin_usd_per_unit,
+                               coin_display as _coin_disp)
+    cbonds = get_player_coinage_bonds(player.id)
+    cbond_rows = ""
+    for bd in cbonds:
+        net  = bd.principal_coins - (bd.demurrage_accrued or 0.0)
+        rate = get_live_coin_usd_per_unit(bd.currency_code) or 0.0
+        cdsp = _coin_disp(bd.currency_code)
+        cbond_rows += f"""
+            <div class="bond-row">
+              <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center;">
+                <div><span style="font-size:1.1rem;">{cdsp.get('flag','🪙')}</span>
+                  <strong style="color:#fbbf24;">{bd.currency_code}</strong>
+                  {bd.maturity_days}-day coinage bond &bull; matures <strong>{bd.matures_at:%Y-%m-%d}</strong></div>
+                <div style="text-align:right;">
+                  <div>Locked: <strong>{bd.principal_coins:,.4f} {bd.currency_code}</strong></div>
+                  <div class="mini">Repaid at maturity ≈ <strong style="color:#f59e0b;">{net:,.4f} {bd.currency_code}</strong>
+                    (≈${net*rate:,.2f}) after demurrage</div>
+                </div>
+              </div>
+            </div>"""
+    cbonds_holdings = (f'<div class="card"><h3>🪙 Your Coinage Bonds</h3>{cbond_rows}</div>'
+                       if cbond_rows else "")
+
+    coin_opts = "".join(
+        f'<option value="{b["currency_code"]}">{b["currency_code"]} ({b["balance"]:,.4f} available)</option>'
+        for b in coin_balances if (b.get("balance") or 0) > 0
+    )
+    cbond_mat_opts = "".join(f'<option value="{d}">{d} days</option>' for d in COIN_BOND_MATURITIES)
+    if coin_opts:
+        coinage_buy_form = f"""
+        <div class="bank-card">
+          <div class="bank-header">
+            <span style="font-size:1.5rem;">🏛️</span>
+            <div><span class="code">Federal Treasury</span>
+              <span class="mini" style="margin-left:6px;">Government coinage bonds — hard money, {abs(COIN_BOND_DEMURRAGE_ANNUAL)*100:.0f}%/yr demurrage</span></div>
+          </div>
+          <div style="font-size:0.75rem;color:#475569;margin-bottom:6px;">
+            Lock metal coinage with the federal government for a fixed term. The coins flow straight into the treasury
+            (helping fill outstanding redemption IOUs). Hard money never pays to hold: at maturity you get back your
+            principal <em>minus</em> demurrage — paid from the treasury, or queued as a redemption IOU if it is short.
+          </div>
+          <form action="/api/reserve-banks/coinage-bonds/buy" method="post"
+                style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-top:12px;">
+            <div><label>Coinage</label>
+              <select name="currency_code" style="width:220px;">{coin_opts}</select></div>
+            <div><label>Amount (coins)</label>
+              <input type="number" name="principal_coins" min="0.0001" step="0.0001" placeholder="e.g. 10" style="width:130px;" required></div>
+            <div><label>Term</label>
+              <select name="maturity_days" style="width:110px;">{cbond_mat_opts}</select></div>
+            <button type="submit" class="btn btn-blue">Lock Coinage →</button>
+          </form>
+        </div>"""
+    else:
+        coinage_buy_form = ('<div class="bank-card"><div class="mini" style="color:#64748b;">'
+                            'You hold no metal coinage to lock. Mint or acquire coinage first, then you can buy a '
+                            'government coinage bond here.</div></div>')
+    coinage_bonds_section = '<h2>🪙 Government Coinage Bonds</h2>' + cbonds_holdings + coinage_buy_form
+
     body = f"""
     <a href="/" class="nav">← Dashboard</a>
     <h1>🏦 State Reserve Banks — Bond Market</h1>
@@ -415,6 +477,7 @@ def bond_market(
     {bonds_section}
     <h2>Available Reserve Banks</h2>
     {bank_cards}
+    {coinage_bonds_section}
     """
     return _page("Bond Market", body, player.id)
 
@@ -729,6 +792,28 @@ def api_buy_bond(
 
     ok, msg = purchase_bond(player.id, currency_code, wsc_amount, maturity_days, stable_coin_symbol)
     param   = "msg" if ok else "err"
+    from urllib.parse import quote
+    return RedirectResponse(f"/reserve-banks/bonds?{param}={quote(msg)}", status_code=303)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# API: BUY GOVERNMENT COINAGE BOND (hard-money term deposit)
+# ──────────────────────────────────────────────────────────────────────────────
+
+@router.post("/api/reserve-banks/coinage-bonds/buy")
+def api_buy_coinage_bond(
+    currency_code:   str   = Form(...),
+    principal_coins: float = Form(...),
+    maturity_days:   int   = Form(...),
+    session_token: Optional[str] = Cookie(None),
+):
+    player = _auth(session_token)
+    if not player:
+        return RedirectResponse("/login", status_code=303)
+
+    from reserve_banks import buy_coinage_bond
+    ok, msg, _bond_id = buy_coinage_bond(player.id, currency_code, principal_coins, maturity_days)
+    param = "msg" if ok else "err"
     from urllib.parse import quote
     return RedirectResponse(f"/reserve-banks/bonds?{param}={quote(msg)}", status_code=303)
 

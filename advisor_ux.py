@@ -716,6 +716,21 @@ def _build_player_context(player_id: int) -> str:
                 iou_strs.append(f"{rem:,.4f} {n.currency_code} ({pct:.0f}% filled)")
             lines.append("  Pending coinage owed by the government (redemption IOUs): "
                          + "; ".join(iou_strs))
+        # Government coinage bonds (hard-money term deposits locked with the treasury, -demurrage).
+        try:
+            from reserve_banks import get_player_coinage_bonds
+            cbonds = get_player_coinage_bonds(player_id)
+            if cbonds:
+                bstrs = []
+                for bd in cbonds[:6]:
+                    net = bd.principal_coins - (bd.demurrage_accrued or 0.0)
+                    mat = bd.matures_at.strftime("%Y-%m-%d") if bd.matures_at else "?"
+                    bstrs.append(f"{bd.principal_coins:,.4f} {bd.currency_code} "
+                                 f"(≈{net:,.4f} net at maturity {mat})")
+                lines.append("  Coinage bonds locked with the treasury (hard-money term deposits, "
+                             "demurrage): " + "; ".join(bstrs))
+        except Exception:
+            pass
     except Exception:
         pass
 
